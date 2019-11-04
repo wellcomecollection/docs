@@ -1,5 +1,7 @@
 # Process
 
+**This is a DRAFT, still under consideration by the team**
+
 We follow the OKR process, see the [2019/2020 Delivery Plan](https://wellcomecloud.sharepoint.com/sites/wc2/DE/RoadMaps/Delivery%20Plans/Delivery%20Plan%202019-20%20Digital%20Engagement.pdf?csf=1&e=WUG2dI&cid=56bdefa5-c5d4-44a1-99e7-96a6975d10fc)
 
 Delivery over process - do not follow these guidelines if they prevent you from delivering value as defined by our objectives.
