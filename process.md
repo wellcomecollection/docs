@@ -6,15 +6,40 @@ We follow the OKR process, see the [2019/2020 Delivery Plan](https://wellcomeclo
 
 Delivery over process - do not follow these guidelines if they prevent you from delivering value as defined by our objectives.
 
+## Rituals
+
+- *Quarterly planning*: Higher level planning happening once a quarter to decide product changes to meet objectives.
+- *Fortnightly refinement*: Bringing higher level issues into scope for work, creating sub-issues for that work.
+- *Fortnightly retrospectives*: Reflecting on work in the previous fornight, what worked, what didn't, how to optimise.
+- *Ad-hoc retrospectives*: Retrospectives focussed on incidents or topics of special interest.
+
 ## Projects
 
 Projects are quarterly iterations of the projects [available in Github](https://github.com/wellcometrust/platform/projects).
 
-Issues are binned or recycled on a quarterly basis.
+Issues are erased or recycled on a quarterly basis.
 
-## Pull Requests (PRs)
+## Projects, Issues & Pull Requests (PRs)
 
-All Pull Requests should have in general:
+Projects, Issues & PRs overlap in GitHub, here is how we think about them:
+
+- Issues & PRs are both _change requests_.
+- A PR is the unit of deployment, i.e. PRs should be deployable in isolation (where possible).
+- PRs reference a set of git commits which in totality describe a coherent functional change.
+- Issues reference one or more PRs which together describe a coherent functional change.
+- Github Projects contain Issues _or_ PRs which transition through defined states towards *done*.
+
+Project state:
+
+- _no state assigned_: unassigned PRs / issues serve as a record of intended upcoming work (subject to quarterly erasure).
+- *Triage* (assigned to a project but _stateless_): awaiting assignment at backlog refinement.
+- *To do*: available to be worked on before the next refinement cycle
+- *In progress*: actively being worked on right now
+- *Done*: released! Meets the specification for done (see below).
+
+## Issue / PR requirements
+
+All change requests should have in general:
 
 - What is the benefit of this change (and for who)
   e.g. In order to make searches better for users
