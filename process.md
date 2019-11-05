@@ -47,8 +47,8 @@ All change requests should have in general:
 - What is the change functionally
   e.g. We've ordered searches by date
   
-- What is the change
-  e.g. By implementing an update to the `ElasticFlarp GargleMap` in `object FleebChunker`
+- What is the change 
+  A brief overview of the implemention where useful e.g. This is an update to the `ElasticFlarp GargleMap` in `object FleebChunker`.
   
 - Relationships to other changes
   e.g. Depends on #123, required for #456
