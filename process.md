@@ -32,10 +32,10 @@ Projects, Issues & PRs overlap in GitHub, here is how we think about them:
 Project state:
 
 - _no state assigned_: unassigned PRs / issues serve as a record of intended upcoming work (subject to quarterly erasure).
-- *Triage* (assigned to a project but _stateless_): awaiting assignment at backlog refinement.
-- *To do*: available to be worked on before the next refinement cycle
-- *In progress*: actively being worked on right now
-- *Done*: released! Meets the specification for done (see below).
+- **Triage** (assigned to a project but _stateless_): awaiting assignment at backlog refinement.
+- **To do**: available to be worked on before the next refinement cycle
+- **In progress**: actively being worked on right now
+- **Done**: released! Meets the specification for done (see below).
 
 ## Issue / PR requirements
 
@@ -67,7 +67,7 @@ Depends on #123, required for #456
 
 You do not need to enumerate these in PRs, but you must be cognisant of them when closing PRs.
 
-To be *done* they require:
+To be **done** they require:
 
 - A code review from a non-pairing peer
 - An iminent deployment plan 
@@ -81,4 +81,4 @@ To be *done* they require:
 
 PRs are merged by one of those who worked on the change.
 
-Changes *should* be deployed immediately, or if they are not there *must* be a clear timescale indicated on the PR.
+Changes **should** be deployed immediately, or if they are not there **must** be a clear timescale indicated on the PR.
