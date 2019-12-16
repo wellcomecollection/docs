@@ -1,6 +1,6 @@
 # Searching with the CALM API
 
-### 16 December 2019, AWLC
+### 16 December 2019, Alex Chan
 
 This has some notes on using the CALM API, and an example script for searching all the records in the CALM catalogue.
 
@@ -8,7 +8,7 @@ This has some notes on using the CALM API, and an example script for searching a
 
 ## Motivation
 
-As part of the born-digital content migration, I had a collection of directories with accession-like numbers, and I wanted to get a list of all the accession numbers in CALM, so I could match the directories to accession numbers:
+As part of the born-digital content migration, I had a collection of directories on the V drive with accession-like numbers, and I wanted to get a list of all the accession numbers in CALM, so I could match the directories to accession numbers:
 
     AAUICW_2185 ~> AAUICW/2185 ?
     AAUNAM_2213 ~> AAUNAM/2213 ?
@@ -19,7 +19,7 @@ Exporting a list of accession numbers from the CALM GUI would have been tricky (
 <details>
   <summary>What is an accession/accession number?</summary>
 
-  > In library science, an *accession* is all the material that gets collected at one time from a single source.
+  > In archives practice, an *accession* is all the material that gets collected at one time from a single source.
   > The *accession identifier* is the unique identifier given to that batch of material.
   >
   > At Wellcome, the accession identifier is made of two parts: the *accession number* (sequential, currently up to 2551) and a *collection reference* (such as WT, PPMTW, SANCT).
@@ -50,7 +50,10 @@ Useful pieces for searching the API:
     Example request/responses are here: <http://archives.wellcomelibrary.org/CalmAPI/help/example_search.htm>
     This returns an XML response that tells you how many results there are.
 
-    I know you can search the "Catalog", "Accessn" and "Locations" databases; there might be more I'm unaware of.
+    I know you can search the "Catalog", "Accessn", "Locations" and "Persons" databases; there might be more I'm unaware of.
+    There are lots of databases in CALM, but not all of them are populated.
+    Look in the CALM GUI for ideas of what else you can search!
+
     The wildcard `*` is a useful search term: it return everything.
 
     <details>

@@ -136,7 +136,7 @@ if __name__ == "__main__":
         inquirer.List(
             "database",
             message="Which database do you want to search?",
-            choices=["Catalog", "Accessn", "Locations"],
+            choices=["Catalog", "Accessn", "Locations", "Persons"],
         ),
     ]
 
