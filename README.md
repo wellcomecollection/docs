@@ -6,6 +6,7 @@ This is documentation for Wellcome Collection developers. Documentation for user
 * [Process](process.md): How we work.
 * [RFCs](rfcs): A collection of RFCs for Wellcome Collection developers.
 * [Research](research): Notes and research on technical stuff that might be useful later.
+* [Howto](howto): Instructions for doing stuff.
 
 ## Contributing
 
