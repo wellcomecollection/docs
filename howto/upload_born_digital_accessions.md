@@ -33,3 +33,12 @@
     *   If the name of the `.log` file contains `success`: hooray, your package has been successfully accepted for processing!
     *   If the name of the `.log` file contains `failed`: something went wrong trying to process your package.
         Download the log file, and read it with Notepad to understand what went wrong.
+
+    (If you don't see a log file within a minute or so, speak to the devs.)
+
+6.  If you go to the Archivematica dashboard (<https://archivematica.wellcomecollection.org/>), you should see the transfer package has been picked up after a few minutes.
+    It will gradually process through the "Transfer" tab, then the "Ingest" tab.
+    When it completes the Ingest tab, it will have been successfully stored in the Wellcome Storage with the settings:
+
+    *   storage space: `born-digital-accessions`
+    *   external identifier: `{accession number}`
