@@ -25,6 +25,11 @@ Exporting a list of accession numbers from the CALM GUI would have been tricky (
   > At Wellcome, the accession identifier is made of two parts: the *accession number* (sequential, currently up to 2551) and a *collection reference* (such as WT, PPMTW, SANCT).
 </details>
 
+In the storage service, we are going to use the *accession number* as the identifier (with the collection reference included in the package, in case there's a typo in the accession number).
+This is to avoid ambiguity between catalogue references and accession references (e.g. `WT/1` vs. `WT accession 1`).
+
+At some point, we may start storing born digital accessions with Sierra o-numbers (`o12345678`), and the bare accession number plays nicer with that system.
+
 
 
 ## Resources
