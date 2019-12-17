@@ -12,7 +12,7 @@
 3.  Inside the folder, create another folder called `metadata`, and in that folder create a CSV file `metadata.csv`.
 
     ```csv
-    filename,collection_reference,accession
+    filename,collection_reference,accession_number
     objects/,LEMON,1234
     ```
 
