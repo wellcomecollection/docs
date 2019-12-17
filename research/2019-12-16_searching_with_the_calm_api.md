@@ -10,9 +10,9 @@ This has some notes on using the CALM API, and an example script for searching a
 
 As part of the born-digital content migration, I had a collection of directories on the V drive with accession-like numbers, and I wanted to get a list of all the accession numbers in CALM, so I could match the directories to accession numbers:
 
-    AAUICW_2185 ~> AAUICW/2185 ?
-    AAUNAM_2213 ~> AAUNAM/2213 ?
-    AAUNAM_2254 ~> AAUNAM/2254 ?
+    AAUICW_2185 ~> AAUICW accession 2185?
+    AAUNAM_2213 ~> AAUNAM accession 2213?
+    AAUNAM_2254 ~> AAUNAM accession 2254?
 
 Exporting a list of accession numbers from the CALM GUI would have been tricky (I don't have access to CALM on my Mac), so I tried using the CALM API to export the data.
 
@@ -23,10 +23,6 @@ Exporting a list of accession numbers from the CALM GUI would have been tricky (
   > The *accession identifier* is the unique identifier given to that batch of material.
   >
   > At Wellcome, the accession identifier is made of two parts: the *accession number* (sequential, currently up to 2551) and a *collection reference* (such as WT, PPMTW, SANCT).
-  > The two are written together, separated by a slash.
-  > Examples:
-  >
-  > The accession number is globally unique: if there's an accession `WT/123`, you won't see `123` with any other collection reference.
 </details>
 
 
