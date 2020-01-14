@@ -1,0 +1,46 @@
+<svg viewBox="0 0 420 120" xmlns="http://www.w3.org/2000/svg" stroke="black" stroke-width="0.5" fill="white">
+
+  <line x1="10" y1="13" x2="10" y2="23"/>
+  <line x1="60" y1="13" x2="60" y2="23"/>
+  <line x1="110" y1="13" x2="110" y2="23"/>
+  <line x1="160" y1="13" x2="160" y2="23"/>
+  <line x1="210" y1="13" x2="210" y2="23"/>
+  <line x1="260" y1="13" x2="260" y2="23"/>
+  <line x1="310" y1="13" x2="310" y2="23"/>
+  <line x1="360" y1="13" x2="360" y2="23"/>
+  <line x1="410" y1="13" x2="410" y2="23"/>
+  <line x1="10" y1="18" x2="410" y2="18"/>
+
+  <text x="210" y="5"
+    fill="black"
+    font-size="10px"
+    stroke-width="0"
+    text-anchor="middle"
+    dominant-baseline="middle"
+    font-family="sans-serif">vCPU units</text>
+
+  <svg x="0" y="3">
+    <rect x="10" y="25" width="200" height="50" stroke-width="1.5" fill="#9ACDED"/>
+    <text x="105" y="50"
+      fill="black"
+      font-size="10px"
+      stroke-width="0"
+      text-anchor="middle"
+      dominant-baseline="middle"
+      font-family="sans-serif">task</text>
+  </svg>
+
+  <svg x="200" y="75">
+    <line x1="10" y1="10" x2="10" y2="21" stroke="#E10F2D" stroke-width="1.2" stroke-dasharray="1,1"/>
+    <line x1="210" y1="10" x2="210" y2="21" stroke="#E10F2D" stroke-width="1.2" stroke-dasharray="1,1"/>
+    <line x1="11.5" y1="15" x2="208.5" y2="15.5" stroke="#E10F2D" stroke-width="1.2" stroke-dasharray="1,1"/>
+
+    <text x="110" y="30"
+      fill="#E10F2D"
+      font-size="8px"
+      stroke-width="0"
+      text-anchor="middle"
+      dominant-baseline="middle"
+      font-family="sans-serif">idle CPU</text>
+  </svg>
+</svg>
