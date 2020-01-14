@@ -240,6 +240,6 @@ Two possible approaches:
 
 ## I want code! 🤓
 
-Look at the Python script [`2019-12-16_searching_with_the_calm_api.py`](2019-12-16_searching_with_the_calm_api.py).
+Look at the Python script [`2019-12-16_searching_with_the_calm_api.py`](code/2019-12-16_searching_with_the_calm_api.py).
 
 It implements the "I want to get everything" search described above.
