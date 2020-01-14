@@ -27,8 +27,10 @@ If you have lots of small tasks, this is okay:
 <figure>
   <img src="images/2020-01-14-ec2-tasks-small.svg">
   <figcaption>
-    This EC2 instance has eight CPU cores, and each task uses a single CPU core.
-    We can run seven tasks and still be able to do blue-green deployments, and only a single core is sitting idle.
+    <small>
+      This EC2 instance has eight CPU cores, and each task uses a single CPU core.
+      We can run seven tasks and still be able to do blue-green deployments, and only a single core is sitting idle.
+    </small>
   </figcaption>
 </figure>
 
@@ -37,10 +39,11 @@ But if you have one big task, you're wasting a lot of CPU:
 <figure>
   <img src="images/2020-01-14-ec2-tasks-big.svg">
   <figcaption>
-    This task needs four CPU cores – so the other four cores are sitting idle for when we need to do a deployment.
+    <small>
+      This task needs four CPU cores – so the other four cores are sitting idle for when we need to do a deployment.
+    </small>
   </figcaption>
 </figure>
-
 
 If this big task doesn't need continuous uptime (for example, it's a background process), then it would be better to allocate it all eight CPU cores, and allow ECS to scale it to zero when we do a deployment.
 
