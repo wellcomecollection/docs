@@ -1,5 +1,10 @@
 # Incident retro - `Internal model` <=> `Elastic index` sync question 
 
+**Incident from:** 2020-01-07
+
+**Incident till:** 2020-01-07
+
+**Retro held:** 2020-01-15
 
 ## Summary
 And application (the API in this case) was deployed with an internal model that
