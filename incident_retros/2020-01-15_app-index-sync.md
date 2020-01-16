@@ -40,7 +40,29 @@ Namely:
 * [Deployment transparency and rollback](#deployment-transparency-and-rollback)
 
 ### Timeline
-TBD
+
+Tue 7 Jan 2020
+- Change merged that added licences, changed one licence (the change couldn't be parsed)
+
+Wed 8 Jan 2020
+Day
+- Fix for relevancy deployed
+- Checks went through and seemed fine
+
+23.20
+- Try to search “dinosaurs” on /works, and get an error page back.
+- Go to Slack, and check #wc-platform, #wc-data, #wc-experience and #wc-platform-alerts. No messages or alerts that would indicate an error.
+- Try to find the logs in the platform account. I can’t find the API at all.
+- Log into Elastic Cloud at cloud.elastic.co. Click on the logging cluster, try to launch Kibana … boom, no logs for me!
+- Realise the API is in the catalogue account now, go to terraform to hunt issues.
+- Get into the catalogue account, search the logs. Search for “500”, see a lot of 500 errors accumulating in the API Gateway logs and nginx.
+- Check the ECS tasks. Oh look, it got redeployed when the bugs started.
+- Write this all up in Slack and a GitHub ticket.
+
+Thu 9 Jan 2020
+- Went through the above, tried rollback to potentially previously working version
+- Guessed that it may be the modl breaking, pointed app to staging index which fixed it
+- Put into code and committed
 
 ---
 
