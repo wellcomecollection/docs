@@ -1,6 +1,6 @@
 ## Pipeline Tracing
 
-**Status: ** :building_construction: Draft :construction:
+**Status:** :building_construction: Draft :construction:
 
 **Last updated:** 2020/01/28
 
