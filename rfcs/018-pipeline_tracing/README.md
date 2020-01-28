@@ -1,5 +1,9 @@
 ## Pipeline Tracing
 
+**Status: ** :building_construction: Draft :construction:
+
+**Last updated:** 2020/01/28
+
 When things go wrong in the pipeline, debugging them involves a confusing and slow mix of checking DLQs and reading through the logs of several separate services in order to figure out what went wrong, for which documents, and where. This slows down development across the catalogue and makes it harder to catch bugs.
 
 As well as more comprehensive, structured logging in the constituent services of the pipeline, it would be beneficial to track the flow of data through it, from the adapters right through to ingest.
