@@ -8,3 +8,4 @@ Fortnightly updates about the work of the digital platform team.
 - [2019 December 06](20191206.md)
 - [2019 December 20](20191220.md)
 - [2020 January 18](20200118.md)
+- [2020 January 31](20200131.md)
