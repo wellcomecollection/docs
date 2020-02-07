@@ -6,6 +6,10 @@
 
 **Retro held:** 2020-01-15
 
+- [Summary](#summary)
+- [Timeline](#timeline)
+- [Analysis of causes](#analysis-of-causes)
+
 ## Summary
 And application (the API in this case) was deployed with an internal model that
 was incompatible with the index that the application's environment was pointing to.
@@ -66,11 +70,13 @@ Thu 9 Jan 2020
 
 ---
 
-## The Model-Index-Sync question
+## Analysis of causes
+
+### The Model-Index-Sync question
 TBD
 
 
-## Error reporting
+### Error reporting
 CloudWatch alarms were triggered in the Catalogue AWS account from API gateway.
 
 These then tried to post to a topic in the Platform AWS account, to which it had
@@ -85,7 +91,7 @@ This never happened due to the permission issue.
   - Lambda
   - Slack
 
-## Error logging
+### Error logging
 The logs were non-descriptive and held in multiple places. This made it hard to 
 to work out what the problem was.
 
@@ -94,7 +100,7 @@ to work out what the problem was.
 - We should have the logs reporting into the Elastic search logging cluster
 
 
-## Deployment transparency and rollback
+### Deployment transparency and rollback
 When looking to rollback it was not clear as to where to log back to. This information
 is available in the release tool infrastructure (Dynamo). When releases are made we also
 know through ECS events that they are occuring, as @alexwlchan did to debug this problem.
