@@ -54,13 +54,13 @@ GET /works/:id?include=items
           },
           "shelfmark": "W50 2009L89",
           "accessConditions": [
-		        {
-				      "terms": "Usage terms go here",
-				      "status": {
-								"id": "open",
-								"label": "Open",
-								"type": "AccessStatus"
-							},
+            {
+              "terms": "Usage terms go here",
+              "status": {
+                "id": "open",
+                "label": "Open",
+                "type": "AccessStatus"
+              },
               "type": "AccessCondition"
 						}
           ],
