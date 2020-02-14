@@ -62,7 +62,7 @@ GET /works/:id?include=items
                 "type": "AccessStatus"
               },
               "type": "AccessCondition"
-						}
+            }
           ],
           "type": "Location"
         },
@@ -244,12 +244,12 @@ GET /requests
         "id": "sepbb",
         "label": "Rare Materials Room",
         "type": "LocationDescription"
-			},
+      },
       "status": {
-			  "id": "i",
-			  "label": "Item hold ready for pickup.",
+        "id": "i",
+        "label": "Item hold ready for pickup.",
         "type": "RequestStatus"
-			},
+      },
       "type": "Request"
     }
   ],
