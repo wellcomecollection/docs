@@ -110,3 +110,8 @@ is available in the release tool infrastructure (Dynamo). When releases are made
 know through ECS events that they are occuring, as @alexwlchan did to debug this problem.
 
 [model change]: https://github.com/wellcometrust/catalogue/pull/328/files#diff-4bc08710478ccfb8e2ea57802292a290
+
+---
+
+## Actions
+- [Create RFC](https://github.com/wellcomecollection/docs/pull/9)
