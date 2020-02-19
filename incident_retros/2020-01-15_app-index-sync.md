@@ -73,7 +73,11 @@ Thu 9 Jan 2020
 ## Analysis of causes
 
 ### The Model-Index-Sync question
-TBD
+Currently we index into a new index when we start up a new pipeline, which is often triggered by a transformer or model change.
+
+When then need to remember that any new changes to the API will have to reference this new model as it will be using the new model.
+
+This has caused issues by going out of sync in the past.
 
 
 ### Error reporting
