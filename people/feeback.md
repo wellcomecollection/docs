@@ -10,6 +10,12 @@ It is an integral part to any iteratively improving system.
 
 ---
 
+## Where will feedback be used
+
+Feedack will be used in 1:1s when necessary, at the end of each quarter in regards to PDRs, and as evidence for promotion and remuneration applications.
+
+---
+
 ## What do we collect feedback on?
 
 The how and the what.
