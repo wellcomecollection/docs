@@ -59,6 +59,8 @@ How you do what you do, how you help others to do what they do, and what support
 
 As timely as possible making the feedback as easy as possible to act and respond to, but with regards to the fact that receiving feedback too often will cause a numbness to it, probably reduce the quality of it, and miss the opportunity to see patterns forming.
 
+This will be initially be done every month, or in the context of fortnightly 1:1s, every second occurrence.
+
 ---
 
 > [Any maturity model, like any model, is a simplification: wrong but hopefully useful.](https://martinfowler.com/bliki/MaturityModel.html)
