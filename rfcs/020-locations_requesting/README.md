@@ -206,7 +206,7 @@ Item statuses will be passed through directly from Sierra for now. They are avai
 
 #### Request item
 
-When an item is requested, the API will identify the user from the provided Oauth token and place a hold in Sierra for the requested item. This request will return an empty response, with a 204 status code on success.
+When an item is requested, the API will identify the user from the provided Oauth token and place a hold in Sierra for the requested item. This request will return an empty response.
 
 ```
 POST /requests
@@ -221,7 +221,17 @@ POST /requests
 }
 ```
 
-The provided `pickupDate` maps to `neededBy` in the hold request to Sierra. This should in turn populate `notNeededAfterDate` on the created hold, but that still needs to be confirmed. There is no other date on a hold that can be specified via the Sierra API.
+`pickupDate` is an optional field.
+
+An accepted hold request will result in `204 Accepted`.
+
+A rejected hold request will result in `409 Conflict`.
+
+A conflict might will occur when a hold has been placed by another user before an items status has been updated.
+
+The provided `pickupDate` maps to `neededBy` in the hold request to Sierra. 
+
+This should in turn populate `notNeededAfterDate` on the created hold, but that still needs to be confirmed. There is no other date on a hold that can be specified via the Sierra API.
 
 #### Current requests
 

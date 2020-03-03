@@ -1,6 +1,6 @@
 # **RFC 016: Holdings service**
 
-- Status: 🚧 Draft 🚧
+- Status: **Deprecated** refer to [020-locations_requesting](../020-locations-requesting/README.md)
 - Last updated: 24 September 2019.
 
 ## Glossary
