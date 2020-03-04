@@ -1,12 +1,14 @@
 # Handling error cases in requesting
 
-For the new item requesting service, we need to handle errors coming from the Sierra API (for varying definition of "error").
+**The user clicks "request item", and something goes wrong.**
 
-*   The item/requests APIs need to recognise the error, and provide a suitable response.
+One source of errors with item requesting is the Sierra API – if it refuses or is unable to place a hold.
+The requesting service and front-end need to handle this:
 
+*   The APIs need to recognise the error, and provide a suitable response.
 *   The front-end needs to present error messages to users based on responses from the APIs.
 
-I had a conversation with Natalie about some of the errors we might encounter when looking up or requesting items in Sierra:
+This document is an attempt to list all the ways the Sierra API might not place a hold (based on a conversation with Natalie):
 
 *   **A server error from Sierra.**
     The Sierra API returns a 500 error.
