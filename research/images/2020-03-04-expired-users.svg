@@ -1,0 +1,57 @@
+<svg viewBox="0 0 550 280" xmlns="http://www.w3.org/2000/svg">
+
+  <defs>
+    <style>
+      text {
+        fill: black;
+        font-size: 20px;
+        stroke: none;
+        text-anchor: middle;
+        dominant-baseline: middle;
+        font-family: sans-serif;
+      }
+
+      line {
+        stroke-linecap: round;
+        stroke-width: 1.5;
+        stroke: black;
+      }
+
+      rect {
+        fill: white;
+        stroke: black;
+      }
+    </style>
+  </defs>
+
+  <rect x="5" y="5" width="200" height="50"/>
+  <text x="105" y="30">user</text>
+  <line x1="35" y1="55" x2="35" y2="105"/>
+  <line x1="35" y1="105" x2="82" y2="105" marker-end="url(#arrowhead)"/>
+
+  <svg x="100" y="75">
+    <rect x="5" y="5" width="200" height="50"/>
+    <text x="105" y="30">expired card</text>
+
+    <line x1="35" y1="55" x2="35" y2="105"/>
+    <line x1="35" y1="105" x2="82" y2="105" marker-end="url(#arrowhead)"/>
+  </svg>
+
+  <svg x="200" y="150">
+    <rect x="5" y="5" width="200" height="50"/>
+    <text x="105" y="30">P TYPE=expired</text>
+
+    <line x1="35" y1="55" x2="35" y2="105"/>
+    <line x1="35" y1="105" x2="82" y2="105" marker-end="url(#arrowhead)"/>
+  </svg>
+
+  <svg x="300" y="225">
+    <rect x="5" y="5" width="200" height="50"/>
+    <text x="105" y="30">deleted user</text>
+  </svg>
+
+  <marker id="arrowhead" markerWidth="10" markerHeight="7"
+    refX="0" refY="3.5" orient="auto">
+    <polygon points="0 0, 10 3.5, 0 7" />
+  </marker>
+</svg>
