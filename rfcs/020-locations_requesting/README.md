@@ -223,7 +223,7 @@ POST /requests
 
 `pickupDate` is an optional field.
 
-An accepted hold request will result in `204 Accepted`.
+An accepted hold request will result in `202 Accepted`.
 
 A rejected hold request will result in `409 Conflict`.
 
