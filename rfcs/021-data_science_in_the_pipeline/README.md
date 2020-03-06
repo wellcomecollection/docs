@@ -25,9 +25,9 @@ We can write down some desiderata for any proposed solution:
 
 These suggest 3 distinct, but loosely coupled, services:
 
-- **Inferrer**: A Python service that provides a synchronous API that consumes whatever is needed to infer the new data, which it outputs.
+- **Inferrer**: A Python service that provides a synchronous API (most likely RESTful HTTP) that consumes whatever is needed to infer the new data, which it outputs.
 - **Model Trainer**: A Python service that can consume records from the catalogue index in bulk in order to train a model, and outputs/stores a persistent representation of this model for the *inferrer* to use.
-- **Inference Manager**: A Scala service that lives in the pipeline and contains "the usual" Wellcome message-passing, Akka, etc logic & libraries, which sychronously calls the `inferrer` and attaches the new data to the work/image before passing it along.
+- **Inference Manager**: A Scala service that lives in the existing pipeline and contains "the usual" Wellcome message-passing, Akka, etc logic & libraries, which sychronously calls the `inferrer` and attaches the new data to the work/image (by populating a field) before passing it along.
 
 The usage of these services would look like this:
 
