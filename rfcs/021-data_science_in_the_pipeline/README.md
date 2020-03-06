@@ -27,7 +27,7 @@ These suggest 3 distinct, but loosely coupled, services:
 
 - **Inferrer**: A Python service that provides a synchronous API that consumes whatever is needed to infer the new data, which it outputs.
 - **Model Trainer**: A Python service that can consume records from the catalogue index in bulk in order to train a model, and outputs/stores a persistent representation of this model for the *inferrer* to use.
-- **Inference Manager**: A Scala service that lives in the pipeline and contains "the usual" Wellcome message-passing, Akka, etc logic & libraries, which sychronously calls the *inferrer* and attaches the new data to the work/image before passing it along.
+- **Inference Manager**: A Scala service that lives in the pipeline and contains "the usual" Wellcome message-passing, Akka, etc logic & libraries, which sychronously calls the `inferrer` and attaches the new data to the work/image before passing it along.
 
 The usage of these services would look like this:
 
@@ -43,4 +43,12 @@ The usage of these services would look like this:
 
 > Are the network requests for (eg) image files going to be very expensive and/or slow? How could we mitigate this?
 
-> How do we deal with wanting to infer several separate things? A chain of inferrer-manager pairs would be simplest and cleanest, but this would require `n` times as many network requests for images as one inferrer doing all the work.
+> How do we deal with wanting to infer several separate things for one piece of content (eg a feature vector _and_ a palette vector for a single image)? A chain of inferrer-manager pairs would be simplest and cleanest, but this would require `n` times as many network requests for images as one inferrer doing all the work.
+
+> Should DS APIs be open to the public?
+
+> Should model artefacts be open to the public?
+
+> Should DS inferrers work only for things we know (ie feature vectors can be inferred only for images within the WC ecosystem, by passing an image ID) or with any content (ie feature vectors can be inferred for any image, by passing a publicly accessible URI)
+
+> It seems like we'll have to reinfer on every existing work/image when a model is retrained, which will significantly add to the expense of retraining based on the above considerations about network requests etc. Is this necessarily the case?
