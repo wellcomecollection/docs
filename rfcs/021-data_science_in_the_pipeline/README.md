@@ -6,7 +6,7 @@
 
 ## Motivation
 
-We want to be augment works and images with data inferred off of them using data science techniques: for example, feature vectors and colour palettes for images.
+We want to augment works and images with data inferred from them using data science techniques: for example, feature vectors and colour palettes for images.
 
 Currently, we do this by holding both some form of index (usually a set of points in a vector space) as well as a model in a separate service - for example, https://labs.wellcomecollection.org/feature-similarity. This has significant drawbacks: data is duplicated, outdated, patchy, and perhaps most importantly, must be searched as a wholly separate all-or-nothing operation outside of our ES indices.
 
