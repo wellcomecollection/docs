@@ -49,7 +49,7 @@ GET /works/:id?include=items
           },
           "description": {
             "id": "medc",
-            "label": "Medical Collection"
+            "label": "Medical Collection",
             "type": "LocationDescription",
           },
           "shelfmark": "W50 2009L89",
