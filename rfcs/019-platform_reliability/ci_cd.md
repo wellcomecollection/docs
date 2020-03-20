@@ -11,25 +11,28 @@ When test pass against a build in a CI environment those changes are deployed to
 We need:
 - To be satisfied that tests in CI ensure that a build is promotable to production.
 - To build on the release tool to ensure the deploy step can actually trigger deployments.
+- To be able to quickly roll-back to a known good code point if a deployment is broken.
 - To connect tests to deployment!
 
 ### Deployment visibility
 
-We want to be able to see who deployed what & when in the recent past.
+We want to be able to see who recently deployed what & when.
 
-We should provide an authenticated web dashboard showing deployments
+We should provide an authenticated web dashboard showing deployments.
+
 We want to know:
 - What was deployed, referencing:
   - The PR that was deployed
   - The tests that have been run against the deployed changes (pre/post deployment)
-  - The status of a deployment
+  - The status of a deployment:
+    - e.g. when a change is available but not deployed
 - When was a change deployed
 
 ### Deployment tool 
 
 The release tooling as currently used is too complicated.
 
-We should have a single step deployment tool that takes a deploy-able artifact from a build and deploys it to an environment.
+We should have a single step deployment tool that takes deploy-able artifact(s) from a build and deploys it to an environment.
 
 ```
 > cd my_project

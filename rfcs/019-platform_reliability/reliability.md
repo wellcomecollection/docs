@@ -8,10 +8,8 @@ In order to verify that pipeline deployments will behave and are behaving as exp
 
 - Test pipeline changes that require re-indexes before new indexes are promoted into production view.
 
-- Test the pipeline is performing as expected when updates flow through it both:
-  - In production
-  - In integration tests
-  
+- Test the pipeline is performing as expected when updates flow through it.
+
 ### Pipeline reindexing 
 
 In order that we can quickly test the behaviour of the catalogue pipeline, we should:

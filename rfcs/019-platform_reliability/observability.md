@@ -25,7 +25,7 @@ In order that application issues are quickly found and diagnosed we should be ab
 We should:
 
 - Decide on appropriate metric collectors for each of our products.
-- Decide on a single platform for visualising application metrics across our products.
+- Decide on appropriate platforms for visualising application metrics across our products.
 
 ## Alerting
 
@@ -33,7 +33,7 @@ In order that we can quickly react to application issues we should be notified w
 
 We should:
 
-- Be able to track response to alerts and actions taken to resolve them.
+- Be able to track out response to alerts and actions taken to resolve them.
 - Decide on what constitutes a critical issue (i.e. one that requires immediate action) and provide a separate channel to deliver critical alerts.
 
 
