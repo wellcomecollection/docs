@@ -4,17 +4,62 @@
 
 ## Background
 
-We build container images as artifacts for deployment, they are labelled with the git ref at the code point the artifact was packaged.
+We have multiple projects that are themselves composed of multiple services, which can deploy into multiple environments (e.g. production/staging).
 
-Deploying container images to production at present moves all container images forward to the latest built version.
+Folk are regularly making changes, building updated services and deploying them into the appropriate environments. Keeping track of what is deployed where, by who and why is essential to working effectively.
 
-## Problem statement
+We have build tooling to take care of building artifacts that can then be deployed:
+
+  ![Simple overview](simple_flow.png)
+
+We have some release tooling that looks after registering build artifacts and provides references to an expected version when deploying.
+
+### Glossary
+
+In order that we can talk about the numerous concepts flying about here, we'll define some terms and visualise how they fit together:
+
+- **project:** A high level abstraction, consisting of one or more **service set**'s. Practically this might indicate whole product and should be a single git repository, e.g. the "catalogue" project.
+
+- **service set:** A functional grouping of **services** within a project. e.g. all the services for the catalogue pipeline. You can have multiple per project, for example in the catalogue project, you've got pipeline, api and adapters.
+
+- **service:** Performs a distinct function within a **project**, practically it may be composed of a few closely related containers. e.g. id_minter, requests API, Front-end content app.
+
+- **environment:** Where you deploy your **services** when you want them to run! e.g. staging, production
+
+- **build environment:** Where you build artifacts to deploy, for example CircleCI, Travis, or your local machine (if tooling allows).
+
+- **build:** The process of creating a **build artifact** for a single **service**
+
+- **build artifact:** A deployable _thing_ for a single service, practically this is a container image stored in ECR.
+
+- **release hash:** Metadata uniquely identifying a **build artifact**, practically this will be a git ref. 
+
+- **release:** Metadata indicating the intention to deploy a particular **build artifact** at a given **release hash**. Generally part of a **release set**.
+
+- **release set:** 
+
+
+
+
+![Terms](keeping_track_terms.png)
+
+## What we do now
+
+**** Maybe split this into a _version 1_ document
 
 We wish to track multiple environments with container images at different versions, and have an audit trail for deployments to those environments.
 
 A deployment mechanism to take a container image for a service within a project and run that in a given environment is deliberately not described here.
 
 SSM parameters are heavily favoured as they provide a data source for terraform.
+
+![Current state](what_we_do_now.png)
+
+### Problems
+
+- It doesn't actually deploy so things get out of sync
+- Multi-step to actually deploy something is confusing / unnecessary
+- Poor visibility of what is actually deployed
 
 ## Proposed Solution
 
@@ -45,8 +90,6 @@ SSM parameters will provide a versioned record of build artifacts. SSM allows de
 This mechanism will be provided via a python application, packaged in a docker container distributed via the https://github.com/wellcometrust/dockerfiles repository.
 
 ### Project structure
-
-> **Project:** A set of services that when composed perform a function.
 
 In order to build releases that describe which version of a service to deploy to a particular environment we need a machine readable description of project structure.
 
