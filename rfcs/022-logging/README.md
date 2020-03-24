@@ -1,4 +1,4 @@
-# RFC 020: Logging
+# RFC 022: Logging
 
 **Last updated: 20 March 2020.**
 
