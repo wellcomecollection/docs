@@ -56,14 +56,38 @@ See the documentation on [version 1](v1/README.md).
 
 ### Problems with the current approach
 
-WIP
-
-- It doesn't actually deploy so things get out of sync
-- Multi-step to actually deploy something is confusing / unnecessary
+- It is not clear how to release a single service
+- In order to actually deploy something there are multiple steps:
+  - Create a release using the CLI tool
+  - Deploy a release using the CLI tool
+  - Run `terraform apply` to _actually_ update the running services
+- Release/Deploy descriptions are not well used / hidden
 - Poor visibility of what is actually deployed
 
 ### Proposed Solution
 
-WIP
+We intend to address the problems described above my improving on the existing CLI tool.
+
+We will:
+
+- Provide complete documentation with examples for the updated CLI tool
+- Provide "single step" deployment capability in the CLI tool
+- Remove the requirement to run `terraform apply` to update existing services
+- Provide a web dashboard which shows a current state of releases & deployments
+- Extract "descriptions" for releases from commit messages
+
+#### Metadata
+
+.wellcome_project
+values in SSM
+values in terraform
+
+#### CLI Tool
+
+
+
+#### Dashboard
+
+
 
 ![Terms](proposed_wip.png)
