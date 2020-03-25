@@ -37,15 +37,18 @@ In order that we can talk about the numerous concepts flying about here, we'll d
 
 - **build:** The process of creating a **build artifact** for a single **service**
 
-- **build artifact:** A deployable _thing_ for a single service, practically this is a container image stored in ECR.
+- **build artifact:** A deployable _thing_ for a single **service**, practically this is a container image stored in ECR.
 
 - **release hash:** Metadata uniquely identifying a **build artifact**, practically this will be a git ref. 
 
 - **release:** Metadata indicating the intention to deploy a particular **build artifact** at a given **release hash**. Generally part of a **release set**.
 
-- **release set:** WIP
+- **release set:** A set of **build artifacts** at particular **release hashes** based on a **service set** template that is intended to be released into an **environment** together.
 
-![Terms](keeping_track_terms.png)
+- **deployment:** A deployed **service**.
+- **deployment set:** A set of deployed **services** created from a **release set** that has been deployed into an **environment**.
+
+![Terms](terms.png)
 
 ## What we do now
 
@@ -62,3 +65,5 @@ WIP
 ### Proposed Solution
 
 WIP
+
+![Terms](proposed_wip.png)
