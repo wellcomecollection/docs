@@ -76,18 +76,72 @@ We will:
 - Provide a web dashboard which shows a current state of releases & deployments
 - Extract "descriptions" for releases from commit messages
 
+#### CLI Tool
+
+```
+release-tool
+
+Usage:
+    release-tool deploy (all | <service>) <env> [--project project_name] [--skip_confirm]
+    release-tool register <ecr_uri> <service> [--project project_name] [--env env_name]` 
+    release-tool status (all | <service>) <env> [--project project_name]
+Options: 
+    --project               Name of the project, default from .weco-project
+    --env                   Environment name, e.g. prod, stage [default: latest]
+    --skip_confirm          Do not ask for confirmation during a deploy (useful in CI)
+```
+
+##### deploy
+
+###### Example usage
+
+```
+> release-tool deploy my_service prod
+
+This will deploy:
+
+    my_service_1@hash_1
+    my_service_2@hash_1
+    my_service_3@hash_1
+
+Do you wish to continue? (y/n) y
+
+Deployment requested.
+```
+
+##### register
+
+###### Example usage
+
+```
+> release-tool register account.amazonaws.com/uk.ac.wellcome/bag_register:4246187 bag_register
+
+Updated: /project_name/images/latest/bag_register 
+```
+
+##### status
+
+###### Example usage
+
+```
+> release-tool status all prod
+
+    my_service_1@hash_1     57  ACTIVE (COMPLETE)
+    my_service_2@hash_1     56  ACTIVE 
+    my_service_3@hash_1     56  ACTIVE
+
+```
+
 #### Metadata
 
 .wellcome_project
 values in SSM
 values in terraform
-
-#### CLI Tool
-
-
+dynamodb
 
 #### Dashboard
 
-
+view on deployments
+view on releases, filtered by environment deployment is in
 
 ![Terms](proposed_wip.png)
