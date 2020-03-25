@@ -84,7 +84,7 @@ Separating service deployment from infrastructure deployment is desirable as inf
 
 Running terraform in a CI environment like Travis is also not desirable as giving an automated environment the power to run infrastructure updates needs careful consideration.
 
-##### Why this is hard
+#### Why this is hard
 
 An ECS task definition contains configuration for volume mounts, CPU & memory requirements, as well as indicating the container image URI to use when creating tasks.
 
@@ -100,13 +100,17 @@ However if the task definition is updated and differs from that recorded by the 
 
 In order to move away from using `terraform apply` it will be necessary to synchronise state between our deployment tool and terraform.
 
-##### A solution
+#### A solution
 
 If we extract the definitive source from which the image URI is loaded by terraform and ensure that the task definition matches the state expected by terraform we can avoid the terraform state being out-of-sync when applied separately.
 
 The terraform state will record the task definition version, so we will need to always provide the most recent version in terraform for the ECS service as well as ensuring the ECS task definition 
 
-#### CLI Tool
+**--WIP--**
+
+### CLI Tool
+
+The proposed use of the CLI tool is as follows:
 
 ```
 release-tool
@@ -121,9 +125,7 @@ Options:
     --skip_confirm      Do not ask for confirmation during a deploy (useful in CI)
 ```
 
-##### deploy
-
-###### Example usage
+#### `deploy` Example usage
 
 ```
 > release-tool deploy my_service prod
@@ -139,9 +141,7 @@ Do you wish to continue? (y/n) y
 Deployment requested.
 ```
 
-##### register
-
-###### Example usage
+#### `register` Example usage 
 
 ```
 > release-tool register account.amazonaws.com/uk.ac.wellcome/bag_register:4246187 bag_register
@@ -149,9 +149,7 @@ Deployment requested.
 Updated: /project_name/images/latest/bag_register 
 ```
 
-##### status
-
-###### Example usage
+##### `status` Example usage
 
 ```
 > release-tool status all prod
@@ -194,22 +192,23 @@ This file `.wellcome_project` should be in the project root.
 
 ##### Container Images / Environment map
 
+**--WIP--**
+
 We need to keep track of what container images should be in what environment at any given time. We will use AWS SSM Parameters for this as it provides a simple key value store and is easily accessible via Terraform data blocks.
 
 ```
 /{project}/images/{environment}/{service} 
-
 ```
 
 
-.wellcome_project
-values in SSM
-values in terraform
-dynamodb
+- .wellcome_project
+- values in SSM
+- values in terraform
+- dynamodb
 
 #### Dashboard
 
+**--WIP--**
+
 view on deployments
 view on releases, filtered by environment deployment is in
-
-![Terms](proposed_wip.png)
