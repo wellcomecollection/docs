@@ -76,6 +76,36 @@ We will:
 - Provide a web dashboard which shows a current state of releases & deployments
 - Extract "descriptions" for releases from commit messages
 
+#### Moving away from terraform for deployment
+
+We currently use `terraform apply` to deploy services at a particular release hash. The choice to use terraform was driven by a requirement to describe our task definitions in code. 
+
+Separating service deployment from infrastructure deployment is desirable as infra/service deployments have differing concerns and pace, i.e. high-value infrequent (infra), vs. low-value frequent (deploying new versions of services). 
+
+Running terraform in a CI environment like Travis is also not desirable as giving an automated environment the power to run infrastructure updates needs careful consideration.
+
+##### Why this is hard
+
+An ECS task definition contains configuration for volume mounts, CPU & memory requirements, as well as indicating the container image URI to use when creating tasks.
+
+The container image URI cannot be updated independently from other parameters in a task definition. This makes ignoring a change to the task definition difficult, see this [epic GitHub issue thread](https://github.com/terraform-providers/terraform-provider-aws/issues/632).
+
+When terraform updates a task definition it has a version of the task definition in code to send to ECS, the ECS Service is then updated by terraform to point at that new task definition and a deployment is started in ECS.
+
+A mechanism to update the task definition outside terraform might look like this:
+
+![Update ECS](ecs_update_task_def.png)
+
+However if the task definition is updated and differs from that recorded by the terraform state (which updating the image _would_ cause) terraform will attempt to return the task definition to a known state, which would be undesirable.
+
+In order to move away from using `terraform apply` it will be necessary to synchronise state between our deployment tool and terraform.
+
+##### A solution
+
+If we extract the definitive source from which the image URI is loaded by terraform and ensure that the task definition matches the state expected by terraform we can avoid the terraform state being out-of-sync when applied separately.
+
+The terraform state will record the task definition version, so we will need to always provide the most recent version in terraform for the ECS service as well as ensuring the ECS task definition 
+
 #### CLI Tool
 
 ```
@@ -86,9 +116,9 @@ Usage:
     release-tool register <ecr_uri> <service> [--project project_name] [--env env_name]` 
     release-tool status (all | <service>) <env> [--project project_name]
 Options: 
-    --project               Name of the project, default from .weco-project
-    --env                   Environment name, e.g. prod, stage [default: latest]
-    --skip_confirm          Do not ask for confirmation during a deploy (useful in CI)
+    --project           Project name, default from .weco-project, required where ambiguous 
+    --env               Environment name, e.g. prod, stage [default: latest]
+    --skip_confirm      Do not ask for confirmation during a deploy (useful in CI)
 ```
 
 ##### deploy
@@ -125,14 +155,52 @@ Updated: /project_name/images/latest/bag_register
 
 ```
 > release-tool status all prod
+    
+     Last released: 12/02/12 16:32:12
+       Released by: Bob Beardly <bob@beardcorp.com>
+            Status: IN_PROGRESS
 
-    my_service_1@hash_1     57  ACTIVE (COMPLETE)
-    my_service_2@hash_1     56  ACTIVE 
-    my_service_3@hash_1     56  ACTIVE
+    my_service_1    hash_1     COMPLETE
+    my_service_2    hash_1     IN_PROGRESS
+    my_service_3    hash_1     IN_PROGRESS
 
 ```
 
 #### Metadata
+
+In order to build releases that describe which version of a service to deploy to a particular environment we need a machine readable description of project structure.
+
+##### Project manifest
+
+```json
+{
+  "project_name": {
+    "environments": [
+      {
+        "id": "stage",
+        "name": "Staging"
+      },
+      {
+        "id": "prod",
+        "name": "Production"
+      }
+    ],
+    "name": "Example project"
+  }
+}
+```
+
+This file `.wellcome_project` should be in the project root.
+
+##### Container Images / Environment map
+
+We need to keep track of what container images should be in what environment at any given time. We will use AWS SSM Parameters for this as it provides a simple key value store and is easily accessible via Terraform data blocks.
+
+```
+/{project}/images/{environment}/{service} 
+
+```
+
 
 .wellcome_project
 values in SSM
