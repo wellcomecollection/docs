@@ -12,3 +12,4 @@ Fortnightly updates about the work of the digital platform team.
 - [2020 February 14](20200214.md)
 - [2020 February 28](20200228.md)
 - [2020 March 13](20200313.md)
+- [2020 March 27](20200327.md)
