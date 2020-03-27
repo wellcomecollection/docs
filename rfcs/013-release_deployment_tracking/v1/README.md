@@ -36,7 +36,7 @@ We update SSM parameters with a Python application, packaged in a Docker contain
 
 > **Project:** A set of services that when composed perform a function.
 
-In order to build releases that describe which version of a service to deploy to a particular environment we need a machine readable description of project structure.
+We store information about the structure of a project in a JSON file, which is named `.wellcome_project` and lives in the root of a repository:
 
 The following structure is used:
 
