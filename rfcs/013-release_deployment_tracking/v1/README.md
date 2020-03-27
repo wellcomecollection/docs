@@ -30,7 +30,7 @@ The attributes are described as follows:
 
 SSM parameters provide a versioned record of build artifacts. SSM allows descriptions to be added to updates, these descriptions should contain the `user_id` of what or who is updating the version
 
-This mechanism is provided via a python application, packaged in a docker container distributed via the https://github.com/wellcometrust/dockerfiles repository.
+We update SSM parameters with a Python application, packaged in a Docker container distributed via the https://github.com/wellcomecollection/dockerfiles repository.
 
 ### Project structure
 
