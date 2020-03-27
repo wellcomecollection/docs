@@ -4,15 +4,13 @@
 
 ## Background
 
-We have multiple projects that are themselves composed of multiple services, which can deploy into multiple environments (e.g. production/staging).
+We run a lot of applications. People are regularly making changes and deploying new code. In order that we don't get confused about what code is deployed where we should track what is deployed where, by whom, and for what reason.
 
-Folk are regularly making changes, building updated services and deploying them into the appropriate environments. Keeping track of what is deployed where, by who and why is essential to working effectively.
-
-In general the build/release/deployment process can be described as follows:
+The build/release/deployment process can be described as follows:
 
 ![Simple overview](simple_flow.png)
 
-More specifically including a high level view of infrastructure includes:
+A high level view of infrastructure includes:
 
 - A service that creates build artefacts from a given version of the codebase, e.g. creating a Docker image (a *build environment*)
 - A store for the created artefacts, e.g. Docker images (an *artefact store*)
@@ -23,30 +21,29 @@ More specifically including a high level view of infrastructure includes:
 
 ### Glossary
 
-In order that we can talk about the numerous concepts flying about here, we'll define some terms and visualise how they fit together:
+- **project:** The top level, consisting of one or more **service set**'s. This might indicate whole product and should be a single git repository, e.g. the catalogue project.
 
-- **project:** A high level abstraction, consisting of one or more **service set**'s. Practically this might indicate whole product and should be a single git repository, e.g. the "catalogue" project.
+- **service:** Performs a distinct function within a **project**. e.g. id_minter, requests API, Front-end content app.
 
-- **service set:** A functional grouping of **services** within a project. e.g. all the services for the catalogue pipeline. You can have multiple per project, for example in the catalogue project, you've got pipeline, api and adapters.
-
-- **service:** Performs a distinct function within a **project**, practically it may be composed of a few closely related containers. e.g. id_minter, requests API, Front-end content app.
-
-- **environment:** Where you deploy your **services** when you want them to run! e.g. staging, production
-
-- **build environment:** Where you build artifacts to deploy, for example CircleCI, Travis, or your local machine (if tooling allows).
+- **service set:** A functional grouping of **services** within a project. You can have multiple per project, for example in the catalogue project, you've got pipeline, api and adapters.
 
 - **build:** The process of creating a **build artifact** for a single **service**
 
-- **build artifact:** A deployable _thing_ for a single **service**, practically this is a container image stored in ECR.
+- **build artifact:** A deployable _thing_ for a single **service**, e.g. a docker image or zip file.
 
-- **release hash:** Metadata that allows us to work out what version of the code was used to create a given build artifact. For example, the Git commit hash.
+- **release hash:** Metadata that allows us to work out what version of the code was used to create a given build artifact, e.g. the Git commit hash.
 
 - **release:** Metadata indicating the intention to deploy a particular **build artifact** at a given **release hash**. Generally part of a **release set**.
 
 - **release set:** A set of **build artifacts** at particular **release hashes** based on a **service set** template that is intended to be released into an **environment** together.
 
 - **deployment:** A deployed **service**.
+
+- **environment:** Where you deploy your **services** when you want them to run! e.g. staging, production.
+
 - **deployment set:** A set of deployed **services** created from a **release set** that has been deployed into an **environment**.
+
+#### How these terms fit together
 
 ![Terms](terms.png)
 
