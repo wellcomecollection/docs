@@ -16,7 +16,7 @@ When container images intended for release are built they will be added to an EC
 
 #### Build artifact SSM Parameters
 
-The URI of the container image will then be used to update an SSM parameter with a key:
+The URI of the container image in ECR will stored in an SSM parameter with a key:
 
  `/{project_id}/images/{label}/{service_id}`
 
