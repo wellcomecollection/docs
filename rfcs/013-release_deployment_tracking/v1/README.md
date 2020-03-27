@@ -10,13 +10,13 @@ Terms defined in this document apply only here.
 
 ### Build artifacts
 
-> **Build artifact:** A container image encapsulating application code that can be configured by environment variable. The artifact _does not_ contain configuration.
+> **Build artifact:** A Docker image containing our application code. An artifact does not contain configuration; instead, it can be configured by passing environment variables.
 
-When container images intended for release are built they will be added to an ECR repository in AWS, by our build tooling.
+Our build tooling creates Docker images and publishes them to an ECR repository in AWS.
 
 #### Build artifact SSM Parameters
 
-The URI of the container image will then be used to update an SSM parameter with a key:
+The URI of the container image in ECR will stored in an SSM parameter with a key:
 
  `/{project_id}/images/{label}/{service_id}`
 
@@ -30,13 +30,13 @@ The attributes are described as follows:
 
 SSM parameters provide a versioned record of build artifacts. SSM allows descriptions to be added to updates, these descriptions should contain the `user_id` of what or who is updating the version
 
-This mechanism is provided via a python application, packaged in a docker container distributed via the https://github.com/wellcometrust/dockerfiles repository.
+We update SSM parameters with a Python application, packaged in a Docker container distributed via the https://github.com/wellcomecollection/dockerfiles repository.
 
 ### Project structure
 
-> **Project:** A set of services that when composed perform a function.
+> **Project:** A set of services that are deployed together.
 
-In order to build releases that describe which version of a service to deploy to a particular environment we need a machine readable description of project structure.
+We store information about the structure of a project in a JSON file, which is named `.wellcome_project` and lives in the root of a repository:
 
 The following structure is used:
 
