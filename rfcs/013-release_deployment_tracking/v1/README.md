@@ -34,7 +34,7 @@ We update SSM parameters with a Python application, packaged in a Docker contain
 
 ### Project structure
 
-> **Project:** A set of services that when composed perform a function.
+> **Project:** A set of services that are deployed together.
 
 We store information about the structure of a project in a JSON file, which is named `.wellcome_project` and lives in the root of a repository:
 
