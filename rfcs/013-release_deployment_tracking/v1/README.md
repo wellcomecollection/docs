@@ -2,9 +2,9 @@
 
 ## Implementation from 24/01/2019
 
-This solution describes a set of steps to track build, release and deployment but is deliberately agnostic of deployment mechanism. 
+This solution describes steps to track, build, release and deploy our services but is deliberately agnostic of deployment mechanism. 
 
-We make use of SSM to track which release should deploy into which environment. Out terraform stacks read from these SSM parameters to get which images to apply.
+We use SSM to track which release should be deployed into which environment. Our Terraform code reads from SSM to get which images to apply.
 
 Terms defined in this document apply only here.
 
@@ -28,7 +28,7 @@ The attributes are described as follows:
 
  `/storage/images/latest/archivist`
 
-SSM parameters provide a versioned record of build artifacts. SSM allows descriptions to be added to updates, these descriptions should contain the `user_id` of what or who is updating the version
+SSM parameters provide a record of build artifacts.
 
 We update SSM parameters with a Python application, packaged in a Docker container distributed via the https://github.com/wellcomecollection/dockerfiles repository.
 
@@ -42,7 +42,7 @@ The following structure is used:
 
 ```json
 {
-  "stacks": {
+  "my_example_project": {
     "environments": [
       {
         "id": "stage",
