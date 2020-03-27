@@ -12,7 +12,7 @@ Terms defined in this document apply only here.
 
 > **Build artifact:** A container image encapsulating application code that can be configured by environment variable. The artifact _does not_ contain configuration.
 
-When container images intended for release are built they will be added to an ECR repository in AWS, by our build tooling.
+Our build tooling creates Docker images and publishes them to an ECR repository in AWS.
 
 #### Build artifact SSM Parameters
 
