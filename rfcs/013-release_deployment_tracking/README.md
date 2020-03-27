@@ -14,10 +14,10 @@ In general the build/release/deployment process can be described as follows:
 
 More specifically including a high level view of infrastructure includes:
 
-- A build environment to build artifacts, e.g. Travis
-- An artifact store to store things, e.g. ECR
-- A database to keep track of what should be released where e.g. DynamoDB
-- A Deployment environment to run things in, e.g. ECS
+- A service that creates build artefacts from a given version of the codebase, e.g. creating a Docker image (a *build environment*)
+- A store for the created artefacts, e.g. Docker images (an *artefact store*)
+- An environment where services can run, e.g. ECS or Kubernetes (a *deployment environment*)
+- A database that tracks what version of each application is running
 
 ![Infrastructure overvier](high_level_infra.png)
 
