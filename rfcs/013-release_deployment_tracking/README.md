@@ -39,7 +39,7 @@ In order that we can talk about the numerous concepts flying about here, we'll d
 
 - **build artifact:** A deployable _thing_ for a single **service**, practically this is a container image stored in ECR.
 
-- **release hash:** Metadata uniquely identifying a **build artifact**, practically this will be a git ref. 
+- **release hash:** Metadata that allows us to work out what version of the code was used to create a given build artifact. For example, the Git commit hash.
 
 - **release:** Metadata indicating the intention to deploy a particular **build artifact** at a given **release hash**. Generally part of a **release set**.
 
