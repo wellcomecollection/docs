@@ -10,7 +10,7 @@ Terms defined in this document apply only here.
 
 ### Build artifacts
 
-> **Build artifact:** A container image encapsulating application code that can be configured by environment variable. The artifact _does not_ contain configuration.
+> **Build artifact:** A Docker image containing our application code. An artifact does not contain configuration; instead, it can be configured by passing environment variables.
 
 Our build tooling creates Docker images and publishes them to an ECR repository in AWS.
 
