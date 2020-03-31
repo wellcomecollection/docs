@@ -61,18 +61,6 @@ See the documentation on [version 1](v1/README.md).
 - Release/Deploy descriptions are not well used / hidden
 - Poor visibility of what is actually deployed
 
-### Proposed Solution
-
-We intend to address the problems described above my improving on the existing CLI tool.
-
-We will:
-
-- Provide complete documentation with examples for the updated CLI tool
-- Provide "single step" deployment capability in the CLI tool
-- Remove the requirement to run `terraform apply` to update existing services
-- Provide a web dashboard which shows a current state of releases & deployments
-- Extract "descriptions" for releases from commit messages
-
 #### Moving away from terraform for deployment
 
 We currently use `terraform apply` to deploy services at a particular release hash. The choice to use terraform was driven by a requirement to describe our task definitions in code. 
@@ -93,17 +81,33 @@ However if the task definition is updated and differs from that recorded by the 
 
 In order to move away from using `terraform apply` it will be necessary to decouple updating the task definition from deploying updated services.
 
-#### A solution
+### Proposed Solution
+
+We intend to address the problems described above my improving on the existing CLI tool.
+
+We will:
+
+- Provide complete documentation with examples for the updated CLI tool
+- Provide "single step" deployment capability in the CLI tool
+- Remove the requirement to run `terraform apply` to update existing services
+- Provide a web dashboard which shows a current state of releases & deployments
+- Extract "descriptions" for releases from commit messages
+
+#### General approach
 
 Use consistent image URIs based on tagged environments in task definitions e.g. stage, prod - these will not change - terraform will not update task defs.
 
 Update what those URIs point at, then force a redeployment where the new images referenced will be used.
 
-##### Register images
+**TODO** this needs a diagram
 
-A build tags images with their git ref first and that tag pushed to ECR, then tagged with latest and pushed. <- This is done by the release tool
+#### Register images
 
-##### What the release tool does
+A build tags images with their git ref first and that tag pushed to ECR, then tagged with latest and pushed. 
+
+We will provide the ability to do this with the CLI tool so that all the code is one one place _phrase that better_
+
+#### Deploying
 
 Record your intention to deploy which images (by git ref tag AND image digest), to which environment. Create a deployment ID (sequential INT) - new db row. @@need to search by env, date, project@@ 
 
@@ -119,24 +123,122 @@ Then force redeployment of the services those images are used in.
 
 Record your deployment IDs in your db.
 
-##### Looking at deployments 
+**TODO** this needs a diagram
 
-You can then connect an ECS deployment status to that db row.
+#### CLI Tool
+
+The proposed use of the CLI tool is as follows:
+
+```
+release-tool
+
+Usage:
+    release-tool deploy (all | <service>) <env> [--project project_name] [--skip_confirm]
+    release-tool latest <ecr_uri> <service> [--project project_name] [--env env_name]` 
+    release-tool status (all | <service>) <env> [--project project_name]
+Options: 
+    --project           Project name, default from .weco-project, required where ambiguous 
+    --env               Environment name, e.g. prod, stage [default: latest]
+    --skip_confirm      Do not ask for confirmation during a deploy (useful in CI)
+```
+
+##### deploy
+
+What this is doing!
+
+For example:
+
+```
+> release-tool deploy my_service prod
+
+This will deploy:
+
+    my_service_1@hash_1
+    my_service_2@hash_1
+    my_service_3@hash_1
+
+Do you wish to continue? (y/n) y
+
+Deployment requested.
+```
+
+##### latest
+
+What this is doing!
+
+**TODO:** The latest command tags the image at git ref, pushes, then tags latest and pushes.
+
+For example:
+```
+> release-tool latest account.amazonaws.com/uk.ac.wellcome/bag_register:4246187 bag_register
+
+Updated: /project_name/images/latest/bag_register 
+```
+
+###### status
+
+What this is doing!
+
+Note: Should this just be ALL always?
+
+For example:
+```
+> release-tool status all prod
+    
+     Last released: 12/02/12 16:32:12
+       Released by: Bob Beardly <bob@beardcorp.com>
+            Status: IN_PROGRESS
+
+    my_service_1    hash_1     COMPLETE
+    my_service_2    hash_1     IN_PROGRESS
+    my_service_3    hash_1     IN_PROGRESS
+
+```
+
+#### Metadata
+
+What state needs to be stored, where and what it looks like.
+
+##### Project manifest
+
+```json
+{
+  "project_name": {
+    "environments": [
+      {
+        "id": "stage",
+        "name": "Staging"
+      },
+      {
+        "id": "prod",
+        "name": "Production"
+      }
+    ],
+    "name": "Example project"
+  }
+}
+```
+
+This file `.wellcome_project` should be in the project root.
+
+##### Data store
+
+Deciding on table structure based on what you need to know 
+
+Dynamo DB - give table description
+
+Example:
+
+|PROJECT_NAME (HK)      | ID (RK)   | MANIFEST  | ENV
+|---                    |---        |---        |---
+|my_project             | 1         | {}        | prod
+|my_project             | 2         | {}        | stage
+|your_project           | 1         | {}        | prod
+|your_project           | 2         | {}        | stage
 
 This needs a description and WHO.
 
-|PROJECT_NAME (HK)   | ID (RK)    | MANIFEST  | ENV
-|---            |---    |---        |---
-|my_project     | 1     | {}        | prod
-|my_project     | 2     | {}        | stage
-|your_project   | 1     | {}        | prod
-|your_project   | 2     | {}        | stage
-
-Each row needs to map to an ECS cluster.
-
-The most recent entry is special as it's the state we're trying to achieve right now.
-
-Example manifest
+A manifest looks like this:
 ```json
 {
   "service_1": {
@@ -153,6 +255,12 @@ Example manifest
 ```
 
 the names, e.g. `service_1` map to ECS service names.
+
+**TODO** highlight deployment_id connects to ECS deployments
+
+#### Dashboard
+
+A view on the data store - projects 
 
 Get the most recent entry for a project (highest id), read its' release manifest than ask ECS to describe each service. 
 
@@ -177,108 +285,6 @@ They could match a deployment (with status):
 
 Report pendingCount/runningCount/desiredCount for each.
 
+**TODO:** describe use cases for this
+
 This is kind of like the ECS dashboard that existed previously.
-
-
-**--WIP--**
-
-### CLI Tool
-
-The proposed use of the CLI tool is as follows:
-
-```
-release-tool
-
-Usage:
-    release-tool deploy (all | <service>) <env> [--project project_name] [--skip_confirm]
-    release-tool latest <ecr_uri> <service> [--project project_name] [--env env_name]` 
-    release-tool status (all | <service>) <env> [--project project_name]
-Options: 
-    --project           Project name, default from .weco-project, required where ambiguous 
-    --env               Environment name, e.g. prod, stage [default: latest]
-    --skip_confirm      Do not ask for confirmation during a deploy (useful in CI)
-```
-
-#### `deploy` Example usage
-
-```
-> release-tool deploy my_service prod
-
-This will deploy:
-
-    my_service_1@hash_1
-    my_service_2@hash_1
-    my_service_3@hash_1
-
-Do you wish to continue? (y/n) y
-
-Deployment requested.
-```
-
-#### `latest` Example usage 
-
-**TODO:** The latest command tags the image at git ref, pushes, then latest and pushes.
-
-```
-> release-tool latest account.amazonaws.com/uk.ac.wellcome/bag_register:4246187 bag_register
-
-Updated: /project_name/images/latest/bag_register 
-```
-
-##### `status` Example usage
-
-
-Note: Should this just be ALL always?
-```
-> release-tool status all prod
-    
-     Last released: 12/02/12 16:32:12
-       Released by: Bob Beardly <bob@beardcorp.com>
-            Status: IN_PROGRESS
-
-    my_service_1    hash_1     COMPLETE
-    my_service_2    hash_1     IN_PROGRESS
-    my_service_3    hash_1     IN_PROGRESS
-
-```
-
-#### Metadata
-
-In order to build releases that describe which version of a service to deploy to a particular environment we need a machine readable description of project structure.
-
-##### Project manifest
-
-```json
-{
-  "project_name": {
-    "environments": [
-      {
-        "id": "stage",
-        "name": "Staging"
-      },
-      {
-        "id": "prod",
-        "name": "Production"
-      }
-    ],
-    "name": "Example project"
-  }
-}
-```
-
-This file `.wellcome_project` should be in the project root.
-
-##### Container Images / Environment map
-
-**--WIP--**
-
-- .wellcome_project
-- values in terraform
-- dynamodb
-
-#### Dashboard
-
-**--WIP--**
-
-view on deployments
-view on releases, filtered by environment deployment is in
