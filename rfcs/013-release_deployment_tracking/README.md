@@ -123,11 +123,16 @@ Record your deployment IDs in your db.
 
 You can then connect an ECS deployment status to that db row.
 
-PROJECT_NAME    | ID    | MANIFEST  | ENV
-my_project      | 1     | {}        | prod
-my_project      | 2     | {}        | stage
-your_project    | 1     | {}        | prod
-your_project    | 2     | {}        | stage
+This needs a description and WHO.
+
+|PROJECT_NAME (HK)   | ID (RK)    | MANIFEST  | ENV
+|---            |---    |---        |---
+|my_project     | 1     | {}        | prod
+|my_project     | 2     | {}        | stage
+|your_project   | 1     | {}        | prod
+|your_project   | 2     | {}        | stage
+
+Each row needs to map to an ECS cluster.
 
 The most recent entry is special as it's the state we're trying to achieve right now.
 
@@ -146,6 +151,8 @@ Example manifest
   }
 }
 ```
+
+the names, e.g. `service_1` map to ECS service names.
 
 Get the most recent entry for a project (highest id), read its' release manifest than ask ECS to describe each service. 
 
@@ -220,6 +227,8 @@ Updated: /project_name/images/latest/bag_register
 
 ##### `status` Example usage
 
+
+Note: Should this just be ALL always?
 ```
 > release-tool status all prod
     
