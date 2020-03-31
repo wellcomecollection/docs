@@ -39,7 +39,7 @@ A high level view of infrastructure includes:
 
 - **deployment:** A deployed **service**.
 
-- **environment:** Where you deploy your **services** when you want them to run! e.g. staging, production.
+- **environment:** Where you deploy your **release sets** when you want them to run e.g. staging, production.
 
 - **deployment set:** A set of deployed **services** created from a **release set** that has been deployed into an **environment**.
 
@@ -123,7 +123,9 @@ Then force redeployment of the services those images are used in.
 
 Record your deployment IDs in your db.
 
-**TODO** this needs a diagram
+**TODO**:
+    - this needs a diagram
+    - be clear environment maps to cluster in ECS
 
 #### CLI Tool
 
@@ -201,25 +203,53 @@ What state needs to be stored, where and what it looks like.
 
 ##### Project manifest
 
+We need to know which services deploy where!
+
 ```json
 {
-  "project_name": {
-    "environments": [
+  "project": {
+    "name": "Catalogue",
+    "service_sets": [
       {
-        "id": "stage",
-        "name": "Staging"
-      },
-      {
-        "id": "prod",
-        "name": "Production"
+        "id": "catalogue_pipeline",
+        "name": "Catalogue Pipeline",
+        "account_id": "1234567890",
+        "environments": [
+          {
+            "id": "stage",
+            "name": "Staging",
+            "cluster_name": "my_stage_cluster"  
+          },
+          {
+            "id": "prod",
+            "name": "Production",
+            "cluster_name": "my_prod_cluster"
+          }
+        ],
+        "services": [
+          {
+            "id": "id_minter",
+            "name": "ID Minter",
+            "repository_name": "uk.ac.wellcome/id_minter"
+          },
+          {
+            "id": "matcher",
+            "name": "Matcher",
+            "repository_name": "uk.ac.wellcome/matcher"
+          },
+          {
+            "id": "merger",
+            "name": "Merger",
+            "repository_name": "uk.ac.wellcome/merger"
+          }
+        ]
       }
-    ],
-    "name": "Example project"
+    ]
   }
 }
 ```
 
-This file `.wellcome_project` should be in the project root.
+This file `.wellcome` should be in the project root.
 
 ##### Data store
 
@@ -229,27 +259,33 @@ Dynamo DB - give table description
 
 Example:
 
-|PROJECT_NAME (HK)      | ID (RK)   | MANIFEST  | ENV
-|---                    |---        |---        |---
-|my_project             | 1         | {}        | prod
-|my_project             | 2         | {}        | stage
-|your_project           | 1         | {}        | prod
-|your_project           | 2         | {}        | stage
+|project_id (HK)      | release_id (RK)     | release_manifest | environment
+|---                  |---                  |---               |---
+|my_project           | 1                   | `{"...","..."}`  | prod
+|my_project           | 2                   | `{"...","..."}`  | stage
+|your_project         | 1                   | `{"...","..."}`  | prod
+|your_project         | 2                   | `{"...","..."}`  | stage
 
 This needs a description and WHO.
 
-A manifest looks like this:
+A release_manifest looks like this:
 ```json
 {
   "service_1": {
     "release_hash": "abcdefg...",
     "image_digest": "sha256:afe605d...",
-    "deployment_id": "ecs-svc/4529926..."
+    "deployment": {
+      "service_arn": "arn:service_1",
+      "deployment_id": "ecs-svc/4529926..."
+    }
   },
   "service_2": {
     "release_hash": "abcdefg...",
     "image_digest": "sha256:afe605d...",
-    "deployment_id": "ecs-svc/4529926..."
+    "deployment": {
+      "service_arn": "arn:service_1",
+      "deployment_id": "ecs-svc/4529926..."
+    }
   }
 }
 ```
