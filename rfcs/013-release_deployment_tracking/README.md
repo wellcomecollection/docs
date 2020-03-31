@@ -89,19 +89,89 @@ The container image URI cannot be updated independently from other parameters in
 
 When terraform updates a task definition it has a version of the task definition in code to send to ECS, the ECS Service is then updated by terraform to point at that new task definition and a deployment is started in ECS.
 
-A mechanism to update the task definition outside terraform might look like this:
+However if the task definition is updated and differs from that recorded by the terraform state (which updating the image URI _would_ cause) terraform will attempt to return the task definition to a known state, which would be undesirable.
 
-![Update ECS](ecs_update_task_def.png)
-
-However if the task definition is updated and differs from that recorded by the terraform state (which updating the image _would_ cause) terraform will attempt to return the task definition to a known state, which would be undesirable.
-
-In order to move away from using `terraform apply` it will be necessary to synchronise state between our deployment tool and terraform.
+In order to move away from using `terraform apply` it will be necessary to decouple updating the task definition from deploying updated services.
 
 #### A solution
 
-If we extract the definitive source from which the image URI is loaded by terraform and ensure that the task definition matches the state expected by terraform we can avoid the terraform state being out-of-sync when applied separately.
+Use consistent image URIs based on tagged environments in task definitions e.g. stage, prod - these will not change - terraform will not update task defs.
 
-The terraform state will record the task definition version, so we will need to always provide the most recent version in terraform for the ECS service as well as ensuring the ECS task definition 
+Update what those URIs point at, then force a redeployment where the new images referenced will be used.
+
+##### Register images
+
+A build tags images with their git ref first and that tag pushed to ECR, then tagged with latest and pushed. <- This is done by the release tool
+
+##### What the release tool does
+
+Record your intention to deploy which images (by git ref tag AND image digest), to which environment. Create a deployment ID (sequential INT) - new db row. @@need to search by env, date, project@@ 
+
+To deploy copy the image tags you want to deploy to an environment tag and push that to ECR. @@this will probably just be copy out of latest@@ 
+
+Each db row also has the release manifest (like v1) which contains a list of services for each:
+ - service to deploy
+   - git ref tag to deploy
+   - image digest
+   - optional deployment id
+ 
+Then force redeployment of the services those images are used in.
+
+Record your deployment IDs in your db.
+
+##### Looking at deployments 
+
+You can then connect an ECS deployment status to that db row.
+
+PROJECT_NAME    | ID    | MANIFEST  | ENV
+my_project      | 1     | {}        | prod
+my_project      | 2     | {}        | stage
+your_project    | 1     | {}        | prod
+your_project    | 2     | {}        | stage
+
+The most recent entry is special as it's the state we're trying to achieve right now.
+
+Example manifest
+```json
+{
+  "service_1": {
+    "release_hash": "abcdefg...",
+    "image_digest": "sha256:afe605d...",
+    "deployment_id": "ecs-svc/4529926..."
+  },
+  "service_2": {
+    "release_hash": "abcdefg...",
+    "image_digest": "sha256:afe605d...",
+    "deployment_id": "ecs-svc/4529926..."
+  }
+}
+```
+
+Get the most recent entry for a project (highest id), read its' release manifest than ask ECS to describe each service. 
+
+Then you match deployment ID recorded to describe service response.
+
+They could match a deployment (with status):
+ - PRIMARY: 
+    - len(deployments) == 1 AND runningCount!=desiredCount => YELLOW
+      This deployment is unstable.
+    - len(deployments) == 1 AND runningCount==desiredCount => GREEN
+      This deployment is complete.
+    - len(deployments) > 1 => BLUE
+      This deployment is rolling out now.
+ - ACTIVE:
+    - runningCount==desiredCount => GREEN
+      This deployment is being replaced. 
+ - INACTIVE
+    - GREY
+      This deployment has being replaced.  
+ - Not match any:
+    - This deployment is not current
+
+Report pendingCount/runningCount/desiredCount for each.
+
+This is kind of like the ECS dashboard that existed previously.
+
 
 **--WIP--**
 
@@ -114,7 +184,7 @@ release-tool
 
 Usage:
     release-tool deploy (all | <service>) <env> [--project project_name] [--skip_confirm]
-    release-tool register <ecr_uri> <service> [--project project_name] [--env env_name]` 
+    release-tool latest <ecr_uri> <service> [--project project_name] [--env env_name]` 
     release-tool status (all | <service>) <env> [--project project_name]
 Options: 
     --project           Project name, default from .weco-project, required where ambiguous 
@@ -138,10 +208,12 @@ Do you wish to continue? (y/n) y
 Deployment requested.
 ```
 
-#### `register` Example usage 
+#### `latest` Example usage 
+
+**TODO:** The latest command tags the image at git ref, pushes, then latest and pushes.
 
 ```
-> release-tool register account.amazonaws.com/uk.ac.wellcome/bag_register:4246187 bag_register
+> release-tool latest account.amazonaws.com/uk.ac.wellcome/bag_register:4246187 bag_register
 
 Updated: /project_name/images/latest/bag_register 
 ```
@@ -191,15 +263,7 @@ This file `.wellcome_project` should be in the project root.
 
 **--WIP--**
 
-We need to keep track of what container images should be in what environment at any given time. We will use AWS SSM Parameters for this as it provides a simple key value store and is easily accessible via Terraform data blocks.
-
-```
-/{project}/images/{environment}/{service} 
-```
-
-
 - .wellcome_project
-- values in SSM
 - values in terraform
 - dynamodb
 
