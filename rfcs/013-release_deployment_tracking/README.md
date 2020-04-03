@@ -88,8 +88,8 @@ We intend to address the problems described above my improving on the existing C
 We will:
 
 - Provide complete documentation with examples for the updated CLI tool, so it is easier to see how to deploy both single services and a complete service set
-- Provide "single step" deployment capability in the CLI tool
-- Remove the requirement to run `terraform apply` to update existing services
+- Provide "single step" deployment capability in the CLI tool.
+  In particular, we will remove the requirement to run `terraform apply` to update existing services.
 - Provide quick visibility on the current state of deployments
 - Remove or automate "descriptions" required from users of the CLI tool
 
