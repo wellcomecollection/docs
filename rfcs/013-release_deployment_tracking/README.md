@@ -29,7 +29,7 @@ A high level view of infrastructure includes:
 
 - **build:** The process of creating a **build artifact** for a single **service**
 
-- **build artifact:** A deployable _thing_ for a single **service**, e.g. a docker image or zip file.
+- **build artifact:** A deployable _thing_ for a single **service**, e.g. a Docker image or Lambda zip file.
 
 - **release hash:** Metadata that allows us to work out what version of the code was used to create a given build artifact, e.g. the Git commit hash.
 
