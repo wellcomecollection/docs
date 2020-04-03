@@ -116,7 +116,7 @@ If you were to use the docker CLI tool, this would look like:
 ```sh
 # Create tags!
 docker tag image_i_just_built ecr_repo/service_name:hash_1
-docker ecr_repo/service_name:hash_1 ecr_repo/service_name:latest
+docker tag image_i_just_built ecr_repo/service_name:latest
 
 # Push tags!
 docker push ecr_repo/service_name:hash_1
