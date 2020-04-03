@@ -12,8 +12,8 @@ The build/release/deployment process can be described as follows:
 
 A high level view of infrastructure includes:
 
-- A service that creates build artefacts from a given version of the codebase, e.g. creating a Docker image (a *build environment*)
-- A store for the created artefacts, e.g. Docker images (an *artefact store*)
+- A service that creates build artifacts from a given version of the codebase, e.g. creating a Docker image (a *build environment*)
+- A store for the created artifacts, e.g. Docker images (an *artifact store*)
 - An environment where services can run, e.g. ECS or Kubernetes (a *deployment environment*)
 - A database that tracks what version of each application is running
 
@@ -55,8 +55,8 @@ See the documentation on [version 1](v1/README.md).
 
 - It is not clear how to release a single service
 - In order to actually deploy something there are multiple steps:
-  - Create a release using the CLI tool
-  - Deploy a release using the CLI tool
+  - Create a release set using the CLI tool
+  - Deploy a release set  using the CLI tool
   - Run `terraform apply` to _actually_ update the running services
 - Release/Deploy descriptions are not well used / hidden
 - Poor visibility of what is actually deployed
@@ -65,9 +65,9 @@ See the documentation on [version 1](v1/README.md).
 
 We currently use `terraform apply` to deploy services at a particular release hash. The choice to use terraform was driven by a requirement to describe our task definitions in code. 
 
-Separating service deployment from infrastructure deployment is desirable as infra/service deployments have differing concerns and pace, i.e. high-value infrequent (infra), vs. low-value frequent (deploying new versions of services). 
+Separating service deployment from infrastructure changes is desirable as infra/service deployments have differing concerns and pace, i.e. high-value infrequent (infra), vs. low-value frequent (deploying new versions of services). 
 
-Running terraform in a CI environment like Travis is also not desirable as giving an automated environment the power to run infrastructure updates needs careful consideration.
+Running terraform in a CI environment like Travis is not desirable as giving an automated environment the power to run infrastructure updates needs careful consideration.
 
 #### Why this is hard
 
@@ -90,120 +90,63 @@ We will:
 - Provide complete documentation with examples for the updated CLI tool
 - Provide "single step" deployment capability in the CLI tool
 - Remove the requirement to run `terraform apply` to update existing services
-- Provide a web dashboard which shows a current state of releases & deployments
-- Extract "descriptions" for releases from commit messages
+- Provide quick visibility on the current state of deployments
+- Remove or automate "descriptions" required from users of the CLI tool
 
 #### General approach
 
-Use consistent image URIs based on tagged environments in task definitions e.g. stage, prod - these will not change - terraform will not update task defs.
+We'll use consistent image URIs in task definitions and update what those URIs reference instead of updating image URIs, allowing us to keep task definitions static when updating which container images they should use. 
 
-Update what those URIs point at, then force a redeployment where the new images referenced will be used.
+As the relationship between which container image to use in which service is no longer described as part of the infrastructure we can avoid terraform.
 
-**TODO** this needs a diagram
+Docker container image repositories allow us to do this through the use of tags. A particular docker image can have multiple tags, and we can use this to provide "environment based tags", e.g. prod, stage. We update what tags are attached to which image to indicate what should be deployed where.
+
+In order that tag changes are "noticed" by our deployed services we will need to force redeployment of the correct ECS services after updating tags. This will cause the tasks created by the new deployment to read their container images from their new tag.
+
+![General approach](general_approach.png)
 
 #### Register images
 
-A build tags images with their git ref first and that tag pushed to ECR, then tagged with latest and pushed. 
+When container images are built we should tag them with:
+- **release hash** as we do now, to keep track of the relationship between release hash and container image id. This tag will always be associated with the same container image.
+- **latest** so we have a way of knowing the most recently created image for each service which is useful when planning deployments. This tag should always be on the most recently built image for a service.
 
-We will provide the ability to do this with the CLI tool so that all the code is one one place _phrase that better_
+If you were to use the docker CLI tool, this would look like:
+
+```sh
+# Create tags!
+docker tag image_i_just_built ecr_repo/service_name:hash_1
+docker ecr_repo/service_name:hash_1 ecr_repo/service_name:latest
+
+# Push tags!
+docker push ecr_repo/service_name:hash_1
+docker push ecr_repo/service_name:latest
+```
+
+The release CLI tool should automate this process so that we encode this logic in one place. 
 
 #### Deploying
 
-Record your intention to deploy which images (by git ref tag AND image digest), to which environment. Create a deployment ID (sequential INT) - new db row. @@need to search by env, date, project@@ 
+Deploying is now a process of:
 
-To deploy copy the image tags you want to deploy to an environment tag and push that to ECR. @@this will probably just be copy out of latest@@ 
+ - Ascertaining which services you wish to deploy
+ - Ascertaining which images you wish to deploy for those services
+ - Identifying the environment to deploy to
+ - Tagging the chosen images in ECR (docker repository)
+ - Forcing a deployment via the ECS API
+ - Recording the deployment
 
-Each db row also has the release manifest (like v1) which contains a list of services for each:
- - service to deploy
-   - git ref tag to deploy
-   - image digest
-   - optional deployment id
- 
-Then force redeployment of the services those images are used in.
+##### Which services to deploy
 
-Record your deployment IDs in your db.
+In order to deploy a particular service set we need to know which services go together. We can do this using a "Project manifest".
 
-**TODO**:
-    - this needs a diagram
-    - be clear environment maps to cluster in ECS
+We will need to keep track of the relationship between a service and its' container registry in order to apply tags as described above.
 
-#### CLI Tool
+Our project manifest should allow for multiple service sets, with the environments those sets can be deployed into.
 
-The proposed use of the CLI tool is as follows:
+###### Project manifest
 
-```
-release-tool
-
-Usage:
-    release-tool deploy (all | <service>) <env> [--project project_name] [--skip_confirm]
-    release-tool latest <ecr_uri> <service> [--project project_name] [--env env_name]` 
-    release-tool status (all | <service>) <env> [--project project_name]
-Options: 
-    --project           Project name, default from .weco-project, required where ambiguous 
-    --env               Environment name, e.g. prod, stage [default: latest]
-    --skip_confirm      Do not ask for confirmation during a deploy (useful in CI)
-```
-
-##### deploy
-
-What this is doing!
-
-For example:
-
-```
-> release-tool deploy my_service prod
-
-This will deploy:
-
-    my_service_1@hash_1
-    my_service_2@hash_1
-    my_service_3@hash_1
-
-Do you wish to continue? (y/n) y
-
-Deployment requested.
-```
-
-##### latest
-
-What this is doing!
-
-**TODO:** The latest command tags the image at git ref, pushes, then tags latest and pushes.
-
-For example:
-```
-> release-tool latest account.amazonaws.com/uk.ac.wellcome/bag_register:4246187 bag_register
-
-Updated: /project_name/images/latest/bag_register 
-```
-
-###### status
-
-What this is doing!
-
-Note: Should this just be ALL always?
-
-For example:
-```
-> release-tool status all prod
-    
-     Last released: 12/02/12 16:32:12
-       Released by: Bob Beardly <bob@beardcorp.com>
-            Status: IN_PROGRESS
-
-    my_service_1    hash_1     COMPLETE
-    my_service_2    hash_1     IN_PROGRESS
-    my_service_3    hash_1     IN_PROGRESS
-
-```
-
-#### Metadata
-
-What state needs to be stored, where and what it looks like.
-
-##### Project manifest
-
-We need to know which services deploy where!
+This is an updated manifest from version 1. 
 
 ```json
 {
@@ -249,26 +192,73 @@ We need to know which services deploy where!
 }
 ```
 
-This file `.wellcome` should be in the project root.
+This file `.wellcome_project` should be in the project root.
 
-##### Data store
+This file requires that:
+- `project.service_sets[].environments[].cluster_name` maps to an ECS cluster name.
+- `project.service_sets[].services[].id` maps to an ECS service name.
 
-Deciding on table structure based on what you need to know 
+##### Deploying to an environment
 
-Dynamo DB - give table description
+We will make use of the concept of ECS cluster to indicate environment as it provides a useful way to classify & separate services.
 
-Example:
+When we want to deploy to the production environment, we can match services described in the project manifest to those running in the "prod" cluster and force redeployment as described above.
 
-|project_id (HK)      | release_id (RK)     | release_manifest | environment
-|---                  |---                  |---               |---
-|my_project           | 1                   | `{"...","..."}`  | prod
-|my_project           | 2                   | `{"...","..."}`  | stage
-|your_project         | 1                   | `{"...","..."}`  | prod
-|your_project         | 2                   | `{"...","..."}`  | stage
+Using the docker & aws CLI tools to release "latest" this might look like:
 
-This needs a description and WHO.
+```
+CLUSTER_NAME=prod_cluster
+SERVICE_NAME=my_service
+
+# Add the prod tag to whichever image is currently tagged latest
+docker tag ecr_repo/"$SERVICE_NAME":latest ecr_repo/service_name:prod
+docker push ecr_repo/"$SERVICE_NAME":prod
+
+# Force service deployment in prod cluster
+aws ecs update-service \
+  --cluster "$CLUSTER_NAME" \
+  --service "$SERVICE_NAME" \
+  --force-new-deployment
+```
+
+##### Recording deployments
+
+We want to provide visibility on:
+
+- What version of a service is deployed in which environment _right now_
+- When deployments have taken place
+- Why a deployment took place (along with _who_ deployed if appropriate).
+
+In order to identify which version of a service is deployed we need to get the release hash that a container image was tagged with. The release hash (git ref) is our link to version control on the code the container image is built from. 
+
+When a container image is built it also has an "image id" which provides an immutable reference to that container image which we should record to provide a definitive record of what was deployed.
+
+We will continue to use DynamoDB to record deployments. 
+
+There will be a single "deployment table" in the platform account for all projects.
+
+The proposed updated table structure is:
+
+|project_id    | release_n | date_requested      | requested_by  | release_manifest | environment 
+|---           |---        |---                  |---            |---               |---
+|my_project    | 1         | 2019-02-08T12:32:42 | jim@org.com   | `{"..."}`        | prod
+|my_project    | 2         | 2019-02-08T12:32:42 | jim@org.com   | `{"..."}`        | stage
+|your_project  | 1         | 2019-02-08T12:32:42 | jim@org.com   | `{"..."}`        | prod
+|your_project  | 2         | 2019-02-08T12:32:42 | jim@org.com   | `{"..."}`        | stage
+
+The following keys are required:
+
+- `project_id`: Hash Key
+- `release_n`: Range Key
+
+Having an increasing integer as our range key will allow us to efficiently find the latest deployment for a particular project, and provides a human readable identifier that carries useful information.
+
+`project_id:release_n` forms a unique **deployment identifier**
 
 A release_manifest looks like this:
+
+###### Release manifest
+
 ```json
 {
   "service_1": {
@@ -290,37 +280,184 @@ A release_manifest looks like this:
 }
 ```
 
-the names, e.g. `service_1` map to ECS service names.
+Field reference: 
+- `image_digest`: The ECR (container repository) immutable ID of the image deployed.
+- `release_hash`: The release hash tag attached to the image id.
+- `service_arn`: The ARN of the ECS service that was deployed, this identifies both cluster and service deployed to.
+- `deployment_id`: When you force a redeployment of a service ECS will provide you a `deployment_id` that can be used to track the progress and status of deployment for a particular service.
 
-**TODO** highlight deployment_id connects to ECS deployments
+#### CLI Tool
 
-#### Dashboard
+The proposed use of the CLI tool is as follows:
 
-A view on the data store - projects 
+```
+release-tool
 
-Get the most recent entry for a project (highest id), read its' release manifest than ask ECS to describe each service. 
+Usage:
+    release-tool deploy (all | <service>) <environment> [--project project_name] [--skip_confirm]
+    release-tool latest <local_container_name> <remote_repository> [--project project_name]
+    release-tool status <environment> [--project project_name]
+Options: 
+    --project           Project name, default from .weco-project, required where ambiguous 
+    --skip_confirm      Do not ask for confirmation during a deploy (useful in CI)
+```
 
-Then you match deployment ID recorded to describe service response.
+##### deploy
 
-They could match a deployment (with status):
- - PRIMARY: 
-    - len(deployments) == 1 AND runningCount!=desiredCount => YELLOW
-      This deployment is unstable.
-    - len(deployments) == 1 AND runningCount==desiredCount => GREEN
-      This deployment is complete.
-    - len(deployments) > 1 => BLUE
-      This deployment is rolling out now.
- - ACTIVE:
-    - runningCount==desiredCount => GREEN
-      This deployment is being replaced. 
- - INACTIVE
-    - GREY
-      This deployment has being replaced.  
- - Not match any:
-    - This deployment is not current
+> Deploys the latest container images for a service set to an environment.
 
-Report pendingCount/runningCount/desiredCount for each.
+The `deploy` command will:
 
-**TODO:** describe use cases for this
+- Read the project manifest and extract the service/container repository pairs for a given project
+- Look up from the container repository the container images tagged with `latest` for those services
+- Tag those images with the specified `environment` (checking it matches one of those in the project manifest)
+- Force redeployment of the correct ECS services as indicated by the environment -> cluster name mapping
+- Record a deployment in the deployment table as described above
 
-This is kind of like the ECS dashboard that existed previously.
+If there is only a single project that will be the default project, otherwise the command will fail requiring you to specify a project name.
+
+For example:
+
+```
+> release-tool deploy my_service prod
+
+This will deploy:
+
+    my_service_1@hash_1
+    my_service_2@hash_1
+    my_service_3@hash_1
+
+Do you wish to continue? (y/n) y
+
+Deployment requested.
+```
+
+##### latest
+
+> Tags local container_image with `latest` and pushes to a remote repository
+
+The `latest` command will:
+
+- Tag the specified local container image with latest
+- Push the specified local container image to ECR
+- Push the latest tagged container image to ECR
+
+This command allows you to quickly mark a container as latest.
+
+The local container_image should be specified with a release_hash tag.
+
+For example:
+
+```
+> release-tool latest bag_register:hash_1 account.amazonaws.com/uk.ac.wellcome/bag_register 
+
+Updated account.amazonaws.com/uk.ac.wellcome/bag_register:latest 
+```
+
+###### status
+
+> Reads the status of the latest deployment for a project
+
+The `status` command will:
+- Look up the latest deployment for the given project in the deployments table
+- Filter the results by the specified environment
+- For each service in the release manifest:
+    - describe the service from the ECS API
+    - read `.deployments` from the API response
+    - match the recorded ECS deployment ID to that in the API response
+    - calculate the status of the individual service deployment and write it out
+    - calculate the overall status of the **deployment set** and write it out
+    
+Calculating the "status" of a deployment is non-trivial and discussed below.
+
+If there is only a single project that will be the default project, otherwise the command will fail requiring you to specify a project name.
+
+For example:
+
+```
+> release-tool status all prod
+    
+     Last released: 12/02/12 16:32:12
+       Released by: Bob Beardly <bob@beardcorp.com>
+            Status: IN_PROGRESS
+
+    my_service_1    hash_1     COMPLETE
+    my_service_2    hash_1     IN_PROGRESS
+    my_service_3    hash_1     IN_PROGRESS
+
+```
+
+#### Deployment Status in ECS
+
+ECS provides ["deployment types"](https://docs.aws.amazon.com/AmazonECS/latest/developerguide/deployment-types.html) for handling moving from one set of tasks to another. At time of writing there are 3 options only the default ["rolling update"](https://docs.aws.amazon.com/AmazonECS/latest/developerguide/deployment-type-ecs.html) strategy is suitable for our use at the current time.
+
+##### Deployment controllers
+
+Discussion on updating our deployment controller or making use of the new ["external deployment" controller](https://docs.aws.amazon.com/AmazonECS/latest/developerguide/deployment-type-external.html) is far reaching and should take place elsewhere. 
+
+It should suffice for now to notice that "Service auto scaling is not supported when using an external deployment controller".
+
+##### Rolling update
+
+When you initiate a "rolling update" deployment for a service in AWS a "deployment id" is created and visible attached to an ECS Service.
+
+ECS service deployments can have one of the states:
+
+- PRIMARY: The most recent deployment of a service.
+- ACTIVE: A service deployment that still has running tasks, but are in the process of being replaced with a new PRIMARY deployment.
+- INACTIVE: A deployment that has been completely replaced.
+
+A careful reading of these states reveals there is no definitive "success" state. 
+
+The last created deployment is always "PRIMARY", but there may also be "ACTIVE" deployments in existence that are in the process of being replaced. 
+
+A single deployment with the status "PRIMARY" where the number of tasks running for that service is equal to the number of tasks desired for that service and there are _no pending tasks_ could be described as a successful deployment.
+
+##### Determining overall deployment status 
+
+When you match an ECS deployment id recorded in the deployment table to a describe service ECS API response we can use the following to determine overall deployment status.
+
+ECS API describe service response:
+
+```json
+{
+    "services": [
+        {
+            "status": "ACTIVE",
+            "serviceArn": "arn:aws:ecs:us-west-2:123456789012:service/my-http-service",
+            "deployments": [
+                {
+                    "id": "ecs-svc/1234567890123456789",
+                    "status": "PRIMARY",
+                    "pendingCount": 0,
+                    "desiredCount": 10,
+                    "runningCount": 10,
+                    "...": "..."
+                }
+            ],
+            "events": [],
+            "...": "...",
+        }
+    ],
+    "...": "..."
+}
+```
+
+You can then match your recorded deployment ID to those listed. 
+
+We suggest the following designations for different states:
+
+ - Matched deployment status is PRIMARY: 
+    - len(deployments) == 1 AND runningCount==desiredCount 
+      This deployment is **COMPLETE**
+    - len(deployments) > 1
+      This deployment is **IN_PROGRESS**
+    - len(deployments) == 1 AND runningCount!=desiredCount
+      This deployment is **NOT_STABLE**
+ - Matched deployment status is ACTIVE:
+    - This deployment is **RETIRING**
+ - Matched deployment status is INACTIVE
+    - This deployment is **RETIRED**
+ - Deployment id does not match any in list:
+    - This deployment is **DEAD**
+    

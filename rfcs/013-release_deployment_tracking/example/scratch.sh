@@ -19,28 +19,22 @@ docker tag example:31 example:latest
 docker tag example:latest "$ECR_EXAMPLE_REPO_URI":latest
 docker push "$ECR_EXAMPLE_REPO_URI":latest
 
-## Push latest to stage
-#docker tag example:latest example:stage
-#docker tag example:stage "$ECR_EXAMPLE_REPO_URI":stage
-#docker push "$ECR_EXAMPLE_REPO_URI":stage
-#
-## View images in ECR
+# Push latest to stage
+docker tag example:latest example:stage
+docker tag example:stage "$ECR_EXAMPLE_REPO_URI":stage
+docker push "$ECR_EXAMPLE_REPO_URI":stage
+
+# View images in ECR
 aws ecr list-images \
   --repository-name "uk.ac.wellcome/example" \
   --profile platform
 
-## Force service deployment
-#aws ecs update-service \
-#  --cluster "$CLUSTER_NAME" \
-#  --service "$SERVICE_NAME" \
-#  --force-new-deployment \
-#  --profile platform > deployment.json
-#
-## New deployment is always first in list
-#jq ".service.deployments[0].id" deployment.json
+# Force service deployment
+aws ecs update-service \
+  --cluster "$CLUSTER_NAME" \
+  --service "$SERVICE_NAME" \
+  --force-new-deployment \
+  --profile platform > deployment.json
 
-## Push stage to prod
-#docker tag example:stage example:prod
-#docker tag example:prod "$ECR_EXAMPLE_REPO_URI":prod
-#docker push "$ECR_EXAMPLE_REPO_URI":prod
-
+# New deployment is always first in list
+jq ".service.deployments[0].id" deployment.json
