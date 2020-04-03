@@ -4,7 +4,7 @@
 
 ## Background
 
-We run a lot of applications. People are regularly making changes and deploying new code. In order that we don't get confused about what code is deployed where we should track what is deployed where, by whom, and for what reason.
+We should track what code is deployed where, by whom and for what reason. This will give us a clear picture of the state of our deployments, which is useful for tracking the progress of bugfixes and new features.
 
 The build/release/deployment process can be described as follows:
 
