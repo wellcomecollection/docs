@@ -99,9 +99,15 @@ We'll use consistent image URIs in task definitions and update what those URIs r
 
 As the relationship between which container image to use in which service is no longer described as part of the infrastructure we can avoid terraform.
 
-Docker container image repositories allow us to do this through the use of tags. A particular docker image can have multiple tags, and we can use this to provide "environment based tags", e.g. prod, stage. We update what tags are attached to which image to indicate what should be deployed where.
+Docker container image repositories allow us to do this through the use of tags. A particular docker image can have multiple tags, and we can use this to provide "environment based tags", e.g. prod, stage. 
+
+We will update what tags are attached to which image. These tags will indicate what should be deployed into an environment.
 
 In order that tag changes are "noticed" by our deployed services we will need to force redeployment of the correct ECS services after updating tags. This will cause the tasks created by the new deployment to read their container images from their new tag.
+
+Previously the image URI in our task definition was the Git commit hash of the code used to build the Docker image. Now we will use a stable image URI, which will point to different images over time.
+
+From Terraform's point of view, the image URI never changes, so it won't try to change anything.
 
 ![General approach](general_approach.png)
 
