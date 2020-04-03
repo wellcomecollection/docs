@@ -21,7 +21,7 @@ A high level view of infrastructure includes:
 
 ### Glossary
 
-- **project:** The top level, consisting of one or more **service set**'s. This might indicate whole product and should be a single git repository, e.g. the catalogue project.
+- **project:** The top level, consisting of one or more **service set**'s. This might indicate a whole product and should be a single Git repository, e.g. the catalogue repo.
 
 - **service:** Performs a distinct function within a **project**. This could be a single step of a multi-stage pipeline, an API application, or a front-end content app.
 
@@ -29,7 +29,7 @@ A high level view of infrastructure includes:
 
 - **build:** The process of creating a **build artifact** for a single **service**
 
-- **build artifact:** A deployable _thing_ for a single **service**, e.g. a docker image or zip file.
+- **build artifact:** A deployable _thing_ for a single **service**, e.g. a Docker image or Lambda zip file.
 
 - **release hash:** Metadata that allows us to work out what version of the code was used to create a given build artifact, e.g. the Git commit hash.
 
