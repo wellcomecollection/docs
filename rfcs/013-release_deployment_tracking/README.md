@@ -23,7 +23,7 @@ A high level view of infrastructure includes:
 
 - **project:** The top level, consisting of one or more **service set**'s. This might indicate whole product and should be a single git repository, e.g. the catalogue project.
 
-- **service:** Performs a distinct function within a **project**. e.g. id_minter, requests API, Front-end content app.
+- **service:** Performs a distinct function within a **project**. This could be a single step of a multi-stage pipeline, an API application, or a front-end content app.
 
 - **service set:** A functional grouping of **services** within a project. You can have multiple per project, for example in the catalogue project, you've got pipeline, api and adapters.
 
