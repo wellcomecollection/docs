@@ -129,8 +129,8 @@ The release CLI tool should automate this process so that we encode this logic i
 
 Deploying is now a process of:
 
- - Ascertaining which services you wish to deploy
- - Ascertaining which images you wish to deploy for those services
+ - Deciding which services you wish to deploy
+ - Deciding which images you wish to deploy for those services
  - Identifying the environment to deploy to
  - Tagging the chosen images in ECR (docker repository)
  - Forcing a deployment via the ECS API
