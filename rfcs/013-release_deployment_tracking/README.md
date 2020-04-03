@@ -21,7 +21,7 @@ A high level view of infrastructure includes:
 
 ### Glossary
 
-- **project:** The top level, consisting of one or more **service set**'s. This might indicate whole product and should be a single git repository, e.g. the catalogue project.
+- **project:** The top level, consisting of one or more **service set**'s. This might indicate a whole product and should be a single Git repository, e.g. the catalogue repo.
 
 - **service:** Performs a distinct function within a **project**. e.g. id_minter, requests API, Front-end content app.
 
