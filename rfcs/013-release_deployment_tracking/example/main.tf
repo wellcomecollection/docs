@@ -1,9 +1,9 @@
 resource "aws_ecs_cluster" "example" {
-  name = "example"
+  name = "deployment-example"
 }
 
 resource "aws_ecs_task_definition" "example" {
-  family = "example"
+  family = "deployment-example"
 
   network_mode = "awsvpc"
 
@@ -27,7 +27,7 @@ DEFINITION
 }
 
 resource "aws_ecs_service" "example" {
-  name          = "example"
+  name          = "deployment-example"
   cluster       = aws_ecs_cluster.example.id
   desired_count = 1
 
@@ -58,5 +58,5 @@ locals {
 }
 
 resource "aws_ecr_repository" "example" {
-  name = "uk.ac.wellcome/example"
+  name = "uk.ac.wellcome/deployment-example"
 }
