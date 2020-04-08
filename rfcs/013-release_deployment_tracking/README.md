@@ -8,7 +8,7 @@ We should track what code is deployed where, by whom and for what reason. This w
 
 The build/release/deployment process can be described as follows:
 
-![Simple overview](simple_flow.png)
+![Simple overview](simple_overview.png)
 
 A high level view of infrastructure includes:
 
@@ -17,7 +17,7 @@ A high level view of infrastructure includes:
 - An environment where services can run, e.g. ECS or Kubernetes (a *deployment environment*)
 - A database that tracks what version of each application is running
 
-![Infrastructure overvier](high_level_infra.png)
+![Infrastructure overview](build_plan_deploy.png)
 
 ### Glossary
 
@@ -100,6 +100,21 @@ We'll use consistent image URIs in task definitions and update what those URIs r
 As the relationship between which container image to use in which service is no longer described as part of the infrastructure we can avoid terraform.
 
 Docker container image repositories allow us to do this through the use of tags. A particular docker image can have multiple tags, and we can use this to provide "environment based tags", e.g. prod, stage. 
+
+For example, with service `barp`, and `prod`, `stage` environments:
+
+```
+# Images tagged with environment
+
+aws_account_id.dkr.ecr.us-west-2.amazonaws.com/barp:prod
+Image digest: sha256:hash_barp2
+
+aws_account_id.dkr.ecr.us-west-2.amazonaws.com/barp:stage
+Image digest: sha256:hash_barp3
+
+# Task definition for the "prod" barp service references 
+aws_account_id.dkr.ecr.us-west-2.amazonaws.com/barp:prod
+```
 
 We will update what tags are attached to which image. These tags will indicate what should be deployed into an environment.
 
