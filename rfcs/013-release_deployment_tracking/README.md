@@ -4,396 +4,481 @@
 
 ## Background
 
-We build container images as artifacts for deployment, they are labelled with the git ref at the code point the artifact was packaged.
+We should track what code is deployed where, by whom and for what reason. This will give us a clear picture of the state of our deployments, which is useful for tracking the progress of bugfixes and new features.
 
-Deploying container images to production at present moves all container images forward to the latest built version.
+The build/release/deployment process can be described as follows:
 
-## Problem statement
+![Simple overview](simple_overview.png)
 
-We wish to track multiple environments with container images at different versions, and have an audit trail for deployments to those environments.
+A high level view of infrastructure includes:
 
-A deployment mechanism to take a container image for a service within a project and run that in a given environment is deliberately not described here.
+- A service that creates build artifacts from a given version of the codebase, e.g. creating a Docker image (a *build environment*)
+- A store for the created artifacts, e.g. Docker images (an *artifact store*)
+- An environment where services can run, e.g. ECS or Kubernetes (a *deployment environment*)
+- A database that tracks what version of each application is running
 
-SSM parameters are heavily favoured as they provide a data source for terraform.
+![Infrastructure overview](build_plan_deploy.png)
 
-## Proposed Solution
+### Glossary
 
-This solution describes a set of steps to track build, release and deployment but is deliberately agnostic of deployment mechanism. In addition this RFC **does not** describe a mechanism for reporting build or deployment status.
+- **project:** The top level, consisting of one or more **service set**'s. This might indicate a whole product and should be a single Git repository, e.g. the catalogue repo.
 
-### Build artifacts
+- **service:** Performs a distinct function within a **project**. This could be a single step of a multi-stage pipeline, an API application, or a front-end content app.
 
-> **Build artifact:** A container image encapsulating application code that can be configured by environment variable. The artifact _does not_ contain configuration.
+- **service set:** A functional grouping of **services** within a project. You can have multiple per project, for example in the catalogue project, you've got pipeline, api and adapters.
 
-When container images intended for release are built they will be added to an ECR repository in AWS.
+- **build:** The process of creating a **build artifact** for a single **service**
 
-#### Build artefacts SSM Parameters
+- **build artifact:** A deployable _thing_ for a single **service**, e.g. a Docker image or Lambda zip file.
 
-The URI of the container image will then be used to update an SSM parameter with a key:
+- **release hash:** Metadata that allows us to work out what version of the code was used to create a given build artifact, e.g. the Git commit hash.
 
- `/{project_id}/artefacts/{label}/{service_id}`
+- **release:** Metadata indicating the intention to deploy a particular **build artifact** at a given **release hash**. Generally part of a **release set**.
 
-The attributes are described as follows:
-- **project_id**: an identifier for a project.
-- **label:** A label for the set of images released, e.g. latest, stable, v2-branch
+- **release set:** A set of **build artifacts** at particular **release hashes** based on a **service set** template that is intended to be released into an **environment** together.
 
- For example:
+- **deployment:** A deployed **service**.
 
- `/storage/images/latest/archivist`
+- **environment:** Where you deploy your **release sets** when you want them to run e.g. staging, production.
 
-SSM parameters will provide a versioned record of build artifacts. SSM allows descriptions to be added to updates, these descriptions should contain the `user_id` of what or who is updating the version
+- **deployment set:** A set of deployed **services** created from a **release set** that has been deployed into an **environment**.
 
-This mechanism will be provided via a python application, packaged in a docker container distributed via the https://github.com/wellcometrust/dockerfiles repository.
+#### How these terms fit together
 
-### Project structure
+![Terms](terms.png)
 
-> **Project:** A set of services that when composed perform a function.
+## What we do now
 
-In order to build releases that describe which version of a service to deploy to a particular environment we need a machine readable description of project structure.
+See the documentation on [version 1](v1/README.md).
 
-We propose the following structure:
+### Problems with the current approach
 
-```json
-{
-  "project": {
-    "id": "id",
-    "name": "project_name",
-    "profile": "aws_profile"
-  },
-  "environments" : [
-    {
-      "id": "environment_id",
-      "name": "environment_name"
-    }
-  ]
-}
+- It is not clear how to release a single service
+- In order to actually deploy something there are multiple steps:
+  - Create a release set using the CLI tool
+  - Deploy a release set  using the CLI tool
+  - Run `terraform apply` to _actually_ update the running services
+- Release/Deploy descriptions are not well used / hidden
+- Poor visibility of what is actually deployed
+
+#### Moving away from terraform for deployment
+
+We currently use `terraform apply` to deploy services at a particular release hash. The choice to use terraform was driven by a requirement to describe our task definitions in code. 
+
+Separating service deployment from infrastructure changes is desirable as infra/service deployments have differing concerns and pace, i.e. high-value infrequent (infra), vs. low-value frequent (deploying new versions of services). 
+
+Running terraform in a CI environment like Travis is not desirable as giving an automated environment the power to run infrastructure updates needs careful consideration.
+
+#### Why this is hard
+
+An ECS task definition contains configuration for volume mounts, CPU & memory requirements, as well as indicating the container image URI to use when creating tasks.
+
+The container image URI cannot be updated independently from other parameters in a task definition. This makes ignoring a change to the task definition difficult, see this [epic GitHub issue thread](https://github.com/terraform-providers/terraform-provider-aws/issues/632).
+
+When terraform updates a task definition it has a version of the task definition in code to send to ECS, the ECS Service is then updated by terraform to point at that new task definition and a deployment is started in ECS.
+
+However if the task definition is updated and differs from that recorded by the terraform state (which updating the image URI _would_ cause) terraform will attempt to return the task definition to a known state, which would be undesirable.
+
+In order to move away from using `terraform apply` it will be necessary to decouple updating the task definition from deploying updated services.
+
+### Proposed Solution
+
+We intend to address the problems described above my improving on the existing CLI tool.
+
+We will:
+
+- Provide complete documentation with examples for the updated CLI tool, so it is easier to see how to deploy both single services and a complete service set
+- Provide "single step" deployment capability in the CLI tool.
+  In particular, we will remove the requirement to run `terraform apply` to update existing services.
+- Provide quick visibility on the current state of deployments
+- Remove or automate "descriptions" required from users of the CLI tool
+
+#### General approach
+
+We'll use consistent image URIs in task definitions and update what those URIs reference instead of updating image URIs, allowing us to keep task definitions static when updating which container images they should use. 
+
+As the relationship between which container image to use in which service is no longer described as part of the infrastructure we can avoid terraform.
+
+Docker container image repositories allow us to do this through the use of tags. A particular docker image can have multiple tags, and we can use this to provide "environment based tags", e.g. prod, stage. 
+
+For example, with service `barp`, and `prod`, `stage` environments:
+
+```
+# Images tagged with environment
+
+aws_account_id.dkr.ecr.us-west-2.amazonaws.com/barp:prod
+Image digest: sha256:hash_barp2
+
+aws_account_id.dkr.ecr.us-west-2.amazonaws.com/barp:stage
+Image digest: sha256:hash_barp3
+
+# Task definition for the "prod" barp service references 
+aws_account_id.dkr.ecr.us-west-2.amazonaws.com/barp:prod
 ```
 
-This is a **project manifest**.
+We will update what tags are attached to which image. These tags will indicate what should be deployed into an environment.
 
-Where this is a file `.wellcome_project` in the project root.
+In order that tag changes are "noticed" by our deployed services we will need to force redeployment of the correct ECS services after updating tags. This will cause the tasks created by the new deployment to read their container images from their new tag.
 
-This file can be created by hand or by script.
+Previously the image URI in our task definition was the Git commit hash of the code used to build the Docker image. Now we will use a stable image URI, which will point to different images over time.
 
-### Releases & deployments
+From Terraform's point of view, the image URI never changes, so it won't try to change anything.
 
-> **Release:** A set of services at known versions to be deployed to an environment.
+![General approach](general_approach.png)
 
-> **Deployment:** A statement of intent to deploy a given _release_ to a particular environment.
+#### Register images
 
-We propose the following structure to track releases & deployments for a particular project:
+When container images are built we should tag them with:
+- **release hash** as we do now, to keep track of the relationship between release hash and container image id. This tag will always be associated with the same container image.
+- **latest** so we have a way of knowing the most recently created image for each service which is useful when planning deployments. This tag should always be on the most recently built image for a service.
 
-#### Release manifest
+If you were to use the docker CLI tool, this would look like:
 
-```json
-{
-  "project": {
-    "id": "project_id",
-    "name":  "project_full_name"
-  },
-  "date_requested": "ISO8601 date",
-  "requested_by": {
-    "id": "user_id",
-    "name":  "user_full_name"
-  },
-  "description": "some text describing the content of the release",
-  "images": {
-    "service_id": "container_image_uri"
-  },
-  "deployments": [
-    {
-      "environment": {
-        "id": "environment_id",
-        "name":  "environment_full_name"
-      },
-      "date_requested": "ISO8601 date",
-      "requested_by": {
-        "id": "user_id",
-        "name":  "user_full_name"
-      },
-      "description": "some text describing the reason for deploying the release to the given environment"
-    }
-  ]
-}
+```sh
+# Create tags!
+docker tag image_i_just_built ecr_repo/service_name:hash_1
+docker tag image_i_just_built ecr_repo/service_name:latest
+
+# Push tags!
+docker push ecr_repo/service_name:hash_1
+docker push ecr_repo/service_name:latest
 ```
 
-The container image URIs can be sourced from the SSM Parameters:
+The release CLI tool should automate this process so that we encode this logic in one place. 
 
-| key  	                                    | value                                         |
-|---	                                    |---	                                        |
-| /{project_id}/images/{label}/{service_id} | http://example.com/images/{service_id}/00001  |
+#### Deploying
 
-#### Releases table
+Deploying is now a process of:
 
-Release manifests should be kept in a dynamo table that contains the following attributes:
+ - Deciding which services you wish to deploy
+ - Deciding which images you wish to deploy for those services
+ - Identifying the environment to deploy to
+ - Tagging the chosen images in ECR (docker repository)
+ - Forcing a deployment via the ECS API
+ - Recording the deployment
 
-| release_id  | project_id        |created_at    |deployed_at    |release_manifest   |
-|---          |---                |---           |---            |---                |
-| abcd        | project_id        | 1548345406   | 1548345406    | {}                |
+##### Which services to deploy
 
-The attributes are described as follows:
-- **release_id**: (_hash key_) an identifier for a project.
-- **project_id**: an identifier for a project.
-- **created_at:** Unixtime representation of time the record was written.
-- **deployed_at:** Unixtime representation of the time a deployment was updated.
-- **release_manifest:** JSON blob representing the release manifest.
+In order to deploy a particular service set we need to know which services go together. We can do this using a "Project manifest".
 
-The following GSIs (hash key/range key)are suggested for making it easy to lookup releases & deployments:
+We will need to keep track of the relationship between a service and its' container registry in order to apply tags as described above.
 
-| hash key      | range key     | purpose              |
-|---            |---            |---                   |
-| project_id    | created_at    | latest releases      |
-| project_id    | deployed_at   | latest deployments   |
+Our project manifest should allow for multiple service sets, with the environments those sets can be deployed into.
 
-#### Deployments SSM Parameters
+###### Project manifest
 
-A deployment would take the URIs for a service provided by a release manifest and update the following keys in SSM:
-
-| key  	                                                    | value     |
-|---	                                                    |---	    |
-| /{project_id}/deployments/{environment_id}/{service_id}   | {ecr_uri} |
-
-The attributes are described as follows:
-- **project_id**: an identifier for a project.
-- **environment_id:** an id identifying a deployment environment, e.g. dev,stage,prod
-- **ecr_uri**: the ECR URI of the container image to deploy.
-
-#### Deployments table
-
-In order to track current deployments a table with the following structure is required:
-
-| project_id | environment_id  | release_id |
-|---         |---              |---         |
-| my_project | stage           | abcd       |
-
-The attributes are described as follows:
-- **project_id**: (hash key) an identifier for a project.
-- **environment_id:** (range key) an id identifying a deployment environment, e.g. dev,stage,prod
-- **release_id**: the UUID of a release from the releases table.
-
-**The deployments table will be updated atomically with the releases table when it is updated to add a deployment.**
-
-This mechanism will be provided via a python application, packaged in a docker container distributed via the https://github.com/wellcometrust/dockerfiles repository.
-
-### Examples
-
-#### Deploying the latest images to a stage environment.
-
-In order to create a release we can list the ECR URIs available in SSM for a particular project and label by looking at the services described in the project manifest.
-
-For example for a project with the manifest:
+This is an updated manifest from version 1. 
 
 ```json
 {
   "project": {
-    "id": "bugfarm_73649",
-    "name": "The Best Bug Farm"
-  },
-  "services" : [
-    {
-      "id": "hatching",
-      "name": "Big Bob's baby bug boomer!"
-    },
-    {
-      "id": "feeding",
-      "name": "Fragile Freddie's frosty feeders!"
-    }
-  ]
-}
-```
-
-With the images label `latest` we would look in SSM for the following parameters:
-
-| key  	                                    | value                                     |
-|---	                                    |---	                                    |
-| /bugfarm_73649/images/latest/hatching  	| http://example.com/images/hatching/00001  |
-| /bugfarm_73649/images/latest/feeding 	    | http://example.com/images/feeding/00001  	|
-
-This would result in a release manifest as follows:
-
-```json
-{
-  "project": {
-    "id": "bugfarm_73649",
-    "name":  "The Best Bug Farm"
-  },
-  "date_requested": "2008-09-15T15:53:00",
-  "requested_by": {
-    "id": "dev_dave",
-    "name":  "Dave Dollop"
-  },
-  "description": "Some stuff wot I did.",
-  "images": {
-    "hatching": "http://example.com/images/hatching/00001",
-    "feeding": "http://example.com/images/feeding/00001"
-  },
-  "deployments": []
-}
-```
-
-The releases table being updated to:
-
-| release_id  | project_id        |created_at    |deployed_at    |release_manifest   |
-|---          |---                |---           |---            |---                |
-| abcd        | bugfarm_73649     | 1548345406   |               | _as above_        |
-
-Requesting a deployment would result in the release manifest being updated as follows:
-
-```json
-{
-  "project": {
-    "id": "bugfarm_73649",
-    "name":  "The Best Bug Farm"
-  },
-  "date_requested": "2008-09-15T15:53:00",
-  "requested_by": {
-    "id": "dev_dave",
-    "name":  "Dave Dollop"
-  },
-  "description": "Some stuff wot I did.",
-  "images": {
-    "hatching": "http://example.com/images/hatching/00001",
-    "feeding": "http://example.com/images/feeding/00001"
-  },
-  "deployments": [
+    "name": "Catalogue",
+    "service_sets": [
       {
-        "environment": {
-          "id": "stage",
-          "name":  "Simon's staging sideshow!"
-        },
-        "date_requested": "2008-09-16T14:33:00",
-        "requested_by": {
-          "id": "ops_ophelia",
-          "name":  "Ophelia Oppenheimer"
-        },
-        "description": "Some stuff wot dave did for testing."
+        "id": "catalogue_pipeline",
+        "name": "Catalogue Pipeline",
+        "account_id": "1234567890",
+        "environments": [
+          {
+            "id": "stage",
+            "name": "Staging",
+            "cluster_name": "my_stage_cluster"  
+          },
+          {
+            "id": "prod",
+            "name": "Production",
+            "cluster_name": "my_prod_cluster"
+          }
+        ],
+        "services": [
+          {
+            "id": "id_minter",
+            "name": "ID Minter",
+            "repository_name": "uk.ac.wellcome/id_minter"
+          },
+          {
+            "id": "matcher",
+            "name": "Matcher",
+            "repository_name": "uk.ac.wellcome/matcher"
+          },
+          {
+            "id": "merger",
+            "name": "Merger",
+            "repository_name": "uk.ac.wellcome/merger"
+          }
+        ]
       }
-  ]
+    ]
+  }
 }
 ```
 
-The deployments table being updated to:
+This file `.wellcome_project` should be in the project root.
 
-| project_id    | environment_id  | release_id |
-|---            |---              |---         |
-| bugfarm_73649 | stage           | abcd       |
+This file requires that:
+- `project.service_sets[].environments[].cluster_name` maps to an ECS cluster name.
+- `project.service_sets[].services[].id` maps to an ECS service name.
 
-The releases table being updated to:
+##### Deploying to an environment
 
-| release_id  | project_id        |created_at    |deployed_at    |release_manifest   |
-|---          |---                |---           |---            |---                |
-| abcd        | bugfarm_73649     | 1548345406   | 1638345401    | _as above_        |
+We will make use of the concept of ECS cluster to indicate environment as it provides a useful way to classify & separate services.
 
-SSM would be updated to:
+When we want to deploy to the production environment, we can match services described in the project manifest to those running in the "prod" cluster and force redeployment as described above.
 
-| key  	                                    | value                                     |
-|---	                                    |---	                                    |
-| /bugfarm_73649/deployments/stage/hatching | http://example.com/images/hatching/00001  |
-| /bugfarm_73649/deployments/stage/feeding 	| http://example.com/images/feeding/00001  	|
+Using the docker & aws CLI tools to release "latest" this might look like:
 
-And our imaginary deployment mechanism would attempt to make the environment match this state.
+```
+CLUSTER_NAME=prod_cluster
+SERVICE_NAME=my_service
 
-#### Promoting a staging release to production
+# Add the prod tag to whichever image is currently tagged latest
+docker tag ecr_repo/"$SERVICE_NAME":latest ecr_repo/service_name:prod
+docker push ecr_repo/"$SERVICE_NAME":prod
 
-In order to push the state of environment stage -> prod (or any env a -> b), following from the previous example we query our deployments table:
-
-```py
-table.query(
-  KeyConditionExpression=Key('project_id').eq('bugfarm_73649') & Key('environment_id').eq('stage')
-)
+# Force service deployment in prod cluster
+aws ecs update-service \
+  --cluster "$CLUSTER_NAME" \
+  --service "$SERVICE_NAME" \
+  --force-new-deployment
 ```
 
-The response should include our `release_id`, then we query the releases table:
+##### Recording deployments
 
-```py
-table.query(
-  KeyConditionExpression=Key('release_id').eq('abcd')
-)
-```
+We want to provide visibility on:
 
-The response includes our release manifest from which we can identify the images required by a particular release:
+- What version of a service is deployed in which environment _right now_
+- When deployments have taken place
+- Why a deployment took place (along with _who_ deployed if appropriate).
+
+In order to identify which version of a service is deployed we need to get the release hash that a container image was tagged with. The release hash (git ref) is our link to version control on the code the container image is built from. 
+
+When a container image is built it also has an "image id" which provides an immutable reference to that container image which we should record to provide a definitive record of what was deployed.
+
+We will continue to use DynamoDB to record deployments. 
+
+There will be a single "deployment table" in the platform account for all projects.
+
+The proposed updated table structure is:
+
+|project_id    | release_n | date_requested      | requested_by  | release_manifest | environment 
+|---           |---        |---                  |---            |---               |---
+|my_project    | 1         | 2019-02-08T12:32:42 | jim@org.com   | `{"..."}`        | prod
+|my_project    | 2         | 2019-02-08T12:32:42 | jim@org.com   | `{"..."}`        | stage
+|your_project  | 1         | 2019-02-08T12:32:42 | jim@org.com   | `{"..."}`        | prod
+|your_project  | 2         | 2019-02-08T12:32:42 | jim@org.com   | `{"..."}`        | stage
+
+The following keys are required:
+
+- `project_id`: Hash Key
+- `release_n`: Range Key
+
+Having an increasing integer as our range key will allow us to efficiently find the latest deployment for a particular project, and provides a human readable identifier that carries useful information.
+
+`project_id:release_n` forms a unique **deployment identifier**
+
+A release_manifest looks like this:
+
+###### Release manifest
 
 ```json
 {
-  "project": {
-    "id": "bugfarm_73649",
-    "name":  "The Best Bug Farm"
-  },
-  "...",
-  "images": {
-    "hatching": "http://example.com/images/hatching/00001",
-    "feeding": "http://example.com/images/feeding/00001"
-  },
-  "..."
-}
-```
-
-We can now request a fresh deployment as above using those images, the final state being:
-
-**Release manifest:**
-
-```json
-{
-  "project": {
-    "id": "bugfarm_73649",
-    "name":  "The Best Bug Farm"
-  },
-  "date_requested": "2008-09-15T15:53:00",
-  "requested_by": {
-    "id": "dev_dave",
-    "name":  "Dave Dollop"
-  },
-  "description": "Some stuff wot I did.",
-  "images": {
-    "hatching": "http://example.com/images/hatching/00001",
-    "feeding": "http://example.com/images/feeding/00001"
-  },
-  "deployments": [
-    {
-      "environment": {
-        "id": "stage",
-        "name":  "Simon's staging sideshow!"
-      },
-      "date_requested": "2008-09-16T14:33:00",
-      "requested_by": {
-        "id": "ops_ophelia",
-        "name":  "Ophelia Oppenheimer"
-      },
-      "description": "Some stuff wot dave did for testing."
-    },
-    {
-      "environment": {
-        "id": "prod",
-        "name":  "Peters prod palace!"
-      },
-      "date_requested": "2008-09-17T14:33:00",
-      "requested_by": {
-        "id": "ops_ophelia",
-        "name":  "Ophelia Oppenheimer"
-      },
-      "description": "Some stuff wot dave did for releasing."
+  "service_1": {
+    "release_hash": "abcdefg...",
+    "image_digest": "sha256:afe605d...",
+    "deployment": {
+      "service_arn": "arn:service_1",
+      "deployment_id": "ecs-svc/4529926..."
     }
-  ]
+  },
+  "service_2": {
+    "release_hash": "abcdefg...",
+    "image_digest": "sha256:afe605d...",
+    "deployment": {
+      "service_arn": "arn:service_1",
+      "deployment_id": "ecs-svc/4529926..."
+    }
+  }
 }
 ```
 
-The deployments table being updated to:
+Field reference: 
+- `image_digest`: The ECR (container repository) immutable ID of the image deployed.
+- `release_hash`: The release hash tag attached to the image id.
+- `service_arn`: The ARN of the ECS service that was deployed, this identifies both cluster and service deployed to.
+- `deployment_id`: When you force a redeployment of a service ECS will provide you a `deployment_id` that can be used to track the progress and status of deployment for a particular service.
 
-| project_id    | environment_id  | release_id |
-|---            |---              |---         |
-| bugfarm_73649 | stage           | abcd       |
-| bugfarm_73649 | prod            | abcd       |
+#### CLI Tool
 
-The releases table being updated to:
+The proposed use of the CLI tool is as follows:
 
-| release_id  | project_id        |created_at    |deployed_at    |release_manifest   |
-|---          |---                |---           |---            |---                |
-| abcd        | bugfarm_73649     | 1548345406   | 1738545402    | _as above_        |
+```
+release-tool
 
-SSM would be updated to:
+Usage:
+    release-tool deploy (all | <service>) <environment> [--project project_name] [--skip_confirm]
+    release-tool latest <local_container_name> <remote_repository> [--project project_name]
+    release-tool status <environment> [--project project_name]
+Options: 
+    --project           Project name, default from .weco-project, required where ambiguous 
+    --skip_confirm      Do not ask for confirmation during a deploy (useful in CI)
+```
 
-| key  	                                    | value                                    |
-|---	                                    |---	                                   |
-| /bugfarm_73649/deployments/prod/hatching | http://example.com/images/hatching/00001  |
-| /bugfarm_73649/deployments/prod/feeding 	| http://example.com/images/feeding/00001  |
+##### deploy
 
-And again our imaginary deployment mechanism would attempt to make the environment match this state.
+> Deploys the latest container images for a service set to an environment.
+
+The `deploy` command will:
+
+- Read the project manifest and extract the service/container repository pairs for a given project
+- Look up from the container repository the container images tagged with `latest` for those services
+- Tag those images with the specified `environment` (checking it matches one of those in the project manifest)
+- Force redeployment of the correct ECS services as indicated by the environment -> cluster name mapping
+- Record a deployment in the deployment table as described above
+
+If there is only a single project that will be the default project, otherwise the command will fail requiring you to specify a project name.
+
+For example:
+
+```
+> release-tool deploy my_service prod
+
+This will deploy:
+
+    my_service_1@hash_1
+    my_service_2@hash_1
+    my_service_3@hash_1
+
+Do you wish to continue? (y/n) y
+
+Deployment requested.
+```
+
+##### latest
+
+> Tags local container_image with `latest` and pushes to a remote repository
+
+The `latest` command will:
+
+- Tag the specified local container image with latest
+- Push the specified local container image to ECR
+- Push the latest tagged container image to ECR
+
+This command allows you to quickly mark a container as latest.
+
+The local container_image should be specified with a release_hash tag.
+
+For example:
+
+```
+> release-tool latest bag_register:hash_1 account.amazonaws.com/uk.ac.wellcome/bag_register 
+
+Updated account.amazonaws.com/uk.ac.wellcome/bag_register:latest 
+```
+
+###### status
+
+> Reads the status of the latest deployment for a project
+
+The `status` command will:
+- Look up the latest deployment for the given project in the deployments table
+- Filter the results by the specified environment
+- For each service in the release manifest:
+    - describe the service from the ECS API
+    - read `.deployments` from the API response
+    - match the recorded ECS deployment ID to that in the API response
+    - calculate the status of the individual service deployment and write it out
+    - calculate the overall status of the **deployment set** and write it out
+    
+Calculating the "status" of a deployment is non-trivial and discussed below.
+
+If there is only a single project that will be the default project, otherwise the command will fail requiring you to specify a project name.
+
+For example:
+
+```
+> release-tool status all prod
+    
+     Last released: 12/02/12 16:32:12
+       Released by: Bob Beardly <bob@beardcorp.com>
+            Status: IN_PROGRESS
+
+    my_service_1    hash_1     COMPLETE
+    my_service_2    hash_1     IN_PROGRESS
+    my_service_3    hash_1     IN_PROGRESS
+
+```
+
+#### Deployment Status in ECS
+
+ECS provides ["deployment types"](https://docs.aws.amazon.com/AmazonECS/latest/developerguide/deployment-types.html) for handling moving from one set of tasks to another. At time of writing there are 3 options only the default ["rolling update"](https://docs.aws.amazon.com/AmazonECS/latest/developerguide/deployment-type-ecs.html) strategy is suitable for our use at the current time.
+
+##### Deployment controllers
+
+Discussion on updating our deployment controller or making use of the new ["external deployment" controller](https://docs.aws.amazon.com/AmazonECS/latest/developerguide/deployment-type-external.html) is far reaching and should take place elsewhere. 
+
+It should suffice for now to notice that "Service auto scaling is not supported when using an external deployment controller".
+
+##### Rolling update
+
+When you initiate a "rolling update" deployment for a service in AWS a "deployment id" is created and visible attached to an ECS Service.
+
+ECS service deployments can have one of the states:
+
+- PRIMARY: The most recent deployment of a service.
+- ACTIVE: A service deployment that still has running tasks, but are in the process of being replaced with a new PRIMARY deployment.
+- INACTIVE: A deployment that has been completely replaced.
+
+A careful reading of these states reveals there is no definitive "success" state. 
+
+The last created deployment is always "PRIMARY", but there may also be "ACTIVE" deployments in existence that are in the process of being replaced. 
+
+A single deployment with the status "PRIMARY" where the number of tasks running for that service is equal to the number of tasks desired for that service and there are _no pending tasks_ could be described as a successful deployment.
+
+##### Determining overall deployment status 
+
+When you match an ECS deployment id recorded in the deployment table to a describe service ECS API response we can use the following to determine overall deployment status.
+
+ECS API describe service response:
+
+```json
+{
+    "services": [
+        {
+            "status": "ACTIVE",
+            "serviceArn": "arn:aws:ecs:us-west-2:123456789012:service/my-http-service",
+            "deployments": [
+                {
+                    "id": "ecs-svc/1234567890123456789",
+                    "status": "PRIMARY",
+                    "pendingCount": 0,
+                    "desiredCount": 10,
+                    "runningCount": 10,
+                    "...": "..."
+                }
+            ],
+            "events": [],
+            "...": "...",
+        }
+    ],
+    "...": "..."
+}
+```
+
+You can then match your recorded deployment ID to those listed. 
+
+We suggest the following designations for different states:
+
+ - Matched deployment status is PRIMARY: 
+    - len(deployments) == 1 AND runningCount==desiredCount 
+      This deployment is **COMPLETE**
+    - len(deployments) > 1
+      This deployment is **IN_PROGRESS**
+    - len(deployments) == 1 AND runningCount!=desiredCount
+      This deployment is **NOT_STABLE**
+ - Matched deployment status is ACTIVE:
+    - This deployment is **RETIRING**
+ - Matched deployment status is INACTIVE
+    - This deployment is **RETIRED**
+ - Deployment id does not match any in list:
+    - This deployment is **DEAD**
+    
