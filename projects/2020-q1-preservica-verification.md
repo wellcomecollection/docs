@@ -8,16 +8,17 @@ Before we decommission Preservica, we want to check that every file:
 *   Has been successfully copied to the new storage service, or;
 *   Is a file we are happy to delete
 
-This document describes the verification process.
+This document describes how we completed this verification.
 
 
 
 ## Concepts
 
 Within Preservica, files are organised into *deliverable units (DUs)*.
-A DU is analogous to a folder in a filesystem hierarchy: DUs can be nested, and each file belongs to exactly one DU.
+A DU is analogous to a directory in a traditional filesystem hierarchy: DUs can be nested, and each file belongs to exactly one DU.
 
 Each DU has an associated catalogue reference: for example, `b11633682` or `SATIH/43`.
+This tells us which bag in the storage service the files in this DU should be associated with.
 We also know when each DU was created.
 
 We can get the following metadata about each file from the Preservica SQL database:
@@ -43,9 +44,11 @@ We can get the following metadata about each file from the Preservica SQL databa
     Preservica contains files that we know we don't want to keep, including:
 
     *   Born-digital material that has been de-accessioned or was only ingested for test purposes (working from a spreadsheet `PreservicaAppraisal.xls`)
-    *   Digitised material that we don't want to keep, e.g. Sierra b numbers that have since been deleted
+    *   Born-digital files that are deleted by Archivematica upon ingest, such as `.DS_Store` or `thumbs.db`
+    *   Digitised material that we don't want to keep, e.g. images Sierra b numbers that have since been deleted
+    *   Digitised files that are artefacts of old processed, and should never have been copied to Preservica (e.g. `analyse.xml`)
 
-    This gave us a list of DUs and catalogue references that we could ignored.
+    We ignored all of these files.
 
 *   **Ignore files that we know we can get from the Internet Archive.**
 
@@ -65,7 +68,7 @@ We can get the following metadata about each file from the Preservica SQL databa
     If you tried to open the JP2, you'd get an error.
     (I haven't investigated, but I suspect this was a bagger bug -- the file in the storage service matches the bag manifest, but it got a bad manifest.)
 
-    If you find such a file, ingest a new version of the bag with the correct file.
+    If you find such a file, ingest a new version of the bag with the correct file, then verify the newly-uploaded file is correct.
 
 *   **Upload everything else to S3 for further inspection.**
 
