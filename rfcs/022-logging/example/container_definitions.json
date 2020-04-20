@@ -1,0 +1,68 @@
+[
+  {
+    "essential": true,
+    "image": "${app_repository_url}:prod",
+    "name": "app",
+    "command": ["/bin/sh", "-c", "while true; do echo \"zzz\" && sleep 5s; done"],
+    "logConfiguration": {
+      "logDriver":"awsfirelens",
+      "options": {
+        "Name": "cloudwatch",
+        "region": "eu-west-1",
+        "log_group_name": "firelens-fluent-bit",
+        "auto_create_group": "true",
+        "log_stream_prefix": "from-fluent-bit"
+      }
+    }
+  },
+  {
+    "essential": true,
+    "memoryReservation": 50,
+    "image": "${fluentbit_repository_url}:latest",
+    "name": "log_router",
+    "environment": [
+      {
+        "name": "FLB_LOG_LEVEL",
+        "value": "debug"
+      },
+      {
+        "name": "SERVICE_NAME",
+        "value": "${service_name}"
+      }
+    ],
+    "secrets": [
+      {
+        "name": "ES_PASS",
+        "valueFrom": "${secret_espass_arn}"
+      },
+      {
+        "name": "ES_USER",
+        "valueFrom": "${secret_esuser_arn}"
+      },
+      {
+        "name": "ES_HOST",
+        "valueFrom": "${secret_eshost_arn}"
+      },
+      {
+        "name": "ES_PORT",
+        "valueFrom": "${secret_esport_arn}"
+      }
+    ],
+    "firelensConfiguration": {
+      "type": "fluentbit",
+      "options": {
+        "config-file-type": "file",
+        "config-file-value": "/extra.conf"
+      }
+    },
+    "logConfiguration": {
+      "logDriver": "awslogs",
+      "options": {
+        "awslogs-group": "firelens-container",
+        "awslogs-region": "eu-west-1",
+        "awslogs-create-group": "true",
+        "awslogs-stream-prefix": "firelens"
+      }
+    }
+  }
+]
