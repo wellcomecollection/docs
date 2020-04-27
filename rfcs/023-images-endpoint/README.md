@@ -28,7 +28,7 @@ This is intentionally minimal at this point as we decide what fields an image sh
 
 ### Single image
 
-**`GET` **`/catalogue/v2/images/:image_id`
+**`GET`** `/catalogue/v2/images/:image_id`
 
 *Query params*
 
