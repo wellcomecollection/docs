@@ -19,8 +19,8 @@ The initial images endpoint will be in **beta**, and therefore will be liable to
 ```
 {
   "id": String,
-	"location": DigitalLocation,
-	"parentWork": String
+  "location": DigitalLocation,
+  "parentWork": String
 }
 ```
 
