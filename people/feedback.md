@@ -30,28 +30,28 @@ How you do what you do, how you help others to do what they do, and what support
 
 ### Technical
 
-- How do you use your technical know-how to work towards the team's vision and achieve it's goals?
-- How do you use your technical know-how to help others work towards the team's vision and achieve it's goals?
-- Where can we support you to develop and share your technical skills?
+* How do you use your technical know-how to work towards the team's vision and achieve it's goals?
+* How do you use your technical know-how to help others work towards the team's vision and achieve it's goals?
+* Where can we support you to develop and share your technical skills?
 
 ### Intra-team working
 
-- How are you working within your team to help the team work towards the team's vision and achieve it's goals?
-- Where can your team support you to help you be more effective within it?
+* How are you working within your team to help the team work towards the team's vision and achieve it's goals?
+* Where can your team support you to help you be more effective within it?
 
 ### Inter-team working
 
-- How are you working and collaborating with teams and others outside of your team to help make yours and their team more effective?
-- Where can others support you to be more effective to them?
-- Where can others support you to be more effective within your team?
+* How are you working and collaborating with teams and others outside of your team to help make yours and their team more effective?
+* Where can others support you to be more effective to them?
+* Where can others support you to be more effective within your team?
 
 ---
 
 ## What qualities should feedback have?
 
-- **Conversational:** It is an opinion, not facts, and can be the beginning of a conversation rather than the end.
-- **Timely:** Allowing for all involved to respond.
-- **Future leaning:** Given and taken with a view of how it is applicable to a better future.
+* **Conversational:** It is an opinion, not facts, and can be the beginning of a conversation rather than the end.
+* **Timely:** Allowing for all involved to respond.
+* **Future leaning:** Given and taken with a view of how it is applicable to a better future.
 
 ---
 
