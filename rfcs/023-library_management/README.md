@@ -11,6 +11,8 @@ These are the problems that I find with the current setup:
 - If you’re unlucky enough that a change that you need to make is in one of the libraries at the end of a chain and it requires changing something at the beginning of a chain, you have to release ~ 4 projects (so 4 PRs, 4 travis builds etc). And that’s assuming that when you use those newly relased libraries you don’t find anything that forces you to go back again.
 - As they are released individually, there is no way to enforce in CI that our libraries work together at any given time in CI at the moment, even though that is a requirement. So you can (and it has happened) end up with libraries that pass the build but are effectively unusable because they can’t work work with others.
 
+## Solution
+
 I think these problems are mostly self generated, because we consider these libraries as individual pieces, when they are not.
 I think it would be more useful to consider them pieces of an ecosystem and we should release the whole ecosytem every time we release something.
 
