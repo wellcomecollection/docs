@@ -6,6 +6,8 @@
 
 We have multiple libraries each in its own repo and some of them depend on other forming a chain. In many situatios (but not all) we end up using all these libraries together, so we need them to be split but we also need to know that they can work together.
 
+## Problem
+
 These are the problems that I find with the current setup:
 - Discoverability of what libraries form part of a chain and how are they linked is very poor. It involves jumping across different github projects and it involves knowing the names of these projects cause the released artifacts don’t have the same name as the github repo and we haven’t been consistent in naming of repos and libraries.
 - If you’re unlucky enough that a change that you need to make is in one of the libraries at the end of a chain and it requires changing something at the beginning of a chain, you have to release ~ 4 projects (so 4 PRs, 4 travis builds etc). And that’s assuming that when you use those newly relased libraries you don’t find anything that forces you to go back again.
