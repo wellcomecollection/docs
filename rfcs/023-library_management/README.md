@@ -1,4 +1,8 @@
-# Library management
+# RFC 023: Library management
+
+**Last updated: 30 April 2020.**
+
+## Background
 
 We have multiple libraries each in its own repo and some of them depend on other forming a chain. In many situatios (but not all) we end up using all these libraries together, so we need them to be split but we also need to know that they can work together.
 
