@@ -26,7 +26,7 @@ We can write down some desiderata for any proposed solution:
 These suggest 3 distinct, but loosely coupled, services:
 
 - **Inferrer**: A Python service that provides a synchronous API (most likely RESTful HTTP) that consumes whatever is needed to infer the new data, which it outputs.
-- **Model Trainer**: A Python service that can consume records from the catalogue index in bulk in order to train a model, and outputs/stores a persistent representation of this model for the *inferrer* to use.
+- **Model Trainer**: A Python service that can consume records from the catalogue index in bulk in order to train a model, and outputs/stores a persistent representation of this model for the _inferrer_ to use.
 - **Inference Manager**: A Scala service that lives in the existing pipeline and contains "the usual" Wellcome message-passing, Akka, etc logic & libraries, which sychronously calls the `inferrer` and attaches the new data to the work/image (by populating a field) before passing it along.
 
 The usage of these services would look like this:
@@ -52,3 +52,8 @@ The usage of these services would look like this:
 > Should DS inferrers work only for things we know (ie feature vectors can be inferred only for images within the WC ecosystem, by passing an image ID) or with any content (ie feature vectors can be inferred for any image, by passing a publicly accessible URI)
 
 > It seems like we'll have to reinfer on every existing work/image when a model is retrained, which will significantly add to the expense of retraining based on the above considerations about network requests etc. Is this necessarily the case?
+
+### Update 2020-05-01
+
+An updated, more complete version of the diagram above with what's been built (black) and what remains to be built (green):
+![Untitled-2020-05-01-1447](updated_inferrer_diagram_2020-05-01.png)
