@@ -1,4 +1,4 @@
-# RFC 023: Library management
+# RFC 024: Library management
 
 **Last updated: 30 April 2020.**
 
