@@ -6,9 +6,9 @@
 
 ## Context and requirements
 
-- Images are now entities in the catalogue API
-- We want to be able to search for images, and to fetch specified images
-- The images endpoint should behave similarly to the works endpoint
+- There is a new entity in the catalogue API: `Image`. These are conceptual, like works, and consist of images from the visual collections and interesting images from inside books and other materials.
+- We want to be able to search for images, and to fetch specified images.
+- The images endpoint should be consistent with the works endpoint.
 
 ## Proposal
 
@@ -20,11 +20,15 @@ The initial images endpoint will be in **beta**, and therefore will be liable to
 {
   "id": String,
   "location": DigitalLocation,
-  "parentWork": String
+  "source": {
+    "id": String,
+    "sourceType": "Work"
+  },
+  "type": "Image"
 }
 ```
 
-This is intentionally minimal at this point as we decide what fields an image should have.
+This is intentionally minimal at this point as we decide what fields an image should have; it's what is needed to render the panel on search results.
 
 ### Single image
 
@@ -33,6 +37,7 @@ This is intentionally minimal at this point as we decide what fields an image sh
 *Query params*
 
 - `include` - optional list of fields, as with works endpoint
+  - `visuallySimilar` - includes a list of visually similar works
 
 ### Multiple images
 
@@ -41,8 +46,7 @@ This is intentionally minimal at this point as we decide what fields an image sh
 *Query params*
 
 - `query` - text search query
-- `similarTo` - an image ID; returned images are sorted by visual similarity to this.
-- `include` - as with the single image endpoint
-- `license` - license to filter for
+- `include` - optional list of extra fields _not including `visuallySimilar`_
+- `items.locations.license` - license to filter for
 - `page`
 - `pageSize`
