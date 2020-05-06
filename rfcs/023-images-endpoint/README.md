@@ -19,10 +19,10 @@ The initial images endpoint will be in **beta**, and therefore will be liable to
 ```
 {
   "id": String,
-  "location": DigitalLocation,
+  "locations": List[DigitalLocation],
   "source": {
     "id": String,
-    "sourceType": "Work"
+    "type": "Work"
   },
   "type": "Image"
 }
@@ -47,6 +47,6 @@ This is intentionally minimal at this point as we decide what fields an image sh
 
 - `query` - text search query
 - `include` - optional list of extra fields _not including `visuallySimilar`_
-- `items.locations.license` - license to filter for
+- `locations.license` - license to filter for
 - `page`
 - `pageSize`
