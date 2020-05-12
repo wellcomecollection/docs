@@ -34,7 +34,7 @@ Currently, our concepts are a mess:
 - When a user on a works page clicks on a concept label, we currently run a search for the label string in the same way as any other query, ie searching works for the tokens `henry` `wellcome`, rather than filtering works for a concept identifier referring to the specific person.
 - Users at the search bar have a mix of the same problems - searching for "flu" just looks for works containing the token `flu` anywhere, rather than understanding that the user is more likely to be looking for works tagged with `influenza`, `flu`, `grippe`, etc. There might be an overlap in these results, but we can more clearly match their intention by disambiguating the concepts in their query and our works.
 - Many works have rich descriptions and notes entries, which contain mentions of what we're describing as concepts, but do not include them in the concept fields. This is particularly true for archive collections, which have no subjects but plenty of notes and text-heavy description.
-- We regularly see concepts with identifiers labelled with outdated language, which has been updated in the source which the identifier refers to. We don't have a functioning system for updating language, and suspect that instances of outdated language are often deleted rather than updated in place.
+- We regularly see concept labels containing outdated language. Often, these labels have been updated in the source which the identifier refers to. We don't have a functioning system for updating language, and suspect that instances of outdated language are often deleted rather than updated in place.
 
 ### Intended outcomes
 
