@@ -18,7 +18,7 @@
 | Description  | description         | ✅ |
 | CreatorName  | contributors        | ✅ |
 | Date         | production          | ✅ |
-| Language     | languages           | 🚧 |
+| Language     | languages           | In development |
 | Extent       | physicalDescription | ✅ |
 | UserWrapped6 | physicalDescription | ✅ |
 | Subject      | subjects            | ✅ |
