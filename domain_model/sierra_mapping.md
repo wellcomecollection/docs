@@ -11,11 +11,11 @@
 
 ## 20X-24X: Title and Title-Related
 
-| Sierra | API                         | Status |
-|:-------|:----------------------------|:------:|
-| 240    | alternativeTitles | ✅ |
-| 245    | title   | ✅ |
-| 246 [2nd ind. 6]         | lettering    | ✅ |
+| Sierra | API                             | Status |
+|:-------|:--------------------------------|:------:|
+| 240                  | alternativeTitles | ✅ |
+| 245                  | title             | ✅ |
+| 246 [2nd ind. 6]     | lettering         | ✅ |
 | 246 [2nd ind. not 6] | alternativeTitles | ✅ |
 
 ## 25X-28X: Edition, Imprint, Etc
@@ -37,7 +37,7 @@
 
 | Sierra | API  | Status |
 |:-------|:-----|:------:|
-| 440, 490, 830 | TBD    | 💡 |
+| 440, 490, 830 | TBD    | Future development |
 
 ## 5XX: Note
 
@@ -57,17 +57,17 @@
 | 518    | notes [time-place]      | ✅ |
 | 520    | description             | ✅ |
 | 524    | notes [citation]        | ✅ |
-| 530    | additionalForms         | 💡 |
+| 530    | additionalForms         | Future development |
 | 533    | notes [reproduction]    | ✅ |
 | 534    | notes [reproduction]    | ✅ |
 | 535    | notes [location]        | ✅ |
 | 536    | notes [funding]         | ✅ |
 | 540    | notes [terms-of-use]    | ✅ |
-| 541    | notes [acquisition]     | 💡 |
+| 541    | notes [acquisition]     | Future development |
 | 542    | notes [copyright]       | ✅ |
 | 545    | notes [biographical]    | ✅ |
 | 547    | notes [general]         | ✅ |
-| 561    | notes [ownership]       | 💡 |
+| 561    | notes [ownership]       | Future development |
 | 562    | notes [general]         | ✅ |
 | 563    | notes [binding]         | ✅ |
 | 581    | notes [publications]    | ✅ |
@@ -95,13 +95,13 @@
 | 700    | contributors [Person]       | ✅ |
 | 710    | contributors [Organisation] | ✅ |
 | 711    | contributors [Meeting]      | ✅ |
-| 740    | relatedTo                   | 💡 |
-| 752    | subjects                    | 💡 |
+| 740    | relatedTo                   | Future development |
+| 752    | subjects                    | Future development |
 
 ## 76X-78X: Linking Entry
 
 | Sierra | API             | Status |
 |:-------|:----------------|:------:|
-| 776    | additionalForms | 💡 |
-| 780    | continuedBy     | 💡 |
-| 785    | continues       | 💡 |
+| 776    | additionalForms | Future development |
+| 780    | continuedBy     | Future development |
+| 785    | continues       | Future development |
