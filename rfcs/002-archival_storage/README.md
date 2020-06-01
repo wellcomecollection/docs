@@ -164,7 +164,7 @@ Content-Type: application/json
     "type": "Location",
     "provider": {
       "type": "Provider",
-      "id": "aws-s3-standard"
+      "id": "amazon-s3"
     },
     "bucket": "source-bucket",
     "path": "source-path/source-bag.tar.gz"
@@ -221,7 +221,7 @@ Response:
     "type": "Location",
     "provider": {
       "type": "Provider",
-      "id": "aws-s3-standard"
+      "id": "amazon-s3"
     },
     "bucket": "source-bucket",
     "path": "source-path/source-bag.tar.gz"
@@ -273,7 +273,7 @@ Content-Type: application/json
     "type": "Location",
     "provider": {
       "type": "Provider",
-      "id": "aws-s3-standard"
+      "id": "amazon-s3"
     },
     "bucket": "source-bucket",
     "path": "source-path/source-bag.tar.gz"
@@ -559,8 +559,8 @@ Response:
     "type": "Location",
     "provider": {
       "type": "Provider",
-      "id": "aws-s3-ia",
-      "label": "AWS S3 - Infrequent Access"
+      "id": "amazon-s3",
+      "label": "Amazon S3"
     },
     "bucket": "bucketname",
     "path": "digitised/b24923333",
@@ -571,8 +571,8 @@ Response:
       "type": "Location",
       "provider": {
         "type": "Provider",
-        "id": "aws-s3-glacier",
-        "label": "AWS S3 - Glacier"
+        "id": "amazon-s3",
+        "label": "Amazon S3"
       },
       "bucket": "bucketname-replica",
       "path": "digitised/b24923333",
@@ -582,8 +582,8 @@ Response:
       "type": "Location",
       "provider": {
         "type": "Provider",
-        "id": "azure-blob-archive",
-        "label": "Azure Blob Storage - Archive"
+        "id": "azure-blob-storage",
+        "label": "Azure Blob Storage"
       },
       "bucket": "bucketname-replica",
       "path": "digitised/b24923333",
@@ -746,8 +746,8 @@ Response:
     "type": "Location",
     "provider": {
       "type": "Provider",
-      "id": "aws-s3-ia",
-      "label": "AWS S3 - Infrequent Access"
+      "id": "amazon-s3",
+      "label": "Amazon S3"
     },
     "bucket": "bucketname",
     "path": "born-digital/GC253_1046-a2870a2d-5111-403f-b092-45c569ef9476",
@@ -758,8 +758,8 @@ Response:
       "type": "Location",
       "provider": {
         "type": "Provider",
-        "id": "aws-s3-glacier",
-        "label": "AWS S3 - Glacier"
+        "id": "amazon-s3",
+        "label": "Amazon S3"
       },
       "bucket": "bucketname-replica",
       "path": "born-digital/GC253_1046-a2870a2d-5111-403f-b092-45c569ef9476",
