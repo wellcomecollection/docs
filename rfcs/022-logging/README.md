@@ -106,8 +106,7 @@ There are a few options for routing to Elasticsearch.
   - (con) Requires some log collector infrastructure and network configuration though centralised and with a single instance of the collector service.
   
   ![Firelens configuration](firelens.png)
-  
-  
+
 
 
 
