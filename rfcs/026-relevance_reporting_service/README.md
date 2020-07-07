@@ -42,13 +42,61 @@ Any test to help with this will need to be against our production data, as that 
 
 * https://docs.google.com/document/d/1aIbE4IAOZb1Cbyp9ei81HtZ5w98AVZHIrudP9RUG1Is/edit#heading=h.byr3zbqes7qg
 * https://wellcomecloud-my.sharepoint.com/:w:/g/personal/a_richmond_wellcome_ac_uk/EZ-5bvoQ76NCkIBDok_L0c0BaqsaFKFLN-J9KtnEprUsKw?e=lyzSmO
-* https://wellcomecloud-my.sharepoint.com/:w:/g/personal/a_richmond_wellcome_ac_uk/EZ-5bvoQ76NCkIBDok_L0c0BaqsaFKFLN-J9KtnEprUsKw?e=lyzSmO
+* https://app.gitbook.com/@wellcomecollection/s/catalogue/search/intentions-and-expectations
 
 ## Technical implementation
 
 The relevance service will be a lambda that can be triggered by services that have IAM permission to do so.
 
 The service can return a fail / pass as a response to the call, being useful for CI etc, and can store that report in S3 for dashboards.
+
+### Pseudo λ
+
+``` js
+const http = require('http');
+const {
+    esUrl
+} = process.env;
+/*
+  id: string
+  query:
+  {
+    "match": {
+        "data.title": "origin of species"
+    }
+  }
+*/
+const {
+    id,
+    query
+} = JSON.parse(event.body);
+
+// There should be loads more of these, and the queries would be more 
+const requests = [{
+    "id": "title_origin_of_species",
+    "request": {
+        "query": query
+    },
+    "ratings": [{
+        "_index": "works_prod"
+        "_id": "awfa9aty",
+        "rating": 0
+    }]
+}]
+
+const response = await http.get( `${esUrl}/works_prod/_rank_eval` , {
+    json: true,
+    body: {
+        requests
+    }
+})
+
+const report = parseEsRankEvalResponse(response)
+
+await saveReport(report)
+
+return report
+```
 
 ### Getting started
 
