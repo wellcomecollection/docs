@@ -32,6 +32,18 @@ Any test to help with this will need to be against our production data, as that 
 1. This will be run against Elastic's [ `rank_eval` ](https://www.elastic.co/guide/en/elasticsearch/reference/current/search-rank-eval.html) api
 1. We will report on the response of `rank_eval` response
 
+### Collection search-terms
+
+@alicerichmond is going through some rounds of qualitative research with internal people first, and working with them to go through some searches that they know should return certain results. There are a few documents about which we will distil into this<sup> `*` </sup>.
+
+@taceybadgerbrook is also working on analysing the quantitative search queries to help come up with this. [e.g.](https://github.com/wellcomecollection/catalogue/pull/634/files)
+
+<sup> `*` </sup> Documents to distil
+
+* https://docs.google.com/document/d/1aIbE4IAOZb1Cbyp9ei81HtZ5w98AVZHIrudP9RUG1Is/edit#heading=h.byr3zbqes7qg
+* https://wellcomecloud-my.sharepoint.com/:w:/g/personal/a_richmond_wellcome_ac_uk/EZ-5bvoQ76NCkIBDok_L0c0BaqsaFKFLN-J9KtnEprUsKw?e=lyzSmO
+* https://wellcomecloud-my.sharepoint.com/:w:/g/personal/a_richmond_wellcome_ac_uk/EZ-5bvoQ76NCkIBDok_L0c0BaqsaFKFLN-J9KtnEprUsKw?e=lyzSmO
+
 ## Technical implementation
 
 The relevance service will be a lambda that can be triggered by services that have IAM permission to do so.
