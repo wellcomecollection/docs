@@ -44,7 +44,7 @@ Any test to help with this will need to be against our production data, as that 
 * https://wellcomecloud-my.sharepoint.com/:w:/g/personal/a_richmond_wellcome_ac_uk/EZ-5bvoQ76NCkIBDok_L0c0BaqsaFKFLN-J9KtnEprUsKw?e=lyzSmO
 * https://app.gitbook.com/@wellcomecollection/s/catalogue/search/intentions-and-expectations
 
-## Technical implementation
+## Implementation
 
 The relevance service will be a lambda that can be triggered by services that have IAM permission to do so.
 
