@@ -19,3 +19,4 @@ Fortnightly updates about the work of the digital platform team.
 - [2020 June 5](20200605.md)
 - [2020 June 19](20200619.md)
 - [2020 July 03](20200703.md)
+- [2020 July 17](20200717.md)
