@@ -32,6 +32,13 @@ Any test to help with this will need to be against our production data, as that 
 1. This will be run against Elastic's [ `rank_eval` ](https://www.elastic.co/guide/en/elasticsearch/reference/current/search-rank-eval.html) api
 1. We will report on the response of `rank_eval` response
 
+To create the `rank_eval` test we will
+
+* Use the current research to fill in the search-queries and relevant documents
+* Release this to internal and external people
+* Use feedback from internal people to fill out the `rank_eval` tests
+* Repeat
+
 ### Collection search-terms
 
 @alicerichmond is going through some rounds of qualitative research with internal people first, and working with them to go through some searches that they know should return certain results. There are a few documents about which we will distil into this<sup> `*` </sup>.
