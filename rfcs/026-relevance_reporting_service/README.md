@@ -13,7 +13,7 @@ A way for us to be able to test and report on the efficacy of elastic-queries by
 
 ## Motivation
 
-We need to have and instil transparency and confidence in the way that our search relevancy works.
+We need to have confidence and instil transparency in the way that our search relevancy works.
 
 Any test to help with this will need to be against our production data, as that is exactly what people will be seeing.
 
