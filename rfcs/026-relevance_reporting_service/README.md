@@ -15,7 +15,7 @@ A way for us to be able to test and report on the efficacy of elastic-queries by
 
 We need to have confidence and instil transparency in the way that our search relevancy works.
 
-Any test to help with this will need to be against our production data, as that is exactly what people will be seeing.
+We should test using the same data people are seeing.
 
 ### Use cases
 
