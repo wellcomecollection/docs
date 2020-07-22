@@ -7,7 +7,7 @@
 | Level           | workType        |   ✅   |
 | RefNo           | identifiers     |   ✅   |
 | AltRefNo        | identifiers     |   ✅   |
-| AltRefNo        | referenceNumber |   ✅   |
+| AltRefNo        | referenceNumber | In development |
 | Bnumber         | identifiers     |   ✅   |
 | PreviousNumbers | identifiers     |   ✅   |
 
