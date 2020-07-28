@@ -27,11 +27,11 @@ These suggest 3 types of distinct, but loosely coupled, services:
 
 - **Inferrer**: A Python service that provides a synchronous API (most likely RESTful HTTP) that consumes whatever is needed to infer the new data, which it outputs. There can be multiple different inferrers.
 - **Inference Manager**: A Scala service that lives in the existing pipeline and contains "the usual" Wellcome message-passing, Akka, etc logic & libraries. It performs any work that is required by all of the inferrers, synchronously calls all of them and attaches the new data from them to the work/image (by populating a field) before passing it along. There is one inference manager for all the inferrers.
-- **Model Trainer**: A Python service that can consume records from the catalogue index in bulk in order to train a model, and outputs/stores a persistent representation of this model for an *inferrer* to use. There is one model trainer for each inferrer.
+- **Model Trainer**: A Python service that can consume records from the catalogue index in bulk in order to train a model, and outputs/stores a persistent representation of this model for an *inferrer* to use. There is **optionally** one model trainer for each inferrer.
 
 The usage of these services would look like this:
 
-![An architecture diagram for data science services](https://user-images.githubusercontent.com/4429247/76087593-631cc700-5fae-11ea-819f-3545e6dc7c65.png)
+![An architecture diagram for data science services](https://user-images.githubusercontent.com/4429247/88694368-5bde8d00-d0f8-11ea-8d0b-4b1c7687877b.png)
 
 #### Implementation details
 
