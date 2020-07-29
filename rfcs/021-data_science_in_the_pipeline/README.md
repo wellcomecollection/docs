@@ -2,7 +2,7 @@
 
 **Status:** 🏗 Draft 🚧
 
-**Last updated:** 2020/07/28
+**Last updated:** 2020/07/29
 
 ## Motivation
 
@@ -36,7 +36,7 @@ The usage of these services would look like this:
 #### Implementation details
 
 - The inferrers and inference manager exist in one task definition (and therefore on one host).
-- Non-trivial results of the shared work that the manager might perform (eg, images that it downloads and that are required by all of the inferrers) are stored as artifacts in an EBS volume attached to the host and mounted in both the manager and inferrer tasks. In this case, the request to the inferrers from the manager would include a local filesystem path to the artifacts.
+- Non-trivial results of the shared work that the manager might perform (eg, images that it downloads and that are required by all of the inferrers) are stored in EBS volumes attached to each host and mounted in both the manager and inferrer tasks. In this case, the request to the inferrers from the manager would include a local filesystem path to the files. As the EBS volumes just act as a shared cache they can delete on termination of the host instance.
 - The model trainer is run as a standalone one-off ECS task from a local script.
 - The inferrer loads the model from S3 when it starts. Inferrer instances will be short-lived (as they'll scale to zero when not in use) so triggering a restart or loading a new model by other means is not necessary.
 
