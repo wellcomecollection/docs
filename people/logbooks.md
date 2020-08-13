@@ -9,13 +9,13 @@ processes specifically.
 
 ## What are they used for
 
-### Your logbook
+### Your logbook
 
 * Memory fallability machines
 * Facilitate discussion in [1-1s](./1-1s.md)
 * A great reference when discussing promotions or pay raises
 
-### Other's logbooks
+### Other's logbooks
 
 * Useful in running through to give effective [feedback](./feedback)
 * A great chance to remind someone of something they might have left off
