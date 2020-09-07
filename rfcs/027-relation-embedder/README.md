@@ -1,8 +1,8 @@
-# RFC 026: Work Enricher
+# RFC 026: Relation Embedder
 
 ## Background
 
-Recently we have started ingesting archive data from Calm. An archive according to our model is a collection of works arranged hierarchically in a tree structure according to some path. For example, the works with paths `A`, `A/1`, `A/1/X`, `A/1/Y` and `A/2` would for the following tree:
+Recently we have started ingesting archive data from Calm. An archive according to our model is a collection of works arranged hierarchically in a tree structure according to some path. For example, the works with paths `A`, `A/1`, `A/1/X`, `A/1/Y` and `A/2` would form the following tree:
 
 ```
 A
@@ -39,19 +39,19 @@ Currently we calculate work relations dynamically on the server during a request
 
 We therefore need a method to generate relation data on works within the pipeline, in advance of indexing for the API.
 
-## Enricher
+## Relation embedder
 
-In order to include relation data on the work model itself it is clear there needs to be an additional stage of the pipeline which is able to query relationships between works, and include data from related works onto the work itself. This proposed name for this stage is the enricher.
+In order to include relation data on the work model itself it is clear there needs to be an additional stage of the pipeline which is able to query relationships between works, and include data from related works onto the work itself. This proposed name for this stage is the relation embedder.
 
-It is important that this stage takes place after the merger: if denormalisation happens before this stage the related data may be inconsistent with what exists on the work post merging. For this reason the enricher should exist near the end of the pipeline immediately preceding the ID minter.
+It is important that this stage takes place after the merger: if denormalisation happens before this stage the related data may be inconsistent with what exists on the work post merging. For this reason the relation embedder should exist near the end of the pipeline immediately preceding the ID minter.
 
-There are a few possible methods by which the enricher can query relationships between works:
+There are a few possible methods by which the relation embedder can query relationships between works:
 
-1) Assuming the merged works coming into the enricher are stored within some Elasticsearch index, the existing API code for querying on the archive path could be repurposed for this.
+1) Assuming the merged works coming into the relation embedder are stored within some Elasticsearch index, the existing API code for querying on the archive path could be repurposed for this.
 
-2) Before coming into the enricher we could build and store a directed graph representation of the archives in some data store, with each node being a work and the edges encoding relations. We will discuss this further in the [Graph Store](#graph-store) section.
+2) Before coming into the relation embedder we could build and store a directed graph representation of the archives in some data store, with each node being a work and the edges encoding relations. We will discuss this further in the [Graph Store](#graph-store) section.
 
-In either case, denormalisation of works within the enricher would consist of:
+In either case, denormalisation of works within the relation embedder would consist of:
 
 1. Fetching the relations for a given work
 2. Emitting a new work containing the relevant fields embedded (`parts`, `partOf`, `precededBy`, `succeededBy`)
@@ -72,7 +72,7 @@ Generally, for the insertion, update or removal of any given node, we need to up
 
 ## Commonalities with Other Pipeline Stages
 
-The matcher and merger stages have similar underlying functionality to the enricher. Abstractly these stages involve:
+The matcher and merger stages have similar underlying functionality to the relation embedder. Abstractly these stages involve:
 
 1) Receiving a work as input and applying domain knowledge to build a graph of connections to other works
 2) Using the input work and its graph to emit a new work at the output, including any required data from the relations
@@ -81,11 +81,11 @@ This points to a potential universal solution within the pipeline, such as using
 
 There are a few issues to bear in mind when considering how a shared solution would work:
 
-* Whilst stage 1 (currently the matcher) could potentially also involve analysis of archive relations, it is important as stated above that the denormalisation in the enricher takes place on a merged works to ensure data consistency. This indicates the merger and enricher stages being separate and accessing works from two separate works stores (unmerged and merged).
+* Whilst stage 1 (currently the matcher) could potentially also involve analysis of archive relations, it is important as stated above that the denormalisation in the relation embedder takes place on a merged works to ensure data consistency. This indicates the merger and relation embedder stages being separate and accessing works from two separate works stores (unmerged and merged).
 
 * The matcher currently uses a custom DynamoDB graph implementation which was built specifically for the purpose. This was never meant to be a general solution and a rewrite would likely need to be involved in the building of some common system.
 
-* The graph element of both the matcher and relations work are relatively similar, but the denormalisation stages (the enricher and the merger) have less parallels. For example, the input to the merger is currently a group of work IDs to be merged with the stage having no knowledge of the graph representation, unlike the enricher which is likely to receive single works and needs access to the graph.
+* The graph element of both the matcher and relations work are relatively similar, but the denormalisation stages (the relation embedder and the merger) have fewer parallels. For example, the input to the merger is currently a group of work IDs to be merged with the stage having no knowledge of the graph representation, unlike the relation embedder which is likely to receive single works and needs access to the graph.
 
 Besides from the use of graphs and similarities to the matcher and merger, another aspect worth mentioning is the fact that we will need another store for denormalised works in addition to a store for merged works. Having two Elasticsearch indices coupled to corresponding ingestors is a possible solution (one for the current index of merged works and adding an additional one for denormalised works). There have been some previous discussions about replacing the recorder VHS with an Elasticsearch index, so it might be a worthwhile time to consider how this would work in this context, as here we would introducing an Elasticsearch index which was not the sink of the pipeline but used as an intermediate store.
 
@@ -126,13 +126,13 @@ There are a number of graph and non graph stores we could use for storing relati
 
 ## Possible approach
 
-If it is agreed that we will require a separate enricher stage which is used to perform the denormalisation, and which is somewhat independent from the stage in the pipeline which performs any graph analysis, there is a possible 2 step approach. This involves first building a new enricher service that has access to the merged works Elastsearch index, and which uses the existing API code for querying for related works. Then at a later date we can transition it across to use the graph store.
+If it is agreed that we will require a separate relation embedder stage which is used to perform the denormalisation, and which is somewhat independent from the stage in the pipeline which performs any graph analysis, there is a possible 2 step approach. This involves first building a new relation embedder service that has access to the merged works Elastsearch index, and which uses the existing API code for querying for related works. Then at a later date we can transition it across to use the graph store.
 
 The initial architecture would look something like this:
 
 ![Pipeline architecture](./pipeline-architecture.png)
 
-With a small amount of abstraction we can make the enricher service not dependent on any particular method for retrieving related works, initially using Elasticsearch queries on paths and later updating to querying of some graph store:
+With a small amount of abstraction we can make the relation embedder service not dependent on any particular method for retrieving related works, initially using Elasticsearch queries on paths and later updating to querying of some graph store:
 
 ```scala
 case class RelatedWorks(
