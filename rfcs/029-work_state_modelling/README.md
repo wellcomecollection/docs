@@ -114,7 +114,7 @@ object IdentifierState {
   case class Unidentifiable() extends Minted with Unminted
 }
 
-/** Work contains the work itself. It is parameterised by it's state, meaning
+/** Work contains the work itself. It is parameterised by its state, meaning
   * the same type of Work can be in a number of possible states depending on
   * where in the pipeline it is. This allows us to easily add new types of work
   * (such as if Collection is decided to be a separate type to StandardWork),
