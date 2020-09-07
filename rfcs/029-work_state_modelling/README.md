@@ -117,7 +117,7 @@ object IdentifierState {
 /** Work contains the work itself. It is parameterised by it's state, meaning
   * the same type of Work can be in a number of possible states depending on
   * where in the pipeline it is. This allows us to easily add new types of work
-  * (such as if Collection is decided to be a seperate type to StandardWork),
+  * (such as if Collection is decided to be a separate type to StandardWork),
   * with the state of the work in the pipeline being an orthogonal concern.
   */
 sealed trait Work[State <: WorkState] {
