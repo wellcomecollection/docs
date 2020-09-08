@@ -38,7 +38,7 @@
 | PublnNote              | notes [publications] |   ✅   |
 | UserWrapped4           | notes [finding-aids] |   ✅   |
 | Copyright              | notes [copyright]    |   ✅   |
-| ReproductionConditions | notes [terms-of-use] |   ✅   |
+| ReproductionConditions | notes [terms-of-use] |   To be removed by https://github.com/wellcomecollection/platform/issues/4773 |
 
 ## Access conditions
 
