@@ -31,12 +31,14 @@ Feedback is often given to reinforce a behaviour, or to change a behavior.
 Factual observations of a person's actions.
 
 **Reinforcement e.g:** You explained the piece of work you were starting clearly and transparently
+
 **Change e.g:** You worked on alone for a week on the new piece of work you started
 
 ### Impact
 How this affected the product or people involved
 
 **Reinforcement e.g:** Valuable contributions were made from some teams, all parties felt included, and the end result needed little refinement.
+
 **Change e.g:** Some contributions from the other teams weren't included and we had to make a significant changes to the original implementation. It made other teams feel less involved in the outcome of the product.
 
 ## Challenge
@@ -44,6 +46,7 @@ How this affected the product or people involved
 How we move towards changing or facilitating this to have a more favourable outcome?
 
 **Reinforcement e.g:** Could you share how you did this with the rest of the team?
+
 **Change e.g:** Was there a reason you started without including others?
 
 ---
