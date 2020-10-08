@@ -110,15 +110,16 @@ The ingestor should use greater than versioning instead of greater or equal.
  
 The updated timestamp needs to be recorded in the adapter in different ways depending on the source:
 - Sierra: the sierra API already provides a timestamp with down to the second granularity 
-for each update and the Sierra adapter already stores it in the Sierra VHS. The sierra transfomer can 
+for each update. The Sierra adapter already stores it in the Sierra VHS. The sierra transfomer can 
 read this value and copy it into the work. 
-- Miro: Miro data doesn't change so can just set it to zero in the transformer
+- Miro: Miro data doesn't change so we can just set it to zero in the transformer
 - Calm: Calm data has a `retrievedAt` field in the Calm VHS. It comes from the HTTP header 
-of the response from the Calm API. Because of this a lot of Calm records have the same timestamp
- of when the first harvest was done. This could cause consistency issues if none of the works in 
- the group has a more recent updated date because all of the updates sent by the merger will have 
- the same version. 
+of the response from the Calm API and it just represents when the response was sent from the server. 
+Because of this a lot of Calm records have the same timestamp of when the first harvest was done. 
+This could cause consistency issues if none of the works in the group has a more recent updated date 
+because all of the updates sent by the merger will have the same version. 
  There is also a `Modified` field which indicates when the record was modified in Calm, but it has a 
  down to the day granularity. The proposal is to use `retrievedAt` and revisit if we find issues.
 - METS: there is currently no info about when a bag was created/updated in the adapter store. 
-However, this is provided by the storage service in the `createdDate` field in the bag response, so we can change the adapter to read and store this. This requires an adapter change and a VHS migration
+However, this is provided by the storage service in the `createdDate` field in the bag response, 
+so we can change the adapter to read and store this. This requires an adapter change and a VHS migration
