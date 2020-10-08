@@ -121,5 +121,4 @@ of the response from the Calm API. Because of this a lot of Calm records have th
  There is also a `Modified` field which indicates when the record was modified in Calm, but it has a 
  down to the day granularity. The proposal is to use `retrievedAt` and revisit if we find issues.
 - METS: there is currently no info about when a bag was created/updated in the adapter store. 
-We have to modify the adapter and migrate the store to add `createdDate` from the bag response 
-of the storage service
+However, this is provided by the storage service in the `createdDate` field in the bag response, so we can change the adapter to read and store this. This requires an adapter change and a VHS migration
