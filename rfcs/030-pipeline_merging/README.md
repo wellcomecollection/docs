@@ -1,7 +1,21 @@
 ## Pipeline merging
-### What should the pipeline be doing?
 
-A few cases to remind ourselves what the behaviour of the whole pipeline should be when merging things:
+### What is merging and why do we need it
+
+The pipeline feeds from different sources. Records from different sources may contain information relating 
+to other records withing the same source or in a different one. We want to present this information in the 
+catalogue API in a unified view to present the user with as much context as we can and to improve discoverability. 
+
+To achieve this the pipeline merges works by:
+ - extracting links to other works from the source data
+ - constructing a graph from those links and identifying sets of connected works in the graph
+ - selecting one of a set of connected works as target
+ - adding relevant information to the target from the other works in the set
+ - redirecting all the others works in the set to the target
+
+### What happens when merging?
+
+These are a few cases that may happen when merging:
 
 - A:1 -> B:1 if A:1 is the canonical results in:
     - A:1 merged with B:1
@@ -106,7 +120,8 @@ The solution suggested by Nic is that we pass through in the work a field with t
 of the last update.
 The merger should then use the maximum of the timestamps of all works sent by the matcher 
 as the version for each of the works.
-The ingestor should use greater than versioning instead of greater or equal.
+The ingestor doesn't need to use greater than or equal to versioning anymore, but we will leave it so that 
+we don't necessarily have to reindex in a new index if we change transformer rules.
  
 The updated timestamp needs to be recorded in the adapter in different ways depending on the source:
 - Sierra: the sierra API already provides a timestamp with down to the second granularity 
@@ -114,12 +129,9 @@ for each update. The Sierra adapter already stores it in the Sierra VHS. The sie
 read this value and copy it into the work. 
 - Miro: Miro data doesn't change so we can just set it to zero in the transformer
 - Calm: Calm data has a `retrievedAt` field in the Calm VHS. It comes from the HTTP header 
-of the response from the Calm API and it just represents when the response was sent from the server. 
-Because of this a lot of Calm records have the same timestamp of when the first harvest was done. 
-This could cause consistency issues if none of the works in the group has a more recent updated date 
-because all of the updates sent by the merger will have the same version. 
+of the response from the Calm API and it just represents when the response was sent from the server.  
  There is also a `Modified` field which indicates when the record was modified in Calm, but it has a 
- down to the day granularity. The proposal is to use `retrievedAt` and revisit if we find issues.
+ down to the day granularity. Therefore, we will use `retrievedAt`.
 - METS: there is currently no info about when a bag was created/updated in the adapter store. 
 However, this is provided by the storage service in the `createdDate` field in the bag response, 
 so we can change the adapter to read and store this. This requires an adapter change and a VHS migration
