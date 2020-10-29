@@ -62,6 +62,7 @@
 | 508    | notes [credits]         | ✅ |
 | 510    | notes [publications]    | ✅ |
 | 511    | notes [credits]         | ✅ |
+| 514    | notes [lettering]       | In development |
 | 518    | notes [time-place]      | ✅ |
 | 520    | description             | ✅ |
 | 524    | notes [citation]        | ✅ |
@@ -74,6 +75,7 @@
 | 541    | notes [acquisition]     | Future development |
 | 542    | notes [copyright]       | ✅ |
 | 545    | notes [biographical]    | ✅ |
+| 546    | notes [language]        | In development |
 | 547    | notes [general]         | ✅ |
 | 561    | notes [ownership]       | Future development |
 | 562    | notes [general]         | ✅ |
@@ -81,6 +83,7 @@
 | 581    | notes [publications]    | ✅ |
 | 585    | notes [exhibitions]     | ✅ |
 | 586    | notes [awards]          | ✅ |
+| 591    | notes [general]         | In development |
 | 593    | notes [copyright]       | ✅ |
 
 ## 6XX: Subject Access
@@ -98,13 +101,14 @@
 
 ## 70X-75X: Added Entry
 
-| Sierra | API                         | Status |
-|:-------|:----------------------------|:------:|
-| 700    | contributors [Person]       | ✅ |
-| 710    | contributors [Organisation] | ✅ |
-| 711    | contributors [Meeting]      | ✅ |
-| 740    | relatedTo                   | Future development |
-| 752    | subjects                    | Future development |
+| Sierra | API                            | Status |
+|:-------|:-------------------------------|:------:|
+| 700    | contributors [Person]          | ✅ |
+| 710    | contributors [Organisation]    | ✅ |
+| 711    | contributors [Meeting]         | ✅ |
+| 740    | relatedTo                      | Future development |
+| 752    | subjects                       | Future development |
+| 759    | identifiers [wellcome-digcode] | In development |
 
 ## 76X-78X: Linking Entry
 
