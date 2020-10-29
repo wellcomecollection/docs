@@ -2,9 +2,11 @@
 
 ## 01X-09X: Numbers and Codes
 
-| Sierra | API             | Status |
-|:-------|:----------------|:------:|
-| 046    | languages       | In development |
+| Sierra | API                | Status |
+|:-------|:-------------------|:------:|
+| 020    | identifiers [isbn] | ✅ |
+| 022    | identifiers [issn] | In development |
+| 046    | languages          | In development |
 
 ## 1XX: Main Entry
 
