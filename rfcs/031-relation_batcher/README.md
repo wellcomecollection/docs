@@ -50,4 +50,43 @@ There are 3583 works here which are siblings of eachother, and when any one of t
 
 ## Proposed Solution
 
+The proposed solution is to have a relation embedder pipeline made of 3 services: `router`, a `batcher` and 
+the `relation_embedder`. 
+
+### Router
+The `router` takes a work id, looks it up in the `pipeline_storage` and checks if it's part of an 
+archive (ie. has a `collectionPath` field). 
+
+If it's not, it sends it straight to the `id_minter_works`. 
+
+If it is, it sends the value of `collectionPath` to the `batcher`
+
+### Batcher
+The `batcher` is deployed as a single task and runs at intervals of fixed duration (say, 30  minutes). 
+At every run, it reads all messages in the queue at that moment. 
+Assuming a graph shape like this:
+```
+A
+|-----
+|    |
+B    C
+|    |-----
+|    |    |
+D    E    F
+|
+G
+|
+H
+```
+
+and assuming the queue contains `H`, `D`, `E` and `F` the `batcher` would:
+
+- determine the set parent of each of the messages in the queue (ie. in the example `G`, `B`, `C`)
+- filter out nodes which are descendents from other ones (i,e, `G` as it is a descendent of `B`) 
+- send the remaining to the `relation_embedder` (`B` and `C` )
+
+### Relation embedder
+The `relation_embedder` receives `collectionPath`s as input from the `batcher` instead of work ids. 
+It is unchanged in every other aspect.
+
 ## Potential Issues
