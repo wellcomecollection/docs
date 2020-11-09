@@ -85,8 +85,37 @@ and assuming the queue contains `H`, `D`, `E` and `F` the `batcher` would:
 - filter out nodes which are descendents from other ones (i,e, `G` as it is a descendent of `B`) 
 - send the remaining to the `relation_embedder` (`B` and `C` )
 
+In the example above of this archive tree:
+```
+MS9225
+|
+|---
+|  |
+1  2
+   |-------------
+   |  |  |      |
+   1  2  3 ... 3583
+```
+
+in the best case scenario where all works in this archive are in the queue at the same time and
+the `batcher` sends only one work - `MS9225` - to the `relation_embedder`, minimizing the amount of work it has to do.
+Even in a slightly worse scenario where they don't all end up in the same batch, if the interval is big
+ enough so that it's likely that a significant proportion af them are in the same batch, this drasticxally reduces the 
+ amount of messages sent to the `relation_embedder`.
+
 ### Relation embedder
 The `relation_embedder` receives `collectionPath`s as input from the `batcher` instead of work ids. 
 It is unchanged in every other aspect.
 
 ## Potential Issues
+
+One issue is that we introduce a delay in processing updates to works in an archive. We can tweak the `batcher` 
+interval to make this less of an issue, but the more we decrease the delay in the `batcher` the more we make the 
+`relation_embedder` do unnecessary work, which in turn increases delay again.
+One possible solution could be to make the interval duration dynamic, so that it's big while there are many messages
+ in flight, but it's small if there are not many messages. This could decrease latency for updates, 
+ while retaining efficiency advantages during a reindex.
+ 
+Also, it's worth mentioning that currently, only 1/6th of works are in an archive, so the majority of 
+works will probably be sped up by the fact that they can bypass
+ the relation_embedder stage entirely. 
