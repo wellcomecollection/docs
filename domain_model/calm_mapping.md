@@ -34,6 +34,7 @@
 | Acquisition            | notes [acquisition]  |   ✅   |
 | Appraisal              | notes [appraisal]    |   ✅   |
 | Accruals               | notes [accruals]     |   ✅   |
+| Language               | notes [language]     |   In development   |
 | RelatedMaterial        | notes [related]      |   ✅   |
 | PublnNote              | notes [publications] |   ✅   |
 | UserWrapped4           | notes [finding-aids] |   ✅   |
