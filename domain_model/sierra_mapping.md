@@ -5,7 +5,7 @@
 | Sierra | API                | Status |
 |:-------|:-------------------|:------:|
 | 020    | identifiers [isbn] | ✅ |
-| 022    | identifiers [issn] | In development |
+| 022    | identifiers [issn] | ✅ |
 | 046    | languages          | In development |
 
 ## 1XX: Main Entry
@@ -62,7 +62,7 @@
 | 508    | notes [credits]         | ✅ |
 | 510    | notes [publications]    | ✅ |
 | 511    | notes [credits]         | ✅ |
-| 514    | notes [lettering]       | In development |
+| 514    | notes [lettering]       | ✅ |
 | 518    | notes [time-place]      | ✅ |
 | 520    | description             | ✅ |
 | 524    | notes [citation]        | ✅ |
@@ -75,7 +75,7 @@
 | 541    | notes [acquisition]     | Future development |
 | 542    | notes [copyright]       | ✅ |
 | 545    | notes [biographical]    | ✅ |
-| 546    | notes [language]        | In development |
+| 546    | notes [language]        | ✅ |
 | 547    | notes [general]         | ✅ |
 | 561    | notes [ownership]       | Future development |
 | 562    | notes [general]         | ✅ |
@@ -83,7 +83,7 @@
 | 581    | notes [publications]    | ✅ |
 | 585    | notes [exhibitions]     | ✅ |
 | 586    | notes [awards]          | ✅ |
-| 591    | notes [general]         | In development |
+| 591    | notes [general]         | ✅ |
 | 593    | notes [copyright]       | ✅ |
 
 ## 6XX: Subject Access
@@ -108,7 +108,7 @@
 | 711    | contributors [Meeting]         | ✅ |
 | 740    | relatedTo                      | Future development |
 | 752    | subjects                       | Future development |
-| 759    | identifiers [wellcome-digcode] | In development |
+| 759    | identifiers [wellcome-digcode] | ✅ |
 
 ## 76X-78X: Linking Entry
 
