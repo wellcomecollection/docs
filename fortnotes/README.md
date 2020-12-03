@@ -27,3 +27,4 @@ Fortnightly updates about the work of the digital platform team.
 - [2020 September 25](20200925.md)
 - [2020 October 9](20201009.md)
 - [2020 October 23](20201023.md)
+- [2020 December 04](20201104.md)
