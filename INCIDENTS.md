@@ -17,7 +17,10 @@ An incident must be worked on as soon as possible to mitigate loss of service to
 
 An potential incident might be reported in lots of ways (tweet from a user, report from a developer) but should be funneled to a delivery manager to assess the damage and decide whether to call the issue an "incident" or prioritise work via other channels.
 
-There will be situations where it is obvious that a situation needs to be delat with immediately and doesn't need "approval" by a delivery manager to be called an incident, in that situation ensure a delivery manager is informed as part of inititiating an incident.
+There are some situations where a person decides that it is best to initiate the protocol themselves without a delivery manager at first. When this happens, ensure that the delivery manager is informed that this has happened. Some examples of where this might happen
+
+* The incident is small enough to get a rapid fix out
+* A delivery manager is unavailable
 
 ## Roles
 
