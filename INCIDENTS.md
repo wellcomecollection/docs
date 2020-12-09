@@ -3,13 +3,20 @@
 
 ## What's an incident?
 
-An incident is defined here as a severe immediate or short-term potential degredation in the user-facing performance of our services.
+An incident is defined as a severe immediate or short-term potential degredation in the user-facing performance of our services.
+
+When something that looks like it's a problem comes up ask yourself:
+
+- Who and how many people are affected?
+- Will this problem get worse if not attended to? e.g. 
+- Are there downstream dependencies that will be affected?
 
 Some examples might be:
 
 - Traffic to `wellcomecollection.org` or some part of the site not being served as expected, e.g. "Whats on?" being unavailable or incorrect
 - Search APIs being unavailable or serving incorrect data
 - A security compromise such as credentials being exposed on the public internet.
+- A service showing repeated performance degredation, that might fall over if not looked at
 
 An incident must be worked on as soon as possible to mitigate loss of service to users and minimise reputational damage.
 
@@ -28,13 +35,17 @@ There are some situations where a person decides that it is best to initiate the
 
 When it's clear an incident has occured the person responsible is the most senior developer who is available to respond. Who that is can be worked out via Slack in the #wc-platform channel. This person is now the "incident lead" until they pass that role on explicitly to someone else. It is not expected that the most senior developer lead on all incidents, but rather the role should be handed to the person best placed to lead on a solution.
 
-The incident lead should announce in #wc-platform that an incident has occured, ensuring that the relevant delivery manager is aware of the situation   (and agrees to continue where appropriate). A new Slack channel should be created for that incident, started with description of the problem and what is known at that time.
+The incident lead should announce in #wc-platform that an incident has occured, ensuring that the relevant delivery manager is aware of the situation (and agrees to continue where appropriate). A new Slack channel should be created for that incident, started with description of the problem and what is known at that time.
 
 The incident lead should pull in whoever they need to understand and resolve the problem. All those involved in resolving the incident should report their progress in the shared incident channel. When someone is no longer able to assist or has stopped helping that should also be made clear.
 
 ### Supporting colleague
 
-If an incident lead requests your help to resolve an issue, please assist as required reporting your progress in the shared Slack channel. If you are unable to assist or are no longer working on the problem please also make that clear.
+If an incident lead requests your help to resolve an issue, please assist as required reporting your progress in the shared Slack channel. 
+
+If you are unable to assist or are no longer working on the problem please also make that clear. 
+
+Offers of help should be directed to the incident lead.
 
 ### Delivery manager
 
