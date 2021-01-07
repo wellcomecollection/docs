@@ -2,8 +2,6 @@
 
 Last updated: 29/06/20
 
----
-
 There are various places we deal with secrets in the platform.
 
 ## AWS Credentials
@@ -12,7 +10,7 @@ Wellcome Collection AWS accounts are part of the wider Wellcome Trust AWS Organi
 
 ### Root accounts
 
-Root accounts require MFA access, credentials are stored in Password Manager Pro, and accounts described in Confluence. This service is only accessible to authorised users within the Wellcome network (or with Global Protect). 
+Root accounts require MFA access, credentials are stored in Password Manager Pro, and accounts described in Confluence. This service is only accessible to authorised users within the Wellcome network \(or with Global Protect\).
 
 All root accounts require use of the hardware MFA key stored within a firesafe on Wellcome premises.
 
@@ -30,9 +28,9 @@ Further information is available in the [platform-infrastructure repository](htt
 
 ### Machine accounts
 
-Where a service outside of AWS requires some access to Wellcome Collection AWS resources it is acceptable to provision an IAM user to do so. 
+Where a service outside of AWS requires some access to Wellcome Collection AWS resources it is acceptable to provision an IAM user to do so.
 
-Permissions provided to IAM users should follow the [principle of least privilege](https://en.wikipedia.org/wiki/Principle_of_least_privilege). 
+Permissions provided to IAM users should follow the [principle of least privilege](https://en.wikipedia.org/wiki/Principle_of_least_privilege).
 
 IAM users and their roles / permissions must always be provisioned in terraform.
 
@@ -50,8 +48,9 @@ There is currently not an approved mechanism for distributing SSH keys. These ar
 
 ECS tasks should load secrets from [AWS SecretsManager via SSM](https://docs.aws.amazon.com/systems-manager/latest/userguide/integration-ps-secretsmanager.html).
 
-You should use the provided [container_definition](https://github.com/wellcomecollection/terraform-aws-ecs-service/tree/v2.6.3/modules/container_definition) terraform modules to facilitate this.
+You should use the provided [container\_definition](https://github.com/wellcomecollection/terraform-aws-ecs-service/tree/v2.6.3/modules/container_definition) terraform modules to facilitate this.
 
 ## Terraform
 
 Terraform variables should be loaded from [SSM Parameter store](https://docs.aws.amazon.com/systems-manager/latest/userguide/systems-manager-parameter-store.html), _not a .tfvars file_. Secrets should never be stored in terraform state but referenced via a [SecretsManager](https://aws.amazon.com/secrets-manager/) path.
+

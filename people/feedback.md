@@ -8,16 +8,13 @@ It promotes sharing of ideas on how to maintain and develop a shared understandi
 
 It is an integral part of any iteratively improving system - including products, processes, and people.
 
----
-
 ## Where will feedback be used
 
 Feedack will be used
+
 * To discuss anything that has come up between 1:1s 
 * To facilitate running through and creating PDRs each quarter
 * As evidence for promotion applications
-
----
 
 ## In what format do we collect feedback
 
@@ -28,6 +25,7 @@ We should be thinking about both what was achieved and how it was achieved.
 Feedback is often given to reinforce a behaviour, or to change a behavior.
 
 ### Behaviours / observations
+
 Factual observations of a person's actions.
 
 **Reinforcement e.g:** You explained the piece of work you were starting clearly and transparently
@@ -35,6 +33,7 @@ Factual observations of a person's actions.
 **Change e.g:** You worked on alone for a week on the new piece of work you started
 
 ### Impact
+
 How this affected the product or people involved
 
 **Reinforcement e.g:** Valuable contributions were made from some teams, all parties felt included, and the end result needed little refinement.
@@ -48,8 +47,6 @@ How we move towards changing or facilitating this to have a more favourable outc
 **Reinforcement e.g:** Could you share how you did this with the rest of the team?
 
 **Change e.g:** Was there a reason you started without including others?
-
----
 
 ## What do we collect feedback on?
 
@@ -77,14 +74,11 @@ Areas that feedback is useful to help a person improve are:
 
 * How are you impacting those around you?
 
----
-
 ## When do we go through the feedback
 
 As timely as possible making the feedback as easy as possible to act and respond to, but with regards to the fact that receiving feedback too often will cause a numbness to it, probably reduce the quality of it, and miss the opportunity to see patterns forming.
 
 This will be initially be done every month, or in the context of fortnightly 1:1s, every second occurrence.
 
----
-
 > [Any maturity model, like any model, is a simplification: wrong but hopefully useful.](https://martinfowler.com/bliki/MaturityModel.html)
+

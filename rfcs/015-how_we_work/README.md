@@ -12,10 +12,9 @@ This is intended to be a living document and will not represent _everything all 
 
 ### Areas
 
-- Objectives and projects
-- Pull requests
-- Pairing
-- [Code reviews](code_reviews.md)
-- [Shared libraries](shared_libraries.md)
-
+* Objectives and projects
+* Pull requests
+* Pairing
+* [Code reviews](code_reviews.md)
+* [Shared libraries](shared_libraries.md)
 
