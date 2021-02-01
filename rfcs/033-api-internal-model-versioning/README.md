@@ -13,8 +13,8 @@ can deploy the API and a reindex can take a few hours.
 ## Problem
 
 This means that:
--  If there is a change to the internal model and a susequent change to the API that is unrelated to the internal model change
-   (i.e. a chnage on search queries or on display serialization), the change to the API cannot be deployed until a reindex
+-  If there is a change to the internal model and a subsequent change to the API that is unrelated to the internal model change
+   (i.e. a change on search queries or on display serialization), the change to the API cannot be deployed until a reindex
    has finished successfully because of the internal model dependency.
 
 - If there are problems in the pipeline that delay a reindex, that means a deploy of the API is potentially delayed too.
