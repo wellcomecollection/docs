@@ -119,3 +119,15 @@ These are the types of location our model needs to support:
 
     If it's a URL with subscription access, users can only view the journal by accessing a URL like `https://{proxyname}.catalogue.wellcomelibrary.org` and logging in to their Library account.
     This means we need an access status of `login-required`, although this isn't explicitly communicated in the holdings records -- we'd have to infer it from the URL.
+
+*   **On exhibition.**
+
+    This should include the *name of the exhibition* and the *due date* when the item will be returning to the library.
+
+    For an example of this, see <https://wellcomecollection.org/works/azrhju85>.
+    There might be a free-form text description that lives separately in the "notes" field.
+
+There are a number of other infrequently used location codes (e.g. "offsite", "at digitisation", "Rare Materials Room") that we currently present in the API.
+We'll need to continue to support these in some form.
+
+(See included spreadsheets that tally the locations from a recent snapshot.)
