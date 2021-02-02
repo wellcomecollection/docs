@@ -20,7 +20,7 @@ The deletion watcher will consist of:
 
 The lambda will place a message on the reindexer queue requesting a "reindex" of Calm records to be sent to the worker. It will be triggered by a scheduled Cloudwatch event or manually. By default it will request the full source scan but in the case of a manual trigger it will be possible to request specific IDs, which will be useful in the case of expediting known deletions.
 
-The worker will consume records and check for their existence in the Calm API. If the record has been deleted (is no longer present) then it will update the VHS entry to flag the deletion. 
+The worker will consume records, filter out those that are already flagged as deleted, and check for the existence of the rest in the Calm API. If the record has been deleted (is no longer present) then it will update the VHS entry to flag the deletion. The deletion flag will live in the DynamoDB record so that the flag can be checked without fetching the object from S3.
 
 The calm transformer will check for the presence of the deletion flag in the source data and create `Deleted` works as appropriate.
 
