@@ -38,6 +38,8 @@ At this point we could iterate through either the results or the record IDs to f
 
 Perhaps unsurprisingly, this is a problem that has been considered [at length](https://arxiv.org/pdf/1902.06002.pdf) in the literature and indeed is particularly relevant at the moment - for example, in October [Mutesa et al (2020)](https://www.nature.com/articles/s41586-020-2885-5) described a strategy for finding positive SARS-CoV-2 tests in individuals by pooled testing across a population. Our testing tool (a SOAP API rather than a PCR test) can tell us how many deleted items there are in a given set, so we can use a simple algorithm by [Hwang (1972)](https://www.jstor.org/stable/pdf/2284447.pdf?casa_token=d7hvCvhjYyQAAAAA:zr0BQ_BVfaBPezuV5P1RlFyDO1Uo1ZMLgMGi9fXCddGcrjj8GPxc9M2jn6CBzs1fV8GT8Nbjfwj_w68RV8imdWN8SchyMahjxBwF8qDM_j90sSedVg) to find the deleted works in fewer requests provided that the number of deleted works is less than `(N + 2)/2`.
 
+Note: I have verified that the Calm API is happy to take requests for batches of IDs up to (and probably beyond) a size of 1000.
+
 ## Questions & potential issues
 
 - Are we really 100% sure that polling for deletions is the only way to detect them?
