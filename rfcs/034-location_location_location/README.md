@@ -138,7 +138,6 @@ These are the types of location our model needs to support:
     Do we need to expose this information for the requesting service?
 
     -   Can something be requested faster if it's stored on-site?
-    -   Does the requesting service need to know the location of something when it tells Sierra "please ask somebody to fetch this item", or can it just provide Sierra the item ID?
 
 *   **A standalone IIIF image.**
 
