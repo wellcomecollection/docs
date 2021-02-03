@@ -102,13 +102,19 @@ A digitised item (a IIIF Presentation location):
 
 ## What should a location tell you?
 
-When somebody looks at an item, they want to know two things about the location:
+When somebody looks at an item, here's what they want to know about location:
 
 *   **Am I allowed to see it?**
     This is encoded by the *access conditions* field, which includes an *access status* (drawn from a fixed vocabulary: open, closed, requires-permission, etc.) and an *access description* (free-text, written by cataloguers).
 
 *   **If I'm allowed to see it, where can I find it?**
     For example: where it sits on the physical shelves within the library, or a particular URL, or a IIIF resource.
+
+*   **If I'm allowed to see it, can I use it?**
+    This is the *license* on the item.
+
+    Note: Our current model only supports a license on digital locations.
+    Is this correct, or do we need to support licenses on physical locations also?
 
 We need to support filtering and aggregating by location.
 For example, users should be able to find all the material that's openly available online (if they're working remotely), or all the material in the library (if they're in the building).
