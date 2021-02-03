@@ -19,7 +19,7 @@ We're not planning to change the Item model; we want to consider if the Location
 <details>
 <summary>Examples of physical and digital locations in the existing model</summary>
 
-Physical location:
+Papers in the closed stores (a physical location):
 
 ```json
 {
@@ -44,7 +44,7 @@ Physical location:
 }
 ```
 
-  Digital location:
+A single Miro image (a IIIF image location):
 
 ```json
 {
@@ -62,6 +62,36 @@ Physical location:
     "type": "License"
   },
   "accessConditions": [],
+  "type": "DigitalLocation"
+}
+```
+
+A digitised item (a IIIF Presentation location):
+
+```json
+{
+  "locationType": {
+    "id": "iiif-presentation",
+    "label": "IIIF Presentation API",
+    "type": "LocationType"
+  },
+  "url": "https://wellcomelibrary.org/iiif/b22398752/manifest",
+  "license": {
+    "id": "pdm",
+    "label": "Public Domain Mark",
+    "url": "https://creativecommons.org/share-your-work/public-domain/pdm/",
+    "type": "License"
+  },
+  "accessConditions": [
+    {
+      "status": {
+        "id": "open",
+        "label": "Open",
+        "type": "AccessStatus"
+      },
+      "type": "AccessCondition"
+    }
+  ],
   "type": "DigitalLocation"
 }
 ```
