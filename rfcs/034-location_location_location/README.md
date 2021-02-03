@@ -137,7 +137,9 @@ These are the types of location our model needs to support:
 
     Do we need to expose this information for the requesting service?
 
-    -   Can something be requested faster if it's stored on-site?
+    -   We don't need to expose the full detail of our closed stores, but do we want to expose the difference between onsite/offsite?
+        The latter will take longer to retrieve, and may require a manual request to Library Enquiries.
+        Is this something that should be exposed by the Catalogue API, or only by the Requesting service?
 
 *   **A standalone IIIF image.**
 
