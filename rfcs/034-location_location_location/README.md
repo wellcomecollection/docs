@@ -117,8 +117,12 @@ These are the types of location our model needs to support:
     For example, a journal with online access.
     This should include a *URL* (to access the resource), and optional *link text* (e.g. View this e-book).
 
-    If it's a URL with subscription access, users can only view the journal by accessing a URL like `https://{proxyname}.catalogue.wellcomelibrary.org` and logging in to their Library account.
-    This means we need an access status of `login-required`, although this isn't explicitly communicated in the holdings records -- we'd have to infer it from the URL.
+    If it's a journal to which Wellcome subscribes, access is IP-restricted.
+    This requires using a proxy URL, which is of the form `https://{proxyname}.catalogue.wellcomelibrary.org`.
+    How is the journal accessed?
+
+    *   If users are in our building, they don't need to log in
+    *   If users are off-site, they need to log in to their Library account to use the proxy
 
 *   **On exhibition.**
 
