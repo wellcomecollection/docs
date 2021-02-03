@@ -12,7 +12,7 @@ Please check if the information contained is accurate and complete.
 
 
 
-## The existing approach
+## The existing model
 
 The Catalogue API contains *Works*, and Works contain *Items*.
 In turn, each Item can have *Locations*, which tell the user how they can get the item.
@@ -174,3 +174,45 @@ There are a number of other infrequently used location codes (e.g. "offsite", "a
 We'll need to continue to support these in some form.
 
 (See included spreadsheets that tally the locations from a recent snapshot.)
+
+
+
+## The existing transformation
+
+This section explains how we create locations in the current version of the Catalogue API, as of commit 885a26d in the catalogue repo.
+
+Miro images:
+
+*   We create a DigitalLocation with location type `iiif-image`.
+*   The URL points to `iiif.wellcomecollection.org`, and uses the Miro image number (from the `image_no_calc` field in the Miro record)
+*   The credit line is based on the value in the `image_credit_line` field
+*   The license is based on the value in the `image_use_restrictions` field
+
+Calm records:
+
+*   We create a PhysicalLocation with location type `scmac` (Closed stores Arch. & MSS)
+*   We create access conditions based on the `AccessStatus` and `AccessConditions` fields.
+    Additionally, we use the `ClosedUntil` and `UserDate1` fields to determine when a given set of access conditions end (if appropriate).
+
+Digitised items from METS:
+
+*   We create a digital location with location type `iiif-presentation`.
+*   The URL points to the IIIF manifest on `wellcomelibrary.org`.
+*   The license, access status and access conditions are drawn from the METS XML:
+
+    ```xml
+    <mods:accessCondition type="dz">CC-BY-NC</mods:accessCondition>
+    <mods:accessCondition type="status">Open</mods:accessCondition>
+    <mods:accessCondition type="usage">Some terms</mods:accessCondition>
+    ```
+
+Bibs and items from Sierra:
+
+*   We create a physical location whose location type comes from the `"location"` field on the Sierra API response for the item.
+*   The access conditions are based on the varfields with MARC tag 506:
+
+    -   If the first indicator is 0, the access status is "Open"
+    -   We look at subfield $a for a free-text description of the access conditions
+    -   We look at subfield $f for the standardised open/closed/restricted terminology
+
+    Note: if these three values are inconsistent, we do not set an AccessStatus from our controlled vocabulary.
