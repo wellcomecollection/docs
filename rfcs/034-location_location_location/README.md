@@ -132,11 +132,11 @@ These are the types of location our model needs to support:
 
     Although the MARC records include a shelf location and a shelfmark, the Collections team would prefer this not to be exposed publicly.
 
-    Do we need to expose this information for the requesting service?
+    Note:
 
-    -   We don't need to expose the full detail of our closed stores, but do we want to expose the difference between onsite/offsite?
-        The latter will take longer to retrieve, and may require a manual request to Library Enquiries.
-        Is this something that should be exposed by the Catalogue API, or only by the Requesting service?
+    -   Material kept offsite takes longer to retrieve, and may require a manual request to Library Enquiries.
+        Some of this can be encoded via access conditions, but access conditions may not say "this can be requested with three hours' notice" vs "this can be requested with a day's notice".
+        Is this information we need to expose via the Catalogue API, or will this be handled by the Requesting service?
 
 *   **A standalone IIIF image.**
 
@@ -231,3 +231,25 @@ Bibs and items from Sierra:
 *   Currently the `"license"` field only appears on digital locations.
 
     Although we don't have any examples of it on physical locations yet, a license is sufficiently core that we'll make it part of the PhysicalLocation model.
+
+*   Currently the `LocationType` model uses the full range of location codes supported by Sierra.
+
+    We will replace this with a controlled set of types (similar to AccessStatus), and the Sierra transformer will make a best-effort guess to map the Sierra location code/label onto one of these types.
+    If it is unable to map the Sierra location code to one of these types, it will skip adding a locationType, and just use the location name as the `"label"` on the Location.
+
+    This will include a warning log, so the developers can know if/when new locationTypes have been added and are being skipped by the transformer.
+
+    This is an initial suggestion for the list of types:
+
+    *   ClosedStores
+    *   OpenShelves
+    *   IIIFPresentationAPI
+    *   IIIFImageAPI
+    *   RareMaterialsRoom
+    *   OnExhibition
+
+*   We will add optional `"shelfLocation"` and `"shelfmark"` fields to the PhysicalLocation model.
+
+    These will only be populated if the locationType is `OpenShelves`.
+    The shelfLocation will be drawn from the location name in Sierra (e.g. "History of Medicine").
+    The shelfmark will be drawn from the callNumber field in Sierra (e.g. "/HIS").
