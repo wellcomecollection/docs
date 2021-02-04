@@ -212,7 +212,8 @@ Bibs and items from Sierra:
     -   We look at subfield $a for a free-text description of the access conditions
     -   We look at subfield $f for the standardised open/closed/restricted terminology
 
-    Note: if these three values are inconsistent, we do not set an AccessStatus from our controlled vocabulary.
+    Note: if these three values are inconsistent, the code will not set an AccessStatus from our controlled vocabulary.
+    This is protection against future inconsistency; there are no known examples.
 
 
 
