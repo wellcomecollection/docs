@@ -115,9 +115,6 @@ When somebody looks at an item, here's what they want to know about location:
 *   **If I'm allowed to see it, can I use it?**
     This is the *license* on the item.
 
-    Note: Our current model only supports a license on digital locations.
-    Is this correct, or do we need to support licenses on physical locations also?
-
 We need to support filtering and aggregating by location.
 For example, users should be able to find all the material that's openly available online (if they're working remotely), or all the material in the library (if they're in the building).
 
@@ -229,3 +226,7 @@ Bibs and items from Sierra:
 
     -   `ByAppointment`, which the current implementation of the Catalogue API treats as synonymous with `Restricted`
     -   `TemporarilyUnavailable`, so we can distinguish between, say, material that's being digitised and will be available later, and material that has been de-accessioned and will never become available.
+
+*   Currently the `"license"` field only appears on digital locations.
+
+    Although we don't have any examples of it on physical locations yet, a license is sufficiently core that we'll make it part of the PhysicalLocation model.
