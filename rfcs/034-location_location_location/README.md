@@ -216,3 +216,16 @@ Bibs and items from Sierra:
     -   We look at subfield $f for the standardised open/closed/restricted terminology
 
     Note: if these three values are inconsistent, we do not set an AccessStatus from our controlled vocabulary.
+
+
+
+## Proposed changes
+
+*   The AccessStatus model in the Catalogue API (which draws from a fixed vocabulary) should reflect the access statuses in section 12 of the [Wellcome Collection Access Policy](https://wellcomecollection.org/pages/Wvmu3yAAAIUQ4C7F#access-policy).
+
+    Currently it has: `Open`, `OpenWithAdvisory`, `Restricted`, `Unavailable`, `Closed`, `LicensedResources` and `PermissionRequired`.
+
+    We should add:
+
+    -   `ByAppointment`, which the current implementation of the Catalogue API treats as synonymous with `Restricted`
+    -   `TemporarilyUnavailable`, so we can distinguish between, say, material that's being digitised and will be available later, and material that has been de-accessioned and will never become available.
