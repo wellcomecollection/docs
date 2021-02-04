@@ -246,6 +246,7 @@ Bibs and items from Sierra:
     *   IIIFPresentationAPI
     *   IIIFImageAPI
     *   OnExhibition
+    *   OnlineResource
 
 *   We will add optional `"shelfLocation"` and `"shelfmark"` fields to the PhysicalLocation model.
 
