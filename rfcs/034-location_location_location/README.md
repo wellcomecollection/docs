@@ -338,6 +338,12 @@ Bibs and items from Sierra:
     The shelfLocation will be drawn from the location name in Sierra (e.g. "History of Medicine").
     The shelfmark will be drawn from the callNumber field in Sierra (e.g. "/HIS").
 
+    For item records, these will be populated from the *location.name* and *callNumber* fields from the Sierra API response, respectively.
+    This gives us a good initial implementation, and we can refine it later if necessary.
+
+    For holdings records, only the `"shelfLocation"` will be populated.
+    The holdings records don't have enough information to populate a shelfMark.
+
     In these cases, we will concatenate the shelfLocation and shelfmark to create the `"label"`.
 
     <details>
