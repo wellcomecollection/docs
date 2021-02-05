@@ -232,6 +232,8 @@ Bibs and items from Sierra:
 
     Although we don't have any examples of it on physical locations yet, a license is sufficiently core that we'll make it part of the PhysicalLocation model.
 
+*   We will add an optional `"link_text"` field to digital locations.
+
 *   Currently the `LocationType` model uses the full range of location codes supported by Sierra.
 
     We will replace this with a controlled set of types (similar to AccessStatus), and the Sierra transformer will make a best-effort guess to map the Sierra location code/label onto one of these types.
@@ -319,8 +321,75 @@ Bibs and items from Sierra:
 
     </details>
 
+    <details>
+    <summary>Proposed heuristic for matching Sierra holdings locations to controlled types</summary>
+
+    For Sierra holdings, the API only returns a location *code* (e.g. stax) via fixed field 40.
+
+    We will look up the location code to find the location name, then apply a similar rule to that which we apply for items.
+    If the location code or name are unrecognised, we will skip adding a location to the holding.
+
+    This heuristic allows us to create locations in our controlled type for **99.87% of all holdings**.
+    </details>
+
 *   We will add optional `"shelfLocation"` and `"shelfmark"` fields to the PhysicalLocation model.
 
     These will only be populated if the locationType is `OpenShelves`.
     The shelfLocation will be drawn from the location name in Sierra (e.g. "History of Medicine").
     The shelfmark will be drawn from the callNumber field in Sierra (e.g. "/HIS").
+
+    In these cases, we will concatenate the shelfLocation and shelfmark to create the `"label"`.
+
+    <details>
+      <summary>Examples of the proposed output</summary>
+
+      An item in closed stores:
+
+      ```json
+      {
+        "id": "i1000008",
+        "label": "Closed stores",
+        "locationType": {
+          "code": "closed-stores",
+          "label": "Closed stores",
+          "type": "LocationType"
+        },
+        "type": "Location"
+      }
+      ```
+
+      An item on open shelves:
+
+      ```json
+      {
+        "id": "i1000011",
+        "label": "Medical Collection WP300 1902C96c",
+        "shelfLocation": "Medical Collection",
+        "shelfmark": "WP300 1902C96c",
+        "locationType": {
+          "code": "open-shelves",
+          "label": "Open shelves",
+          "type": "LocationType"
+        },
+        "type": "Location"
+      }
+      ```
+
+      An online journal resource:
+
+      ```json
+      {
+        "id": "h1234567",
+        "url": "https://journals.example.org/login",
+        "link_text": "View this journal",
+        "credit": "ACME Journal Publishings",
+        "locationType": {
+          "code": "online-resource",
+          "label": "Online resource",
+          "type": "LocationType"
+        },
+        "type": "Location"
+      }
+      ```
+
+    </details>
