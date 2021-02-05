@@ -7,8 +7,10 @@ We don't want to have two entirely different location models in the Catalogue an
 
 This RFC describes the types of location we want to model, and proposes how they will be returned in the catalogue API.
 
-**Current status:** this RFC outlines the problem, by describing the types of location we want to model.
-Please check if the information contained is accurate and complete.
+**Current status:** this RFC describes the sort of Location data we want to model, and some proposed changes for:
+
+*   Adding shelf location and shelfmark data
+*   Creating a smaller set of LocationTypes specifically for the Catalogue API, rather than repeating the Sierra location codes
 
 
 
