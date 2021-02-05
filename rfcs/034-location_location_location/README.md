@@ -235,7 +235,7 @@ Bibs and items from Sierra:
 *   Currently the `LocationType` model uses the full range of location codes supported by Sierra.
 
     We will replace this with a controlled set of types (similar to AccessStatus), and the Sierra transformer will make a best-effort guess to map the Sierra location code/label onto one of these types.
-    If it is unable to map the Sierra location code to one of these types, it will skip adding a locationType, and just use the location name as the `"label"` on the Location.
+    If it is unable to map the Sierra location code to one of these types, it will skip adding a location to the item.
 
     This will include a warning log, so the developers can know if/when new locationTypes have been added and are being skipped by the transformer.
 
@@ -247,6 +247,77 @@ Bibs and items from Sierra:
     *   IIIFImageAPI
     *   OnExhibition
     *   OnlineResource
+    *   Conservation
+
+    <details>
+    <summary>Proposed heuristic for matching Sierra item locations to controlled types</summary>
+
+    For Sierra items, the API returns both a location *code* (e.g. semsa) and a location *name* (e..g Closed Stores EPB MSL A).
+    We will do a case-insensitive match on the location name to map to the controlled type.
+
+    <table>
+      <tr><th>New LocationType</th><th>Sierra location names that match:</th></tr>
+      <tr>
+        <td>ClosedStores</td>
+        <td>
+          archives & mss well.coll<br/>
+          by appointment<br/>
+          closed stores<br/>
+          early printed books<br/>
+          iconographic collection<br/>
+          offsite<br/>
+          unrequestable
+        </td>
+      </tr>
+      <tr>
+        <td>OpenShelves</td>
+        <td>
+          biographies<br/>
+          folios<br/>
+          history of medicine<br/>
+          journals<br/>
+          medical collection<br/>
+          medicine & society collection<br/>
+          open shelves<br/>
+          quick ref collection<br/>
+          quick ref. collection<br/>
+          rare materials room<br/>
+          student coll
+        </td>
+      </tr>
+      <tr>
+        <td>OnExhibition</td>
+        <td>on exhibition</td>
+      </tr>
+      <tr>
+        <td>Conservation</td>
+        <td>conservation</td>
+      </tr>
+    </table>
+
+    This heuristic allows us to create locations in our controlled type for **94.7% of all items**.
+
+    Some Sierra items have a location like "as above" or "bound in above".
+    For these, we could apply an additional heuristic: if every other item has the same location (e.g. every other item is ClosedStores), then we give this item the same location.
+    Otherwise, we skip adding a Location to that item until we can come back and write more sophisticated logic (e.g. matching on shelfmark).
+
+    This additional heuristic would allow us to create locations in our controlled type for **99.97% of all items**.
+
+    The unmapped Sierra locations are as follows:
+
+    <table>
+      <tr><th>Sierra location</th><th># of items</th></tr>
+      <tr><td>bwith / bound in above</td><td>218</td></tr>
+      <tr><td>cwith / Contained in above</td><td>28</td></tr>
+      <tr><td>digit / Digitised Collections</td><td>10</td></tr>
+      <tr><td>wqrfe / Enquiry Line</td><td>2</td></tr>
+      <tr><td>temp1 / At Digitisation</td><td>1</td></tr>
+      <tr><td>wghig / Gallery</td><td>1</td></tr>
+      <tr><td>sgmip / sgmip</td><td>1</td></tr>
+      <tr><td>gblip / 215 Information Point</td><td>1</td></tr>
+    </table>
+
+    </details>
 
 *   We will add optional `"shelfLocation"` and `"shelfmark"` fields to the PhysicalLocation model.
 
