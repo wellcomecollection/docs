@@ -136,9 +136,9 @@ These are the types of location our model needs to support:
 
     Note:
 
-    -   Material kept offsite takes longer to retrieve, and may require a manual request to Library Enquiries.
-        Some of this can be encoded via access conditions, but access conditions may not say "this can be requested with three hours' notice" vs "this can be requested with a day's notice".
-        Is this information we need to expose via the Catalogue API, or will this be handled by the Requesting service?
+    -   Material kept offsite takes longer to retrieve, and may require a manual request to Library Enquiries (although that might change in future).
+        The catalogue API doesn't care about this distinction, so material in closed stores onsite or offsite will get the same location type.
+        If we need to expose this (e.g. to set expectations about retrieval times), we can revisit this when we work on requesting.
 
 *   **A standalone IIIF image.**
 
