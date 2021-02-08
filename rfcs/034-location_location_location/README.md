@@ -299,6 +299,10 @@ Bibs and items from Sierra:
         <td>OnExhibition</td>
         <td>on exhibition</td>
       </tr>
+      <tr>
+        <td>Online</td>
+        <td>online</td>
+      </tr>
     </table>
 
     This heuristic allows us to create locations in our controlled type for **94.7% of all items**.
@@ -393,6 +397,60 @@ Bibs and items from Sierra:
     If the location code or name are unrecognised, we will skip adding a location to the holding.
 
     This heuristic allows us to create locations in our controlled type for **99.87% of all holdings**.
+
+    The unmapped Sierra holdings locations are as follows:
+
+    <table>
+      <tr>
+        <th>Sierra location</th>
+        <th># of items</th>
+      </tr>
+      <tr>
+        <td>gblip / 215 Information Point</td>
+        <td>15</td>
+      </tr>
+      <tr>
+        <td>multi</td>
+        <td>7</td>
+      </tr>
+      <tr>
+        <td>digi / Digitised Collections</td>
+        <td>3</td>
+      </tr>
+      <tr>
+        <td>wghig / Gallery</td>
+        <td>3</td>
+      </tr>
+      <tr>
+        <td>acql / Wellcome Library</td>
+        <td>2</td>
+      </tr>
+      <tr>
+        <td>wghir / Reading Room</td>
+        <td>2</td>
+      </tr>
+      <tr>
+        <td>wghxg / Folios</td>
+        <td>2</td>
+      </tr>
+      <tr>
+        <td>dept / Wellcome Trust departments</td>
+        <td>1</td>
+      </tr>
+      <tr>
+        <td>gibb / Wellcome Trust departments</td>
+        <td>1</td>
+      </tr>
+      <tr>
+        <td>orio / Asian Collections</td>
+        <td>1</td>
+      </tr>
+      <tr>
+        <td>wqrfe / Enquiry Line</td>
+        <td>1</td>
+      </tr>
+    </table>
+
     </details>
 
 *   We will add an optional `"shelfMark"` field to the PhysicalLocation model.
