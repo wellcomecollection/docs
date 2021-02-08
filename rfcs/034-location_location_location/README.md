@@ -304,10 +304,10 @@ Bibs and items from Sierra:
     This heuristic allows us to create locations in our controlled type for **94.7% of all items**.
 
     Some Sierra items have a location like "as above" or "bound in above".
-    For these, we could apply an additional heuristic: if every other item has the same location (e.g. every other item is ClosedStores), then we give this item the same location.
+    For these, we will apply an additional heuristic: if every other item has the same location (e.g. every other item is ClosedStores), then we give this item the same location.
     Otherwise, we skip adding a Location to that item until we can come back and write more sophisticated logic (e.g. matching on shelfmark).
 
-    This additional heuristic would allow us to create locations in our controlled type for **99.97% of all items**.
+    This additional heuristic allows us to create locations in our controlled type for **99.97% of all items**.
 
     The unmapped Sierra locations are as follows:
 
