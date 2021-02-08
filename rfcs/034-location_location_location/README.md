@@ -312,14 +312,74 @@ Bibs and items from Sierra:
     The unmapped Sierra locations are as follows:
 
     <table>
-      <tr><th>Sierra location</th><th># of items</th></tr>
-      <tr><td>bwith / bound in above</td><td>218</td></tr>
-      <tr><td>cwith / Contained in above</td><td>28</td></tr>
-      <tr><td>digit / Digitised Collections</td><td>10</td></tr>
-      <tr><td>wqrfe / Enquiry Line</td><td>2</td></tr>
-      <tr><td>wghig / Gallery</td><td>1</td></tr>
-      <tr><td>sgmip / sgmip</td><td>1</td></tr>
-      <tr><td>gblip / 215 Information Point</td><td>1</td></tr>
+      <tr>
+        <th>Sierra location</th>
+        <th># of items</th>
+        <th>examples</th>
+      </tr>
+      <tr>
+        <td>bwith / bound in above</td>
+        <td>218</td>
+        <td>
+          <a href="https://api.wellcomecollection.org/catalogue/v2/works?items.locations.locationType=bwith&include=items%2Cidentifiers">API examples</a> /
+          <a href="https://api.wellcomecollection.org/catalogue/v2/works/a2239muq?include=items,identifiers">a2239muq</a> /
+          <a href="https://search.wellcomelibrary.org/iii/encore/record/C__Rb1519298?lang=eng">b15192982</a>
+        </td>
+      </tr>
+      <tr>
+        <td>cwith / Contained in above</td>
+        <td>28</td>
+        <td>
+          <a href="https://api.wellcomecollection.org/catalogue/v2/works?items.locations.locationType=cwith&include=items%2Cidentifiers">API examples</a> /
+          <a href="https://api.wellcomecollection.org/catalogue/v2/works/a23admwy?include=items,identifiers">a23admwy</a> /
+          <a href="https://search.wellcomelibrary.org/iii/encore/record/C__Rb1986128?lang=eng">b1986128x</a>
+        </td>
+      </tr>
+      <tr>
+        <td>digit / Digitised Collections</td>
+        <td>10</td>
+        <td>
+          <a href="https://api.wellcomecollection.org/catalogue/v2/works?items.locations.locationType=digit&include=items%2Cidentifiers">API examples</a> /
+          <a href="https://api.wellcomecollection.org/catalogue/v2/works/dutxh9yu?include=items,identifiers">dutxh9yu</a> /
+          <a href="https://search.wellcomelibrary.org/iii/encore/record/C__Rb1077140?lang=eng">b10771402</a>
+        </td>
+      </tr>
+      <tr>
+        <td>wqrfe / Enquiry Line</td>
+        <td>2</td>
+        <td>
+          <a href="https://api.wellcomecollection.org/catalogue/v2/works?items.locations.locationType=wqrfe&include=items%2Cidentifiers">API examples</a> /
+          <a href="https://api.wellcomecollection.org/catalogue/v2/works/en3eymfx?include=items,identifiers">en3eymfx</a> /
+          <a href="https://search.wellcomelibrary.org/iii/encore/record/C__Rb1529652?lang=eng">b15296520</a>
+        </td>
+      </tr>
+      <tr>
+        <td>wghig / Gallery</td>
+        <td>1</td>
+        <td>
+          <a href="https://api.wellcomecollection.org/catalogue/v2/works?items.locations.locationType=wghig&include=items%2Cidentifiers">API examples</a> /
+          <a href="https://api.wellcomecollection.org/catalogue/v2/works/k3ee5bwq?include=items,identifiers">k3ee5bwq</a> /
+          <a href="https://search.wellcomelibrary.org/iii/encore/record/C__Rb2472458?lang=eng">b24724580</a>
+        </td>
+      </tr>
+      <tr>
+        <td>sgmip / sgmip</td>
+        <td>1</td>
+        <td>
+          <a href="https://api.wellcomecollection.org/catalogue/v2/works?items.locations.locationType=sgmip&include=items%2Cidentifiers">API examples</a> /
+          <a href="https://api.wellcomecollection.org/catalogue/v2/works/v5rcgfrg?include=items,identifiers">v5rcgfrg</a> /
+          <a href="https://search.wellcomelibrary.org/iii/encore/record/C__Rb1307568?lang=eng">b13075688</a>
+        </td>
+      </tr>
+      <tr>
+        <td>gblip / 215 Information Point</td>
+        <td>1</td>
+        <td>
+          <a href="https://api.wellcomecollection.org/catalogue/v2/works?items.locations.locationType=gblip&include=items%2Cidentifiers">API examples</a> /
+          <a href="https://api.wellcomecollection.org/catalogue/v2/works/z3hgbrbk?include=items,identifiers">v5rcgfrg</a> /
+          <a href="https://search.wellcomelibrary.org/iii/encore/record/C__Rb1497535?lang=eng">b1497535x</a>
+        </td>
+      </tr>
     </table>
 
     </details>
