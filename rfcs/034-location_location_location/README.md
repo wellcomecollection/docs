@@ -251,7 +251,6 @@ Bibs and items from Sierra:
     *   IIIFImageAPI
     *   OnExhibition
     *   OnlineResource
-    *   Conservation
 
     <details>
     <summary>Proposed heuristic for matching Sierra item locations to controlled types</summary>
@@ -274,6 +273,13 @@ Bibs and items from Sierra:
         </td>
       </tr>
       <tr>
+        <td>ClosedStores with an access status TemporarilyUnavailable</td>
+        <td>
+          conservation<br/>
+          at digitisation
+        </td>
+      </tr>
+      <tr>
         <td>OpenShelves</td>
         <td>
           biographies<br/>
@@ -293,10 +299,6 @@ Bibs and items from Sierra:
         <td>OnExhibition</td>
         <td>on exhibition</td>
       </tr>
-      <tr>
-        <td>Conservation</td>
-        <td>conservation</td>
-      </tr>
     </table>
 
     This heuristic allows us to create locations in our controlled type for **94.7% of all items**.
@@ -315,7 +317,6 @@ Bibs and items from Sierra:
       <tr><td>cwith / Contained in above</td><td>28</td></tr>
       <tr><td>digit / Digitised Collections</td><td>10</td></tr>
       <tr><td>wqrfe / Enquiry Line</td><td>2</td></tr>
-      <tr><td>temp1 / At Digitisation</td><td>1</td></tr>
       <tr><td>wghig / Gallery</td><td>1</td></tr>
       <tr><td>sgmip / sgmip</td><td>1</td></tr>
       <tr><td>gblip / 215 Information Point</td><td>1</td></tr>
