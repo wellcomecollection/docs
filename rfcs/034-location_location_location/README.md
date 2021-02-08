@@ -334,19 +334,18 @@ Bibs and items from Sierra:
     This heuristic allows us to create locations in our controlled type for **99.87% of all holdings**.
     </details>
 
-*   We will add optional `"shelfLocation"` and `"shelfmark"` fields to the PhysicalLocation model.
+*   We will add an optional `"shelfMark"` field to the PhysicalLocation model.
+    We will reuse the `"label"` field for the shelf location.
 
-    These will only be populated if the locationType is `OpenShelves`.
-    The shelfLocation will be drawn from the location name in Sierra (e.g. "History of Medicine").
-    The shelfmark will be drawn from the callNumber field in Sierra (e.g. "/HIS").
-
-    For item records, these will be populated from the *location.name* and *callNumber* fields from the Sierra API response, respectively.
+    The shelfmark will be drawn from the *callNumber* field in Sierra (e.g. "/HIS").
+    The label will be drawn from the *location.name* in Sierra (e.g. "History of Medicine").
     This gives us a good initial implementation, and we can refine it later if necessary.
 
-    For holdings records, only the `"shelfLocation"` will be populated.
+    For holdings records, only the `"label"` will be populated.
     The holdings records don't have enough information to populate a shelfMark.
 
-    In these cases, we will concatenate the shelfLocation and shelfmark to create the `"label"`.
+    For now, this will be populated on all "PhysicalLocation" records, including ClosedStores.
+    We may choose to remove it from some locations later, after appropriate discussions with Collections Information to ensure the API still includes all the identifiers and information required by users.
 
     <details>
       <summary>Examples of the proposed output</summary>
@@ -371,8 +370,7 @@ Bibs and items from Sierra:
       ```json
       {
         "id": "i1000011",
-        "label": "Medical Collection WP300 1902C96c",
-        "shelfLocation": "Medical Collection",
+        "label": "Medical Collection",
         "shelfmark": "WP300 1902C96c",
         "locationType": {
           "code": "open-shelves",
