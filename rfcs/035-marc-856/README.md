@@ -1,7 +1,7 @@
 # RFC 035: Modelling MARC 856 "web linking entry"
 
-[MARC field 856](https://www.loc.gov/marc/bibliographic/concise/bd856.html) is used for "electronic location and access".
-At Wellcome, it's used to store links to resources on external websites.
+[MARC field 856](https://www.loc.gov/marc/bibliographic/concise/bd856.html) is used to link to other resources, and it has a variety of uses at Wellcome.
+Among other things, it links to websites, electronic journals, and links to canned searches in our catalogue.
 
 For example, on b30204021:
 
@@ -10,7 +10,7 @@ For example, on b30204021:
        fy0701/2006282336.html
 ```
 
-which is displayed on wellcomelibrary.org as follows:
+This is displayed as a link on wellcomelibrary.org:
 
 ![Screenshot of the library website with a grey box titled 'Table of contents'. The grey box has an error and the text is blue, like a link.](encore_screenshot.png)
 
