@@ -88,8 +88,8 @@ On bib records, the first indicator is used as follows:
     </tr>
 </table>
 
-I manually inspected the 48 records where the first indicator isn't 4; all of them contain HTTP URLs and it looks like the first indicator has just been incorrectly applied.
-I have uploaded a list with [the bib IDs of these records](bibs_with_incorrect_first_indicator.txt).
+I manually inspected the 48 records where the first indicator isn't 4; all of them contain HTTP URLs and it looks like the first indicator has been inconsistently applied.
+I have uploaded a list with [the bib IDs of these records](bibs_with_unexpected_first_indicator.txt).
 
 The current Wellcome Library website always presents a link to the contents of 856 subfield $u, even if the first indicator isn't "4 - HTTP".
 Examples:
@@ -192,7 +192,7 @@ The companion field to field 856 "Electronic Location and Access" is field 956 "
 In the Wellcome catalogue, this is only used for URLs of the form `http://wellcomelibrary.org/item/{bnumber}`, which we don't need to expose in the Catalogue API.
 
 
-## Records that need cataloguing fixes
+## Suggested cataloguing fixes
 
 This table lists the records I found which need some cataloguing fixes:
 
