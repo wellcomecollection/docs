@@ -260,3 +260,100 @@ The location will have the following fields:
     At some point we might want to do quality control on this field and omit some of the values -- e.g. if removing generic "view online" descriptions from the Sierra data, so the front-end can use more consistent vocabulary.
 
 *   `locationType` = OnlineResource
+
+If the 856 is attached to a bib record, then the Item is attached directly to the bib Work.
+
+If the 856 is attached to a holdings record, then the Item is attached to every Work that the holdings is attached to.
+(i.e. every bib that the holdings links to)
+
+
+
+## Examples
+
+<details>
+<summary><a href="https://search.wellcomelibrary.org/iii/encore/record/C__Rb1766070?lang=eng">b17660701</a> – field 856 with link text</summary>
+
+MARC field:
+
+```
+856 40 |uhttp://0-
+       gateway.proquest.com.catalogue.wellcomelibrary.org/
+       openurl?ctx_ver=Z39.88-2003&res_id=xri:eebo&rft_val_fmt=&
+       rft_id=xri:eebo:image:193067|zView resource.
+```
+
+Catalogue API output:
+
+```json
+"items": [
+  {
+    "locations": [
+      {
+        "locationType": {
+          "id": "online-resource",
+          "label": "Online resource",
+          "type": "LocationType"
+        },
+        "linkText": "View resource.",
+        "url": "http://0-
+       gateway.proquest.com.catalogue.wellcomelibrary.org/…",
+        "type": "DigitalLocation"
+      }
+    ],
+    "type": "Item"
+  }
+]
+```
+
+</details>
+
+<details>
+<summary><a href="https://search.wellcomelibrary.org/iii/encore/record/C__Rb2043440?lang=eng">b20434406</a> – multiple instances of field 856</summary>
+
+MARC fields:
+
+```
+856 41 |3Table of contents|uhttp://catdir.loc.gov/catdir/toc/
+       wiley022/96047734.html
+856 42 |3Publisher description|uhttp://catdir.loc.gov/catdir/
+       description/wiley031/96047734.html
+```
+
+Catalogue API output:
+
+```json
+"items": [
+  {
+    "locations": [
+      {
+        "locationType": {
+          "id": "online-resource",
+          "label": "Online resource",
+          "type": "LocationType"
+        },
+        "linkText": "Table of contents",
+        "url": "http://catdir.loc.gov/catdir/toc/wiley022/96047734.html",
+        "type": "DigitalLocation"
+      }
+    ],
+    "type": "Item"
+  },
+  {
+    "locations": [
+      {
+        "locationType": {
+          "id": "online-resource",
+          "label": "Online resource",
+          "type": "LocationType"
+        },
+        "linkText": "Publisher description",
+        "url": "http://catdir.loc.gov/catdir/description/wiley031/96047734.html",
+        "type": "DigitalLocation"
+      }
+    ],
+    "type": "Item"
+  }
+]
+```
+
+</details>
