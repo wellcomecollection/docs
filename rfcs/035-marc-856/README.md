@@ -252,14 +252,18 @@ The location will have the following fields:
 
     If the contents of subfield $u doesn't look like a URL, we will log a warning and not create the item.
 
-*   `linkText` = the space-joined contents of subfields $z, $y and $3.
+*   `locationType` = OnlineResource
 
-    These will be joined in the original subfield order.
-    If this is an empty string, we will omit the linkText field.
+The `label` on the item and `linkText` on the location will be populated as follows:
+
+*   Concatenate the contents of subfields $z, $y and $3, joined with spaces.
+    If this is an empty string, we will omit both fields.
+
+    We don't want the linkText to be too long (no more than seven words), and some of these subfields contain very long strings.
+    So we apply the following rule: if the concatenated string is seven words or less, and contains "access", "view" or "connect", we put it in the location `"linkText"` field.
+    Otherwise, we put it in the item's `"label"` field.
 
     At some point we might want to do quality control on this field and omit some of the values -- e.g. if removing generic "view online" descriptions from the Sierra data, so the front-end can use more consistent vocabulary.
-
-*   `locationType` = OnlineResource
 
 If the 856 is attached to a bib record, then the Item is attached directly to the bib Work.
 
@@ -324,6 +328,7 @@ Catalogue API output:
 ```json
 "items": [
   {
+    "label": "Table of contents",
     "locations": [
       {
         "locationType": {
@@ -331,7 +336,6 @@ Catalogue API output:
           "label": "Online resource",
           "type": "LocationType"
         },
-        "linkText": "Table of contents",
         "url": "http://catdir.loc.gov/catdir/toc/wiley022/96047734.html",
         "type": "DigitalLocation"
       }
@@ -339,6 +343,7 @@ Catalogue API output:
     "type": "Item"
   },
   {
+    "label": "Publisher description",
     "locations": [
       {
         "locationType": {
@@ -346,7 +351,6 @@ Catalogue API output:
           "label": "Online resource",
           "type": "LocationType"
         },
-        "linkText": "Publisher description",
         "url": "http://catdir.loc.gov/catdir/description/wiley031/96047734.html",
         "type": "DigitalLocation"
       }
