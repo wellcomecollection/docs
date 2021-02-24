@@ -3,7 +3,7 @@
 [MARC field 856](https://www.loc.gov/marc/bibliographic/concise/bd856.html) is used to link to other resources, and it has a variety of uses at Wellcome.
 Among other things, it links to websites, electronic journals, and links to canned searches in our catalogue.
 
-For example, on b30204021:
+For example, on [b30204021](https://search.wellcomelibrary.org/iii/encore/record/C__Rb3020402?lang=eng):
 
 ```
 856 41 |zTable of contents|uhttp://catdir.loc.gov/catdir/toc/
