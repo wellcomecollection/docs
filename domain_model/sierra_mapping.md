@@ -117,3 +117,9 @@
 | 776    | additionalForms | Future development |
 | 780    | continuedBy     | Future development |
 | 785    | continues       | Future development |
+
+## 8XX
+
+| Sierra | API   | Status |
+|:-------|:------|:------:|
+| 856    | items | In progress; see <https://github.com/wellcomecollection/docs/pull/48> |
