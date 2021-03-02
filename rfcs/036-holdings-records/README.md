@@ -120,6 +120,9 @@ We will populate it as follows:
     *   A digital location using field 856 if the location in fixed field 40 is `elro` (online)
     *   A physical location using fixed field 40 for the location type/label, and 949 for the shelfmark.
 
+*   For now, we won't add any identifiers.
+    We could add them as h-prefixed Sierra IDs, but I don't see much use of those identifiers -- usually people use the b number when discussing the associated holdings record.
+
 ### Possible future enhancements
 
 Although we're treating items and holdings as separate types, we might be able to do some de-duplication of data in a future release (e.g. two items *Vol. 1* and *Vol. 2*, and a holdings record *Vols. 1 and 2*).
