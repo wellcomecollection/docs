@@ -182,7 +182,7 @@ b10035370 (<a href="https://search.wellcomelibrary.org/iii/encore/record/C__Rb10
 {
   "type": "Work",
   "id": "fjuk8v9k",
-  "holdings": [
+  "items": [
     {
       "locations": [
         {
@@ -206,7 +206,7 @@ b10035370 (<a href="https://search.wellcomelibrary.org/iii/encore/record/C__Rb10
           "type": "Location"
         }
       ],
-      "type": "Holdings"
+      "type": "Item"
     }
   ],
   …
