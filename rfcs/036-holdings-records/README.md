@@ -125,6 +125,10 @@ It will have the following fields, populated as follows:
 *   For now, we won't add any identifiers.
     We could add them as h-prefixed Sierra IDs, but I don't see much use of those identifiers -- usually people use the b number when discussing the associated holdings record.
 
+    (It's also not entirely clear to me that `h` is the correct prefix to use.
+    I've also seen these referred to as "checkin records", with a `c` prefix.
+    I don't want to add identifiers until I'm sure what prefix to use.)
+
 ### Possible future enhancements
 
 Although we're treating items and holdings as separate types, we might be able to do some de-duplication of data in a future release (e.g. two items *Vol. 1* and *Vol. 2*, and a holdings record *Vols. 1 and 2*).
