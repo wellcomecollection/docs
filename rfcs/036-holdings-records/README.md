@@ -51,6 +51,9 @@ Wellcome uses the following MARC fields (in decreasing order of usage):
 
     Within the 866 field, we mostly use subfields $a (textual holdings), $x (nonpublic note) and $z (public note).
 
+    There don't seem to be particularly consistent rules about the use of $a and $z.
+    Different records use them for similar text.
+
 *   **989.**
     This contains old migration data that we don't need to show the public.
     See [discussion in Slack](https://wellcome.slack.com/archives/CGXDT2GSH/p1611746151042100).
@@ -64,6 +67,8 @@ Wellcome uses the following MARC fields (in decreasing order of usage):
 
     There are similar pairs 854/864 (for supplementary material) and 855/865 (for captions and indexes).
 
+    Most holdings records have 0 or 1 853/863 pairs, but some records have a lot -- up to 86 in one case.
+
 *   [**856 Electronic Location.**](https://www.oclc.org/bibformats/en/8xx/856.html)
     See [RFC 035](https://github.com/wellcomecollection/docs/tree/master/rfcs/035-marc-856) about how we model electronic locations for more discussion of this field.
 
@@ -76,12 +81,6 @@ Wellcome uses the following MARC fields (in decreasing order of usage):
 
 We also have a handful of records using fields 000, 561, 596, 852, 860, 876, 990.
 Because these are so infrequently used, we will skip using them in the initial model.
-
-----
-
-
-
-
 
 
 
@@ -106,14 +105,15 @@ For example:
 
 ### Creating a separate Holdings type
 
-Rather than reuse the `Item` type, we will create a new `Holdings` type with the same fields (at least, initially).
-This will appear as a list on a Work called `"holdings"`.
+We will create a new `Holdings` type, which will appear as a list on a Work called `"holdings"`.
 
-We will populate it as follows:
+It will have the following fields, populated as follows:
 
-*   The `title` will come from the concatenated contents of MARC field 866 subfields $a and $z.
-    We will append the label from 853 and 863 (newline-separated), one per 853/863 pair.
-    (We might need to split this out if it becomes unwieldy.)
+*   The `description` field will be a string, taken from the concatenated contents of MARC field 866 subfields $a and $z.
+
+*   The `enumeration` field will be a list of strings, one per 853/863 enumeration pair.
+
+    We will not include 854/864 or 855/865; these are used rarely and I don't want to model the distinction between holdings/supplementary materials/indexes in the initial implementation.
 
 *   The `locations` list will contain:
 
