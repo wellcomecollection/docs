@@ -107,7 +107,7 @@ For example:
 
 We will create a new `Holdings` type, which will appear as a list on a Work called `"holdings"`.
 
-It will have the following fields, populated as follows:
+For a holdings record with a physical location (anything except `elro`/`Online` in fixed field 40), we will create an instance of `Holdings`, with fields populated as follows:
 
 *   The `description` field will be a string, taken from the contents of MARC field 866 subfield $a.
 
@@ -117,10 +117,7 @@ It will have the following fields, populated as follows:
 
     We will not include 854/864 or 855/865; these are used rarely and I don't want to model the distinction between holdings/supplementary materials/indexes in the initial implementation.
 
-*   The `locations` list will contain:
-
-    *   A digital location using field 856 if the location in fixed field 40 is `elro` (online)
-    *   A physical location using fixed field 40 for the location type/label, and 949 for the shelfmark.
+*   The `locations` list will contain a physical location using fixed field 40 for the location type/label, and 949 for the shelfmark.
 
 *   For now, we won't add any identifiers.
     We could add them as h-prefixed Sierra IDs, but I don't see much use of those identifiers -- usually people use the b number when discussing the associated holdings record.
@@ -128,6 +125,11 @@ It will have the following fields, populated as follows:
     (It's also not entirely clear to me that `h` is the correct prefix to use.
     I've also seen these referred to as "checkin records", with a `c` prefix.
     I don't want to add identifiers until I'm sure what prefix to use.)
+
+For a holdings record with an online location (`elro` in fixed field 40), we will create an unidentified instance of `Item`, with fields populated as follows:
+
+*   The `locations` list will contain digital location(s) using the contents of field 856.
+    The `label` on these locations will be drawn from the contents of the 853/863 enumeration pairs, where possible.
 
 ### Possible future enhancements
 
