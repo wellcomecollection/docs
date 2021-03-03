@@ -109,7 +109,9 @@ We will create a new `Holdings` type, which will appear as a list on a Work call
 
 It will have the following fields, populated as follows:
 
-*   The `description` field will be a string, taken from the concatenated contents of MARC field 866 subfields $a and $z.
+*   The `description` field will be a string, taken from the contents of MARC field 866 subfield $a.
+
+*   The `note` field will be a string, taken from the contents of MARC field 866 subfield $z.
 
 *   The `enumeration` field will be a list of strings, one per 853/863 enumeration pair.
 
