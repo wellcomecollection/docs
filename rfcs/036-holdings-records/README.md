@@ -152,7 +152,47 @@ b10032538 (<a href="https://search.wellcomelibrary.org/iii/encore/record/C__Rb10
   "id": "esstapc9",
   "holdings": [
     {
-      "title": "Vol. 1-7",
+      "enumerations": [
+        "v.1 (1979) - v1.130:no.1 (2010)",
+        "v.130:no.3 (2010) - v.132:no.3 (2010)",
+        "v.133:no.2 (2011) - v.160:no.2 (2015)",
+        "v.163 (2015)",
+        "v.164:no.1 (2015)",
+        "v.165 (2015) - v.166:no.3 (2015)",
+        "v.167 (2015) - v.168 (2015)""
+      ],
+      "locations": [
+        {
+          "locationType": {
+            "id": "open-shelves",
+            "label": "Open shelves",
+            "type": "LocationType"
+          },
+          "label": "Open shelves",
+          "type": "Location"
+        }
+      ],
+      "type": "Holdings"
+    }
+  ],
+  …
+}
+```
+
+</details>
+
+<details>
+<summary>A bib with a physical holdings record and enumerations</summary>
+
+b13107884 (<a href="https://search.wellcomelibrary.org/iii/encore/record/C__Rb1310788?lang=eng">Library</a>/<a href="https://api.wellcomecollection.org/catalogue/v2/works/e2vm6e85?include=items">API</a>)
+
+```json
+{
+  "type": "Work",
+  "id": "esstapc9",
+  "holdings": [
+    {
+      "description": "Vol. 1-7",
       "locations": [
         {
           "locationType": {
