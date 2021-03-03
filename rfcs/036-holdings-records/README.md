@@ -150,12 +150,6 @@ b10032538 (<a href="https://search.wellcomelibrary.org/iii/encore/record/C__Rb10
   "id": "esstapc9",
   "holdings": [
     {
-      "identifiers": [
-        {
-          "identifierType": {"id": "sierra-system-number", "label": "Sierra system number", "type": "IdentifierType"},
-          "value": "1063290"
-        }
-      ]
       "title": "Vol. 1-7",
       "locations": [
         {
