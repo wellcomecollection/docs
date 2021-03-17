@@ -6,7 +6,7 @@
 |:-------|:-------------------|:------:|
 | 020    | identifiers [isbn] | ✅ |
 | 022    | identifiers [issn] | ✅ |
-| 046    | languages          | In development |
+| 046    | languages          | ✅ |
 
 ## 1XX: Main Entry
 
@@ -45,7 +45,7 @@
 
 | Sierra | API  | Status |
 |:-------|:-----|:------:|
-| 440, 490, 830 | TBD    | Future development |
+| 440, 490, 830 | TBD    | In development |
 
 ## 5XX: Note
 
@@ -122,4 +122,4 @@
 
 | Sierra | API   | Status |
 |:-------|:------|:------:|
-| 856    | items | In progress; see <https://github.com/wellcomecollection/docs/pull/48> |
+| 856    | items | ✅     |
