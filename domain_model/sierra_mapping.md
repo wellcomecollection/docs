@@ -122,4 +122,4 @@
 
 | Sierra | API   | Status |
 |:-------|:------|:------:|
-| 856    | items | ✅     |
+| 856    | locations [online-resource] | ✅     |
