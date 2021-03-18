@@ -55,7 +55,7 @@ http://host.name/path/docs?aggregations=a.b.c
 
 This means JSON paths are still represented as strings, rather than being expanded. For example, the response to the previous example would include at the top level
 
-```json
+```
 {
   ...,
   "aggregations": {
