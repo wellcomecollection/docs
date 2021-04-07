@@ -12,9 +12,66 @@ As part of decommissioning the Wellcome Library site we must ensure continuity o
 
 E-resources are currently available from the page linked above, but [can also be found](https://api.wellcomecollection.org/catalogue/v2/works?query=awa6c6gm&include=items) in the catalogue API.
 
-Items will have an `online-resource` location:
+Items will have an `online-resource` location, for example:
 
-![online resource item](online_resource.png)
+```json
+{
+  "@context": "https://api.wellcomecollection.org/catalogue/v2/context.json",
+  "type": "ResultList",
+  "pageSize": 10,
+  "totalPages": 1,
+  "totalResults": 1,
+  "results": [
+    {
+      "id": "awa6c6gm",
+      "title": "Nature",
+      "alternativeTitles": [
+        "Nature (Online)"
+      ],
+      "workType": {
+        "id": "d",
+        "label": "Journals",
+        "type": "Format"
+      },
+      "items": [
+        {
+          "locations": [
+            {
+              "locationType": {
+                "id": "online-resource",
+                "label": "Online resource",
+                "type": "LocationType"
+              },
+              "url": "http://resolver.ebscohost.com/Redirect/PRL?EPPackageLocationID=667.50974.646402&epcustomerid=s7451719",
+              "linkText": "Connect to Nature Publishing Group",
+              "accessConditions": [
+                {
+                  "status": {
+                    "id": "licensed-resources",
+                    "label": "Licensed resources",
+                    "type": "AccessStatus"
+                  },
+                  "type": "AccessCondition"
+                }
+              ],
+              "type": "DigitalLocation"
+            }
+          ],
+          "type": "Item"
+        }
+      ],
+      "availabilities": [
+        {
+          "id": "online",
+          "label": "Online",
+          "type": "Availability"
+        }
+      ],
+      "type": "Work"
+    }
+  ]
+}
+```
 
 The URL indexed is for the [EBSCO](https://www.ebsco.com/) Link Resolver
                            
