@@ -75,11 +75,9 @@ Items will have an `online-resource` location, for example:
 
 The URL indexed is for the [EBSCO](https://www.ebsco.com/) Link Resolver
                            
-EBSCO is a service used by "Collections and Research" to handle database/e-journal metadata.
-
 ### EBSCO link resolver
 
-EBSCOhost etc.
+EBSCO is a service used by "Collections and Research" to handle database/e-journal metadata.
 
 ## Current access methods
 
@@ -101,7 +99,7 @@ Some service providers require that to use Shibboleth authentication you are a m
 
 The Wellcome Trust & Wellcome Sanger institute are members of the [UK Federation](https://www.ukfederation.org.uk/content/Documents/IdPInfoList), which holds some metadata on those institutions as "identity providers".
 
-The UK Federation [publishes metadata](https://www.ukfederation.org.uk/content/Documents/MetadataPublicationService) about "identity providers" that hold membership, that service providers can use to determine where a user will sign-in.
+The UK Federation [publishes metadata](https://www.ukfederation.org.uk/content/Documents/MetadataPublicationService) about "identity providers" that hold membership. Service providers can use that metadata to determine where a user will sign-in for a given institution.
 
 #### Where Are You From (WAYF)
 
@@ -128,7 +126,7 @@ When a user accesses a resource behind the WAM Proxy they will use a WAM Proxy l
 
 **Resource link**
 ```
-https://0-www-nature-com.catalogue.wellcomelibrary.org/nature/volumes
+https://www-nature-com/nature/volumes
 ```
 
 **WAM Proxy link for that resource**
