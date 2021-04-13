@@ -28,7 +28,7 @@ of "Early European Books : Printed sources to 1700 ;" is the biggest in the libr
 Series can also have identifiers in subfield $l (Library of Congress call number) or $x (ISSN). 
 Records with the same identifier in a Serie statement can have different volumes in subfield $v.
 
-### Host Item Entry
+### Host Item Entry and Constituent Unit Entry
 Host Item Entry is in 773 MARC tag. Host Item entries can have a title, related parts in $g that can be volumes or dates, 
 identifers such as ISSN in $x, ISBN in $z or record control number in $w.
 
@@ -41,8 +41,8 @@ Some records in Host Item Entry overlap partially or entirely with series: "ACLS
 Not all Host Item entries refer to Series though, like for example 
 [1377450](https://search.wellcomelibrary.org/iii/encore/record/C__Rb1377450?lang=eng&suite=cobalt&marcData=Y) which refers to another work. 
 
-### Constituent Unit Entry
-Constituent Unit Entry is in 774 MARC tag. There are 760 works with a 774 MARC tag.
+Constituent Unit Entry is in 774 MARC tag. Constituent Unit entries can have a title, related parts in $g that can be volumes or dates,
+identifiers such as ISSN in $x, ISBN in $z or record control number in $w. There are 760 works with a 774 MARC tag. 
 
 ## Proposed modeling
 The proposal is to use properties `parts` and `partOf` of the Work model that are already used to represent
