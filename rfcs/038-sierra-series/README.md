@@ -325,7 +325,7 @@ Serie statement in 440 with only the title
     "totalDescendentParts": 1,
     "parts": [
       {
-        "id": "abcdefgh1",
+        "id": "abcdefgh1", // minted based on subfield $w
         "title": "Charing Cross Hospital: a portrait of house surgeons. Photograph, 1906.",
         "totalParts": 0,
         "totalDescendentParts": 0, 
@@ -340,7 +340,7 @@ Serie statement in 440 with only the title
     "totalDescendentParts": 1,
     "parts": [
           {
-            "id": "abcdefgh2",
+            "id": "abcdefgh2", // minted based on subfield $w
             "title": "Charing Cross Hospital: a portrait of house surgeons. Photograph, 1906.",
             "totalParts": 0,
             "totalDescendentParts": 0,
@@ -356,7 +356,7 @@ Serie statement in 440 with only the title
     "totalDescendentParts": 1,
     "parts": [
           {
-            "id": "abcdefgh",
+            "id": "abcdefgh3", // minted based on subfield $w
             "title": "Charing Cross Hospital: full-length portrait of Basil Hood. Photograph, 1906.",
             "totalParts": 0,
             "totalDescendentParts": 0,
