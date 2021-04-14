@@ -48,7 +48,7 @@ identifiers such as ISSN in $x, ISBN in $z or record control number in $w. There
 The proposal is to use properties `parts` and `partOf` of the Work model that are already used to represent
 archive collections. This is an example of how relations are rendered by the Catalogue API for archive works for
 [dq3spb42](https://api.wellcomecollection.org/catalogue/v2/works/dq3spb42?include=parts,partOf):
-```
+```yaml
 "parts": [
   {
     "id": "fncn55x6",
@@ -116,7 +116,8 @@ Given the size of many series and Host Item Entry that would not be practical in
 is for the frontend to choose whether to render the hierarchy base on the Work `WorkType`, which is `Collection` 
 in the case of archive Works.
 
-As series and Host Item Entries can have volumes, the proposal is to represent those as Items.
+As series and Host Item Entries can have volumes, the proposal is to represent them as Works with a `partOf` field 
+containing the Work that they belong to.
 Additionally, if a serie or Host Item Entry has an identifier (such as ISSN os ISBn or other) the proposal is 
 to mint a canonical identifier in the pipeline and to expose that identifier in the API. 
 Finally, the proposal is to model a serie statement or a Host Item Entry with a type `Work`.
@@ -126,116 +127,111 @@ Finally, the proposal is to model a serie statement or a Host Item Entry with a 
 - [1074785](https://search.wellcomelibrary.org/iii/encore/record/C__Rb1074785?lang=eng&suite=cobalt&marcData=Y) 
 This is an example of a serie statement in 490 + 830. In this example the information contained in 830 and 490 is 
   exactly the same, so the result is just one statement. 
-```
+```yaml
 "partOf": [
-    {
+  {
+    "title": "Morphogenesis of the vertebrate brain; 2",
+    "partOf": [
+      {
         "title": "Morphogenesis of the vertebrate brain",
-        "items": [
-            {
-                "title": "2",
-                "type": "Item",
-                "locations": []
-            }
-        ],
         "type": "Work"
-    }
+      }
+    ],
+    "type": "Work"
+  }
 ]
 ```
 - [3109805](https://search.wellcomelibrary.org/iii/encore/record/C__Rb3109805?lang=eng&suite=cobalt&marcData=Y)
   490 + 773 with slightly different information
-```
+```yaml
 "partOf": [
-    {   //490
+  {   //490
+    "title": "Early European Books : Printed sources to 170; Collection 4",
+    "partOf": [
+      {
         "title": "Early European Books : Printed sources to 170",
-        "items": [
-            {
-                "title": "Collection 4",
-                "type": "Item",
-                "locations": []
-            }
-        ],
         "type": "Work"
-    },
-    {   //773
-        "title": "Early European Books",
-        "type": "Work"
-    },
+      }
+    ],
+    "type": "Work"
+  },
+  {   //773
+    "title": "Early European Books",
+    "type": "Work"
+  }
 ]
 ```
 
 - [3178769](https://search.wellcomelibrary.org/iii/encore/record/C__Rb3178769?lang=eng&suite=cobalt&marcData=Y) 490 + 830 multiple entries + 773
-```
+```yaml
 "partOf": [
-    {   // 490 & 830 with same information
+  {   // 490 & 830 with same information
+    "title": "Perspectives in Continental philosophy series; no. 39",
+    "partOf": [
+      {
         "id": "abcdefg",
         "identifiers": [
-            {
-                "identifierType": {
-                    "id": "issn",
-                    "label": "ISSN",
-                    "type": "IdentifierType"
-                },
-                "value": "1089-3938",
-                "type": "Identifier"
-            }
+          {
+            "identifierType": {
+              "id": "issn",
+              "label": "ISSN",
+              "type": "IdentifierType"
+              },
+            "value": "1089-3938",
+            "type": "Identifier"
+          }
         ],
         "title": "Perspectives in Continental philosophy series",
-        "type": "Work",
-        "items": [
-            {
-                "title": "no. 39",
-                "type": "Item",
-                "locations": []
-            }
-        ]
-    },
-    {  // 830 with slighly different information
-        "title": "Fordham perspectives in continental philosophy",
         "type": "Work"
-    },
-    {   // 830 & 773 contain the same information
-        "title": "ACLS Humanities E-Book.",
-        "type": "Work"
-    }
+      }
+    ],
+    "type": "Work"
+  },
+  {  // Second 830 with slighly different information
+    "title": "Fordham perspectives in continental philosophy",
+    "type": "Work"
+  },
+ {   // 830 & 773 contain the same information
+    "title": "ACLS Humanities E-Book.",
+    "type": "Work"
+  }
 ]
 ```
 - [2125597](https://search.wellcomelibrary.org/iii/encore/record/C__Rb2125597?lang=eng&suite=cobalt&marcData=Y)
   490 with ISSN + 830 and 773. There are 1037 bibs that have the same ISSN in a serie statement but
   with different volume subfield.
-```
+```yaml
 "partOf": [
-    {   // 490 +830 contain duplicated info
+  {   // 490 +830 contain duplicated info
+    "partOf": [
+      {
         "id": "abcdefg",
         "identifiers": [
-            {
-                "identifierType": {
-                    "id": "issn",
-                    "label": "ISSN",
-                    "type": "IdentifierType"
-                },
-                "value": "1064-3745",
-                "type": "Identifier"
-            }
+          {
+            "identifierType": {
+              "id": "issn",
+              "label": "ISSN",
+              "type": "IdentifierType"
+            },
+            "value": "1064-3745",
+            "type": "Identifier"
+          }
         ],
         "title": "Methods in Molecular Biology, Methods and Protocols",
-        "items": [
-            {
-                "title": "212",
-                "type": "Item",
-                "locations": []
-            }
-        ],
         "type": "Work"
-    },
-    {   // 773 
-        "title": "Springer eBooks",
-        "title": "Work"
-    }
+      }
+    ],
+    "type": "Work"
+  },
+  {   // 773 
+    "title": "Springer eBooks",
+    "title": "Work"
+  }
 ]
 ```
 - [3001878](https://search.wellcomelibrary.org/iii/encore/record/C__Rb3001878?lang=eng&suite=cobalt&marcData=Y)
   Only 830 with no 490/440 or 773
-```
+```yaml
 "partOf": [
     {
         "title": "Adamson Collection Wellcome Library", // subfield $a concatenated with $p
@@ -245,7 +241,7 @@ This is an example of a serie statement in 490 + 830. In this example the inform
 ```
 - [1110225](https://search.wellcomelibrary.org/iii/encore/record/C__Rb1110225?lang=eng&suite=cobalt&marcData=Y)
 Serie statement in 440 with only the title
-```
+```yaml
 "partOf": [
     {
         "title": "Monographs on inorganic and physical chemistry",
@@ -254,36 +250,35 @@ Serie statement in 440 with only the title
 ]
 ```
 - [1204561](https://search.wellcomelibrary.org/iii/encore/record/C__Rb1204561?lang=eng&suite=cobalt&marcData=Y) 440 with id
-```
+```yaml
 "partOf": [
-    {
+  {
+    "title": "Brill's studies in intellectual history; v. 13",
+    "partOf": [
+      {
         "id": "abcdefgh",
         "identifiers": [
-            {
-                "identifierType": {
-                    "id": "issn",
-                    "label": "ISSN",
-                    "type": "IdentifierType"
-                },
-                "value": "0920-8607",
-                "type": "Identifier"
-            }
+          {
+            "identifierType": {
+              "id": "issn",
+              "label": "ISSN",
+              "type": "IdentifierType"
+            },
+            "value": "0920-8607",
+            "type": "Identifier"
+          }
         ],
         "title": "Brill's studies in intellectual history",
-        "items": [
-            {
-                "title": "v. 13",
-                "type": "Item",
-                "locations": []
-            }
-        ],
         "type": "Work"
-    }
+      }
+    ],
+    "type": "Work"
+  }
 ]
 ```
 - [2301867](https://search.wellcomelibrary.org/iii/encore/record/C__Rb2301867?lang=eng&suite=cobalt&marcData=Y) 
   773 not overlapping with series and no id. 
-```
+```yaml
 "partOf": [
     {
         "title": "Eighteenth Century collections online",
@@ -293,36 +288,36 @@ Serie statement in 440 with only the title
 ```
 - [1186777](https://search.wellcomelibrary.org/iii/encore/record/C__Rb1186777?lang=eng&suite=cobalt&marcData=Y) 
   773 with an id in subfield $w which links to another Work in our library (see example below) 
-```
+```yaml
 "partOf": [
-    {
+   {
+    "title": "Basil Hood. Photograph album; page 9",   
+    "partOf": [
+      {
         "id": "abcdefgh",
         "identifiers": [
-            {
-                // identifier from $w
-                "identifierType": {
-                    "id": "???",
-                    "label": "???",
-                    "type": "IdentifierType"
-                },
-                "value": "(Wcat)9175i",
-                "type": "Identifier"
-            }
+          {
+            // identifier from $w
+            "identifierType": {
+              "id": "???",
+              "label": "???",
+              "type": "IdentifierType"
+            },
+            "value": "(Wcat)9175i",
+            "type": "Identifier"
+          }
         ],
         "title": "Basil Hood. Photograph album",
-        "items": [
-            {
-                "title": "page 9", 
-                "type": "Item",
-                "locations": []
-            }
-        ]
-    }
+        "type": "Work"
+      }
+    ], 
+    "type": "Work"
+  }
 ]
 ```
 - [1172977](https://search.wellcomelibrary.org/iii/encore/record/C__Rb1172977?lang=eng&suite=cobalt&marcData=Y) 
   774 with ids (related to above 773)
-```
+```yaml
 "parts": [
     {
         "id": "abcdefgh1",
@@ -354,7 +349,7 @@ Serie statement in 440 with only the title
 
 - [3017508](https://search.wellcomelibrary.org/iii/encore/record/C__Rb3017508?lang=eng&suite=cobalt&marcData=Y) 
   774 no ids
-```
+```yaml
 "parts": [
     {
         "title": "Lists of plants collected in January 1885.",
