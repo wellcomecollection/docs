@@ -319,31 +319,52 @@ Serie statement in 440 with only the title
   774 with ids (related to above 773)
 ```yaml
 "parts": [
-    {
+  {
+    "title": "Basil Hood. Photograph album; Page 5",
+    "totalParts": 1,
+    "totalDescendentParts": 1,
+    "parts": [
+      {
         "id": "abcdefgh1",
         "title": "Charing Cross Hospital: a portrait of house surgeons. Photograph, 1906.",
-        "referenceNumber": "Page 5",
         "totalParts": 0,
-        "totalDescendentParts": 0,
+        "totalDescendentParts": 0, 
         "type": "Work"
-    },
-    {
-        "id": "abcdefgh2",
-        "title": "Charing Cross Hospital: a portrait of house surgeons. Photograph, 1906.",
-        "referenceNumber": "Page 6",
-        "totalParts": 0,
-        "totalDescendentParts": 0,
-        "type": "Work"
-    },
-    {
-        "id": "abcdefgh3",
-        "title": "Charing Cross Hospital: a portrait of house surgeons. Photograph, 1906.",
-        "referenceNumber": "Page 7",
-        "totalParts": 0,
-        "totalDescendentParts": 0,
-        "type": "Work"
-    },
-    ...
+      }
+    ],
+    "type": "Work"
+  },
+  {
+    "title": "Basil Hood. Photograph album; Page 6",
+    "totalParts": 1,
+    "totalDescendentParts": 1,
+    "parts": [
+          {
+            "id": "abcdefgh2",
+            "title": "Charing Cross Hospital: a portrait of house surgeons. Photograph, 1906.",
+            "totalParts": 0,
+            "totalDescendentParts": 0,
+            "type": "Work"
+          }
+    ],
+    "type": "Work"
+  },
+  ...
+  {
+    "title": "Basil Hood. Photograph album; Page 9",
+    "totalParts": 1,
+    "totalDescendentParts": 1,
+    "parts": [
+          {
+            "id": "abcdefgh",
+            "title": "Charing Cross Hospital: full-length portrait of Basil Hood. Photograph, 1906.",
+            "totalParts": 0,
+            "totalDescendentParts": 0,
+            "type": "Work"
+          }
+    ],
+    "type": "Work"
+  },
 ]
 ```
 
