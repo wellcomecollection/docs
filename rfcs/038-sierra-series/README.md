@@ -6,11 +6,29 @@ where Works are organized in hierarchy with parents, children and siblings.
 In Sierra there are many ways to represent relationships between Works. One of them is series, 
 which represent group of Works. Another relationship that is represented in Sierra is the Host Item 
 entry and Constituent Unit Entry. Host Item entry links the Work to something that the Work is a part of, which could be for 
-example another Work or a serie. Constituent Unit Entry links a Work to something that the Work is composed of, 
+example another Work or a Series. Constituent Unit Entry links a Work to something that the Work is composed of, 
 for example another Work or a page or chapter of the Work.
 
 There are other ways in sierra to represent Work relationships but this RFC is focusing on these 3 with the aim of defining 
 a model for representing these relationships that is flexible enough to be re-used for others.
+
+## Current usage
+
+These relationships are currently exposed on the wellcomelibrary.org website but not on wellcomecollection.org and need
+to be added in order to be able to migrate users from wellcomelibrary.org.
+This is an example of how they're rendered on the wellcomelibrary website for [3178769](https://search.wellcomelibrary.org/iii/encore/record/C__Rb3178769?lang=eng):
+![](encore.png)
+
+The series statements are clickable and direct the user to a [search page](https://search.wellcomelibrary.org/iii/encore/search/C__SPerspectives%20in%20continental%20philosophy%20SMCLN__Orightresult?lang=eng&suite=cobalt):
+![](series_search.png)
+This is a simple search that matches words in the works regardless of where they appear so sometimes matches works
+that are not in the series but just happen to contain some words in the search query.  
+[This](https://search.wellcomelibrary.org/iii/encore/search/C__SCookery%20notes%20SMCLN__Orightresult__U?lang=eng&suite=cobalt)
+is an example of a series that has 55 works, but 126 show in the search result:
+![](cookery_notes.png)
+
+As we make this information available on wellcomecollection.org, we want to provide a more precise way of browsing linked 
+works that allows the user to paginate through all works in the same series or host item entry.
 
 ## MARC representation
 
@@ -18,15 +36,15 @@ a model for representing these relationships that is flexible enough to be re-us
 Sierra series are in Marc tag 490 (plus sometimes 830) of the bib record. 
 Legacy series are in tag 440 and will me migrated to 490 by collections team.
 
-Based on investigation of the Sierra data done at the end of March 2021, there are 131883 record with a Sierra serie statement.
-The biggest serie is 
+Based on investigation of the Sierra data done at the end of March 2021, there are 131883 record with a Sierra series statement.
+The biggest series is 
 [Early European Books : Printed sources to 1700 ;](https://search.wellcomelibrary.org/iii/encore/search/C__SEarly%20European%20Books%20%3A%20Printed%20sources%20to%201700%20SMCLN__Orightresult__U?lang=eng&suite=cobalt) with 31956 bibs, followed by
 [ACLS Humanities E-Book](https://search.wellcomelibrary.org/iii/encore/search/C__SACLS%20Humanities%20E-Book.__Orightresult__U?lang=eng&suite=cobalt) with 5118.
 
 Series can have volumes in subfield $v. Volume "Collection 3" 
 of "Early European Books : Printed sources to 1700 ;" is the biggest in the library and contains 10245 works.
 Series can also have identifiers in subfield $l (Library of Congress call number) or $x (ISSN). 
-Records with the same identifier in a Serie statement can have different volumes in subfield $v.
+Records with the same identifier in a Series statement can have different volumes in subfield $v.
 
 ### Host Item Entry and Constituent Unit Entry
 Host Item Entry is in 773 MARC tag. Host Item entries can have a title, related parts in $g that can be volumes or dates, 
@@ -118,14 +136,14 @@ in the case of archive Works.
 
 As series and Host Item Entries can have volumes, the proposal is to represent them as Works with a `partOf` field 
 containing the Work that they belong to.
-Additionally, if a serie or Host Item Entry has an identifier (such as ISSN os ISBn or other) the proposal is 
+Additionally, if a series or Host Item Entry has an identifier (such as ISSN os ISBn or other) the proposal is 
 to mint a canonical identifier in the pipeline and to expose that identifier in the API. 
-Finally, the proposal is to model a serie statement or a Host Item Entry with a type `Work`.
+Finally, the proposal is to model a series statement or a Host Item Entry with a type `Work`.
 
 ### Examples
  
 - [1074785](https://search.wellcomelibrary.org/iii/encore/record/C__Rb1074785?lang=eng&suite=cobalt&marcData=Y) 
-This is an example of a serie statement in 490 + 830. In this example the information contained in 830 and 490 is 
+This is an example of a series statement in 490 + 830. In this example the information contained in 830 and 490 is 
   exactly the same, so the result is just one statement. 
 ```yaml
 "partOf": [
@@ -198,7 +216,7 @@ This is an example of a serie statement in 490 + 830. In this example the inform
 ]
 ```
 - [2125597](https://search.wellcomelibrary.org/iii/encore/record/C__Rb2125597?lang=eng&suite=cobalt&marcData=Y)
-  490 with ISSN + 830 and 773. There are 1037 bibs that have the same ISSN in a serie statement but
+  490 with ISSN + 830 and 773. There are 1037 bibs that have the same ISSN in a series statement but
   with different volume subfield.
 ```yaml
 "partOf": [
@@ -225,7 +243,7 @@ This is an example of a serie statement in 490 + 830. In this example the inform
   },
   {   // 773 
     "title": "Springer eBooks",
-    "title": "Work"
+    "type": "Work"
   }
 ]
 ```
@@ -240,7 +258,7 @@ This is an example of a serie statement in 490 + 830. In this example the inform
 ]
 ```
 - [1110225](https://search.wellcomelibrary.org/iii/encore/record/C__Rb1110225?lang=eng&suite=cobalt&marcData=Y)
-Serie statement in 440 with only the title
+Series statement in 440 with only the title
 ```yaml
 "partOf": [
     {
