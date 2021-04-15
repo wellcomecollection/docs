@@ -62,7 +62,7 @@ Not all Host Item entries refer to Series though, like for example
 Constituent Unit Entry is in 774 MARC tag. Constituent Unit entries can have a title, related parts in $g that can be volumes or dates,
 identifiers such as ISSN in $x, ISBN in $z or record control number in $w. There are 760 works with a 774 MARC tag. 
 
-## Proposed modeling
+## Proposal
 The proposal is to use properties `parts` and `partOf` of the Work model that are already used to represent
 archive collections. This is an example of how relations are rendered by the Catalogue API for archive works for
 [dq3spb42](https://api.wellcomecollection.org/catalogue/v2/works/dq3spb42?include=parts,partOf):
@@ -129,13 +129,23 @@ archive collections. This is an example of how relations are rendered by the Cat
   }
 ],
 ```
-For archive collections, the website renders these as a collapsible hierarchy: ![The collapsible hierachy of the archive the work is part of](archives.png)
-Given the size of many series and Host Item Entry that would not be practical in this case, so the proposal 
-is for the frontend to choose whether to render the hierarchy base on the Work `WorkType`, which is `Collection` 
-in the case of archive Works.
+For archive collections, the website renders these as a collapsible hierarchy: 
 
-As series and Host Item Entries can have volumes, the proposal is to represent them as Works with a `partOf` field 
-containing the Work that they belong to.
+![](archives.png)
+
+Given the size of many series and Host Item Entry that would not be practical in this case, so the proposal 
+is for the frontend to render differently the information in `partOf` based on the `type` property of the work. 
+
+In the case of archive works, the frontend should render the hierarchy as in the example above.
+
+In the case of Sierra works, the frontend should provide a link to a search page where the user can paginate through 
+all works linked by the same Series or Host Item Entry. 
+To do this the Catalogue API should provide a filter that matches exactly on the contents of `partOf` along the lines of
+`/works?partOf.title=Morphogenesis of the vertebrate brain`.
+
+As series and Host Item Entries can have volumes, the proposal is to represent them by creating one record for the Series or
+Host Item Entry and one for the volume with a nested `partOf` property (see example below).
+
 Additionally, if a series or Host Item Entry has an identifier (such as ISSN os ISBn or other) the proposal is 
 to mint a canonical identifier in the pipeline and to expose that identifier in the API. 
 Finally, the proposal is to model a series statement or a Host Item Entry with a type `Work`.
