@@ -159,13 +159,18 @@ This is an example of a series statement in 490 + 830. In this example the infor
 "partOf": [
   {
     "title": "Morphogenesis of the vertebrate brain; 2",
+    "workType": {
+      "id": "???",
+      "label": "Volumes",
+      "type": "Format"             
+    },
     "partOf": [
       {
         "title": "Morphogenesis of the vertebrate brain",
-        "type": "Work"
+        "type": "Series"
       }
     ],
-    "type": "Work"
+    "type": "Series"
   }
 ]
 ```
@@ -175,13 +180,18 @@ This is an example of a series statement in 490 + 830. In this example the infor
 "partOf": [
   {   //490
     "title": "Early European Books : Printed sources to 170; Collection 4",
+    "workType": {
+      "id": "???",
+      "label": "Volumes",
+      "type": "Format"
+    },
     "partOf": [
       {
         "title": "Early European Books : Printed sources to 170",
-        "type": "Work"
+        "type": "Series"
       }
     ],
-    "type": "Work"
+    "type": "Series"
   },
   {   //773
     "title": "Early European Books",
@@ -195,6 +205,11 @@ This is an example of a series statement in 490 + 830. In this example the infor
 "partOf": [
   {   // 490 & 830 with same information
     "title": "Perspectives in Continental philosophy series; no. 39",
+    "workType": {
+      "id": "???",
+      "label": "Volumes",
+      "type": "Format"             
+    },
     "partOf": [
       {
         "id": "abcdefg",
@@ -210,18 +225,18 @@ This is an example of a series statement in 490 + 830. In this example the infor
           }
         ],
         "title": "Perspectives in Continental philosophy series",
-        "type": "Work"
+        "type": "Series"
       }
     ],
-    "type": "Work"
+    "type": "Series"
   },
   {  // Second 830 with slighly different information
     "title": "Fordham perspectives in continental philosophy",
-    "type": "Work"
+    "type": "Series"
   },
  {   // 830 & 773 contain the same information
     "title": "ACLS Humanities E-Book.",
-    "type": "Work"
+    "type": "Work" //or Series?
   }
 ]
 ```
@@ -246,10 +261,10 @@ This is an example of a series statement in 490 + 830. In this example the infor
           }
         ],
         "title": "Methods in Molecular Biology, Methods and Protocols",
-        "type": "Work"
+        "type": "Series"
       }
     ],
-    "type": "Work"
+    "type": "Series"
   },
   {   // 773 
     "title": "Springer eBooks",
@@ -263,7 +278,7 @@ This is an example of a series statement in 490 + 830. In this example the infor
 "partOf": [
     {
         "title": "Adamson Collection Wellcome Library", // subfield $a concatenated with $p
-        "type": "Work"
+        "type": "Series"
     }
 ]
 ```
@@ -273,7 +288,7 @@ Series statement in 440 with only the title
 "partOf": [
     {
         "title": "Monographs on inorganic and physical chemistry",
-        "type": "Work"
+        "type": "Series"
     }
 ]
 ```
@@ -282,6 +297,11 @@ Series statement in 440 with only the title
 "partOf": [
   {
     "title": "Brill's studies in intellectual history; v. 13",
+    "workType": {
+      "id": "???",
+      "label": "Volumes",
+      "type": "Format"             
+    },
     "partOf": [
       {
         "id": "abcdefgh",
@@ -297,10 +317,10 @@ Series statement in 440 with only the title
           }
         ],
         "title": "Brill's studies in intellectual history",
-        "type": "Work"
+        "type": "Series"
       }
     ],
-    "type": "Work"
+    "type": "Series"
   }
 ]
 ```
