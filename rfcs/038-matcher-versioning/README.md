@@ -122,3 +122,34 @@ This is based on a real example of an issue we had with merging and Sanskrit man
 
         Because *m1* &gt; *m0*, the downstream services will prefer the work with modified time *m1*, which is based on *t1*, which is what we want.
 
+Let's repeat the original example with the new behaviour:
+
+1.  Start with four works joined in two pairs AB and CD, all created and processed by the matcher at time t=0:
+
+    ![](fixed_matcher_1.png)
+
+    The merger will use the time these works were processed by the matcher to create the merged work, so it will create four works all with timestamp t=0.
+
+2.  Now suppose we realise these are paired incorrectly, and should actually be AD and BC. We update A at time t=1, B at time t=2, C at time t=3, D at time t=4. However, due to best-effort ordering, we don’t process these updates in the correct order.
+
+3.  Work D was updated at time t=4, and it gets processed by the matcher at time t=5.
+
+    ![](fixed_matcher_2.png)
+
+    The merger uses time t=5 for the works it creates.
+
+4.  Then we process A and C, which were updated at time t=1 and t=3, respectively.
+    The matcher processes these two updates at time t=6.
+
+    ![](fixed_matcher_3.png)
+
+    The merger uses time t=6 for the works it creates.
+    This is newer than the previous timestamp, so these works can replace the ones from the previous run of the merger.
+
+5.  Finally we process B, which was updated at time t=2.
+    The matcher processes this update at time t=7.
+
+    ![](fixed_matcher_4.png)
+
+    Because the merger uses time t=7 for the works, these can be indexed in pipeline storage and replace the previous versions.
+    Success!
