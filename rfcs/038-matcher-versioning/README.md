@@ -90,6 +90,9 @@ This is based on a real example of an issue we had with merging and Sanskrit man
 *   The message sent by the matcher should include a timestamp.
     The merger will copy this timestamp into the created Works, rather than using the max of their timestamps.
 
+    Specifically, we will extend the `MatcherResult` model to include a `timeSent` field (an Instant).
+    The matcher will populate this with the current time when it sends the message, and the merger will use this timestamp in the works it creates.
+
 *   This gives us sensible. ordering behaviour.
 
     **Loose proof:**
@@ -121,6 +124,10 @@ This is based on a real example of an issue we had with merging and Sanskrit man
         *   after the matcher run at *m1*, it creates a Work[Merged] from the work at *t1*
 
         Because *m1* &gt; *m0*, the downstream services will prefer the work with modified time *m1*, which is based on *t1*, which is what we want.
+
+
+
+## Proposed fix: a worked example
 
 Let's repeat the original example with the new behaviour:
 
