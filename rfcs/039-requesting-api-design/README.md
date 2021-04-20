@@ -41,7 +41,7 @@ We will add a new endpoint `/catalogue/v2/works/{workId}/items`.
 -   This will return a modified version of our existing `Work` model.
 
     In particular, responses will have only two fields: `id` and `items`.
-    The `Item` model will have a new field (`status`) which returns an instance of a new `ItemStatus` type, e.g.
+    The `Item` model will in turn only have two fields: `id` and `status`, the latter of which returns an instance of a new `ItemStatus` type, e.g.
 
     ```
     "status": {
@@ -51,7 +51,7 @@ We will add a new endpoint `/catalogue/v2/works/{workId}/items`.
     }
     ```
 
--   This will return an item for every item in the corresponding `/works` request.
+-   This will return an item for every identified item in the corresponding `/works` request.
 
     If an item cannot be requested (e.g. it is tracked in Calm, not Sierra), we will return a `not-requestable` status.
     This includes items that only have digital locations.
@@ -71,19 +71,6 @@ GET /catalogue/v2/works/a23upgqy/items
   "items": [
     {
       "id": "zv4gvvq8",
-      "locations": [
-        {
-          "locationType": {
-            "id": "closed-stores",
-            "label": "Closed stores",
-            "type": "LocationType"
-          },
-          "label": "Closed stores",
-          "shelfmark": "Pat. vol. 157",
-          "accessConditions": [],
-          "type": "PhysicalLocation"
-        }
-      ],
       "status": {
         "id" : "available",
         "label" : "Available",
@@ -93,54 +80,6 @@ GET /catalogue/v2/works/a23upgqy/items
     },
     {
       "id": "fwsbxqp4",
-      "locations": [
-        {
-          "locationType": {
-            "id": "closed-stores",
-            "label": "Closed stores",
-            "type": "LocationType"
-          },
-          "label": "Closed stores",
-          "shelfmark": "Pat. vol. 157:30",
-          "accessConditions": [],
-          "type": "PhysicalLocation"
-        }
-      ],
-      "status": {
-        "id" : "not-requestable",
-        "label" : "Not requestable",
-        "type": "ItemStatus"
-      },
-      "type": "Item"
-    },
-    {
-      "locations": [
-        {
-          "locationType": {
-            "id": "iiif-presentation",
-            "label": "IIIF Presentation API",
-            "type": "LocationType"
-          },
-          "url": "https://wellcomelibrary.org/iiif/b30758762/manifest",
-          "license": {
-            "id": "pdm",
-            "label": "Public Domain Mark",
-            "url": "https://creativecommons.org/share-your-work/public-domain/pdm/",
-            "type": "License"
-          },
-          "accessConditions": [
-            {
-              "status": {
-                "id": "open",
-                "label": "Open",
-                "type": "AccessStatus"
-              },
-              "type": "AccessCondition"
-            }
-          ],
-          "type": "DigitalLocation"
-        }
-      ],
       "status": {
         "id" : "not-requestable",
         "label" : "Not requestable",
