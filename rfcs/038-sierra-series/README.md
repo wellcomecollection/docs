@@ -205,11 +205,6 @@ This is an example of a series statement in 490 + 830. In this example the infor
 "partOf": [
   {   // 490 & 830 with same information
     "title": "Perspectives in Continental philosophy series; no. 39",
-    "workType": {
-      "id": "???",
-      "label": "Volumes",
-      "type": "Format"             
-    },
     "partOf": [
       {
         "id": "abcdefg",
@@ -246,6 +241,7 @@ This is an example of a series statement in 490 + 830. In this example the infor
 ```yaml
 "partOf": [
   {   // 490 +830 contain duplicated info
+    "title": "Methods in Molecular Biology, Methods and Protocols; 212",
     "partOf": [
       {
         "id": "abcdefg",
@@ -297,11 +293,6 @@ Series statement in 440 with only the title
 "partOf": [
   {
     "title": "Brill's studies in intellectual history; v. 13",
-    "workType": {
-      "id": "???",
-      "label": "Volumes",
-      "type": "Format"             
-    },
     "partOf": [
       {
         "id": "abcdefgh",
