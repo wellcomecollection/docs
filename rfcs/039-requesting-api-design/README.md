@@ -8,7 +8,9 @@ In particular, these APIs should allow a user to:
 -   Get the status of a given item (e.g. available, on hold)
 -   Request an item
 -   See a list of their current requests
--   Relinquish a pending request
+
+Relinquishing a request is out of scope for the initial API.
+There's currently no automated process to do this, and we'd need to coordinate with LE&E to define such a process.
 
 This RFC describes how these APIs will work, and provides examples of requests and responses.
 
@@ -190,13 +192,11 @@ The three operations are as follows:
     [
       "requests": [
         {
-          "id": "sierra/1234567",
           "workId": "a23upgqy",
           "itemId": "fwsbxqp4",
           "type": "ItemRequest"
         },
         {
-          "id": "calm/1234567",
           "workId": "a23upgqy",
           "itemId": "fwsbxqp4",
           "type": "ItemRequest"
@@ -205,10 +205,6 @@ The three operations are as follows:
       "type": "ItemRequestList"
     ]
     ```
-
-    The `id` is a value which should not be shown to the user, but can instead be used to relinquish requests.
-
--   To relinquish a pending request, a user makes a DELETE request to `/item-requests/{requestId}`
 
 Notes:
 
