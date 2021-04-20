@@ -56,7 +56,7 @@ We will add a new endpoint `/catalogue/v2/works/{workId}/items`.
     If an item cannot be requested (e.g. it is tracked in Calm, not Sierra), we will return a `not-requestable` status.
     This includes items that only have digital locations.
 
--   Using this endpoint will require an API key.
+-   We will apply rate limiting to this endpoint, and possibly an API key (tbd).
 
     Requests to this endpoint will trigger requests to Sierra (and possibly other systems in future).
     We don't want it to be used to DDOS those systems, so we need a way to turn off misbehaving clients.
