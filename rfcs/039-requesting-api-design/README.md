@@ -143,7 +143,7 @@ The three operations are as follows:
           "itemId": "fwsbxqp4",
           "type": "ItemRequest"
         }
-      ]
+      ],
       "type": "ItemRequestList"
     ]
     ```
