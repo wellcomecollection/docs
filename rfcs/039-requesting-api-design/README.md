@@ -59,7 +59,9 @@ We will add a new endpoint `/catalogue/v2/works/{workId}/items`.
 -   We will apply rate limiting to this endpoint, and possibly an API key (tbd).
 
     Requests to this endpoint will trigger requests to Sierra (and possibly other systems in future).
-    We don't want it to be used to DDOS those systems, so we need a way to turn off misbehaving clients.
+    We don't want it to be used to DDOS those systems, so we will use API keys and rate limiting.
+
+    If this API can be called from the browser, we'll proxy requests to the Node server from the browser client, and the server can hold an API key securely.
 
 <details>
 <summary>Example request/response</summary>
