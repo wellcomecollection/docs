@@ -19,7 +19,9 @@ There are three disadvantages to this approach:
   processed correctly in the pipeline. This versioning logic would have to be added explicitly to the 
   TEI transformer whereas having an adapter and an intermediate store would allow us to use the already existing versioning
   logic in the versioned store library.
-  
+- Currently, we compare the number of record in the source table to the number of works in the transformer pipeline store
+  to track the success of a reindex. We wouldn't be able to do that without a store.
+
 For these reasons the proposal is to have a TEI adapter that listens to changes to TEI files and a TEI store.
 
 However, since GitHub is a relatively reliable and low latency source, we  could only store the HTTP URLs
