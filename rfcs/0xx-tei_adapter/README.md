@@ -26,7 +26,7 @@ For these reasons the proposal is to have a TEI adapter that listens to changes 
 
 However, since GitHub is a relatively reliable and low latency source, we  could only store the HTTP URLs
 to the TEI files in a TEI store, and not the full XML. This has the advantage that we don't have to manage an 
-ever growing S3 bucket (we don't have a way of cleaning up old versions of a record), but it has some disadvantages:
+ever-growing S3 bucket (we don't have a way of cleaning up old versions of a record), but it has some disadvantages:
 - GitHub outages (which are rare but happen) might affect our reindexes.
 - We might be throttled during a reindex
 - We go to the public internet for every TEI file for every reindex as opposed to getting each file exactly once 
@@ -86,7 +86,8 @@ It receives time windows from the lambda and for each one:
 
 It receives file URLs from the GitHub Api service and for each one:
 
-- Retrieves it from GitHub & store it in the TEI store
+- Decides if it's a relevant TEI file
+- It it is, retrieves it from GitHub & stores it in the TEI store
 - Send each record stored to the transformer
 
 ### Full reharvest
