@@ -121,7 +121,8 @@ The three operations are as follows:
     This endpoint will return the following status codes:
 
     -   201 Created if the request is successful (or already exists)
-    -   403 Forbidden if the user is unable to place requests (e.g. at their account limit, banned account)
+    -   401 Unauthorized if the user is not authenicated
+    -   403 Forbidden if the user authenticates successfully, but they are unable to place requests (e.g. at their account limit, banned account)
     -   404 Not Found if the work does not exist, or the work exists but the item is not part of this work
     -   409 Conflict if the work is already requested by another user
 
