@@ -77,7 +77,11 @@ The proposal is to make the TEI adapter 2 services
 
 It receives time windows from the lambda and for each one:
   
-- It calls the GitHub API to get the commits within that window
+- It calls the GitHub API to get the commits within that window. 
+  This is an example of a call to GitHub API and returns a list of commits within the time window passed in the query parameters:
+``` 
+GET https://api.github.com/repos/wellcomecollection/wellcome-collection-tei/commits?since=2021-01-20T10:00:00&until=2021-03-22T18:01:00&branch=master
+```
 - Call the GitHub API to get the files changed in each commit
 - Send a message for each file
 
@@ -92,5 +96,5 @@ It receives file URLs from the GitHub Api service and for each one:
 
 ### Full reharvest
 
-For the full reharvest we crawl the repo and send the URL of each file to the TEI Adaper service.
+For the full reharvest we crawl the repo and send the URL of each file to the TEI Adapter service.
 
