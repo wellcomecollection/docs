@@ -91,7 +91,7 @@ GET https://api.github.com/repos/wellcomecollection/wellcome-collection-tei/comm
 It receives file URLs from the GitHub Api service and for each one:
 
 - Decides if it's a relevant TEI file
-- It it is, retrieves it from GitHub & stores it in the TEI store
+- If it is, retrieves it from GitHub & stores it in the TEI store
 - Send each record stored to the transformer
 
 ### Full reharvest
