@@ -151,3 +151,5 @@ The three operations are as follows:
 Notes:
 
 -   Because these operations modify a user's account, they must be authenticated first.
+
+    ![](sequence.svg)
