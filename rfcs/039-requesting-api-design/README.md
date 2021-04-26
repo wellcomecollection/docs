@@ -111,7 +111,7 @@ The three operations are as follows:
 
     ```json
     {
-      "patronId": "1234567",
+      "userId": "1234567",
       "workId": "a23upgqy",
       "itemId": "fwsbxqp4",
       "type": "ItemRequest"
