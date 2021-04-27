@@ -35,10 +35,11 @@ ever-growing S3 bucket (we don't have a way of cleaning up old versions of a rec
 For these reasons, the proposal here is to store thw whole TEI file in a full VHS.
 ### Store structure
 
-Therefore, the proposed store structure would be:
+Therefore taking as an example [WMS_Arabic_529](https://github.com/wellcomecollection/wellcome-collection-tei/blob/master/Arabic/WMS_Arabic_529.xml), the proposed store record would be:
 
-| Id(bnumber) | Payload (location in s3) | deleted (true/false) | version |
-| ----------- | ------------------------ | ---------------------| --------|
+| Id | Payload | deleted  | version |
+| --- | ------- | -------| --------|
+| WMS_Arabic_529 | ... | false | 1 |
 
 ### Updates from github
 
