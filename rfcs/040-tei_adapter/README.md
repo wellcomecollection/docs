@@ -3,7 +3,7 @@
 ## What is TEI
 
 TEI is an XML standard to represent any source in any script or language. 
-It's used at Wellcome to describe manuscripts in non latin languages.
+It's used at Wellcome to describe manuscripts in non-Latin languages.
 The TEI files are in a [GitHUb Repository](https://github.com/wellcomecollection/wellcome-collection-tei). At the 
 time of writing in April 2021 there are 622 TEI files, but the collection of manuscripts is much larger, around 10k.
 
