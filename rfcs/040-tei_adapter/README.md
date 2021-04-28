@@ -20,7 +20,7 @@ and do a reindex by cloning the repository and/or parsing the tree of the TEI fi
 There are some disadvantages to this approach:
 - We need a "special" reindexer for TEI.
 - We can't keep track of deleted files. If something is deleted, the change will go through the pipeline once, 
-  but there's no way of "remembering" it.
+  but after that there's no way of "remembering" that the record ever existed.
 - We need to assign versions to works resulting from TEI files in order to ensure subsequent updates are 
   processed correctly in the pipeline. This versioning logic would have to be added explicitly to the 
   TEI transformer whereas having an adapter and an intermediate store would allow us to use the already existing versioning
@@ -47,7 +47,7 @@ the proposed store record would be:
 
 | Id | Payload | deleted  | version |
 | --- | ------- | -------| --------|
-| WMS_Arabic_529 | ... | false | 1 |
+| WMS_Arabic_529 | [pointer to location in s3] | false | 1 |
 
 ### Updates from github
 
