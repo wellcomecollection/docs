@@ -8,7 +8,7 @@ The TEI files are in a [GitHUb Repository](https://github.com/wellcomecollection
 time of writing in April 2021 there are 622 TEI files, but the collection of manuscripts is much larger, around 10k.
 
 Currently, all information stored in TEI files is not surfaced anywhere except the GitHub repository. 
-Many of the TEI files have a dummy Sierra record that they link to, but not all
+Many of the TEI files have a Sierra record that they link to, but not all of them – and the record contains minimal information. 
 ## How we do it
 ### Do we need an adapter?
 
@@ -106,4 +106,3 @@ It receives file URLs from the GitHub Api service and for each one:
 
 For the full reharvest we can get the tree of files from the repository and send the URL of each file 
 to the TEI Adapter service, bypassing the GitHub Api service.
-
