@@ -43,7 +43,7 @@ Sierra presents the item status in the [Item STATUS field](https://documentation
 There are standard codes supplied as part of Sierra, but libraries can define additional item status values.
 
 This is a list of item statuses in use at Wellcome, based on the reporting cluster data.
-(Deleted and suppressed items have been )
+(Deleted and suppressed items have been omitted from this analysis.)
 
 <table>
   <tr>
