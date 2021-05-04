@@ -288,6 +288,7 @@ Instead, we will create a new set of statuses, which will be mapped as follows:
     </td>
     <td>
       This is arguably only useful as long as COVID lasts, but it wouldn't be too tricky to add if we wanted it.
+      Normally this status is "in transit", but it seems to have been renamed temporarily.
     </td>
   </tr>
   <tr>
@@ -305,3 +306,6 @@ Instead, we will create a new set of statuses, which will be mapped as follows:
     </td>
   </tr>
 </table>
+
+As with the Sierra locations, we will match on the text description of the status, rather than the exact codes.
+This will make us a bit less coupled to the Sierra implementation.
