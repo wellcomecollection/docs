@@ -207,19 +207,36 @@ Instead, we will create a new set of statuses, which will be mapped as follows:
     <td></td>
   </tr>
   <tr>
+    <td>closed</td>
+    <td>Closed</td>
+    <td>
+      <code>h</code> / Closed <br/>
+    </td>
+    <td>
+      We distinguish between closed/restricted/unavailable in the access statuses.
+      I'm assuming it's a useful distinction here, but we could collapse this into "Unavailable" if not.
+    </td>
+  </tr>
+  <tr>
+    <td>restricted</td>
+    <td>Restricted</td>
+    <td>
+      <code>6</code> / Restricted <br/>
+    </td>
+    <td>
+      Ditto above.
+    </td>
+  </tr>
+  <tr>
     <td>unavailable</td>
     <td>Unavailable</td>
     <td>
-      <code>h</code> / Closed <br/>
       <code>r</code> / Unavailable <br/>
-      <code>6</code> / Restricted <br/>
       <code>m</code> / Missing <br/>
       <code>x</code> / Withdrawn
     </td>
     <td>
-      We distinguish between closed/restricted/unavailable in the access statuses.
-      Is that a useful distinction here?<br/><br/>
-      We map the "Missing" status to "Unavailable" in the access statuses.
+      I assume we wouldn't want to advertise if an item was missing.
     </td>
   </tr>
   <tr>
