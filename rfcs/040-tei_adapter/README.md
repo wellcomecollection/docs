@@ -47,7 +47,9 @@ the proposed store record would be:
 
 | Id | Payload | deleted  | version |
 | --- | ------- | -------| --------|
-| WMS_Arabic_529 | [pointer to location in s3] | false | 1 |
+| manuscript_16172 | [pointer to location in s3] | false | 1 |
+
+The id come from the `xml:id` attribute in the main `TEI` tag.
 
 ### Updates from github
 
