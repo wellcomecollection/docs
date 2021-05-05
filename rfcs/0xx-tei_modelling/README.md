@@ -25,7 +25,11 @@ This RFC explores how to represent the information contained in TEI files in our
 | TEI| API |
 | ----------- | ----------- |
 |	|	|
+## Parts
 
+| TEI | API |
+| ------|---|
+|msContents/fileDesc| parts |
 ## Examples
 
 - [Javanese_10](https://github.com/wellcomecollection/wellcome-collection-tei/blob/master/Javanese/Javanese_10.xml)
