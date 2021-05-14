@@ -389,8 +389,23 @@ This is my best understanding of what happens:
 
 We have many ways to decide the status of an item in Sierra:
 
--   Access terms in field 506 on the bib
+-   Access status and conditions in field 506 on the bib
 -   Is an item blocked by rules for requesting?
 -   Fixed field 88 (status) on the item
 -   Fixed field 108 (opacmsg) on the item
 -   The hold count on the item
+
+This data isn't always consistent.
+I've attached a spreadsheet of all the combinations, and an example of each: [combinations.csv](combinations.csv)
+
+We can define broad rules for common cases, and it might be worth talking to Collections about getting the long tail cleaned up.
+We should also look at:
+
+*   Using the name of the store to determine access conditions.
+    Is "Unrequestable Arch. & MSS" truly unrequestable?
+*   Stop parsing access statuses from conditions; it's not wholly reliable, e.g. we'll parse
+
+    > Researchers who wish to publish material must seek copyright permission from the copyright owner.
+
+    as PermissionRequired, which is not necessarily correct if somebody just wants to look at the item.
+
