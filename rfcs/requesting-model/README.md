@@ -87,12 +87,12 @@ For Sierra records, we create a single item per item record, with a single locat
 
 *   We look at the Sierra location code/name, and use that to decide the location type
 *   If the location type is Closed stores, we use that as the label; for other locations, we use the location name from Sierra
-*   On the bib data, we use field 506 ǂa for the access condition terms, and ǂg for the access condition "to" date
+*   On the bib data, we use field 506 subfield ǂa for the access condition terms, and subfield ǂg for the access condition "to" date
 *   We determine access status using three fields:
 
     -   If 506 first indicator is 0, the record is open
-    -   Standard terminology in 506 ǂf
-    -   The access condition terms from 506 ǂa
+    -   Standard terminology in 506 subfield ǂf
+    -   The access condition terms from 506 subfield ǂa
 
     If these don't agree, we log a warning and don't put any access conditions on the work.
     There are a small number of records where these don't agree.
