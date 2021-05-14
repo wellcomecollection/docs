@@ -121,6 +121,14 @@ These rules can also include user-visible messages, which are displayed in both 
 
 ![Encore screenshot. There's a red cross and the message "No requested items are available. This item cannot be requested online. Please place a manual request."](r4r_encore.png)
 
+Our Rules for Requesting are based on the value of the following item fixed fields:
+
+-   61 / Itype (e.g. exhibit, film, serial)
+-   79 / location
+-   87 / Loan rule
+-   88 / status
+-   97 / Imessage
+
 ### The Sierra Loan Rules
 
 The Loan Rules determine whether an item can be loaned to staff members.
@@ -374,3 +382,15 @@ This is my best understanding of what happens:
 
     It gets scanned a final time, and the `status` changes to `Available`.
     The item is now ready to be requested by another user.
+
+
+
+## Putting it all together
+
+We have many ways to decide the status of an item in Sierra:
+
+-   Access terms in field 506 on the bib
+-   Is an item blocked by rules for requesting?
+-   Fixed field 88 (status) on the item
+-   Fixed field 108 (opacmsg) on the item
+-   The hold count on the item
