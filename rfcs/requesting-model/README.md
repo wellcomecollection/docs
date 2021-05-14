@@ -399,13 +399,57 @@ This data isn't always consistent.
 I've attached a spreadsheet of all the combinations, and an example of each: [combinations.csv](combinations.csv)
 
 We can define broad rules for common cases, and it might be worth talking to Collections about getting the long tail cleaned up.
-We should also look at:
+We should also consider:
 
 *   Using the name of the store to determine access conditions.
     Is "Unrequestable Arch. & MSS" truly unrequestable?
-*   Stop parsing access statuses from conditions; it's not wholly reliable, e.g. we'll parse
+
+*   Remove our parsing access statuses from conditions; it's not wholly reliable, e.g. we'll parse
 
     > Researchers who wish to publish material must seek copyright permission from the copyright owner.
 
     as PermissionRequired, which is not necessarily correct if somebody just wants to look at the item.
 
+
+
+## How we model this in the API
+
+Here's my proposal: we add an optional "note" field to the AccessCondition model:
+
+```diff
+ AccessCondition {
+   status: AccessStatus?
+   terms: String?
+   to: String?
++  note: String?
+ }
+```
+
+We use this field to describe how you access the item.
+This might include:
+
+*   The OPAC message (e.g. "Online request", "Manual request")
+*   A message from the Rules for Requesting
+*   Any new microcopy we write, e.g. for "at digitisation"
+
+We will design a set of rules for including the OPAC message and status in this model.
+
+The items API will return the following response for each item:
+
+```
+ItemStatus {
+  statusType: StatusType
+  message: String?
+}
+```
+
+where StatusType will be drawn from a fixed list:
+
+-   Available -- you can request this, right now
+-   OnHold -- this is on hold for another user, but you can get it later
+-   Unavailable -- you can't request this right now, but you might be able to later
+-   NotRequestable
+
+and the `message` will include any microcopy we want in the UI.
+
+> Question: Do we need the distinction between Unavailable and NotRequestable?
