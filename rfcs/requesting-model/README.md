@@ -433,6 +433,7 @@ This might include:
 *   Any new microcopy we write, e.g. for "at digitisation"
 
 We will design a set of rules for including the OPAC message and status in this model.
+We should do this in conjunction with Collections, after we've done some data cleanup.
 
 The items API will return the following response for each item:
 
