@@ -454,3 +454,81 @@ where StatusType will be drawn from a fixed list:
 and the `message` will include any microcopy we want in the UI.
 
 > Question: Do we need the distinction between Unavailable and NotRequestable?
+
+
+
+## How we map the statuses in the API
+
+The included script ([proto_transformer.py](proto_transformer.py)) defines some initial rules for mapping statuses:
+
+-   If the status is `Missing`, `Withdrawn` or `On search`, we set the status to Unavailable, include an explanatory note and don't make the item requestable.
+
+-   We use the combination of status and Opacmsg to construct the access status:
+
+    <table>
+      <tr>
+        <th>Access status</th>
+        <th>Status field (88)</th>
+        <th>Opacmsg field</th>
+        <th>Is requestable?</th>
+      </tr>
+      <tr>
+        <td>Open</td>
+        <td>- (available)</td>
+        <td>f (online request)</td>
+        <td>✅</td>
+      </tr>
+      <tr>
+        <td>Open (on-site closed stores journals)</td>
+        <td>- (available)</td>
+        <td>n (manual request)</td>
+        <td>❌</td>
+      </tr>
+      <tr>
+        <td>Open with advisory</td>
+        <td>- (available)</td>
+        <td>f (online request)</td>
+        <td>✅</td>
+      </tr>
+      <tr>
+        <td>Restricted</td>
+        <td>6 (restricted)</td>
+        <td>f (online request)</td>
+        <td>✅</td>
+      </tr>
+      <tr>
+        <td>By appointment</td>
+        <td>y (permission required)</td>
+        <td>a (by appointment)</td>
+        <td>❌</td>
+      </tr>
+      <tr>
+        <td>Donor permission</td>
+        <td>y (permission required)</td>
+        <td>q (donor permission)</td>
+        <td>❌</td>
+      </tr>
+      <tr>
+        <td>Temporarily unavailable</td>
+        <td>r (unavailable)</td>
+        <td>b (@ digitisation)</td>
+        <td>❌</td>
+      </tr>
+      <tr>
+        <td>Closed</td>
+        <td>h (closed)</td>
+        <td>u (digitisation)</td>
+        <td>❌</td>
+      </tr>
+    </table>
+
+    Note: we only do this if the access terms from bib field 506 don't match.
+
+-   Items on open shelves aren't requestable.
+
+-   If the status is "As above", there's not much we can do.
+
+The included script will apply this transformation, and flag cases that don't work.
+This rule doesn't work for 98 cases, which covers 9203 items -- these are in the spreadsheet [unhandled.csv](unhandled.csv).
+
+We should work with Collections to either define rules or fix the item data.
