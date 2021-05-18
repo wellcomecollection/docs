@@ -27,14 +27,14 @@ For example:
 
 We need a way to apply these changes and record them.
 
-### Principles
+## Principles
 
 -   We should be able to override specific values in the Miro data/transformer.
     We should assume we will asked to make changes on an ongoing basis -- this isn't a one-off operation.
 -   We should keep a record of our changes: who made them, when, and why
 -   Our changes should be separate from the Miro exports
 
-### Proposal
+## Proposal
 
 We extend the `MiroSourcePayload` model with two optional fields:
 
@@ -71,3 +71,28 @@ This model can be extended to add new overrides as necessary.
 
 When we make changes to a Miro record, we add a new MiroUpdateEvent to record the change, and we update the DynamoDB record.
 This gives us change tracking that preserves the integrity of the original Miro data in S3.
+
+### Python API
+
+As part of this change, there will be a collection of Python functions that you can use to write scripts for modifying the Miro data.
+
+```
+# miro_updates.py
+
+def make_image_available(image_id, message: Option[str])
+
+def suppress_image(image_id, message: Option[str])
+
+def set_license_override(image_id, license_code: str, message: Option[str])
+
+def remove_license_override(image_id, message: Option[str])
+```
+
+You could use these to, for example, write a script to suppress three images:
+
+```python
+from miro_updates import suppress_image
+
+for image_id in ["A0000001", "A0000002", "A0000003"]:
+    suppress_image(image_id, message="We were asked to take these images down; see email from John Smith on 18 May 2021")
+```
