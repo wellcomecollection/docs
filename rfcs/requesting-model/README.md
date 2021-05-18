@@ -101,6 +101,21 @@ For Sierra records, we create a single item per item record, with a single locat
 
 ## What data do we have available?
 
+### Bib field 506, item field tag n (DisplayNote)
+
+On bibs, field 506 is used to describe access conditions that affect every copy of the bib -- for example, sensitive information.
+
+> Closed under the Data Protection Act until 1st January 2030.
+
+In items, field tag n (or DisplayNote) is used to add information that describes this particular copy of the item, for example:
+
+> This item is being digitised and is currently unavailable.
+
+Currently we ignore the DisplayNote and copy the bib-level conditions to every item.
+
+If a record is harvested from Calm to Sierra, the AccessStatus and AccessCondition fields are copied across to 506.
+If the same record is later updated in Calm, only the bib-level data is automatically updated in the harvest -- the item-level data has to be fixed manually, and this doesn't always happen.
+
 ### The Sierra Rules for Requesting
 
 The [Rules for Requesting](https://documentation.iii.com/sierrahelp/Content/sgasaa/sgasaa_requestrl.html) are a set of rules in Sierra that determine whether an item can be requested.
@@ -135,124 +150,150 @@ The Loan Rules determine whether an item can be loaned to staff members.
 
 Since we won't expose a "Loan" button through the website, we can safely ignore this.
 
-### Fixed field 88 (status)
+### Item: fixed field 88 (status)
 
-This displays the status of an item, and we have the following values:
+This displays the status of an item: available, unavailable, closed, and so on.
+
+For requesting, the key value is "Available".
+Only items with this status can be requested online.
+
+<details>
+  <summary>List of status values</summary>
 
 <table>
-<tr><th>code</th><th>label</th><th>count</th></tr>
+<tr><th>code</th><th>label</th><th>count</th><th>notes</th></tr>
 <tr>
 <td><code>-</code></td>
 <td>Available</td>
 <td>614928</td>
+<td></td>
 </tr>
 <tr>
-<td><code>b</code></td>
+<td><code>b</code> / <code>c</code></td>
 <td>As above</td>
-<td>34051</td>
+<td>41630</td>
+<td></td>
 </tr>
 <tr>
 <td><code>h</code></td>
 <td>Closed</td>
 <td>10038</td>
-</tr>
-<tr>
-<td><code>c</code></td>
-<td>As above</td>
-<td>7579</td>
+<td></td>
 </tr>
 <tr>
 <td><code>r</code></td>
 <td>Unavailable</td>
 <td>5885</td>
+<td></td>
 </tr>
 <tr>
 <td><code>y</code></td>
 <td>Permission required</td>
 <td>5779</td>
+<td></td>
 </tr>
 <tr>
 <td><code>6</code></td>
 <td>Restricted</td>
 <td>5188</td>
+<td></td>
 </tr>
 <tr>
 <td><code>m</code></td>
 <td>Missing</td>
 <td>3556</td>
+<td></td>
 </tr>
 <tr>
 <td><code>w</code></td>
 <td>Dept material</td>
 <td>149</td>
+<td></td>
 </tr>
 <tr>
 <td><code>p</code></td>
 <td>In cataloguing</td>
 <td>47</td>
+<td></td>
 </tr>
 <tr>
 <td><code>!</code></td>
 <td>On holdshelf</td>
 <td>39</td>
+<td></td>
 </tr>
 <tr>
 <td><code>e</code></td>
 <td>On exhibition</td>
 <td>24</td>
+<td></td>
 </tr>
 <tr>
 <td><code>s</code></td>
 <td>On search</td>
 <td>16</td>
+<td>
+  This status is used when a member of staff tries to find something, but can't.
+  It's searched for several times before it's declared missing.
+</td>
 </tr>
 <tr>
 <td><code>z</code></td>
 <td>Claims returned</td>
 <td>10</td>
+<td></td>
 </tr>
 <tr>
 <td><code>x</code></td>
 <td>Withdrawn</td>
 <td>7</td>
+<td></td>
 </tr>
 <tr>
 <td><code>a</code></td>
 <td></td>
 <td>3</td>
+<td></td>
 </tr>
 <tr>
 <td><code>d</code></td>
 <td>On display</td>
 <td>3</td>
+<td></td>
 </tr>
 <tr>
 <td><code>t</code></td>
 <td>In quarantine</td>
 <td>2</td>
+<td></td>
 </tr>
 <tr>
 <td><code>0</code></td>
 <td></td>
 <td>1</td>
+<td></td>
 </tr>
 <tr>
 <td><code>f</code></td>
 <td>Returned to vendor</td>
 <td>1</td>
+<td></td>
 </tr>
 </table>
 
 This table excludes items that are suppressed/deleted, or which are linked to bibs that are suppressed/deleted – these will never be shown on wellcomecollection.org.
 
-Questions:
+</details>
 
-*   What does "On search" mean?
-
-### Fixed field 108 (opacmsg)
+### Item: fixed field 108 (opacmsg)
 
 This returns a message which is displayed in the list of items in the OPAC.
-We have the following values:
+
+For requesting, the key value is "Online request".
+Only items with this opacmsg can be requested online.
+
+<details>
+  <summary>List of opacmsg values</summary>
 
 <table>
 <tr><th>code</th><th>label</th><th>count</th></tr>
@@ -335,7 +376,9 @@ We have the following values:
 
 This table excludes items that are suppressed/deleted, or which are linked to bibs that are suppressed/deleted – these will never be shown on wellcomecollection.org.
 
-### The holdCount field on items
+</details>
+
+### Items: hold count
 
 Items in the Sierra API include a `holdCount` field, a number telling you how many holds there are on an item.
 
@@ -349,7 +392,9 @@ This is an opportunity to improve on the current UX.
 If another user has requested the item, the OPAC show "1 hold" and hide the requesting button; the Encore hides the button with no explanation.
 We can provide a better explanation here.
 
-### The lifecycle of a requested item
+
+
+## The lifecycle of a requested item
 
 Suppose we have an item in the closed stores.
 It's available (status = `-`) and can be ordered with an online request (opacmsg = `Online request`).
@@ -390,145 +435,72 @@ This is my best understanding of what happens:
 We have many ways to decide the status of an item in Sierra:
 
 -   Access status and conditions in field 506 on the bib
+-   Information in the DisplayNote on the item
 -   Is an item blocked by rules for requesting?
 -   Fixed field 88 (status) on the item
 -   Fixed field 108 (opacmsg) on the item
 -   The hold count on the item
 
-This data isn't always consistent.
-I've attached a spreadsheet of all the combinations, and an example of each: [combinations.csv](combinations.csv)
-
-We can define broad rules for common cases, and it might be worth talking to Collections about getting the long tail cleaned up.
-We should also consider:
-
-*   Using the name of the store to determine access conditions.
-    Is "Unrequestable Arch. & MSS" truly unrequestable?
-
-*   Remove our parsing access statuses from conditions; it's not wholly reliable, e.g. we'll parse
-
-    > Researchers who wish to publish material must seek copyright permission from the copyright owner.
-
-    as PermissionRequired, which is not necessarily correct if somebody just wants to look at the item.
 
 
+## Proposed changes
 
-## How we model this in the API
+-   **Move the bib-level conditions in 506 off the Item, and onto the Work.**
 
-Here's my proposal: we add an optional "note" field to the AccessCondition model:
+    These conditions apply to all the items in a Work, and we should display them once -- not on every Item.
+    We will stop using this data for item-level conditions, and move it to a TermsOfUse note on the Work.
+    i.e. we'll put the contents of 506 subfield ǂa in the notes field.
 
-```diff
- AccessCondition {
-   status: AccessStatus?
-   terms: String?
-   to: String?
-+  note: String?
- }
-```
+    As part of this, we'll stop trying to guess an AccessStatus from these free-text conditions -- it's hard to do reliably.
+    How do you tell the difference between:
 
-We use this field to describe how you access the item.
-This might include:
+    > This item was opened, then reassessed and restricted.
 
-*   The OPAC message (e.g. "Online request", "Manual request")
-*   A message from the Rules for Requesting
-*   Any new microcopy we write, e.g. for "at digitisation"
+    and
 
-We will design a set of rules for including the OPAC message and status in this model.
-We should do this in conjunction with Collections, after we've done some data cleanup.
+    > This item was restricted, then reassessed and opened.
 
-The items API will return the following response for each item:
+    It's better to return nothing than to return bad information.
 
-```
-ItemStatus {
-  statusType: StatusType
-  message: String?
-}
-```
+*   **Use the "status" and "opacmsg" fields to determine the access status of an item.**
 
-where StatusType will be drawn from a fixed list:
+*   **Add a "note" field to the AccessCondition model.**
 
--   Available -- you can request this, right now
--   OnHold -- this is on hold for another user, but you can get it later
--   Unavailable -- you can't request this right now, but you might be able to later
--   NotRequestable
+    ```diff
+     AccessCondition {
+       status: AccessStatus?
+       terms: String?
+       to: String?
+    +  note: String?
+     }
+    ```
 
-and the `message` will include any microcopy we want in the UI.
+    This field will include a combination of:
 
-> Question: Do we need the distinction between Unavailable and NotRequestable?
+    *   The opacmsg field (e.g. "Online request", "Manual request")
+    *   Any message returned by the Rules for Requesting
+    *   Anything in the DisplayNote field on the item
 
+    I haven't looked into all the combinations here -- for now we'll take all three fields and combine them with newlines.
+    Later we can refine how we combine the fields, if some items have multiple fields.
 
+*   The items API will return the following response for each item:
 
-## How we map the statuses in the API
+    ```
+    ItemStatus {
+      statusType: StatusType
+      message: String?
+    }
+    ```
 
-The included script ([proto_transformer.py](proto_transformer.py)) defines some initial rules for mapping statuses:
+    where StatusType will be drawn from a fixed list:
 
--   If the status is `Missing`, `Withdrawn` or `On search`, we set the status to Unavailable, include an explanatory note and don't make the item requestable.
+    -   Available -- you can request this, right now
+    -   OnHold -- this is on hold for another user, but you can get it later
+    -   Unavailable -- you can't request this right now, but you might be able to later
+    -   NotRequestable
 
--   We use the combination of status and Opacmsg to construct the access status:
+    and the `message` will include any message we want to display in the UI.
+    e.g. "This item is at digitisation and cannot be requested."
 
-    <table>
-      <tr>
-        <th>Access status</th>
-        <th>Status field (88)</th>
-        <th>Opacmsg field</th>
-        <th>Is requestable?</th>
-      </tr>
-      <tr>
-        <td>Open</td>
-        <td>- (available)</td>
-        <td>f (online request)</td>
-        <td>✅</td>
-      </tr>
-      <tr>
-        <td>Open (on-site closed stores journals)</td>
-        <td>- (available)</td>
-        <td>n (manual request)</td>
-        <td>❌</td>
-      </tr>
-      <tr>
-        <td>Open with advisory</td>
-        <td>- (available)</td>
-        <td>f (online request)</td>
-        <td>✅</td>
-      </tr>
-      <tr>
-        <td>Restricted</td>
-        <td>6 (restricted)</td>
-        <td>f (online request)</td>
-        <td>✅</td>
-      </tr>
-      <tr>
-        <td>By appointment</td>
-        <td>y (permission required)</td>
-        <td>a (by appointment)</td>
-        <td>❌</td>
-      </tr>
-      <tr>
-        <td>Donor permission</td>
-        <td>y (permission required)</td>
-        <td>q (donor permission)</td>
-        <td>❌</td>
-      </tr>
-      <tr>
-        <td>Temporarily unavailable</td>
-        <td>r (unavailable)</td>
-        <td>b (@ digitisation)</td>
-        <td>❌</td>
-      </tr>
-      <tr>
-        <td>Closed</td>
-        <td>h (closed)</td>
-        <td>u (digitisation)</td>
-        <td>❌</td>
-      </tr>
-    </table>
-
-    Note: we only do this if the access terms from bib field 506 don't match.
-
--   Items on open shelves aren't requestable.
-
--   If the status is "As above", there's not much we can do.
-
-The included script will apply this transformation, and flag cases that don't work.
-This rule doesn't work for 98 cases, which covers 9203 items -- these are in the spreadsheet [unhandled.csv](unhandled.csv).
-
-We should work with Collections to either define rules or fix the item data.
+    > Question: Do we need the distinction between Unavailable and NotRequestable?
