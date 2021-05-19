@@ -53,13 +53,24 @@ The `MiroUpdateEvent` model will track our changes to the data:
 
 ```
 MiroUpdateEvent {
+  description: String
   message: String
   date: Datetime
   user: String
 }
 ```
 
-and the `MiroSourceOverride` model will allow us to track overrides:
+The `description` will be an automatically generated description of the change, e.g.
+
+> Change license override from "None" to "cc-by"
+
+and the `message` will be a human-written explanation of why we made the change, e.g.
+
+> We realised we could make this available under a more permissive licence.
+
+The `date` and `user` will be automatically populated.
+
+The `MiroSourceOverride` model will allow us to track overrides:
 
 ```
 MiroSourceOverride {
@@ -95,4 +106,91 @@ from miro_updates import suppress_image
 
 for image_id in ["A0000001", "A0000002", "A0000003"]:
     suppress_image(image_id, message="We were asked to take these images down; see email from John Smith on 18 May 2021")
+```
+
+### Worked example
+
+Suppose we have the following Miro record:
+
+```
+MiroSourcePayload {
+  id = "A0000001"
+  isClearedForCatalogueAPI = true
+  location = S3ObjectLocation { bucket = "vhs-miro", key = "A0000001.json" }
+  version = 1
+}
+```
+
+The data in the S3 metadata means this is mapped to an "in-copyright" license.
+
+We get an email from the contributor, who tells us we can release it under the CC-BY-NC license.
+We call the Python helper:
+
+```python
+set_license_override(
+    image_id="A0000001",
+    license_code="cc-by-nc",
+    message="An email from John Smith (the contributor) explained we can use CC-BY-NC"
+)
+```
+
+The helper will add an appropriate MiroUpdateEvent and MiroSourceOverride:
+
+```diff
+ MiroSourcePayload {
+   id = "A0000001"
+   isClearedForCatalogueAPI = true
+   location = S3ObjectLocation { bucket = "vhs-miro", key = "A0000001.json" }
++  events = [
++    MiroUpdateEvent {
++      description = "Change license override from 'None' to 'cc-by-nc'"
++      message = "An email from John Smith (the contributor) explained we can use CC-BY-NC"
++      date = 2001-01-01T01:01:01Z
++      user = "Alex Chan <chana@wellcomecloud.onmicrosoft.com>"
++    },
++  ]
++  overrides = MiroSourceOverride {
++    license = "cc-by-nc"
++  }
++  version = 2
+ }
+```
+
+Later we get another contributor, saying we can now use CC-BY.
+We call the helper a second time:
+
+```python
+set_license_override(
+    image_id="A0000001",
+    license_code="cc-by",
+    message="An email from John Smith (the contributor) said we can use CC-BY"
+)
+```
+
+And the record gets updated again:
+
+```diff
+ MiroSourcePayload {
+   id = "A0000001"
+   isClearedForCatalogueAPI = true
+   location = S3ObjectLocation { bucket = "vhs-miro", key = "A0000001.json" }
+   events = [
+     MiroUpdateEvent {
+       description = "Change license override from 'None' to 'cc-by-nc'"
+       message = "An email from John Smith (the contributor) explained we can use CC-BY-NC"
+       date = 2001-01-01T01:01:01Z
+       user = "Alex Chan <chana@wellcomecloud.onmicrosoft.com>"
+     },
+    MiroUpdateEvent {
+      description = "Change license override from 'cc-by-nc' to 'cc-by'"
+      message = "An email from John Smith (the contributor) said we can use CC-BY"
+      date = 2002-02-02T02:02:02Z
+      user = "Henry Wellcome <wellcomeh@wellcomecloud.onmicrosoft.com>"
+    },
+   ]
+   overrides = MiroSourceOverride {
++    license = "cc-by"
+   }
++  version = 3
+ }
 ```
