@@ -108,6 +108,8 @@ for image_id in ["A0000001", "A0000002", "A0000003"]:
     suppress_image(image_id, message="We were asked to take these images down; see email from John Smith on 18 May 2021")
 ```
 
+These functions will send a message to the Miro updates topic, so the record gets re-transformed by the Miro transformer.
+
 ### Worked example
 
 Suppose we have the following Miro record:
