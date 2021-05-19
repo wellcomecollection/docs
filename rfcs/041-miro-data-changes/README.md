@@ -53,7 +53,7 @@ The `MiroUpdateEvent` model will track our changes to the data:
 
 ```
 MiroUpdateEvent {
-  note: String
+  message: String
   date: Datetime
   user: String
 }
@@ -79,13 +79,13 @@ As part of this change, there will be a collection of Python functions that you 
 ```
 # miro_updates.py
 
-def make_image_available(image_id, message: Option[str])
+def make_image_available(image_id, message: str)
 
-def suppress_image(image_id, message: Option[str])
+def suppress_image(image_id, message: str)
 
-def set_license_override(image_id, license_code: str, message: Option[str])
+def set_license_override(image_id, license_code: str, message: str)
 
-def remove_license_override(image_id, message: Option[str])
+def remove_license_override(image_id, message: str)
 ```
 
 You could use these to, for example, write a script to suppress three images:
