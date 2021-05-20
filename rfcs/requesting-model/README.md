@@ -497,8 +497,7 @@ We have many ways to decide the status of an item in Sierra:
 
     -   Available -- you can request this, right now
     -   OnHold -- this is on hold for another user, but you can get it later
-    -   Unavailable -- you can't request this right now, but you might be able to later
-    -   NotRequestable
+    -   Unavailable -- you can't request this
 
     and the `message` will include any message we want to display in the UI.
     e.g. "This item is at digitisation and cannot be requested."
