@@ -501,5 +501,3 @@ We have many ways to decide the status of an item in Sierra:
 
     and the `message` will include any message we want to display in the UI.
     e.g. "This item is at digitisation and cannot be requested."
-
-    > Question: Do we need the distinction between Unavailable and NotRequestable?
