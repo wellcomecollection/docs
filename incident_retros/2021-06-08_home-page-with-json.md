@@ -71,7 +71,7 @@ PR released 9:59
 ## Actions
 
 **DMc**
-- Investigate a way to programmatically prevent json stringify from being deployed in a tsx 
+- Investigate a way to programmatically prevent json stringify from being deployed in a tsx file
 
 **GE**
 - Change the QA script for a person to check the deployment: scroll through a few top level pages including home page - DONE in [#6598](https://github.com/wellcomecollection/wellcomecollection.org/pull/6598)
