@@ -60,7 +60,7 @@
 | 506 $f | accessConditions.status | ✅ |
 | 506 $g | accessConditions.to     | ✅ |
 | 508    | notes [credits]         | ✅ |
-| 510    | notes [publications]    | ✅ |
+| 510    | notes [references]      | In development - currently notes [publication] |
 | 511    | notes [credits]         | ✅ |
 | 514    | notes [lettering]       | ✅ |
 | 518    | notes [time-place]      | ✅ |
