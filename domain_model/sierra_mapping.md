@@ -43,9 +43,9 @@
 
 ## 4XX: Series Statement
 
-| Sierra | API  | Status |
-|:-------|:-----|:------:|
-| 440, 490, 830 | TBD    | In development |
+| Sierra        | API    | Status         |
+|:--------------|:-------|:--------------:|
+| 440, 490, 830 | partOf | In development |
 
 ## 5XX: Note
 
@@ -77,7 +77,7 @@
 | 545    | notes [biographical]    | ✅ |
 | 546    | notes [language]        | ✅ |
 | 547    | notes [general]         | ✅ |
-| 561    | notes [ownership]       | Future development |
+| 561    | notes [ownership]       | In development |
 | 562    | notes [general]         | ✅ |
 | 563    | notes [binding]         | ✅ |
 | 581    | notes [publications]    | ✅ |
