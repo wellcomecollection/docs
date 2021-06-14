@@ -19,7 +19,7 @@
 | Description  | description         |   ✅   |
 | CreatorName  | contributors        |   ✅   |
 | Date         | production          |   ✅   |
-| Language     | languages           | In development |
+| Language     | languages           |   ✅   |
 | Extent       | physicalDescription |   ✅   |
 | UserWrapped6 | physicalDescription |   ✅   |
 | Subject      | subjects            |   ✅   |
@@ -34,12 +34,11 @@
 | Acquisition            | notes [acquisition]  |   ✅   |
 | Appraisal              | notes [appraisal]    |   ✅   |
 | Accruals               | notes [accruals]     |   ✅   |
-| Language               | notes [language]     |   In development   |
+| Language               | notes [language]     |   ✅   |
 | RelatedMaterial        | notes [related]      |   ✅   |
 | PublnNote              | notes [publications] |   ✅   |
 | UserWrapped4           | notes [finding-aids] |   ✅   |
 | Copyright              | notes [copyright]    |   ✅   |
-| ReproductionConditions | notes [terms-of-use] |   To be removed by https://github.com/wellcomecollection/platform/issues/4773 |
 
 ## Access conditions
 
