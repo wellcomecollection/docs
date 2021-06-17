@@ -38,16 +38,28 @@ ever-growing S3 bucket (we don't have a way of cleaning up old versions of a rec
 - We go to the public internet for every TEI file for every reindex as opposed to getting each file exactly once 
   per every change that affects it.
   
-For these reasons, the proposal here is to store the whole TEI file in a full VHS.
+For these reasons, the proposal here is to store the TEI files S3 and a pointer to it in Dynamo.
 ### Store structure
 
 Therefore, taking as an example
 [WMS_Arabic_529](https://github.com/wellcomecollection/wellcome-collection-tei/blob/master/Arabic/WMS_Arabic_529.xml), 
 the proposed store record would be:
 
-| Id | Payload | deleted  | version |
-| --- | ------- | -------| --------|
-| manuscript_16172 | [pointer to location in s3] | false | 1 |
+| Id | Payload | version |
+| --- | ------- | -------| 
+| manuscript_16172 | [location in s3 and deleted flag] | 1 |
+
+This is a sample of the payload:
+```yaml
+{
+  "deleted": true,
+  "s3Location": {
+    "bucket": "a_bucket",
+    "key": "a_key.xml"
+  },
+  "time": "2021-06-23T18:05:00Z"
+}
+```
 
 The id come from the `xml:id` attribute in the main `TEI` tag.
 
@@ -151,7 +163,11 @@ At every request, we can compare the old tree with the new one to know what chan
 ### TEI Adapter
 ![](tei_adapter_stack.png)
 
-The proposal is to have one Lambda that queries the GitHub API and a TEI adapter service that retrieves the files that 
+The proposal is to have:
+* one Lambda that queries the GitHub API,
+* a TEI Id extractor that retrieves the id inside the xml for a path changed 
+  and keeps track of each path/id pair and changes to them,
+* a TEI adapter service that retrieves the files that 
 have been modified and stores them in a VHS.
 #### Tree updater Lambda 
 
@@ -166,17 +182,60 @@ This is a sample of the message sent by the Lambda:
 {
   "path": "Arabic/WMS_Arabic_1.xml",
   "url": "https://api.github.com/repos/wellcomecollection/wellcome-collection-tei/git/blobs/17f54c8c5ebccec643e23b54b3f4277f86204282",
-  "deleted": false 
+  "timeModified": "2021-05-10:T10:05:05+00:00" 
+}
+```
+A message for a file deleted looks like:
+```yaml
+{
+  "path": "Arabic/WMS_Arabic_2.xml",
+  "timeDeleted": "2021-05-10:T10:05:05+00:00"
 }
 ```
 
-####  TEI Adapter service
+#### TEI Id Extractor
 
 It receives messages from the Tree updater Lambda and for each one:
 
-- Decides if it's a relevant TEI file
-- If it is, retrieves it from GitHub & stores it in the TEI store
-- Send each record stored to the transformer
+* For a file changed/added message
+  - Decides if it's a relevant TEI file
+  - If it is, retrieves it from GitHub & stores it in S3
+  - Retrieves the id from the XML
+  - Stores the path/id pair in an RDS database
+  - Sends a message to the Tei Adapter for the id changed
+* For a file deleted message
+  - Decides if it's a relevant TEI file
+  - If it is, retrieves the id of the stored path in the RDS database
+  - Sends a message to the Tei Adapter for the id deleted
+  
+The messages sent by the TEI Id Extractor are like:
+```yaml
+{
+  "id": "manuscript_145",
+  "s3Location": {
+    "bucket": <tei_adapter_bucket>
+    "key": <tei_file_key>,
+  },
+  "timeModified": "2021-05-10:T10:05:05+00:00"
+}
+```
+or
+```yaml
+{
+  "id": "manuscript_145",
+  "timeDeleted": "2021-05-10:T10:05:05+00:00"
+}
+```
+The reason to use RDS instead of another store like dynamo for keeping trach of the Path/id relationships 
+is that we want both the path and the id to be unique, which is not easy to achieve in dynamo.
+Secondly, we want to lock the rows affected by a change so that other processes cannot access them while they are being modified.
+Although, we have implemented our own dynamo locking library, in RDS we can use the [`SELECT * ... FOR UPDATE`](https://dev.mysql.com/doc/refman/8.0/en/innodb-locking-reads.html) syntax
+without needing separate locking tables.
+
+####  TEI Adapter service
+The TEI Adapter receives messages from the TEI Id extractor and:
+- Stores each id, s3Location and deleted flag in a VersionedStore
+- Sends each record stored to the transformer
 
 ### Full reharvest
 
