@@ -38,16 +38,28 @@ ever-growing S3 bucket (we don't have a way of cleaning up old versions of a rec
 - We go to the public internet for every TEI file for every reindex as opposed to getting each file exactly once 
   per every change that affects it.
   
-For these reasons, the proposal here is to store the whole TEI file in a full VHS.
+For these reasons, the proposal here is to store the TEI files S3 and a pointer to it in Dynamo.
 ### Store structure
 
 Therefore, taking as an example
 [WMS_Arabic_529](https://github.com/wellcomecollection/wellcome-collection-tei/blob/master/Arabic/WMS_Arabic_529.xml), 
 the proposed store record would be:
 
-| Id | Payload | deleted  | version |
-| --- | ------- | -------| --------|
-| manuscript_16172 | [pointer to location in s3] | false | 1 |
+| Id | Payload | version |
+| --- | ------- | -------| 
+| manuscript_16172 | [location in s3 and deleted flag] | 1 |
+
+This is a sample of the payload:
+```yaml
+{
+  "deleted": true,
+  "s3Location": {
+    "bucket": "a_bucket",
+    "key": "a_key.xml"
+  },
+  "time": "2021-06-23T18:05:00Z"
+}
+```
 
 The id come from the `xml:id` attribute in the main `TEI` tag.
 
@@ -68,43 +80,164 @@ The biggest disadvantage is that we don't have control or visibility if the Webh
 
 #### Pull the changes from GitHub at regular intervals:
   
-This means having a Lambda that regularly requests changes from GitHub within subsequent time intervals. 
-This is an approach we already use in the Sierra adapter and in the Calm adapter.
+This means regularly request changes from GitHub within certain time intervals. 
 The big advantage of this approach is that we control what happens if one request fail, how we should be notified
 and what action we should take.
 
 The proposal in this RFC is to use a pull approach so that we can be confident that all updates have either gone through
 successfully, or we are notified of any failure, and we can retry.
 
-This is a diagram of the proposed architecture: ![](architecture.png)
+#### How to query GitHub
 
-The Lambda in the picture should generate windows and send them to the TEI adapter
-
-### TEI Adapter
-![](tei_adapter_stack.png)
-The proposal is to make the TEI adapter 2 services
-#### GitHub Api service
-
-It receives time windows from the lambda and for each one:
-  
-- It calls the GitHub API to get the commits within that window. 
-  This is an example of a call to GitHub API and returns a list of commits within the time window passed in the query parameters:
+We can ask the GitHub API for commits that happened in a certain time window with a query like: 
 ``` 
 GET https://api.github.com/repos/wellcomecollection/wellcome-collection-tei/commits?since=2021-01-20T10:00:00&until=2021-03-22T18:01:00&branch=master
 ```
-- Call the GitHub API to get the files changed in each commit
-- Send a message for each file
+This gives us all the commits that have happened in the time window passed. 
+The problem with this approach is that if there is a feature branch merged into master, the commits 
+coming from the merge will be shown at the time they were created in the feature branch. This means that a query for 
+commits within a window can return different results depending on whether the query is made before or after a merge. 
+To not loose changes coming from a merge, we would need to chase the commits coming from that branch when we see a merge commit, 
+which in turn means keeping track of the commits we have already seen and effectively keeping track of the
+history of the repo, which is very fiddly and error prone.
 
+Another approach is to ask the GitHub API for trees. Trees are a representation of the file hierarchy in the repo at a 
+certain commit. The following request gives us all the files in the repository at the latest commit in master:
+```
+https://api.github.com/repos/wellcomecollection/wellcome-collection-tei/git/trees/master?recursive=true
+```
+
+This is a small sample of the response:
+```yaml
+{
+"sha": "d947db3638a7ae2aa069e2b19a7db73dfae7d653",
+"url": "https://api.github.com/repos/wellcomecollection/wellcome-collection-tei/git/trees/d947db3638a7ae2aa069e2b19a7db73dfae7d653",
+"tree": [
+  {
+    "path": ".DS_Store",
+    "mode": "100644",
+    "type": "blob",
+    "sha": "ed307046335248d38c18cb8320d6ca9253e0d35b",
+    "size": 22532,
+    "url": "https://api.github.com/repos/wellcomecollection/wellcome-collection-tei/git/blobs/ed307046335248d38c18cb8320d6ca9253e0d35b"
+  },
+  {
+    "path": ".gitattributes",
+    "mode": "100644",
+    "type": "blob",
+    "sha": "bcb42237cafe6a22e80b9d720dcbf6395198d249",
+    "size": 62,
+    "url": "https://api.github.com/repos/wellcomecollection/wellcome-collection-tei/git/blobs/bcb42237cafe6a22e80b9d720dcbf6395198d249"
+  },
+  {
+    "path": "Arabic",
+    "mode": "040000",
+    "type": "tree",
+    "sha": "187c8c750739ee6a8f9f99ebf7420a46457670d5",
+    "url": "https://api.github.com/repos/wellcomecollection/wellcome-collection-tei/git/trees/187c8c750739ee6a8f9f99ebf7420a46457670d5"
+  },
+  {
+    "path": "Arabic/README.md",
+    "mode": "100644",
+    "type": "blob",
+    "sha": "4bfe74311d86293447f173108190a4b4664d68ea",
+    "size": 1753,
+    "url": "https://api.github.com/repos/wellcomecollection/wellcome-collection-tei/git/blobs/4bfe74311d86293447f173108190a4b4664d68ea"
+  },
+  {
+    "path": "Arabic/WMS_Arabic_1.xml",
+    "mode": "100644",
+    "type": "blob",
+    "sha": "17f54c8c5ebccec643e23b54b3f4277f86204282",
+    "size": 59802,
+    "url": "https://api.github.com/repos/wellcomecollection/wellcome-collection-tei/git/blobs/17f54c8c5ebccec643e23b54b3f4277f86204282"
+  },
+...
+  ]
+}
+```
+Every entry in the `tree` can be either a `tree` or a `blob`. A `blob` is a file in the repo and has a hash associated to it. 
+If the content of a file changes, the hash changes. 
+This means that we can query for the tree in master at regular intervals and store the last version of the tree in S3. 
+At every request, we can compare the old tree with the new one to know what changes have happened.
+### TEI Adapter
+![](tei_adapter_stack.png)
+
+The proposal is to have:
+* one Lambda that queries the GitHub API,
+* a TEI Id extractor that retrieves the id inside the xml for a path changed 
+  and keeps track of each path/id pair and changes to them,
+* a TEI adapter service that retrieves the files that 
+have been modified and stores them in a VHS.
+#### Tree updater Lambda 
+
+This is a scheduled Lambda that:
+  
+- calls the GitHub API to get the latest tree.
+- Retrieves the old tree from S3.
+- Compares the two and for every change it sees in the tree sends a message.
+- Replaces the old version of the tree with the new one in S3
+This is a sample of the message sent by the Lambda:
+```yaml
+{
+  "path": "Arabic/WMS_Arabic_1.xml",
+  "url": "https://api.github.com/repos/wellcomecollection/wellcome-collection-tei/git/blobs/17f54c8c5ebccec643e23b54b3f4277f86204282",
+  "timeModified": "2021-05-10:T10:05:05+00:00" 
+}
+```
+A message for a file deleted looks like:
+```yaml
+{
+  "path": "Arabic/WMS_Arabic_2.xml",
+  "timeDeleted": "2021-05-10:T10:05:05+00:00"
+}
+```
+
+#### TEI Id Extractor
+
+It receives messages from the Tree updater Lambda and for each one:
+
+* For a file changed/added message
+  - Decides if it's a relevant TEI file
+  - If it is, retrieves it from GitHub & stores it in S3
+  - Retrieves the id from the XML
+  - Stores the path/id pair in an RDS database
+  - Sends a message to the Tei Adapter for the id changed
+* For a file deleted message
+  - Decides if it's a relevant TEI file
+  - If it is, retrieves the id of the stored path in the RDS database
+  - Sends a message to the Tei Adapter for the id deleted
+  
+The messages sent by the TEI Id Extractor are like:
+```yaml
+{
+  "id": "manuscript_145",
+  "s3Location": {
+    "bucket": <tei_adapter_bucket>
+    "key": <tei_file_key>,
+  },
+  "timeModified": "2021-05-10:T10:05:05+00:00"
+}
+```
+or
+```yaml
+{
+  "id": "manuscript_145",
+  "timeDeleted": "2021-05-10:T10:05:05+00:00"
+}
+```
+The reason to use RDS instead of another store like dynamo for keeping trach of the Path/id relationships 
+is that we want both the path and the id to be unique, which is not easy to achieve in dynamo.
+Secondly, we want to lock the rows affected by a change so that other processes cannot access them while they are being modified.
+Although, we have implemented our own dynamo locking library, in RDS we can use the [`SELECT * ... FOR UPDATE`](https://dev.mysql.com/doc/refman/8.0/en/innodb-locking-reads.html) syntax
+without needing separate locking tables.
 
 ####  TEI Adapter service
-
-It receives file URLs from the GitHub Api service and for each one:
-
-- Decides if it's a relevant TEI file
-- If it is, retrieves it from GitHub & stores it in the TEI store
-- Send each record stored to the transformer
+The TEI Adapter receives messages from the TEI Id extractor and:
+- Stores each id, s3Location and deleted flag in a VersionedStore
+- Sends each record stored to the transformer
 
 ### Full reharvest
 
-For the full reharvest we can get the tree of files from the repository and send the URL of each file 
-to the TEI Adapter service, bypassing the GitHub Api service.
+We don't need a separate reharvest process with this approach. The tree updater Lambda can deal 
+with the case where it cannot find the old tree in S3 by sending everything in the current tree to the TEI Adapter service.
