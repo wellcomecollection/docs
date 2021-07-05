@@ -26,7 +26,7 @@ If that's not you, you might be looking for:
 
 ## Contributing
 
-This doucmentation is held in our [GitHub][github repo], and also made more discoverable hosting it in [GitBook][gitbook].
+This documentation is held in our [GitHub][github repo], and also made more discoverable hosting it in [GitBook][gitbook].
 
 You can either edit the documentation
 
