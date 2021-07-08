@@ -3,7 +3,7 @@
 This is documentation for Wellcome Collection developers. 
 
 * [Projects](projects/README.md): A list of projects and services supported by Wellcome Collection developers.
-* [Process](process.md): How we work.
+* [Process](PROCESS.md): How we work.
 * [Request for comments (RFCs)](rfcs): A place to discuss possible changes to the Wellcome Collection platform.
 * [Architecture Decision Records (ADRs)](adr): For platform architecture, how things look now (logging, secrets etc).
 * [Research](research): Notes and research on technical stuff that might be useful later.
