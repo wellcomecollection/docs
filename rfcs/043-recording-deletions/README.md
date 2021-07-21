@@ -47,7 +47,10 @@ We're not permanently deleting any data, and we could revert it later if there a
 
 -   **We'd save money on reindexes.**
     Deleted works account for 44% of the index, which means they're probably a substantial reindex cost.
-    (I don't have hard numbers, but I'd guess we're spending ~$40 per reindex to process deleted works.)
+
+    (I don't have exact numbers, but a reindex costs ~$150.
+    Deleted Works are smaller than visible Works so they're a bit cheaper, but a lot of the costs are the same.
+    I'd guess we're spending ~$50 per reindex to process deleted works.)
 
 -   **Reindexes would go faster.**
     Having less records means less work to do in a reindex, so they should finish faster.
