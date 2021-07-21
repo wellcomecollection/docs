@@ -82,3 +82,6 @@ We're not permanently deleting any data, and we could revert it later if there a
     If the size of all the Works in a batch is too big, you get an out-ofmemory error (either from our apps or Elasticsearch) -- so we've picked batch sizes that don't hit these limits.
 
     Deleted Works are pretty small -- when they're removed from the pipeline, the average size of a batch will go up, and we might need to tweak the batch sizes if we start hitting memory errors.
+
+-   **Some as-yet-unforeseen issue.**
+    If this doesn't work in practice, we reverse the process: merge the "deleted" table back into the "live" table, remove the "deleted" table, and we're back at our current setup.
