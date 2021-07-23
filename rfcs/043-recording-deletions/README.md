@@ -64,8 +64,8 @@ We're not permanently deleting any data, and we could revert it later if there a
     As a first pass, we can avoid this by only removing Works that were deleted before the new catalogue API/website -- and so never had public URLs with the current URL scheme.
     If you filter to anything deleted before 1 Jan 2017, there are 876k Works (27% of the 3.2M total Works), and so still a significant saving.
 
-    After that, we could move records to the "deleted" table on a rolling window if we were happy with the 404/410 distinction -- say, anything deleted more than a year previously.
-    This isn't part of the initial plan, but remains as a future option.
+    Although we could move more records to the "deleted" table if we wanted to, we don't need to do that for now.
+    It remains as a future option if we decide we can live with the 404/410 distinction.
 
     We could also move individual records back to the "live" table as required.
 
@@ -89,3 +89,8 @@ We're not permanently deleting any data, and we could revert it later if there a
 
 -   **Some as-yet-unforeseen issue.**
     If this doesn't work in practice, we reverse the process: merge the "deleted" table back into the "live" table, remove the "deleted" table, and we're back at our current setup.
+
+## Possible future extensions
+
+-   We could move more records to the "deleted" table if we're happy to live with the 404/410 distinction.
+-   We could set up a separate pipeline that indexes deleted Works directly from the "deleted" table, bypassing the more expensive parts of the catalogue pipeline.
