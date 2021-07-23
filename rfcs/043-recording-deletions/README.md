@@ -64,7 +64,8 @@ We're not permanently deleting any data, and we could revert it later if there a
     As a first pass, we can avoid this by only removing Works that were deleted before the new catalogue API/website -- and so never had public URLs with the current URL scheme.
     If you filter to anything deleted before 1 Jan 2017, there are 876k Works (27% of the 3.2M total Works), and so still a significant saving.
 
-    After that, we could move records to the "deleted" table on a rolling window -- say, anything deleted more than a year previously.
+    After that, we could move records to the "deleted" table on a rolling window if we were happy with the 404/410 distinction -- say, anything deleted more than a year previously.
+    This isn't part of the initial plan, but remains as a future option.
 
     We could also move individual records back to the "live" table as required.
 
