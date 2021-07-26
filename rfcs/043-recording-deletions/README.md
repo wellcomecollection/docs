@@ -92,5 +92,5 @@ We're not permanently deleting any data, and we could revert it later if there a
 
 ## Possible future extensions
 
--   We could move more records to the "deleted" table if we're happy to live with the 404/410 distinction.
+We could move more records to the "deleted" table if we're happy to live without the 404/410 distinction.
 -   We could set up a separate pipeline that indexes deleted Works directly from the "deleted" table, bypassing the more expensive parts of the catalogue pipeline.
