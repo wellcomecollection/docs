@@ -2,7 +2,7 @@
 
 ## Why
 
-Our prototype concepts enrichment pipeline uses third party sources (LoC subject headings, LoC names, MeSH, and wikidata) to find variant names for the concepts in our catalogue. Each of those third party sources sets a preferred name for each concept, and a list of 0 or more variant names. The preferred names for each concept vary from authority to authority, and Wellcome Collection has no
+Our prototype concepts enrichment pipeline uses third party sources (LoC subject headings, LoC names, MeSH, and wikidata) to find variant names for the concepts in our catalogue. Each of those third party sources sets a preferred name for each concept, and a list of 0 or more variant names. The preferred names for each concept vary from authority to authority, and Wellcome Collection has no existing view on which of these is "best".
 
 Given that in most cases, we won't want to all of its variant names, we will also need to set a preferred name for each concept. With 10,000s of concepts in our catalogue, the choice of which variant name to use will need to be automated in almost all cases.
 
