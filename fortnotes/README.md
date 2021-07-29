@@ -2,6 +2,7 @@
 
 Fortnightly updates about the work of the digital platform team.
 
+- [2021 July 30](20210730.md)
 - [2021 July 16](20210716.md)
 - [2021 July 2](20210702.md)
 - [2021 June 18](20210618.md)
