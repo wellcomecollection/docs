@@ -9,8 +9,6 @@ to discuss how we might support people achieving their [objectives](./objectives
 internally and externally to the organisation we aim to align [these objectives](./objectives.md)
 with the organisation's vision.
 
----
-
 ## List of processes
 
 [**1-1s**](./1-1s.md)
