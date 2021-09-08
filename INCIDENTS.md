@@ -35,7 +35,7 @@ There are some situations where a person decides that it is best to initiate the
 
 When it's clear an incident has occured the person responsible is the most senior developer who is available to respond. Who that is can be worked out via Slack in the #wc-platform channel. This person is now the "incident lead" until they pass that role on explicitly to someone else. It is not expected that the most senior developer lead on all incidents, but rather the role should be handed to the person best placed to lead on a solution.
 
-The incident lead should announce in #wc-platform that an incident has occured, ensuring that the relevant delivery manager is aware of the situation (and agrees to continue where appropriate). A new Slack channel should be created for that incident, started with description of the problem and what is known at that time.
+The incident lead should announce in #wc-platform that an incident has occured, ensuring that the relevant delivery manager is aware of the situation (and agrees to continue where appropriate). Folk should join #wc-incident-response and the lead should post a description of the problem and what is known at that time.
 
 The incident lead should pull in whoever they need to understand and resolve the problem. All those involved in resolving the incident should report their progress in the shared incident channel. When someone is no longer able to assist or has stopped helping that should also be made clear.
 
@@ -52,6 +52,8 @@ Offers of help should be directed to the incident lead.
 It's the role of the delivery manager to identify whether a reported issue qualifies as an incident and to mediate the reponse as appropriate. For example a delivery manager may say "we can deal with this later", or "we can call this resolved when X happens".
 
 The delivery manager is responsible for communicating the issue with stakeholders, by taking that action themselves or delegating it as appropriate.
+
+They are responsible for updating https://status.wellcomecollection.org/ with relevant details of an ongoing incident.
 
 The delivery manager can declare an incident resolved and decide who to prioritise any upcoming work related to it. For example the delivery manager may co-ordinate any clean-up work or schedule a post-mortem for that incident.
 
