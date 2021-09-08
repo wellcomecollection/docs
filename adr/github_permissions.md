@@ -23,4 +23,6 @@ We use the [GitHub CODEOWNERS](https://docs.github.com/en/github/creating-clonin
 
 The [@wellcomecollection/buildkite-reviewers](https://github.com/orgs/wellcomecollection/teams/buildkite-reviewers) group **MUST** be added as a code owner for any Buildkite pipelines when new repositories are added or existing ones updated.
 
+You can use this template repository when starting a new project that needs CI: https://github.com/wellcomecollection/buildkite-template
+
 It's necessary to enforce this relationship so that only code that has been properly reviewed can be run in our [Buildkite CI environment](https://buildkite.com/wellcomecollection). CI can assume roles across accounts and changes need to be reviewed properly to maintain permission boundaries.
