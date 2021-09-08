@@ -1,6 +1,6 @@
 # Process
 
-We follow the OKR process.
+We follow the [OKR process](https://en.wikipedia.org/wiki/OKR).
 
 Delivery over process - do not follow these guidelines if they prevent you from delivering value as defined by our objectives.
 
