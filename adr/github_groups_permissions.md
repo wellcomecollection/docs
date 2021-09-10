@@ -8,12 +8,14 @@ These groups are to aid in notification for review only and cover the 2 major la
 - [@wellcomecollection/js-ts-reviewers](https://github.com/orgs/wellcomecollection/teams/js-ts-reviewers): Folk who can review JavaScript and TypeScript things. The [wellcomecollection.org repo](https://github.com/wellcomecollection/wellcomecollection.org) requires a review from this group before you can merge.
 - [@wellcomecollection/scala-reviewers](https://github.com/orgs/wellcomecollection/teams/scala-reviewers): This group is only to notifiy folk who want to review Scala code in our services.
 
+There are also teams and sub-teams for product/project/UX team members:
+- [@wellcomecollection/product-project-ux](https://github.com/orgs/wellcomecollection/teams/product-project-ux): Product ownership, project management & UX team
+  - [@wellcomecollection/data](https://github.com/orgs/wellcomecollection/teams/data): Data science & analytics
+  - [@wellcomecollection/design](https://github.com/orgs/wellcomecollection/teams/data): All things design and UX
+
 We have some groups for developers who we work with from external companies:
 - [@wellcomecollection/digirati-external](https://github.com/orgs/wellcomecollection/teams/digirati-external): We work the [Digirati](https://digirati.com/) to provide our iiif-image & iiif-presentation APIs.
 - [@wellcomecollection/intranda-external](https://github.com/orgs/wellcomecollection/teams/intranda-external): [Intranda](https://www.intranda.com/) maintain the Goobi service, part of our digital-workflow services.
-
-There is a group for our designers:
-- [@wellcomecollection/designers]
 
 And a group for folk providing oversight from the Trust:
 - [@wellcomecollection/wellcome-trust-platform-technology](https://github.com/orgs/wellcomecollection/teams/wellcome-trust-platform-technology): This group contains members of the Wellcome Trust platform technology teams who have oversight of Collection services.
