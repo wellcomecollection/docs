@@ -4,9 +4,14 @@ Developers can be assigned to the following groups in GitHub:
 - [@wellcomecollection/developers](https://github.com/orgs/wellcomecollection/teams/developers): The default group for engineering roles.
 - [@wellcomecollection/buildkite-reviewers](https://github.com/orgs/wellcomecollection/teams/buildkite-reviewers): Group for folk reviewing code that will run in CI.
 
-These groups are to aid in notification for review only and cover the 2 major languages in the platform.
+These groups are to aid in notification for review only and cover the 2 major languages in the platform:
 - [@wellcomecollection/js-ts-reviewers](https://github.com/orgs/wellcomecollection/teams/js-ts-reviewers): Folk who can review JavaScript and TypeScript things. The [wellcomecollection.org repo](https://github.com/wellcomecollection/wellcomecollection.org) requires a review from this group before you can merge.
 - [@wellcomecollection/scala-reviewers](https://github.com/orgs/wellcomecollection/teams/scala-reviewers): This group is only to notifiy folk who want to review Scala code in our services.
+
+There are also teams and sub-teams for product/project/UX team members:
+- [@wellcomecollection/product-project-ux](https://github.com/orgs/wellcomecollection/teams/product-project-ux): Product ownership, project management & UX team
+  - [@wellcomecollection/data](https://github.com/orgs/wellcomecollection/teams/data): Data science & analytics
+  - [@wellcomecollection/design](https://github.com/orgs/wellcomecollection/teams/data): All things design and UX
 
 We have some groups for developers who we work with from external companies:
 - [@wellcomecollection/digirati-external](https://github.com/orgs/wellcomecollection/teams/digirati-external): We work the [Digirati](https://digirati.com/) to provide our iiif-image & iiif-presentation APIs.
