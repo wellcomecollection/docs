@@ -1,4 +1,4 @@
-# Incident retro - search not available
+# Incident retro - cross cluster replication
 
 **Incident from:** 2021-09-28
 
