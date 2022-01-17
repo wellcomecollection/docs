@@ -1,66 +1,78 @@
 # Work relationships in Sierra
 
-There are various ways to represent relationship between Works in the library and the archive. One example is collections in archives, 
+There are various ways to represent relationship between Works in the library and the archive. One example is collections in archives,
 where Works are organized in hierarchy with parents, children and siblings.
 
-In Sierra there are many ways to represent relationships between Works. One of them is series, 
-which represent group of Works. Another relationship that is represented in Sierra is the Host Item 
-entry and Constituent Unit Entry. Host Item entry links the Work to something that the Work is a part of, which could be for 
-example another Work or a Series. Constituent Unit Entry links a Work to something that the Work is composed of, 
-for example another Work or a page or chapter of the Work.
+In Sierra, there are multiple ways to represent relationships between bib records (which become Works):
 
-There are other ways in sierra to represent Work relationships but this RFC is focusing on these 3 with the aim of defining 
-a model for representing these relationships that is flexible enough to be re-used for others.
+*   A group of bibs can form a **series** (for example, a series of books written by the same author)
+*   A bib can be **part of** another bib (for example, a chapter is part of a book)
+*   Conversely, a bib can **contain** other bibs (for example, a book can contain chapters)
 
-## Current usage
+There are other ways in Sierra to represent relationships, but this RFC is focusing on these three.
+The goal is to define an approach that's flexible enough to be reused for other types of relationship.
 
-These relationships are currently exposed on the wellcomelibrary.org website but not on wellcomecollection.org and need
-to be added in order to be able to migrate users from wellcomelibrary.org.
-This is an example of how they're rendered on the wellcomelibrary website for [3178769](https://search.wellcomelibrary.org/iii/encore/record/C__Rb3178769?lang=eng):
-![](encore.png)
+## How these relationships appear in Encore
 
-The series statements are clickable and direct the user to a [search page](https://search.wellcomelibrary.org/iii/encore/search/C__SPerspectives%20in%20continental%20philosophy%20SMCLN__Orightresult?lang=eng&suite=cobalt):
-![](series_search.png)
-This is a simple search that matches words in the works regardless of where they appear so sometimes matches works
-that are not in the series but just happen to contain some words in the search query.  
-[This](https://search.wellcomelibrary.org/iii/encore/search/C__SCookery%20notes%20SMCLN__Orightresult__U?lang=eng&suite=cobalt)
-is an example of a series that has 55 works, but 126 show in the search result:
-![](cookery_notes.png)
 
-As we make this information available on wellcomecollection.org, we want to provide a more precise way of browsing linked 
-works that allows the user to paginate through all works in the same series or host item entry.
+
+These relationships are exposed in Encore (<https://search.wellcomelibrary.org>), but now our new site (<https://wellcomecollection.org/works>).
+We need to add these relationships to the new site, so we can finish migrating users away from Encore.
+
+If you look at an individual bib record in Encore, these links are shown as part of the bib metadata.
+For example, [b31787691]:
+
+![A table of metadata values titled "More Details". Two of the fields labelled "In" and "Series" are highlighted with a red rectangle.](individual_bib.png)
+
+The "Series" values are links, and take the user to a pre-filled search for the title of the series.
+For example, clicking the second link "Perspectives in continental philosophy ; no. 39." takes you to [this search][continental_philosophy]:
+
+![A table of results in Encore for the search query "Perspectives in continental philosophy ;". There are 131 results.](search_results.png)
+
+This only does a free text search on the record, and sometimes returns inaccurate results.
+If you click the first link on b31787691, [the search is empty][empty_search] – even though we know at least one work in this series!
+
+![A table of results in Encore for the search query "Perspectives in Continental philosophy series, 1089-3938 ;". There aren't any results.](no_results.png)
+
+This is an obvious opportunity for improvement – we can provide a more accurate way to browse works by series link.
+
+[b31787691]: https://search.wellcomelibrary.org/iii/encore/record/C__Rb3178769?lang=eng
+[continental_philosophy]: https://search.wellcomelibrary.org/iii/encore/search/C__SPerspectives%20in%20continental%20philosophy%20SMCLN__Orightresult?lang=eng&suite=cobalt
+[empty_search]: https://search.wellcomelibrary.org/iii/encore/search/C__SPerspectives%20in%20Continental%20philosophy%20series%2C%201089-3938%20SMCLN__Orightresult?suite=cobalt&lang=eng
+
+
 
 ## MARC representation
 
 ### Sierra series
-Sierra series are in Marc tag 490 (plus sometimes 830) of the bib record. 
+Sierra series are in Marc tag 490 (plus sometimes 830) of the bib record.
 Legacy series are in tag 440 and will me migrated to 490 by collections team.
 
 Based on investigation of the Sierra data done at the end of March 2021, there are 131883 record with a Sierra series statement.
-The biggest series is 
+The biggest series is
 [Early European Books : Printed sources to 1700 ;](https://search.wellcomelibrary.org/iii/encore/search/C__SEarly%20European%20Books%20%3A%20Printed%20sources%20to%201700%20SMCLN__Orightresult__U?lang=eng&suite=cobalt) with 31956 bibs, followed by
 [ACLS Humanities E-Book](https://search.wellcomelibrary.org/iii/encore/search/C__SACLS%20Humanities%20E-Book.__Orightresult__U?lang=eng&suite=cobalt) with 5118.
 
-Series can have volumes in subfield $v. Volume "Collection 3" 
+Series can have volumes in subfield $v. Volume "Collection 3"
 of "Early European Books : Printed sources to 1700 ;" is the biggest in the library and contains 10245 works.
-Series can also have identifiers in subfield $l (Library of Congress call number) or $x (ISSN). 
+Series can also have identifiers in subfield $l (Library of Congress call number) or $x (ISSN).
 Records with the same identifier in a Series statement can have different volumes in subfield $v.
 
 ### Host Item Entry and Constituent Unit Entry
-Host Item Entry is in 773 MARC tag. Host Item entries can have a title, related parts in $g that can be volumes or dates, 
+Host Item Entry is in 773 MARC tag. Host Item entries can have a title, related parts in $g that can be volumes or dates,
 identifers such as ISSN in $x, ISBN in $z or record control number in $w.
 
 At the time of the investigation there are 492529 works with a Host Item entry statement. The Host Item entry with
 the most works is "Eighteenth Century collections online" with 182106 works followed by "Early European Books." with 31956 works.
 
-Some records in Host Item Entry overlap partially or entirely with series: "ACLS Humanities E-Book." is in 773 and 830 and 
+Some records in Host Item Entry overlap partially or entirely with series: "ACLS Humanities E-Book." is in 773 and 830 and
 "Early European Books.” in 773 also nearly completely overlaps with “Early European Books : Printed sources to 1700 ;" in 490.
 
-Not all Host Item entries refer to Series though, like for example 
-[1377450](https://search.wellcomelibrary.org/iii/encore/record/C__Rb1377450?lang=eng&suite=cobalt&marcData=Y) which refers to another work. 
+Not all Host Item entries refer to Series though, like for example
+[1377450](https://search.wellcomelibrary.org/iii/encore/record/C__Rb1377450?lang=eng&suite=cobalt&marcData=Y) which refers to another work.
 
 Constituent Unit Entry is in 774 MARC tag. Constituent Unit entries can have a title, related parts in $g that can be volumes or dates,
-identifiers such as ISSN in $x, ISBN in $z or record control number in $w. There are 760 works with a 774 MARC tag. 
+identifiers such as ISSN in $x, ISBN in $z or record control number in $w. There are 760 works with a 774 MARC tag.
 
 ## Proposal
 The proposal is to use properties `parts` and `partOf` of the Work model that are already used to represent
@@ -129,32 +141,32 @@ archive collections. This is an example of how relations are rendered by the Cat
   }
 ],
 ```
-For archive collections, the website renders these as a collapsible hierarchy: 
+For archive collections, the website renders these as a collapsible hierarchy:
 
 ![](archives.png)
 
-Given the size of many series and Host Item Entry that would not be practical in this case, so the proposal 
-is for the frontend to render differently the information in `partOf` based on the `type` property of the work. 
+Given the size of many series and Host Item Entry that would not be practical in this case, so the proposal
+is for the frontend to render differently the information in `partOf` based on the `type` property of the work.
 
 In the case of archive works, the frontend should render the hierarchy as in the example above.
 
-In the case of Sierra works, the frontend should provide a link to a search page where the user can paginate through 
-all works linked by the same Series or Host Item Entry. 
+In the case of Sierra works, the frontend should provide a link to a search page where the user can paginate through
+all works linked by the same Series or Host Item Entry.
 To do this the Catalogue API should provide a filter that matches exactly on the contents of `partOf` along the lines of
 `/works?partOf.title=Morphogenesis of the vertebrate brain`.
 
 As series and Host Item Entries can have volumes, the proposal is to represent them by creating one record for the Series or
 Host Item Entry and one for the volume with a nested `partOf` property (see example below).
 
-Additionally, if a series or Host Item Entry has an identifier (such as ISSN os ISBn or other) the proposal is 
-to mint a canonical identifier in the pipeline and to expose that identifier in the API. 
+Additionally, if a series or Host Item Entry has an identifier (such as ISSN os ISBn or other) the proposal is
+to mint a canonical identifier in the pipeline and to expose that identifier in the API.
 Finally, the proposal is to model a series statement or a Host Item Entry with a type `Work`.
 
 ### Examples
- 
-- [1074785](https://search.wellcomelibrary.org/iii/encore/record/C__Rb1074785?lang=eng&suite=cobalt&marcData=Y) 
-This is an example of a series statement in 490 + 830. In this example the information contained in 830 and 490 is 
-  exactly the same, so the result is just one statement. 
+
+- [1074785](https://search.wellcomelibrary.org/iii/encore/record/C__Rb1074785?lang=eng&suite=cobalt&marcData=Y)
+This is an example of a series statement in 490 + 830. In this example the information contained in 830 and 490 is
+  exactly the same, so the result is just one statement.
 ```yaml
 "partOf": [
   {
@@ -162,7 +174,7 @@ This is an example of a series statement in 490 + 830. In this example the infor
     "workType": {
       "id": "???",
       "label": "Volumes",
-      "type": "Format"             
+      "type": "Format"
     },
     "partOf": [
       {
@@ -262,7 +274,7 @@ This is an example of a series statement in 490 + 830. In this example the infor
     ],
     "type": "Series"
   },
-  {   // 773 
+  {   // 773
     "title": "Springer eBooks",
     "type": "Work"
   }
@@ -315,8 +327,8 @@ Series statement in 440 with only the title
   }
 ]
 ```
-- [2301867](https://search.wellcomelibrary.org/iii/encore/record/C__Rb2301867?lang=eng&suite=cobalt&marcData=Y) 
-  773 not overlapping with series and no id. 
+- [2301867](https://search.wellcomelibrary.org/iii/encore/record/C__Rb2301867?lang=eng&suite=cobalt&marcData=Y)
+  773 not overlapping with series and no id.
 ```yaml
 "partOf": [
     {
@@ -325,12 +337,12 @@ Series statement in 440 with only the title
     }
 ]
 ```
-- [1186777](https://search.wellcomelibrary.org/iii/encore/record/C__Rb1186777?lang=eng&suite=cobalt&marcData=Y) 
-  773 with an id in subfield $w which links to another Work in our library (see example below) 
+- [1186777](https://search.wellcomelibrary.org/iii/encore/record/C__Rb1186777?lang=eng&suite=cobalt&marcData=Y)
+  773 with an id in subfield $w which links to another Work in our library (see example below)
 ```yaml
 "partOf": [
    {
-    "title": "Basil Hood. Photograph album; page 9",   
+    "title": "Basil Hood. Photograph album; page 9",
     "partOf": [
       {
         "id": "abcdefgh",
@@ -349,12 +361,12 @@ Series statement in 440 with only the title
         "title": "Basil Hood. Photograph album",
         "type": "Work"
       }
-    ], 
+    ],
     "type": "Work"
   }
 ]
 ```
-- [1172977](https://search.wellcomelibrary.org/iii/encore/record/C__Rb1172977?lang=eng&suite=cobalt&marcData=Y) 
+- [1172977](https://search.wellcomelibrary.org/iii/encore/record/C__Rb1172977?lang=eng&suite=cobalt&marcData=Y)
   774 with ids (related to above 773)
 ```yaml
 "parts": [
@@ -367,7 +379,7 @@ Series statement in 440 with only the title
         "id": "abcdefgh1", // minted based on subfield $w
         "title": "Charing Cross Hospital: a portrait of house surgeons. Photograph, 1906.",
         "totalParts": 0,
-        "totalDescendentParts": 0, 
+        "totalDescendentParts": 0,
         "type": "Work"
       }
     ],
@@ -407,7 +419,7 @@ Series statement in 440 with only the title
 ]
 ```
 
-- [3017508](https://search.wellcomelibrary.org/iii/encore/record/C__Rb3017508?lang=eng&suite=cobalt&marcData=Y) 
+- [3017508](https://search.wellcomelibrary.org/iii/encore/record/C__Rb3017508?lang=eng&suite=cobalt&marcData=Y)
   774 no ids
 ```yaml
 "parts": [
