@@ -70,7 +70,7 @@ There are five variable-length fields ("varfields") in Sierra that we'll look at
     This is present on ~60k bibs.
 
     The interesting subfields are $a (series statement) and $v (volume).
-    We will ignore the other subfields – either they're not useful for this work, or their use is likely an error on the original Sierra record.
+    We will ignore the other subfields – either they're not useful for this work, they're non-standard fields, or their use is likely an error on the original Sierra record.
 
 *   [**440 Series Statement.**](https://www.loc.gov/marc/bibliographic/bd440.html)
     For example:
@@ -80,6 +80,8 @@ There are five variable-length fields ("varfields") in Sierra that we'll look at
     ```
 
     This is legacy data that will eventually be migrated to 490, but it's currently present on 60k+ bibs, so we have to include it in this work.
+
+    The interesting subfields are $a (series statement) and $v (volume).
 
 *   [**830 Series Added Entry-Uniform Title.**](https://techdocs.iii.com/sierraapi/v2/Content/zReference/objects/varFieldsArray.htm)
     This is another field for marking a bib as part of a series, for example:
@@ -122,6 +124,8 @@ There are five variable-length fields ("varfields") in Sierra that we'll look at
 
     This is only present on 749 bibs.
 
+We'll continue to refine our use of these subfields as we go along – it's very hard to define an exact specification upfront.
+
 
 
 ## Notable series
@@ -135,37 +139,6 @@ There are five variable-length fields ("varfields") in Sierra that we'll look at
     *   ` ` (a single space) which appears in 1k+ instances of 830
 
 
-## MARC representation
-
-### Sierra series
-Sierra series are in Marc tag 490 (plus sometimes 830) of the bib record.
-Legacy series are in tag 440 and will me migrated to 490 by collections team.
-
-Based on investigation of the Sierra data done at the end of March 2021, there are 131883 record with a Sierra series statement.
-The biggest series is
-[Early European Books : Printed sources to 1700 ;](https://search.wellcomelibrary.org/iii/encore/search/C__SEarly%20European%20Books%20%3A%20Printed%20sources%20to%201700%20SMCLN__Orightresult__U?lang=eng&suite=cobalt) with 31956 bibs, followed by
-[ACLS Humanities E-Book](https://search.wellcomelibrary.org/iii/encore/search/C__SACLS%20Humanities%20E-Book.__Orightresult__U?lang=eng&suite=cobalt) with 5118.
-
-Series can have volumes in subfield $v. Volume "Collection 3"
-of "Early European Books : Printed sources to 1700 ;" is the biggest in the library and contains 10245 works.
-Series can also have identifiers in subfield $l (Library of Congress call number) or $x (ISSN).
-Records with the same identifier in a Series statement can have different volumes in subfield $v.
-
-### Host Item Entry and Constituent Unit Entry
-Host Item Entry is in 773 MARC tag. Host Item entries can have a title, related parts in $g that can be volumes or dates,
-identifers such as ISSN in $x, ISBN in $z or record control number in $w.
-
-At the time of the investigation there are 492529 works with a Host Item entry statement. The Host Item entry with
-the most works is "Eighteenth Century collections online" with 182106 works followed by "Early European Books." with 31956 works.
-
-Some records in Host Item Entry overlap partially or entirely with series: "ACLS Humanities E-Book." is in 773 and 830 and
-"Early European Books.” in 773 also nearly completely overlaps with “Early European Books : Printed sources to 1700 ;" in 490.
-
-Not all Host Item entries refer to Series though, like for example
-[1377450](https://search.wellcomelibrary.org/iii/encore/record/C__Rb1377450?lang=eng&suite=cobalt&marcData=Y) which refers to another work.
-
-Constituent Unit Entry is in 774 MARC tag. Constituent Unit entries can have a title, related parts in $g that can be volumes or dates,
-identifiers such as ISSN in $x, ISBN in $z or record control number in $w. There are 760 works with a 774 MARC tag.
 
 ## Proposal
 The proposal is to use properties `parts` and `partOf` of the Work model that are already used to represent
