@@ -42,6 +42,99 @@ This is an obvious opportunity for improvement – we can provide a more accurat
 
 
 
+## How it should work on wellcomecollection.org
+
+Users should be able to:
+
+-   See whether a work is part of a series, part of another work, or contains other works
+-   Find other works in the same series, or which are part of the same work, or contained by this work
+
+We can reuse some of the functionality we have for modelling relations and archive trees, but the size of some series means we can't reuse the UI components.
+
+
+
+## How these relationships are modelled in MARC
+
+There are five variable-length fields ("varfields") in Sierra that we'll look at for this work:
+
+-   [**490 Series Statement.**](https://www.loc.gov/marc/bibliographic/bd490.html)
+    This is used to mark a bib as part of a series, for example:
+
+    ```
+    490 1  Perspectives in Continental philosophy series,|x1089-3938
+           ;|vno. 39
+    ```
+
+    The field is structured to distinguish between the title of the series (`Perspectives in Continental philosophy series`) and the bib's place within this series (`no. 39`).
+
+    This is present on ~60k bibs.
+
+    The interesting subfields are $a (series statement) and $v (volume).
+    We will ignore the other subfields – either they're not useful for this work, or their use is likely an error on the original Sierra record.
+
+*   [**440 Series Statement.**](https://www.loc.gov/marc/bibliographic/bd440.html)
+    For example:
+
+    ```
+    440  0 Folk literature of South American Indians
+    ```
+
+    This is legacy data that will eventually be migrated to 490, but it's currently present on 60k+ bibs, so we have to include it in this work.
+
+*   [**830 Series Added Entry-Uniform Title.**](https://techdocs.iii.com/sierraapi/v2/Content/zReference/objects/varFieldsArray.htm)
+    This is another field for marking a bib as part of a series, for example:
+
+    ```
+    830  0 Published papers (Wellcome Chemical Research Laboratories)
+           ;|vno. 149.
+    ```
+
+    This is present on ~36k bibs.
+
+*   [**773 Host Item Entry.**](https://www.loc.gov/marc/bibliographic/bd773.html)
+    If this is present on a bib, it tells us about the containing bib.
+    For example:
+
+    ```
+    773 00 |tBulletin of the history of dentistry.|gVol. 26 (1978)
+           |gno. 1, Apr.|w(OCoLC)1537778
+    ```
+
+    The bib on which this appears is part of this volume of the bulletin of the history of dentistry.
+
+    This is present on ~492k bibs.
+
+*   [**774 Constituent Unit Entry.**](https://www.loc.gov/marc/bibliographic/bd774.html)
+    This is the opposite of 773, and tells us about the component parts of this bib.
+    For example:
+
+    ```
+    774 18 |gFol. 1 left|aCavalieri, Giovanni Battista, ca. 1525-
+           1601.|tConjoined twins sharing one pair of legs, born in
+           1584. Etching by G.B. Cavalieri, 1585.|w(Wcat)653161i
+    774 18 |gFol. 1 right|aCavalieri, Giovanni Battista, ca. 1525-
+           1601.|tEngraved titlepage to G.B. Cavalieri, 'Opera nela
+           quale vi e molti mostri'.  Engraving by G.B. Cavalieri,
+           1585.|w(Wcat)653162i
+    ```
+
+    The bib on which these fields appear has two component parts.
+
+    This is only present on 749 bibs.
+
+
+
+## Notable series
+
+*   Some series have thousands of items, e.g. "ACLS Humanities E-Book." appears in 5k+ instances of 830 Series Added Entry-Uniform Title.
+
+*   "Early European Books : Printed sources to 1700" appears in 31k+ instances of 440 Series Statement, divided into individual volumes.
+
+*   We should consider dismissing or removing certain values in subfield $a as unlikely to be useful for navigation, including:
+
+    *   ` ` (a single space) which appears in 1k+ instances of 830
+
+
 ## MARC representation
 
 ### Sierra series
