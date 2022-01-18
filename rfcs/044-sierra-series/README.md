@@ -201,89 +201,120 @@ If a series or host item entry has an identifier (such as an ISSN), we'll add it
 
 ### Examples
 
-- [1074785](https://search.wellcomelibrary.org/iii/encore/record/C__Rb1074785?lang=eng&suite=cobalt&marcData=Y)
-This is an example of a series statement in 490 + 830. In this example the information contained in 830 and 490 is
-  exactly the same, so the result is just one statement.
-```yaml
-"partOf": [
-  {
-    "title": "Morphogenesis of the vertebrate brain; 2",
-    "workType": {
-      "id": "???",
-      "label": "Volumes",
-      "type": "Format"
-    },
-    "partOf": [
-      {
-        "title": "Morphogenesis of the vertebrate brain",
-        "type": "Series"
-      }
-    ],
-    "type": "Series"
-  }
-]
-```
-- [3109805](https://search.wellcomelibrary.org/iii/encore/record/C__Rb3109805?lang=eng&suite=cobalt&marcData=Y)
-  490 + 773 with slightly different information
-```yaml
-"partOf": [
-  {   //490
-    "title": "Early European Books : Printed sources to 170; Collection 4",
-    "workType": {
-      "id": "???",
-      "label": "Volumes",
-      "type": "Format"
-    },
-    "partOf": [
-      {
-        "title": "Early European Books : Printed sources to 170",
-        "type": "Series"
-      }
-    ],
-    "type": "Series"
-  },
-  {   //773
-    "title": "Early European Books",
-    "type": "Work"
-  }
-]
-```
+-   b10747850
 
-- [3178769](https://search.wellcomelibrary.org/iii/encore/record/C__Rb3178769?lang=eng&suite=cobalt&marcData=Y) 490 + 830 multiple entries + 773
-```yaml
-"partOf": [
-  {   // 490 & 830 with same information
-    "title": "Perspectives in Continental philosophy series; no. 39",
+    ```
+    490 1  Morphogenesis of the vertebrate brain ;|v2
+    830  0 Morphogenesis of the vertebrate brain ;|v2
+    ```
+
+    We'll deduplicate because the information in 490 and 830 is the same:
+
+    ```json
     "partOf": [
       {
-        "id": "abcdefg",
-        "identifiers": [
+        "title": "Morphogenesis of the vertebrate brain; 2",
+        "workType": {
+          "id": "???",
+          "label": "Volumes",
+          "type": "Format"
+        },
+        "partOf": [
           {
-            "identifierType": {
-              "id": "issn",
-              "label": "ISSN",
-              "type": "IdentifierType"
-              },
-            "value": "1089-3938",
-            "type": "Identifier"
+            "title": "Morphogenesis of the vertebrate brain",
+            "type": "Series"
           }
         ],
-        "title": "Perspectives in Continental philosophy series",
         "type": "Series"
       }
-    ],
-    "type": "Series"
-  },
-  {  // Second 830 with slighly different information
-    "title": "Fordham perspectives in continental philosophy",
-    "type": "Series"
-  },
- {   // 830 & 773 contain the same information
-    "title": "ACLS Humanities E-Book.",
-    "type": "Work" //or Series?
-  }
-]
-```
+    ]
+    ```
+
+    We have a nested `partOf` because there's volume information in subfield $v.
+
+
+-   b31098058
+
+    ```
+    490 0  Early European Books : Printed sources to 1700 ;
+           |vCollection 4
+    773 0  |tEarly European Books.
+    ```
+
+    Here we have 490 and 773 with slightly different information.
+
+    ```json
+    "partOf": [
+      { // 490
+        "title": "Early European Books : Printed sources to 170; Collection 4",
+        "workType": {
+          "id": "???",
+          "label": "Volumes",
+          "type": "Format"
+        },
+        "partOf": [
+          {
+            "title": "Early European Books : Printed sources to 170",
+            "type": "Series"
+          }
+        ],
+        "type": "Series"
+      },
+      { // 773
+        "title": "Early European Books",
+        "type": "Work"
+      }
+    ]
+    ```
+
+    Although we could write logic to deduplicate these, it's better to do the deduplication (if we want to) in Sierra itself.
+
+-   b31787
+
+    ```
+    490 1  Perspectives in Continental philosophy series,|x1089-3938 
+           ;|vno. 39 
+    773 0  |tACLS Humanities E-Book.|nURL: http://
+           www.humanitiesebook.org/ 
+    830  0 Perspectives in continental philosophy ;|vno. 39. 
+    830  0 Fordham perspectives in continental philosophy. 
+    830  0 ACLS Humanities E-Book. 
+    ```
+
+    ```json
+    "partOf": [
+      {   // 490 & 830 with same information
+        "title": "Perspectives in Continental philosophy series; no. 39",
+        "partOf": [
+          {
+            "id": "abcdefg",
+            "identifiers": [
+              {
+                "identifierType": {
+                  "id": "issn",
+                  "label": "ISSN",
+                  "type": "IdentifierType"
+                  },
+                "value": "1089-3938",
+                "type": "Identifier"
+              }
+            ],
+            "title": "Perspectives in Continental philosophy series",
+            "type": "Series"
+          }
+        ],
+        "type": "Series"
+      },
+      {  // Second 830 with slighly different information
+        "title": "Fordham perspectives in continental philosophy",
+        "type": "Series"
+      },
+     {   // 830 & 773 contain the same information
+        "title": "ACLS Humanities E-Book.",
+        "type": "Work" //or Series?
+      }
+    ]
+    ```
 - [2125597](https://search.wellcomelibrary.org/iii/encore/record/C__Rb2125597?lang=eng&suite=cobalt&marcData=Y)
   490 with ISSN + 830 and 773. There are 1037 bibs that have the same ISSN in a series statement but
   with different volume subfield.
