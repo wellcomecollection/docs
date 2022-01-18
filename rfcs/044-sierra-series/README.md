@@ -12,9 +12,9 @@ In Sierra, there are multiple ways to represent relationships between bib record
 There are other ways in Sierra to represent relationships, but this RFC is focusing on these three.
 The goal is to define an approach that's flexible enough to be reused for other types of relationship.
 
+
+
 ## How these relationships appear in Encore
-
-
 
 These relationships are exposed in Encore (<https://search.wellcomelibrary.org>), but now our new site (<https://wellcomecollection.org/works>).
 We need to add these relationships to the new site, so we can finish migrating users away from Encore.
@@ -272,13 +272,13 @@ If a series or host item entry has an identifier (such as an ISSN), we'll add it
 -   b31787
 
     ```
-    490 1  Perspectives in Continental philosophy series,|x1089-3938 
-           ;|vno. 39 
+    490 1  Perspectives in Continental philosophy series,|x1089-3938
+           ;|vno. 39
     773 0  |tACLS Humanities E-Book.|nURL: http://
-           www.humanitiesebook.org/ 
-    830  0 Perspectives in continental philosophy ;|vno. 39. 
-    830  0 Fordham perspectives in continental philosophy. 
-    830  0 ACLS Humanities E-Book. 
+           www.humanitiesebook.org/
+    830  0 Perspectives in continental philosophy ;|vno. 39.
+    830  0 Fordham perspectives in continental philosophy.
+    830  0 ACLS Humanities E-Book.
     ```
 
     ```json
