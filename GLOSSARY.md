@@ -1,6 +1,10 @@
 # Glossary
 
-**Archivematica** - [A tool for born-digital workflows](https://www.archivematica.org/en/). We use Archivematica to package (+metadata) born-digital content,
+**Archivematica** - [A tool for born-digital workflows](https://www.archivematica.org/en/). We use Archivematica to package (+metadata) born-digital content.
+
+**BagIt** - [A standard for packaging digital content](https://datatracker.ietf.org/doc/html/rfc8493). Both Archivematica and Goobi output BagIt-compliant "bags", which are stored in the storage service.
+
+**CALM** - [Archive management software](https://www.axiell.com/uk/solutions/product/calm/) which stores all catalogue data pertaining to archives. These are "harvested" into Sierra every night, but we get archive data from the CALM API directly.
 
 **Digirati** - [An agency](https://digirati.com/) who create/maintain DLCS and contribute to the IIIF standards, who did a lot of the work on wellcomelibrary.org and also helped with our identity/requesting functionality.
 
@@ -23,4 +27,6 @@
 **OPAC, the** - An older and more limited frontend for Sierra, kind of equivalent to Encore. Comes "in the box" with Sierra, rather than being a separate product like Encore. Sometimes known as WebPAC.
 
 **Sierra** - [Our Library Management System](https://www.iii.com/products/sierra-ils/). Sierra manages catalogue records, patrons and more. It exposes a pretty good API which is [well documented](https://techdocs.iii.com/sierraapi/Content/titlePage.htm).
+
+**TEI** - [A metadata standard for text/manuscripts](https://github.com/wellcomecollection/wellcome-collection-tei). We are using this for some non-Western manuscripts as it offers much better metadata than existing library systems and standards.
 
