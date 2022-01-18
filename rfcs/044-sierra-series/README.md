@@ -124,7 +124,9 @@ There are five variable-length fields ("varfields") in Sierra that we'll look at
 
     This is only present on 749 bibs.
 
-We'll continue to refine our use of these subfields as we go along – it's very hard to define an exact specification upfront.
+We'll continue to refine our use of these fields and subfields as we go along – it's very hard to define an exact specification upfront.
+
+We will likely do some cleanup (e.g. deduplication across fields) once we've done the first transformation of the data, but where possible we should try to fix data at source (in Sierra) rather than writing code to deal with it.
 
 
 
@@ -140,11 +142,16 @@ We'll continue to refine our use of these subfields as we go along – it's very
 
 
 
-## Proposal
-The proposal is to use properties `parts` and `partOf` of the Work model that are already used to represent
-archive collections. This is an example of how relations are rendered by the Catalogue API for archive works for
-[dq3spb42](https://api.wellcomecollection.org/catalogue/v2/works/dq3spb42?include=parts,partOf):
-```yaml
+## How we will model these relationships in the catalogue API
+
+Previously, all the relationships in the catalogue API have been to other Works.
+We're not going to create Works for series (unless the Library team have created one in Sierra).
+
+We will use use the `parts` and `partOf` properties on the Work model, that are current used to represent archive collections.
+
+This is how relations are modelled for the archive collection on [dq3spb42](https://api.wellcomecollection.org/catalogue/v2/works/dq3spb42?include=parts,partOf):
+
+```json
 "parts": [
   {
     "id": "fncn55x6",
@@ -154,38 +161,7 @@ archive collections. This is an example of how relations are rendered by the Cat
     "totalDescendentParts": 0,
     "type": "Work"
   },
-  {
-    "id": "a8hbc266",
-    "title": "Articles on Dietetics",
-    "referenceNumber": "PP/DSM/3/2",
-    "totalParts": 0,
-    "totalDescendentParts": 0,
-    "type": "Work"
-  },
-  {
-    "id": "qhvzeece",
-    "title": "Nutrition Newsletters, Conference Literature etc",
-    "referenceNumber": "PP/DSM/3/3",
-    "totalParts": 0,
-    "totalDescendentParts": 0,
-    "type": "Work"
-  },
-  {
-    "id": "cpp2xh99",
-    "title": "Articles and Papers on Nutrition",
-    "referenceNumber": "PP/DSM/3/4",
-    "totalParts": 0,
-    "totalDescendentParts": 0,
-    "type": "Work"
-  },
-  {
-    "id": "ur5sakg9",
-    "title": "\"Nutrition in Britain in the twentieth century\" - PhD thesis",
-    "referenceNumber": "PP/DSM/3/5",
-    "totalParts": 0,
-    "totalDescendentParts": 0,
-    "type": "Work"
-  },
+  ...
   {
     "id": "k4vp98bp",
     "title": "Miscellaneous Items",
@@ -207,26 +183,21 @@ archive collections. This is an example of how relations are rendered by the Cat
   }
 ],
 ```
-For archive collections, the website renders these as a collapsible hierarchy:
+
+These are [rendered on the website](https://wellcomecollection.org/works/dq3spb42) as a collapsible hierarchy:
 
 ![](archives.png)
 
-Given the size of many series and Host Item Entry that would not be practical in this case, so the proposal
-is for the frontend to render differently the information in `partOf` based on the `type` property of the work.
+Some series can have thousands of entries, so this UI isn't practical – we'll need to render the information differently.
+We'll determine how to render them based on the `type` property of the entry in `partOf`.
 
-In the case of archive works, the frontend should render the hierarchy as in the example above.
+*   For archive works, we'll use `partOf: Collection` and render an archive tree
+*   For works which are part of a series (440, 490, 830), we'll use `partOf: Series` and display a link as part of the work metadata (similar to Encore)
+*   For works which have constituent parts or are part of something else, we'll use `partOf: Work`
 
-In the case of Sierra works, the frontend should provide a link to a search page where the user can paginate through
-all works linked by the same Series or Host Item Entry.
-To do this the Catalogue API should provide a filter that matches exactly on the contents of `partOf` along the lines of
-`/works?partOf.title=Morphogenesis of the vertebrate brain`.
+If a series or host item entry has a volume, we'll use a nested `partOf` property to record the series and the volume individually (see example below).
 
-As series and Host Item Entries can have volumes, the proposal is to represent them by creating one record for the Series or
-Host Item Entry and one for the volume with a nested `partOf` property (see example below).
-
-Additionally, if a series or Host Item Entry has an identifier (such as ISSN os ISBn or other) the proposal is
-to mint a canonical identifier in the pipeline and to expose that identifier in the API.
-Finally, the proposal is to model a series statement or a Host Item Entry with a type `Work`.
+If a series or host item entry has an identifier (such as an ISSN), we'll add it to the `partOf` and mint a canonical identifier for it.
 
 ### Examples
 
