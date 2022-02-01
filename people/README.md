@@ -18,3 +18,6 @@ with the organisation's vision.
 [**feedback**](./feedback.md)
 
 [**objectives**](./objectives.md)
+
+-  [How our GitHub organisation is managed](./github-teams.md)
+-  [What to do when somebody leaves the team](./offboarding.md)
