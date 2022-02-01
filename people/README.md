@@ -19,4 +19,5 @@ with the organisation's vision.
 
 [**objectives**](./objectives.md)
 
+-  [How our GitHub organisation is managed](./github-teams.md)
 -  [What to do when somebody leaves the team](./offboarding.md)
