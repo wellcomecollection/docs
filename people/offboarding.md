@@ -1,4 +1,4 @@
-# Offboarding
+# What to do when somebody leaves the team
 
 When somebody leaves the team, here's a (probably incomplete) checklist of things we need to do:
 

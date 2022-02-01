@@ -18,3 +18,5 @@ with the organisation's vision.
 [**feedback**](./feedback.md)
 
 [**objectives**](./objectives.md)
+
+-  [What to do when somebody leaves the team](./offboarding.md)
