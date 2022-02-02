@@ -2,6 +2,7 @@
 
 Fortnightly updates about the work of the digital platform team.
 
+- [2022 February 2](20220202.md)
 - [2022 January 19](20220119.md)
 - [2022 January 5](20220105.md)
 - [2021 December 8](20211208.md)
