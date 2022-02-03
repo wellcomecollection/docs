@@ -3,9 +3,12 @@
 When somebody leaves the team, here's a (probably incomplete) checklist of things we need to do:
 
 - [ ] Move them to alumni on <https://wellcomecollection.org/humans.txt>
-- [ ] Remove them from our GitHub organisation
-- [ ] Remove them from our Buildkite organisation
-- [ ] Remove them from Prismic, if they had access
-- [ ] Remove them from Vercel, if they had access
-- [ ] Remove them from Elastic Cloud, if they had access
+- Remove them from the following accounts/services
+  - [ ] Our GitHub organisation
+  - [ ] Our Buildkite organisation
+  - [ ] Prismic
+  - [ ] Vercel
+  - [ ] Elastic Cloud
+  - [ ] Gitbook
+  - [ ] Notion
 - [ ] Make sure their C_ cloud account (i.e. AWS access) is removed by D&T
