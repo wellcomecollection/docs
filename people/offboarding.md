@@ -7,4 +7,5 @@ When somebody leaves the team, here's a (probably incomplete) checklist of thing
 - [ ] Remove them from our Buildkite organisation
 - [ ] Remove them from Prismic, if they had access
 - [ ] Remove them from Vercel, if they had access
+- [ ] Remove them from Elastic Cloud, if they had access
 - [ ] Make sure their C_ cloud account (i.e. AWS access) is removed by D&T
