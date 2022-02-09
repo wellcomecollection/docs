@@ -14,8 +14,8 @@ Sierra does not provide a change feed or any other kind of notification for even
 
 ## Proposal
 
-1. A **CloudWatch event** is run at some interval *T* to trigger a Lambda
-2. The **Lambda** queries the Sierra API for patron records<sup>†</sup> that were deleted in the previous time window *W > T*. That is to say, time windows overlap to avoid records getting lost at the boundary.
+1. A **CloudWatch event** is run daily to trigger a Lambda
+2. The **Lambda** queries the Sierra API for patron records<sup>†</sup> that were deleted at some point on the _previous_ day - so as to ensure the entire day is covered.
 3. The Lambda calls the [**Auth0 Management API**](https://auth0.com/docs/api/management/v2#!/Users/delete_users_by_id) to delete each of the records found in the query. If these are already deleted, or don't have any data in Auth0, this query 404s (which is fine).
 
 <sup>†</sup> The Sierra API allows us to query by a `deletedDate` like `yyyy-MM-dd`, or an `updatedDate` like `yyyy-MM-dd'T'HH:mm:ssZZ` along with a `deleted: true` filter. While `deletedDate` has poor granularity, we should use it rather than `updatedDate`, as a deletion does not count as an update: the second option would not return records that were recently deleted but not otherwise updated.
