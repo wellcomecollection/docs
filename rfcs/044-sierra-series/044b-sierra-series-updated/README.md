@@ -1,6 +1,6 @@
 # Work relationships in Sierra, part 2
 
-This is an update to [RFC-044: Sierra Series](../044-sierra-series). What is presented
+This is an update to [RFC-044: Sierra Series](..). What is presented
 here is a distillation of our current understanding of this issue, and the 
 practicalities of implementation.
 
@@ -327,8 +327,8 @@ Some 774 values have no id, e.g. [Catalogues of Malayan plants, birds and snakes
 I don't know what that means. This cannot be presented as any kind of list
 of links in a UI, because there is nothing to link to.
 
-However, this object is currently displayed with a Collection Hierarchy,
-with poor titling.  Perhaps this is a job for match and merge?
+This example is a TEI manuscript, so the data for the API comes from there
+rather than Sierra.
 
 ```
 245 00 [Catalogues of Malayan plants, birds and snakes] 
