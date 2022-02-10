@@ -11,4 +11,4 @@ When somebody leaves the team, here's a (probably incomplete) checklist of thing
   - [ ] Elastic Cloud
   - [ ] Gitbook
   - [ ] Notion
-- [ ] Make sure their C_ cloud account (i.e. AWS access) is removed by D&T
+- [ ] Make sure their C_ cloud account (i.e. AWS access) is disabled by D&T. These accounts aren't removed immediately; they're disabled and deleted after a certain period has passed.
