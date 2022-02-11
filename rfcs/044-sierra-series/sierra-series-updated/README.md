@@ -49,8 +49,9 @@ can be improved for those records where we have more information.
 
 It also represents a cone of uncertainty.  It is clear that we want to link
 from Works to Series via a filtered search for the Series title.  The 
-desired behaviour of links between parent and child works is less clear. 
-The value of the subPart text is not clear.
+correct presentation of links between parent and child works is less clear. 
+In particular, how best to handle asymmetric links.
+The value of presenting the subPart text to users is not clear.
 
 ## Common features
 
@@ -70,8 +71,9 @@ __Investigate where this happens in order to decide, before developing a solutio
  
 ### subPart property name
 
-$g - Related parts and $v Volume/Sequential designation are used in the
-Sierra data.  Giving them the same name in the API is simpler than
+The subfields `$g - Related parts` and `$v Volume/Sequential designation` are used in the
+Sierra data in 773/774 and 440/490/830 fields, respectively.  
+Giving them a commonname in the API is simpler than
 having two different names, forcing a client to first try one then the other
 or look at one property if the parent is a Series and another one if the
 parent is a Work or Unknown.
@@ -81,8 +83,11 @@ parent is a Work or Unknown.
 Whereas hierarchies from CALM data can be arbitrarily deep and broad, 
 and benefit from nested `partOf` and `part` values, 
 values derived from these fields are effectively flat. Although the 
-first layer in either may be arbitrarily broad, the next layer has
-exactly one value.
+first layer in either may be arbitrarily broad (multiple parents/children), 
+the next layer would have maximally one value.
+
+In addition, where `$g` or `$v` are used, the immediate parent/child as proposed in
+the original RFC is of less importance, being a volume number or page number.
 
 They denote membership of a container, and optionally denote a subPart
 within that container.
@@ -101,8 +106,9 @@ And the same is true In a part relationship derived from these fields:
 * Each child optionally has one child
 * The terminal descendant is the "important" one.
 
-In both cases, the first level is arbitrarily broad - An individual
-Work can have arbitrarily many `parts` or `partOf`s 
+Using nesting in this situation would mean that a client would have to 
+iterate to find terminal ancestors/descendants.  This pattern may be clear to 
+Wellcome Collection developers, but not obvious to external consumers of the API.
 
 ## Linking a Work to a Series
 
@@ -126,6 +132,8 @@ type of "Series", thus:
 
 A MARC value may have a subfield denoting a "part" of the series, this should
 be separated from the series title, and presented in a new field, `subPart`
+
+In the case of 830, 430 nd 490 fields, this is in the $v subField.
 
 `830 Published papers (Wellcome Chemical Research Laboratories)
 ;|vno. 149.`
@@ -229,13 +237,6 @@ also expect there to be many Series with titles containing most of those tokens.
 * A search for the exact string would return only one result (i.e. this one)
 * A client would have to somehow know how to parse out the subPart to request the right exact phrase (without the benefit of the MARC subfield markers).
 
-#### Other considerations
-
-subPart information may be found in subfield $v - Volume/Sequential designation.
-
-In the interest of consistency with Work->Work links (see below), this field
-should not have a name like "volume".
-
 ## Links from child Works to parent Works
 
 ### Manifestation
@@ -248,14 +249,15 @@ Order can be determined from the order of 774 properties in the parent object.
 The value of subPart should be extracted from the $g subfield, if present.
 
 If the relationship is asymmetric, there should be no hierarchy. The
-child should link to the parent Work.
+child should link to the parent Work in such a way as to allow the 
+user to find other children of that parent.
 
 ### In Depth
 
 A Host Item/Constituent Unit relationship may describe something like:
 
-* Pictures in an album (Basil Hood)
-* Articles in a Journal
+* Pictures in an album or montage (e.g. Basil Hood)
+* Articles in a Journal (e.g. Edinburgh Medical and Surgical Journal)
 * A single work published in multiple volumes? (I don't have any examples of this)
 
 #### 773 without corresponding 774
