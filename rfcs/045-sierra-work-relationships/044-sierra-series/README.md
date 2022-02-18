@@ -1,8 +1,10 @@
 # Work relationships in Sierra
 
 ---
-THIS RFC has been superceded by [sierra-work-relationships](../../045-sierra-work-relationships) and is 
+
+This RFC has been superceded by [sierra-work-relationships](../../045-sierra-work-relationships) and is 
 preserved here to provide context.
+
 ---
 
 There are various ways to represent relationship between Works in the library and the archive. One example is collections in archives,
