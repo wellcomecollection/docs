@@ -1,6 +1,6 @@
 # Work relationships in Sierra, part 2
 
-This is an update to [RFC-044: Sierra Series](..). What is presented
+This is an update to the original [RFC-044: Sierra Series](044-sierra-series). What is presented
 here is a distillation of our current understanding of this issue, and the 
 practicalities of implementation.
 
@@ -8,20 +8,20 @@ RFC-044 is a year old, and engendered a large amount of discussion, making
 it unwieldy to review. Much of the information in that document is still 
 valid, and provides essential context, so it is left intact.
 
-RFC-044 concerns the linking of Works to Series, and of Works to other Works
+These RFCs concern the linking of Works to Series, and of Works to other Works
 coming from Sierra.
 
 It is apparent that these are two different things, with two different 
 manifestations in the API and Website. Though they do have some common
 features.
 
-## Relevant MARC fields
+## Summary
 
-* [440 - Series Statement/Added Entry-Title](https://www.loc.gov/marc/bibliographic/bd440.html)
-* [490 - Series Statement](https://www.loc.gov/marc/bibliographic/bd490.html)
-* [773 - Host Item Entry](https://www.loc.gov/marc/bibliographic/bd773.html)
-* [774 - Constituent Unit Entry](https://www.loc.gov/marc/bibliographic/bd774.html)
-* [830 - Series Added Entry-Uniform Title](https://www.loc.gov/marc/bibliographic/bd830.html)
+At the broadest level, there are three features to be added resulting from this RFC.
+
+* Linking of Works to Series
+* Linking of parent Works to child Works
+* Linking of child Works to parent Works
 
 ## API change
 
@@ -37,7 +37,7 @@ hierarchies when we start adding new part/partOf relationships.
 ## Staged development proposal
 
 1. All parent relationships described in this document to be displayed as series links. 
-   - This includes 773 relationships with identifiers.
+   - This includes 773 relationships with identifiers, which will eventually link between Works.
    - The subpart ($g or $v) is ignored
 2. Improve handling of identified Work->Work links for hierarchical display.
 3. Improve handling of asymmetric partOf links to link directly by id.
@@ -52,6 +52,15 @@ from Works to Series via a filtered search for the Series title.  The
 correct presentation of links between parent and child works is less clear. 
 In particular, how best to handle asymmetric links.
 The value of presenting the subPart text to users is not clear.
+
+## Relevant MARC fields
+
+* [440 - Series Statement/Added Entry-Title](https://www.loc.gov/marc/bibliographic/bd440.html)
+* [490 - Series Statement](https://www.loc.gov/marc/bibliographic/bd490.html)
+* [773 - Host Item Entry](https://www.loc.gov/marc/bibliographic/bd773.html)
+* [774 - Constituent Unit Entry](https://www.loc.gov/marc/bibliographic/bd774.html)
+* [830 - Series Added Entry-Uniform Title](https://www.loc.gov/marc/bibliographic/bd830.html)
+
 
 ## Common features
 
@@ -116,7 +125,9 @@ Wellcome Collection developers, but not obvious to external consumers of the API
 
 These *are not* to be presented within a hierarchy. On the website, 
 the name of the series should present as a link to a filtered search
-for other objects in the same series.
+for other objects in the same series.  The behaviour of the API will need 
+to be updated in order to support filtering partOf by `title` as well as `id`
+as it currently does.
 
 In the API, this should be represented in a partOf value with no id, and a 
 type of "Series", thus:
@@ -210,7 +221,7 @@ A Series may be something like:
   * e.g. the Usborne Touchy-Feely series, or Oxford Very Short Introductions
 * A grouping of things, possibly from an external source.
 
-These are designated using the 4xx and 8xx codes.
+These are designated using the 4xx and 8xx codes, and (normally) only identified by name.
 
 These should not be represented in the same fashion as a CALM hierarchy because:
 
