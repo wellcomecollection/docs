@@ -405,3 +405,19 @@ However, in this case, the values do not look useful:
 
 It may be worth investigating whether these subfields ever have useful
 information.
+
+### Punctuation between subfields.
+
+MARC data is designed to be printed out verbatim (after stripping subfield tags), so fields and subfields often contain
+punctuation to permit this, e.g. the colon and semicolon at the ends of subfields in these two examples.
+
+`830 Published papers (Wellcome Chemical Research Laboratories) ;|vno. 149.`
+`774 0  |gPage 6 :|tCharing Cross Hospital: a portrait of house surgeons. Photograph, 1906.|w(Wcat)28916i`
+
+Ideally, these separators would not be presented unless the fields are output together.
+
+Note that the order of subfields is defined in the data, so the full string cannot be simply reconstructed from 
+individual fields.
+
+It may be the case that we need to store the whole field as a separate string for presentation, as well as storing the
+main or title field to facilitate linking.
