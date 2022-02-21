@@ -69,20 +69,23 @@ The value of presenting the partName text to users is not clear.
 The 773 field is not restrictive about what it can point to, whereas the 4x0 and 830 
 fields explicitly refer to a Series.  Records with a 773 field that matches
 one of the series fields should ignore the 773 field and just present it
-as a Series link.
+as a Series link. 
+
+Where a 773 field does not match one of the Series fields, then it 
+is treated as a partOf in its own right.
 
 If the title of a 773 field matches one of the Series fields, but it also
 contains a $w subfield, then 
 __Investigate where this happens in order to decide, before developing a solution__
  * Find out if it ever happens
  * Find out how many objects there are in each "series" where it does happen
- * Ask C&R what it means
+ * Ask C&I what it means
  
 ### partName property name
 
 The subfields `$g - Related parts` and `$v Volume/Sequential designation` are used in the
 Sierra data in 773/774 and 440/490/830 fields, respectively.  
-Giving them a commonname in the API is simpler than
+Giving them a common name in the API is simpler than
 having two different names, forcing a client to first try one then the other
 or look at one property if the parent is a Series and another one if the
 parent is a Work or Unknown.
