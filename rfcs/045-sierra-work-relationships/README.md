@@ -27,7 +27,7 @@ At the broadest level, there are three features to be added resulting from this 
 
 This requires a change to the API:
 * `id` is currently required in partOf objects, it needs to be optional.
-* a new field needs to be added to part and partOf objects: `subPart`
+* a new field needs to be added to part and partOf objects: `partName`
 
 ## Preliminary Work
 
@@ -38,10 +38,10 @@ hierarchies when we start adding new part/partOf relationships.
 
 1. All parent relationships described in this document to be displayed as series links. 
    - This includes 773 relationships with identifiers, which will eventually link between Works.
-   - The subpart ($g or $v) is ignored
+   - The partName ($g or $v) is ignored
 2. Improve handling of identified Work->Work links for hierarchical display.
 3. Improve handling of asymmetric partOf links to link directly by id.
-4. Display the subPart if desired.
+4. Display the partName if desired.
 
 This approach allows us to first deliver an improvement to the linking of
 as many records as possible, and then iterates over _how_ that linking
@@ -51,7 +51,7 @@ It also represents a cone of uncertainty.  It is clear that we want to link
 from Works to Series via a filtered search for the Series title.  The 
 correct presentation of links between parent and child works is less clear. 
 In particular, how best to handle asymmetric links.
-The value of presenting the subPart text to users is not clear.
+The value of presenting the partName text to users is not clear.
 
 ## Relevant MARC fields
 
@@ -78,7 +78,7 @@ __Investigate where this happens in order to decide, before developing a solutio
  * Find out how many objects there are in each "series" where it does happen
  * Ask C&R what it means
  
-### subPart property name
+### partName property name
 
 The subfields `$g - Related parts` and `$v Volume/Sequential designation` are used in the
 Sierra data in 773/774 and 440/490/830 fields, respectively.  
@@ -98,7 +98,7 @@ the next layer would have maximally one value.
 In addition, where `$g` or `$v` are used, the immediate parent/child as proposed in
 the original RFC is of less importance, being a volume number or page number.
 
-They denote membership of a container, and optionally denote a subPart
+They denote membership of a container, and optionally denote some kind of subsection
 within that container.
 
 Semantically, it may be correct to define an object by nesting, but in
@@ -142,7 +142,7 @@ type of "Series", thus:
 ```
 
 A MARC value may have a subfield denoting a "part" of the series, this should
-be separated from the series title, and presented in a new field, `subPart`
+be separated from the series title, and presented in a new field, `partName`
 
 In the case of 830, 430 nd 490 fields, this is in the $v subField.
 
@@ -155,7 +155,7 @@ becomes
 "partOf": [
   {
     "title": "Published papers (Wellcome Chemical Research Laboratories) ;",
-    "subPart": "no. 149."      
+    "partName": "no. 149."      
     "type": "Series"
   }
 ]
@@ -231,14 +231,14 @@ These should not be represented in the same fashion as a CALM hierarchy because:
 However, membership of a series is useful information, as is the ability to 
 find other objects from that series.
 
-#### series title and subPart
+#### series title and partName
 
-Separating the subPart from the series title allows us to create an accurate
+Separating the partName from the series title allows us to create an accurate
 filtered search. The partOf title is the exact match to use.
 
 ##### Why not store it all in title?
 
-Storing the series title and subPart in the same field makes this difficult.
+Storing the series title and partName in the same field makes this difficult.
 
 One could expect there to be only one "Published papers (Wellcome Chemical Research Laboratories) ; no. 149",
 and at least 149 "Published papers (Wellcome Chemical Research Laboratories)". One would
@@ -246,7 +246,7 @@ also expect there to be many Series with titles containing most of those tokens.
 
 * A search for all those tokens would return too many results (anything containing Published, or papers, or Wellcome etc.)
 * A search for the exact string would return only one result (i.e. this one)
-* A client would have to somehow know how to parse out the subPart to request the right exact phrase (without the benefit of the MARC subfield markers).
+* A client would have to somehow know how to parse out the partName to request the right exact phrase (without the benefit of the MARC subfield markers).
 
 ## Links from child Works to parent Works
 
@@ -257,7 +257,7 @@ should behave in the same manner as CALM-derived Collection hierarchies.
 
 Order can be determined from the order of 774 properties in the parent object.
 
-The value of subPart should be extracted from the $g subfield, if present.
+The value of partName should be extracted from the $g subfield, if present.
 
 If the relationship is asymmetric, there should be no hierarchy. The
 child should link to the parent Work in such a way as to allow the 
@@ -284,16 +284,18 @@ https://search.wellcomelibrary.org/iii/encore/record/C__Rb1363769__Snotice%20of%
 yields over 1000 hits, which indicates that this should behave more like a Series link
 (though this could include other matches, not just articles in the journal).
 
+These are to be treated as a Series.
+
 ## Links from parent Works to child Works
 ### Manifestation
 
 These *are* to be presented with a hierarchy. On the website, this
 should behave in the same manner as CALM-derived Collection hierarchies.
 
-Whether to include the subpart in the display value can be decided on 
+Whether to include the partName in the display value can be decided on 
 implementation.
 
-The value of subPart should be extracted from the $g subfield, if present.
+The value of partName should be extracted from the $g subfield, if present.
 
 In the API, this will manifest in the `parts` list.
 
@@ -314,34 +316,37 @@ becomes
     ...
     {
       "id": "[canonical id derived from](Wcat)28916i"
-      "subPart": "Page 6"
+      "partName": "Page 6"
       "title": "Charing Cross Hospital: a portrait of house surgeons. Photograph, 1906."
     },
     {
       "id": "[canonical id derived from](Wcat)28922i"
-      "subPart": "Page 7"
+      "partName": "Page 7"
       "title": "Charing Cross Hospital: a portrait of house surgeons. Photograph, 1906."
     },
     {
       "id": "[canonical id derived from](Wcat)28924i"
-      "subPart": "Page 7"
+      "partName": "Page 7"
       "title": "Charing Cross Hospital: a portrait of house surgeons. Photograph, 1906."
     }
     ...
   ]
 ```
-## Unanswered Questions
 
-### 774 without id
+Where a 774 field has no id associated, these are to be ignored.
+e.g. `774 1  |tLists of snake names in Malay.|h4 p.; 34 x 21 cm`
+
+### In Depth
+
+#### 774 without id
 
 Some 774 values have no id, e.g. [Catalogues of Malayan plants, birds and snakes](https://search.wellcomelibrary.org/iii/encore/record/C__Rb3017508__SLists%20of%20snake%20names%20in%20Malay__Orightresult__U__X3?lang=eng&suite=cobalt&marcData=Y)
 [Wellcome Malay 8](https://wellcomecollection.org/works/s5cmqb9q) on wellcomecollection.org.
 
-I don't know what that means. This cannot be presented as any kind of list
-of links in a UI, because there is nothing to link to.
+This cannot be presented as any kind of list of links in a UI, because there is nothing to link to.
 
 This example is a TEI manuscript, so the data for the API comes from there
-rather than Sierra.
+rather than Sierra, so the Sierra data can safely be ignored.
 
 ```
 245 00 [Catalogues of Malayan plants, birds and snakes] 
@@ -361,8 +366,9 @@ rather than Sierra.
 774 1  |tNames of plants collected at Mĕrliman.|h9 p.; 34 x 21 cm
 
 ```
+## Unanswered Questions
 
-### Other potential subPart subfields
+### Other potential partName subfields
 
 There are also subfields $p (Name of part/section of a work) and $n (Number of part/section of a work)
 Both of these are present on at least one example:
