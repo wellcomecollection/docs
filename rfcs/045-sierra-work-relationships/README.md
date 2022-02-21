@@ -371,6 +371,27 @@ rather than Sierra, so the Sierra data can safely be ignored.
 ```
 ## Unanswered Questions
 
+### Worldcat ids
+
+Because it may be difficult to match a worldcat id to an id in the pipeline, it may be simpler to
+check for symmetry by title.
+e.g.
+Having found a record with a 774 field containing an identifier
+```
+246 1  My Made Up Title
+...
+774 1 |tSome part of the main thing |g page 4 |w (Wcat)12345
+```
+
+Search for the document with the title from the 774.
+
+```
+246 1  Some part of the main thing 
+...
+773 1 |tMy Made Up Title |g page 4: |w (Wcat)54321
+```
+Having found that that document contains a 773 with the title of the main document, we can then link them.
+
 ### Other potential partName subfields
 
 There are also subfields $p (Name of part/section of a work) and $n (Number of part/section of a work)
