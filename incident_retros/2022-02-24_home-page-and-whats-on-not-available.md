@@ -106,6 +106,6 @@ DMc couldn’t force the PR
 - Think about having a staging version of Prismic ([development environment for Prismic](https://prismic.io/docs/core-concepts/environments)) and talk to other developers about what has been found out
 
 **Gareth**
-- Document how to re-add deleted fields in Prismic, and update a piece of content arbitrarily.
-- Add a message to the diff tools script re updating content after field deletion from the model.
-- Make a ticket: Investigate all uses of graph query, and make sure we’re only using it where needed
+- Document how to re-add deleted fields in Prismic, and update a piece of content arbitrarily. [#7735](https://github.com/wellcomecollection/wellcomecollection.org/pull/7735)
+- Add a message to the diff tools script re updating content after field deletion from the model. [#7737](https://github.com/wellcomecollection/wellcomecollection.org/issues/7737)
+- Make a ticket: Investigate all uses of graph query, and make sure we’re only using it where needed [#7736](https://github.com/wellcomecollection/wellcomecollection.org/issues/7736)
