@@ -95,9 +95,6 @@ DMc couldn’t force the PR
 
 ## Actions
 
-**Gareth E**
-- Document correct order of steps for updating the Prismic model so we don’t break the site.
-
 **Alex**
 - Make the e2e tests go faster: If they were faster, we'd be able to recover from broken builds a lot faster. [#7706](https://github.com/wellcomecollection/wellcomecollection.org/issues/7706)
 - All developers should be able to merge pull requests
