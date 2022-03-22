@@ -44,7 +44,11 @@ As a starting point, we'd like any solution to satisfy the following:
 3. Create a Lambda layer containing the above 2 artifacts.
 4. Create a Terraform module which references the above layer, constructs the variable containing secret names, provides IAM permissions on the secrets for the Lambda execution role, and provides outputs for configuring a Lambda function.
 
+*Note on Lambda layers/extensions:*
+
+Lambda layers "provide a convenient way to package libraries and other dependencies that you can use with your Lambda functions". Lambda extensions are deployed as layers, and have access to the [Lambda Extensions API](https://docs.aws.amazon.com/lambda/latest/dg/runtimes-extensions-api.html) to hook into the Lambda lifecycle and to in a separate process to the main Lambda code. Using a layer as described above is in effect an extremely simple extension - these aren't really separate features in AWS. While we haven't used layers previously, this is exactly the kind of use case they were designed for.
+
 ## Questions and potential issues
 
-- If `pkg` doesn't work for compiling TS to a binary, what else can we use? We haven't yet written in any compiled languages.
+- If `pkg` doesn't work for compiling TS to a binary, what else can we use? We haven't yet written in any compiled languages. If this doesn't work, we can always fall back to making this solution Node-only (ie using TS compiled to JS and hence supporting only the Node lambda runtime).
 - Is there a way that the Terraform module can wrap an `aws_lambda_function` without having to replicate all its variables? This might make it easier to create "Wellcome" Lambdas, with potential for adding a layer/extension for logging to Elasticsearch later on.
