@@ -1,7 +1,8 @@
 # RFC 046: Secrets in Lambda functions
 
 **Status:** Draft
-**Last updated:** 21/03/2022
+
+**Last updated:** 22/03/2022
 
 ## Context
 We have historically used AWS's per-invocation "serverless" environment, Lambda, as a kind of glue between more complex applications or as part of our monitoring stacks. Increasingly, we have been using it for complete applications: most notably, for the Identity API.
