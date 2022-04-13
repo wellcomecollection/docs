@@ -83,11 +83,14 @@ match the right partial paths and to sum up depth values.
 Modifying the collectionPath in the database appears to be the simplest way to achieve this.
 
 ## Worked example
+The transformer constructs a path by concatenating the `w` subfield in a `773` field, with the value of the document's
+own `001` field.  It will also create a path from just the `001` field if the document has `774` fields in it.
+
 Given the documents in the introduction, after the transformer, we will have the following collectionPaths:
 
-* 3303244i
-* 3303244i/3288731i
-* 3288731i/534631i
+1. 3303244i
+2. 3303244i/3288731i
+3. 3288731i/534631i
 
 Before the relationEmbedder, we want `3288731i/534631i` to be `3303244i/3288731i/534631i`.  There are six scenarios
 to consider.
@@ -116,8 +119,8 @@ This means that out of those six scenarios, there are really only two -
 
 ### What about deeper hierarchies?
 
-This is only expected to work on 3-level hierarchies, but the same pattern follows.  If there are 4 levels, then there
-are 6 possibilities (because the root's arrival does not matter).
+This is only expected to have to work on 3-level hierarchies, but the same pattern follows.  
+If there are 4 levels, then there are 6 possibilities (because the arrival of the root document does not matter).
 
 Given a full path: 0/1/2/3, the paths in each document will be:
 * 0
