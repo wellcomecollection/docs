@@ -2,6 +2,8 @@
 
 ## The problem
 
+This RFC originates from [this issue](https://github.com/wellcomecollection/platform/issues/5479).
+
 Most Sierra records that result in a hierarchy (See ../45-sierra-work-relationships), exist in a two-level
 hierarchy, i.e. a single parent, and one or more children.  However, there is a desire to represent a deeper hierarchy.
 
@@ -50,21 +52,21 @@ ephemera, where there is currently no clickable journey from an individual objec
 
 ## Proposed Solution
 
-A new stage, operating on works-merged, triggered by the Router on encountering a document with a collectionPath and
-a sourceIdentifier with an identifierType of sierra-system-number.
+A new stage, operating on works-merged (both read and write), triggered by the Router on encountering a document with 
+a collectionPath and a sourceIdentifier with an identifierType of sierra-system-number.
 
 The new stage will:
 
 * Take the first and last segments of the path
-  * e.g. given a path, root/branch/leaf - it will use root, and leaf.
+  * e.g. given a path, `root/branch/leaf` - it will use `root`, and `leaf`.
 * Run a wildcard search for records whose last segment matches the first segment of this record.
-  *  e.g. */root
-  * This should only match one record, if there are more, this is an error in the data.
+  * e.g. `*/root`
+  * This should only match one record, if there are more, log an error and do nothing.
 * Replace the first segment in this record with the collectionPath of that record.
 * Run a term search for records with a collectionPath matching the last segment
-  * collectionPath is a path_hierarchy, so in the example above, this will match any records with a path that start with _leaf_
+  * collectionPath is a path_hierarchy, so in the example above, this will match any records with a path that start with `leaf`
 * Replace the first segment in those collectionPath, with this record's collectionPath
-  * e.g. a path leaf/1/2 would become root/branch/leaf/1/2
+  * e.g. a path `leaf/1/2` would become `root/branch/leaf/1/2`
 
 ## Other Candidate Solutions
 
@@ -75,5 +77,94 @@ It is inappropriate to place this in the transformer, because transformers opera
 produce a single output document.  This behaviour requires multiple inputs, and can have multiple outputs.
 
 It is inappropriate to place this in the relation embedder, because it would add inappropriate complexity to an otherwise 
-stable application that is pretty good at turning a full path into a hierarchy. We would need to add behaviour to 
+stable application that is good at turning a full path into a hierarchy. We would need to add behaviour to 
 match the right partial paths and to sum up depth values.
+
+Modifying the collectionPath in the database appears to be the simplest way to achieve this.
+
+## Worked example
+Given the documents in the introduction, after the transformer, we will have the following collectionPaths:
+
+* 3303244i
+* 3303244i/3288731i
+* 3288731i/534631i
+
+Before the relationEmbedder, we want `3288731i/534631i` to be `3303244i/3288731i/534631i`.  There are six scenarios
+to consider.
+
+* 1,2,3
+* 1,3,2
+* 2,3,1
+* 2,1,3
+* 3,1,2
+* 3,2,1
+
+Whenever the actual root is encountered, there is no change, because the job of this application is to replace 
+a segment of path with the path from the root to that segment.
+
+This means that out of those six scenarios, there are really only two - 
+* 2,1
+* 1,2
+
+### 1,2
+`3303244i/3288731i` is encountered, root is `3303244i` leaf is `3288731i`, no change
+`3288731i/534631i` is encountered, root is `3288731i`, `*/3288731i` returns `3303244i/3288731i`, it becomes `3303244i/3288731i/534631i`
+
+### 2,1
+`3288731i/534631i` is encountered, root is `3288731i`, leaf is `534631i` no change.
+`3303244i/3288731i` is encountered, leaf is `3288731i`, which returns the `3288731i/534631i` record and changes it to `3303244i/3288731i/534631i`
+
+### What about deeper hierarchies?
+
+This is only expected to work on 3-level hierarchies, but the same pattern follows.  If there are 4 levels, then there
+are 6 possibilities (because the root's arrival does not matter).
+
+Given a full path: 0/1/2/3, the paths in each document will be:
+* 0
+* 0/1
+* 1/2 (which needs to become 0/1/2 before the relation embedder)
+* 2/3 (which needs to become 0/1/2/3 before the relation embedder)
+
+#### 1,2,3
+`0/1` - no change
+`1/2` - `*1` finds `0/1`, this becomes `0/1/2`
+`2/3` - `*2` finds `0/1/2`, this becomes `0/1/2/3`
+
+#### 1,3,2
+`0/1` - no change
+`2/3` - `*2` finds nothing, `3` finds nothing
+`1/2` - `*1` finds `0/1`, this becomes `0/1/2`, `2` finds `2/3` and changes it to `0/1/2/3`
+
+#### 2,3,1
+`1/2` - no change
+`2/3` - `*2` finds `1/2` this becomes `1/2/3`
+`0/1` - `1` finds `1/2/3` and changes it to `0/1/2/3`
+
+#### 2,1,3
+`1/2` - no change
+`0/1` - `1` finds `1/2` and changes it to `0/1/2`
+`2/3` - `*2` finds `0/1/2` this becomes `0/1/2/3`
+
+#### 3,1,2
+`2/3` - no change
+`0/1` - `*0` finds nothing, `1` finds nothing
+`1/2` - `*1` finds `0/1`, this becomes `0/1/2`, `2` finds `2/3`, and changes it to `0/1/2/3`
+
+#### 3,2,1
+`2/3` - no change
+`1/2` - `*1` finds nothing, `2` finds `2/3` and changes it to `1/2/3`
+`0/1` - `1` finds `1/2/3` and changes it to `0/1/2/3`
+
+## In depth rationales
+
+### Reading and writing to the same DB
+
+Existing stages progress the state of a document and move it to a new database. However, this stage will read and 
+write from works-merged.
+
+By operating on the same database, and not progressing state, we can avoid having to change the behaviour of the 
+downstream stage, and we will not have to pull-then-push data that does not change.  The most common case will be
+that data will not change, so this approach would be more efficient than the existing approach.
+
+
+
