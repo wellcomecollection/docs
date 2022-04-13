@@ -50,5 +50,30 @@ ephemera, where there is currently no clickable journey from an individual objec
 
 ## Proposed Solution
 
+A new stage, operating on works-merged, triggered by the Router on encountering a document with a collectionPath and
+a sourceIdentifier with an identifierType of sierra-system-number.
+
+The new stage will:
+
+* Take the first and last segments of the path
+  * e.g. given a path, root/branch/leaf - it will use root, and leaf.
+* Run a wildcard search for records whose last segment matches the first segment of this record.
+  *  e.g. */root
+  * This should only match one record, if there are more, this is an error in the data.
+* Replace the first segment in this record with the collectionPath of that record.
+* Run a term search for records with a collectionPath matching the last segment
+  * collectionPath is a path_hierarchy, so in the example above, this will match any records with a path that start with _leaf_
+* Replace the first segment in those collectionPath, with this record's collectionPath
+  * e.g. a path leaf/1/2 would become root/branch/leaf/1/2
+
 ## Other Candidate Solutions
 
+I have considered trying to squeeze this into the behaviour of other stages.  The two most obvious places are 
+the transformer, and the relation embedder.
+
+It is inappropriate to place this in the transformer, because transformers operate on a single input document to 
+produce a single output document.  This behaviour requires multiple inputs, and can have multiple outputs.
+
+It is inappropriate to place this in the relation embedder, because it would add inappropriate complexity to an otherwise 
+stable application that is pretty good at turning a full path into a hierarchy. We would need to add behaviour to 
+match the right partial paths and to sum up depth values.
