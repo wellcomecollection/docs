@@ -11,4 +11,5 @@ When somebody leaves the team, here's a (probably incomplete) checklist of thing
   - [ ] Elastic Cloud
   - [ ] Gitbook
   - [ ] Notion
+  - [ ] Mailtrap
 - [ ] Make sure their C_ cloud account (i.e. AWS access) is sorted by D&T. When somebody leaves, these accounts aren't removed immediately; they're disabled and deleted after a certain period has passed.
