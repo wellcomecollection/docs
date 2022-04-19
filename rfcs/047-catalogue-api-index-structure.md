@@ -15,23 +15,33 @@ This RFC proposes a new structure for the Catalogue API index which should remov
 
 ## Proposal
 
-We add a new field `display` to documents in the works and images index.
+We restructure documents in the API index to have three top-level fields:
 
-*   If the work/image is visible, it contains the complete display document as a block of JSON.
-*   If the work/image is not visible (e.g. redirected, deleted), it contains a `null` value.
+-   The `display` field contains the complete display document as a block of JSON.
+    The API will return the contents of this field in public responses.
 
-This field is mapped in the Elasticsearch index as an object field with [enabled=true](https://www.elastic.co/guide/en/elasticsearch/reference/current/enabled.html), meaning Elasticsearch will ignore it for indexing.
+    This field is mapped in the Elasticsearch index as an object field with [enabled=true](https://www.elastic.co/guide/en/elasticsearch/reference/current/enabled.html), meaning Elasticsearch will ignore it for indexing.
 
-Initially the rest of the document will remain as-is, but over time we could remove fields which are only used for display, and not for indexing or debugging.
+-   The `query` field contains the values that we're indexing, e.g. work title.
+    This will contain a subset of the work/image data that is indexed and analysed by Elasticsearch.
+
+    This field must be consistently defined between the pipeline and the API, or values won't be in the right place for queries.
+
+-   The `debug` field contains the values that we use for debugging the pipeline, e.g. the date a document was indexed.
+
+    This field should only contain information that the API can ignore.
 
 ## Implementation
 
-1.  We copy the display models into the pipeline repo, and modify the ingestor to store this new field.
+We can add these fields progressively, rather than in one massive update.
+This is a rough approach, which we could do for all three top-level fields separately:
+
+1.  We copy the display models into the pipeline repo, and modify the ingestor to store these new fields.
     This is a strictly additive step.
 
 2.  We reindex the pipeline to add this field to all documents (this could be a new pipeline, or we could do it in-place in an existing pipeline).
 
-3.  We update the catalogue API to use the `display` field for public API responses, rather than handling its own models.
+3.  We update the catalogue API to use the new fields for public API responses, rather than handling its own models.
 
 4.  We remove fields from the indexed Work model that aren't used for indexing/debugging.
 
@@ -44,7 +54,7 @@ Initially the rest of the document will remain as-is, but over time we could rem
 
 ## Open questions
 
-*   Is "display" the best name for this field?
+*   Are these the best names for these fields?
 
 *   Currently the API will check for internal model compatibility before it starts.
     Do we still want equivalent behaviour with index mappings?
