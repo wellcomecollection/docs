@@ -20,7 +20,7 @@ We restructure documents in the API index to have three top-level fields:
 -   The `display` field contains the complete display document as a block of JSON.
     The API will return the contents of this field in public responses.
 
-    This field is mapped in the Elasticsearch index as an object field with [enabled=true](https://www.elastic.co/guide/en/elasticsearch/reference/current/enabled.html), meaning Elasticsearch will ignore it for indexing.
+    This field is mapped in the Elasticsearch index as an object field with [enabled=false](https://www.elastic.co/guide/en/elasticsearch/reference/current/enabled.html), meaning Elasticsearch will ignore it for indexing.
 
 -   The `query` field contains the values that we're indexing, e.g. work title.
     This will contain a subset of the work/image data that is indexed and analysed by Elasticsearch.
