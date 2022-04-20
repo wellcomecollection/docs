@@ -52,8 +52,8 @@ ephemera, where there is currently no clickable journey from an individual objec
 
 ## Proposed Solution
 
-A new stage, operating on works-merged (both read and write), triggered by the Router on encountering a document with 
-a collectionPath and a sourceIdentifier with an identifierType of sierra-system-number.
+A new "path merger" stage, operating on works-merged (both read and write), triggered by the Router on encountering a 
+document with both a collectionPath and a sourceIdentifier with an identifierType of sierra-system-number.
 
 The new stage will:
 
@@ -63,10 +63,12 @@ The new stage will:
   * e.g. `*/root`
   * This should only match one record, if there are more, log an error and do nothing.
 * Replace the first segment in this record with the collectionPath of that record.
+  * e.g. this record is `d/e/f`, there exists `b/c/d`, the collectionPath for this record becomes `b/c/d/e/f`
 * Run a term search for records with a collectionPath matching the last segment
   * collectionPath is a path_hierarchy, so in the example above, this will match any records with a path that start with `leaf`
 * Replace the first segment in those collectionPath, with this record's collectionPath
   * e.g. a path `leaf/1/2` would become `root/branch/leaf/1/2`
+* Notify downstream (batcher) of all changed paths.
 
 ## Other Candidate Solutions
 
@@ -83,6 +85,7 @@ match the right partial paths and to sum up depth values.
 Modifying the collectionPath in the database appears to be the simplest way to achieve this.
 
 ## Worked example
+
 The transformer constructs a path by concatenating the `w` subfield in a `773` field, with the value of the document's
 own `001` field.  It will also create a path from just the `001` field if the document has `774` fields in it.
 
@@ -92,7 +95,7 @@ Given the documents in the introduction, after the transformer, we will have the
 2. 3303244i/3288731i
 3. 3288731i/534631i
 
-Before the relationEmbedder, we want `3288731i/534631i` to be `3303244i/3288731i/534631i`.  There are six scenarios
+Before the relation embedder, we want `3288731i/534631i` to be `3303244i/3288731i/534631i`.  There are six scenarios
 to consider.
 
 * 1,2,3
@@ -163,11 +166,87 @@ Given a full path: 0/1/2/3, the paths in each document will be:
 ### Reading and writing to the same DB
 
 Existing stages progress the state of a document and move it to a new database. However, this stage will read and 
-write from works-merged.
+write from `works-merged`.
 
 By operating on the same database, and not progressing state, we can avoid having to change the behaviour of the 
-downstream stage, and we will not have to pull-then-push data that does not change.  The most common case will be
-that data will not change, so this approach would be more efficient than the existing approach.
+downstream stage, and we will not have to pull-then-push data that does not change.  By far the most common case will
+be that data will not change, so this approach would be more efficient than the existing approach.
+
+### Modifying the collectionPath
+
+As noted in _Other Candidate Solutions_, above, this is easier than trying to modify the existing behaviour of the
+relation embedder, and it means that we do not need to modify the downstream behaviour at all.
+
+The collectionPath is parsed by ElasticSearch to provide a depth value and a queryable set of path terms. This 
+behaviour would have to be replicated by any new field created by this stage.
+
+Introducing a separate value inserted by this stage would require us to modify downstream stages to make 
+use of the new field.  We would also need to either:
+
+- Use the new field alongside the existing field, because some documents would not be changed by this stage
+- Copy the existing value into the new field, when no changes occur.
+
+## Foreseeable Problems
+
+### Removing Relationships
+
+Although it is unlikely that a middle record in a hierarchy will be deleted without there also being editorial
+action on its children, there does exist the possibility that a record might have been added to the wrong parent, and 
+that mistake gets corrected.
+
+e.g. I have records
+* `a`
+* `b`
+* `a/c` (this should be `b/c`, and gets fixed)
+* `c/d`
+
+In this scenario, the correction will not be automatically propagated to `c/d` by the pipeline, 
+because the path will have been completed to `a/c/d` and now the record `b/c` has no way to find it.
+
+This is likely to be a rare occurrence, and can be resolved by a specific reindex of the affected records.
+
+### False matches
+
+It is possible that the head of a collectionPath might match the tail of the wrong collectionPath.  However, this is
+not a likely occurrence.
+
+If a duplicate "tail matching my head" is found, it will be logged and ignored.
+It is expected that this stage will find many "heads matching my tail".  This _may_ find and modify incorrect
+documents, but it is unlikely to do so.  The values of Sierra path parts are i-numbers of Sierra documents, which
+will not match the values of any path parts from other schemes.
+
+I have examined the existing data with queries for head and tail (e.g. below), and not found any such matches.
+The paths in CALM or TEI data all start with unique heads, not repeated in Sierra hierarchies.  The tails in 
+CALM and TEI data are frequently reused (e.g. single-digit numbers), but they never match any heads.
 
 
+```GET works-merged-2022-04-04/_search
+{
+  "query": {
+    "exists": {"field":"data.collectionPath.path.keyword"}
+  },
+  "size": 0,
+  "runtime_mappings": {
+    "data.collectionPath.path.tail": {
+      "type": "keyword",
+      "script": "emit(doc['data.collectionPath.path.keyword'].value.splitOnToken('/')[-1])"
+    },
+    "data.collectionPath.path.head": {
+      "type": "keyword",
+      "script": "emit(doc['data.collectionPath.path.keyword'].value.splitOnToken('/')[0])"
+    }
+  },
+  "aggs": {
+    "heads": {
+      "terms": {
+        "field": "data.collectionPath.path.head",
+        "size": 10000,
+        "order": {
+          "_key": "asc"
+        }
 
+      }
+
+    }
+  }
+}```

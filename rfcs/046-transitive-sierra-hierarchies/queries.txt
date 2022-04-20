@@ -191,5 +191,3 @@ GET works-merged-2022-04-04/_search
 
 GET works-indexed-2022-04-04/_doc/n3xnc4av
 GET works-indexed-2022-04-04/_doc/g6djvdbe
-GET works-indexed-2022-04-04/_search/?q=version:20&version=true
-GET works-indexed-2022-04-04/_count/?q=version:20
