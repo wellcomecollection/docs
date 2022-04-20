@@ -215,7 +215,8 @@ not a likely occurrence.
 If a duplicate "tail matching my head" is found, it will be logged and ignored.
 It is expected that this stage will find many "heads matching my tail".  This _may_ find and modify incorrect
 documents, but it is unlikely to do so.  The values of Sierra path parts are i-numbers of Sierra documents, which
-will not match the values of any path parts from other schemes.
+will not match the values of any path parts from other schemes.  Triggering this stage _only_ for Sierra documents
+further reduces the likelihood of a clash.
 
 I have examined the existing data with queries for head and tail (e.g. below), and not found any such matches.
 The paths in CALM or TEI data all start with unique heads, not repeated in Sierra hierarchies.  The tails in 
