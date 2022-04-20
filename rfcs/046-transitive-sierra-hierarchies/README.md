@@ -53,7 +53,9 @@ ephemera, where there is currently no clickable journey from an individual objec
 ## Proposed Solution
 
 A new "path concatenator" stage, operating on works-merged (both read and write), triggered by the Router on encountering a 
-document with both a collectionPath and a sourceIdentifier with an identifierType of sierra-system-number.
+document with both of:
+1. a collectionPath
+2. a sourceIdentifier with an identifierType of sierra-system-number.
 
 The new stage will:
 
