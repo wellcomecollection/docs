@@ -452,7 +452,7 @@ https://docs.google.com/document/d/1007W_PpQefrFhMrF7mIZMiGNDGG6hbJMsa-XX6kEl9A
 
 ### Manifest items property can take any resource
 
-The simples thing would be to allow the `manifest.items` property to contain resources that were not canvases - like this (massively simplified):
+The simplest thing would be to allow the `manifest.items` property to contain resources that were not canvases - like this (massively simplified):
 
 ```json
 {
