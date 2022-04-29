@@ -21,6 +21,12 @@ This RFC outlines the major technical decisions that will need to be made around
 
 ## What needs to be done
 
+This approach presupposes the following architectural decisions:
+
+- There is a separate API endpoint within the catalogue for concepts 
+- There is a knowledge graph of concepts that exists independently of works
+- Concepts that works are tagged with are identifiable (the those identifiers exist in the graph) 
+
 #### 1. Concepts API Design
 
 We need to design an API that will allow us to populate concept pages. This may be one API for all concept types (ie subjects or people), or different APIs may provide different types. It should be designed in such a way that the future inclusion of curated content is possible. There should be sufficient information on a concept to disambiguate it (eg birth/death dates for people).
