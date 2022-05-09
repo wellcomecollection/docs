@@ -38,3 +38,8 @@ We need to populate a knowledge graph (wherein the nodes are concepts or have an
 #### 3. Identified concepts on works
 
 Where works are tagged with identifiable (in practice, Library of Congress and MeSH) concepts, we need to be able to match these up with concepts in our knowledge graph. The outcome here is that, given a work, we should be able to know its subjects/agents/etc, and given a concept, we should be able to query for the works that are tagged with it.
+
+## Extra thoughts
+
+- Is there any level of denormalisation of concepts onto works / vice versa?
+- How will we handle multiple source identifiers mapping to individual canonical identifiers?
