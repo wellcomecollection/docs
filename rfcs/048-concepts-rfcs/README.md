@@ -6,7 +6,7 @@
 
 ## Context
 
-We are now starting work on introducing "concepts" to the Wellcome digital platform: identifiable entities like subjects, people, organisations, genres, etc. Works can be tagged with concepts, and concepts can be linked to other concepts by (for example) predicates, in this way forming a knowledge graph. There is a future possibility to infer a work's subjects, as well as manual tagging.
+We are now starting work on introducing "concepts" to the Wellcome digital platform: identifiable entities like subjects, people, organisations, genres, etc. Works can be tagged with concepts, and concepts can be linked to other concepts by (for example) predicates, in this way forming a knowledge graph. We will start by using concepts that are manually tagged in the source catalogues, and in future we might infer a work's concepts.
 
 This opens the door to a variety of possible user outcomes. A small number of these might be...
 
@@ -25,7 +25,7 @@ This approach presupposes the following architectural decisions:
 
 - There is a separate API endpoint within the catalogue for concepts 
 - There is a knowledge graph of concepts that exists independently of works
-- Concepts that works are tagged with are identifiable (the those identifiers exist in the graph) 
+- Works will be tagged with identifiable concepts which (may) exist in the knowledge graph
 
 #### 1. Concepts API Design
 
