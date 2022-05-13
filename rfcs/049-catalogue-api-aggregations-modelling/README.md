@@ -135,7 +135,6 @@ It would be nice if we could remove this coupling and simplify how aggregations 
 ## Proposed solution
 
 We add a new field `query.aggregatableValues` to the documents we store in Elasticsearch.
-This would be an object field in which the values are lists of strings:
 
 ```
 type Query {
@@ -144,8 +143,7 @@ type Query {
 }
 ```
 
-The labels are the aggregation types (languages, work types, licenses) and the values are blobs of display JSON stored as strings.
-That is, we create the display JSON, then serialise the whole object as a string, and store that.
+where the keys are the aggregation types (languages, work types, licenses) and the values are lists of display JSON stored as strings.
 
 This is easiest to understand with an example:
 
