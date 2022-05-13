@@ -169,6 +169,7 @@ This is easiest to understand with an example:
 ```
 
 The ingestors would populate these `aggregatableValues` fields when it indexed a work.
+This would be mapped as a `keyword` field in Elasticsearch.
 
 The API would aggregate over these fields specifically, and copy the values into the `data` field of our aggregation buckets.
 
