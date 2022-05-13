@@ -134,7 +134,7 @@ It would be nice if we could remove this coupling and simplify how aggregations 
 
 ## Proposed solution
 
-We add a new field `query.aggregatableValues` to the Elasticsearch model.
+We add a new field `query.aggregatableValues` to the documents we store in Elasticsearch.
 This would be an object field in which the values are lists of strings:
 
 ```
