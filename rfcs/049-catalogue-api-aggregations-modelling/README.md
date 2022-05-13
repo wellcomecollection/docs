@@ -169,8 +169,6 @@ This is easiest to understand with an example:
 The ingestors would populate these `aggregatableValues` fields when it indexed a work.
 This would be mapped as a `keyword` field in Elasticsearch.
 
-e.g.
-
 ```
 aggregatableValues = {
     languages: [
@@ -185,7 +183,26 @@ aggregatableValues = {
 }
 ```
 
-The API would aggregate over these fields specifically, and copy the values into the `data` field of our aggregation buckets.
+The API would aggregate over these fields specifically.
+The Elasticsearch terms aggregation would return something like:
+
+```
+{
+  "aggregations" : {
+    "languages" : {
+      "buckets" : [
+        {
+          "key" : " { \"id\" : \"eng\", \"label\": \"English\", \"type\": \"Language\" } ",
+          "doc_count" : 691840
+        },
+        {
+          "key" : " { \"id\" : \"fre\", \"label\": \"French\", \"type\": \"Language\" } ",
+          "doc_count" : 67187
+        },
+        ...
+```
+
+and the API would unpack the `keys` as opaque JSON objects, and pass the value into its response:""
 
 ```
 # api
