@@ -21,7 +21,7 @@ When an RFC is merged it provides a guide to implementing that change when it is
   </dd>
 
   <dt>
-    <a href="./049-catalogue-api-aggregations-modelling.md">RFC 049</a>: Changing how aggregations are retrieved by the Catalogue API
+    <a href="./049-catalogue-api-aggregations-modelling">RFC 049</a>: Changing how aggregations are retrieved by the Catalogue API
   </dt>
   <dd>
     Updating aggregations to match the changes from RFC 047 and to reduce the coupling between the pipeline/API repos.

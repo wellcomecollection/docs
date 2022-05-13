@@ -11,7 +11,7 @@ We'd hoped this would allow us to remove the internal/display models from the AP
 
 This RFC proposes a change to how aggregations are handled that should remove this obstacle.
 
-[RFC 047]: ./047-catalogue-api-index-structure.md
+[RFC 047]: ../047-catalogue-api-index-structure.md
 
 
 
