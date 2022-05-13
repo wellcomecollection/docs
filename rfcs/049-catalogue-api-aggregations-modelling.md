@@ -171,3 +171,5 @@ This is easiest to understand with an example:
 The ingestors would populate these `aggregatableValues` fields when it indexed a work.
 
 The API would aggregate over these fields specifically, and copy the values into the `data` field of our aggregation buckets.
+
+This would allow us to reduce the amount of model logic in the API, and would ensure a consistent rendering of values in aggregations and works.
