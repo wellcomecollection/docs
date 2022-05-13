@@ -80,7 +80,7 @@ and we see that `Language` type in the aggregation buckets:
 
 This presents a clean, consistent interface to clients – a value looks the same whether it's in a work or in an aggregation.
 
-We don't to change this behaviour.
+We don't want to change this behaviour.
 
 
 
