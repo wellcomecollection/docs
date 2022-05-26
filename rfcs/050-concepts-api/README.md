@@ -174,3 +174,21 @@ We don't need to decide the details of this yet.
 Q: Do we need this endpoint?
 Is listing/searching concepts something we think we'll do?
 Even if we won't use it, is it worth providing for parity with the works/images APIs?
+
+
+
+## Next steps: building a prototype
+
+*   We could build a minimal version of endpoint #1 pretty quickly, using our existing indexes (id, identifiers, label, alternativeLabels).
+
+    We'd need to index the ID on subjects, but then you could build an endpoint by:
+
+    *   Filtering the index for `subject.id=<id>`
+    *   Extracting the subject from the first Work in the results
+    *   Adapting that into the shape of the new API response
+
+    That would allow us to start using that API in prototype subject pages.
+
+*   We'd need to pull in LCSH/MESH/Wikidata data to populate the other fields, but we could hard-code information in the API without building a full pipeline to flesh out the API and do more testing of concept pages.
+
+    In turn, this might inform which fields we want to prioritise pulling through properly.
