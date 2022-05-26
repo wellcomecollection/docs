@@ -14,7 +14,7 @@ When an RFC is merged it provides a guide to implementing that change when it is
 
 <dl>
   <dt>
-    <a href="./047-catalogue-api-index-structure.md">RFC 047</a>: Changing the structure of the Catalogue API index
+    <a href="./047-catalogue-api-index-structure">RFC 047</a>: Changing the structure of the Catalogue API index
   </dt>
   <dd>
     Updating the catalogue API to serialise responses from an opaque <code>display</code> field, rather than parsing the internal model structure used by the pipeline.
@@ -25,5 +25,12 @@ When an RFC is merged it provides a guide to implementing that change when it is
   </dt>
   <dd>
     Updating aggregations to match the changes from RFC 047 and to reduce the coupling between the pipeline/API repos.
+  </dd>
+
+  <dt>
+    <a href="./050-concepts-api">RFC 050</a>: Design considerations for the concepts API
+  </dt>
+  <dd>
+    Some discussion about how we might model subjects and people in the concepts API.
   </dd>
 </dl>
