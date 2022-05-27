@@ -85,6 +85,9 @@ Notes:
 
     This is a value users would be able to filter on (if we provide an endpoint for listing/searching concepts).
 
+    Although conceptually we know that Person/Organisation/Meeting are subtypes of Agent, the API doesn't.
+    For example, if you wanted to present a list of agent-like things, you'd use a filter `type=Person,Organisation,Meeting` rather than `type=Agent`.
+
 -   The `description` should provide enough context to help users distinguish subjects/people with the same label but different meaning.
     This will likely be drawn from LCSH or Wikidata initially, but at some point we might write our own content here.
 
