@@ -62,7 +62,7 @@ GET /concepts/azxzhnuh
 
   "thumbnail": { … },
 
-  "relatedConcepts": [
+  "connectedConcepts": [
     {
       "id": "asoiham1",
       "label": "Crimea",
@@ -114,13 +114,16 @@ Notes:
     If yes, we can think about how to model this properly.
     If no, we can scrap all of these fields.
 
--   The `relatedConcepts` field lets us link between concept pages.
+-   The `connectedConcepts` field lets us link between concept pages.
     It contains a simplified subset of a Concept's fields; enough to render a link but nothing more.
 
-    We don't want to describe how two concepts are related; this is significantly more complicated.
+    Q: Do we want the connections between concepts to be discoverable from a single concept endpoint, or do we want that elsewhere?
+    I don't think we need to decide exactly how we'll model it (yet), but we should decide if it lives here or in at a distinct endpoint.
 
-    Q: Is relatedness symmetric?
-    If `A.relatedConcepts = [B]`, is it true that `B.relatedConcepts = [A]`?
+    We don't want to describe how two concepts are connected; this is significantly more complicated.
+
+    Q: Is connectedness/relatedness symmetric?
+    If `A.connectedConcepts = [B]`, is it true that `B.connectedConcepts = [A]`?
     This might affect if/how we build an API for listing concepts.
 
 
