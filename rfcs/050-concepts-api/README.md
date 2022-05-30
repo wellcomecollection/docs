@@ -162,7 +162,7 @@ GET /works?contributors.agent=azxzhnuh
 
 ## Endpoint #3: Listing and searching concepts
 
-If we decide we need this, it would look similar to the works and images endpoints:
+This will look similar to the works and images endpoints:
 
 ```
 GET /concepts
@@ -174,12 +174,15 @@ GET /concepts
 
 The `results` list would contain the same objects as returned from endpoint #1.
 
+This API would only return concepts that are used somewhere in our catalogue.
+
+Q: If you find a concept in this API, you know it's somewhere in the works catalogue.
+Is there any way to know whether you should be filtering by subjects/contributors to find a matching work?
+
 Filtering, querying, aggregations, and so on, would follow the same patterns as the works and images APIs.
 We don't need to decide the details of this yet.
 
-Q: Do we need this endpoint?
-Is listing/searching concepts something we think we'll do?
-Even if we won't use it, is it worth providing for parity with the works/images APIs?
+We'll add this endpoint because it's consistent with works and images, and even if we won't use it, other people may use it to do other interesting things.
 
 
 
