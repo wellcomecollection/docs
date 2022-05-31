@@ -114,17 +114,20 @@ Notes:
     If yes, we can think about how to model this properly.
     If no, we can scrap all of these fields.
 
+-   The `thumbnail` field uses the same model as the works API; whether we add it depends on the designs we use.
+    If we want a thumbnail on (1) the per-concept pages or (2) the snippet that links to per-concept pages, we'll use this field.
+    If not, we won't add it.
+
 -   The `connectedConcepts` field lets us link between concept pages.
     It contains a simplified subset of a Concept's fields; enough to render a link but nothing more.
 
-    Q: Do we want the connections between concepts to be discoverable from a single concept endpoint, or do we want that elsewhere?
-    I don't think we need to decide exactly how we'll model it (yet), but we should decide if it lives here or in at a distinct endpoint.
+    We want the connections between concepts to be discoverable from a single concept endpoint, but behind an include.
 
-    We don't want to describe how two concepts are connected; this is significantly more complicated.
+    We don't want to describe how two concepts are connected yet; this is significantly more complicated.
+    When we do, we'll put them in different properties (similar to `partOf` and `parts` in the works API).
 
-    Q: Is connectedness/relatedness symmetric?
-    If `A.connectedConcepts = [B]`, is it true that `B.connectedConcepts = [A]`?
-    This might affect if/how we build an API for listing concepts.
+    Connectedness/relatedness is not symmetric.
+    e.g. many things might link to a large, generic subject like "London", but it won't back-link to them in return.
 
 
 
