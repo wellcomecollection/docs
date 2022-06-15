@@ -216,6 +216,7 @@ I think there is something special about reading/importing changes from Wikidata
 It has the power to shuffle records around in the concepts index.
 But unless we hold wikidata in its own right, we can't reliably do that shuffling.
 Hang about, why are we importing the other concept sources anyway, since all we need is their ids, which are in WD?
+WD is not complete.
 
 ## Out of scope
 
