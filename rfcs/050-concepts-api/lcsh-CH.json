@@ -1,0 +1,225 @@
+{
+  "@context": "http://v3/authorities/subjects/context.json",
+  "@graph": [
+    {
+      "@id": "http://id.loc.gov/authorities/subjects/sh85027252",
+      "@type": "skos:Concept",
+      "skos:altLabel": [
+        {
+          "@language": "en",
+          "@value": "Ciliary neuralgia"
+        },
+        {
+          "@language": "en",
+          "@value": "Histamine cephalgia"
+        },
+        {
+          "@language": "en",
+          "@value": "Histamine headache"
+        },
+        {
+          "@language": "en",
+          "@value": "Horton syndrome"
+        },
+        {
+          "@language": "en",
+          "@value": "Horton's syndrome"
+        },
+        {
+          "@language": "en",
+          "@value": "Migrainous neuralgia"
+        },
+        {
+          "@language": "en",
+          "@value": "Neuralgic migraine"
+        },
+        {
+          "@language": "en",
+          "@value": "Paroxysmal nocturnal cephalgia"
+        }
+      ],
+      "skos:broader": [
+        {
+          "@id": "http://id.loc.gov/authorities/subjects/sh85022123"
+        },
+        {
+          "@id": "http://id.loc.gov/authorities/subjects/sh85046693"
+        },
+        {
+          "@id": "http://id.loc.gov/authorities/subjects/sh85059488"
+        }
+      ],
+      "skos:changeNote": [
+        {
+          "@id": "_:nb25583fbe07a4877ab376cbc49241881b1"
+        },
+        {
+          "@id": "_:nb25583fbe07a4877ab376cbc49241881b2"
+        }
+      ],
+      "skos:inScheme": {
+        "@id": "http://id.loc.gov/authorities/subjects"
+      },
+      "skos:prefLabel": {
+        "@language": "en",
+        "@value": "Cluster headache"
+      },
+      "skos:related": {
+        "@id": "http://id.loc.gov/authorities/subjects/sh85085064"
+      },
+      "skosxl:altLabel": [
+        {
+          "@id": "_:nb25583fbe07a4877ab376cbc49241881b3"
+        },
+        {
+          "@id": "_:nb25583fbe07a4877ab376cbc49241881b4"
+        },
+        {
+          "@id": "_:nb25583fbe07a4877ab376cbc49241881b5"
+        },
+        {
+          "@id": "_:nb25583fbe07a4877ab376cbc49241881b6"
+        },
+        {
+          "@id": "_:nb25583fbe07a4877ab376cbc49241881b7"
+        },
+        {
+          "@id": "_:nb25583fbe07a4877ab376cbc49241881b8"
+        },
+        {
+          "@id": "_:nb25583fbe07a4877ab376cbc49241881b9"
+        },
+        {
+          "@id": "_:nb25583fbe07a4877ab376cbc49241881b10"
+        }
+      ]
+    },
+    {
+      "@id": "_:nb25583fbe07a4877ab376cbc49241881b1",
+      "@type": "cs:ChangeSet",
+      "cs:changeReason": "new",
+      "cs:createdDate": {
+        "@type": "xsd:dateTime",
+        "@value": "1986-02-11T00:00:00"
+      },
+      "cs:creatorName": {
+        "@id": "http://id.loc.gov/vocabulary/organizations/dlc"
+      },
+      "cs:subjectOfChange": {
+        "@id": "http://id.loc.gov/authorities/subjects/sh85027252"
+      }
+    },
+    {
+      "@id": "_:nb25583fbe07a4877ab376cbc49241881b2",
+      "@type": "cs:ChangeSet",
+      "cs:changeReason": "revised",
+      "cs:createdDate": {
+        "@type": "xsd:dateTime",
+        "@value": "2007-01-26T07:54:18"
+      },
+      "cs:creatorName": {
+        "@id": "http://id.loc.gov/vocabulary/organizations/dlc"
+      },
+      "cs:subjectOfChange": {
+        "@id": "http://id.loc.gov/authorities/subjects/sh85027252"
+      }
+    },
+    {
+      "@id": "_:nb25583fbe07a4877ab376cbc49241881b3",
+      "@type": "skosxl:Label",
+      "skosxl:literalForm": {
+        "@language": "en",
+        "@value": "Histamine headache"
+      }
+    },
+    {
+      "@id": "_:nb25583fbe07a4877ab376cbc49241881b4",
+      "@type": "skosxl:Label",
+      "skosxl:literalForm": {
+        "@language": "en",
+        "@value": "Histamine cephalgia"
+      }
+    },
+    {
+      "@id": "_:nb25583fbe07a4877ab376cbc49241881b5",
+      "@type": "skosxl:Label",
+      "skosxl:literalForm": {
+        "@language": "en",
+        "@value": "Neuralgic migraine"
+      }
+    },
+    {
+      "@id": "_:nb25583fbe07a4877ab376cbc49241881b6",
+      "@type": "skosxl:Label",
+      "skosxl:literalForm": {
+        "@language": "en",
+        "@value": "Horton's syndrome"
+      }
+    },
+    {
+      "@id": "_:nb25583fbe07a4877ab376cbc49241881b7",
+      "@type": "skosxl:Label",
+      "skosxl:literalForm": {
+        "@language": "en",
+        "@value": "Migrainous neuralgia"
+      }
+    },
+    {
+      "@id": "_:nb25583fbe07a4877ab376cbc49241881b8",
+      "@type": "skosxl:Label",
+      "skosxl:literalForm": {
+        "@language": "en",
+        "@value": "Ciliary neuralgia"
+      }
+    },
+    {
+      "@id": "_:nb25583fbe07a4877ab376cbc49241881b9",
+      "@type": "skosxl:Label",
+      "skosxl:literalForm": {
+        "@language": "en",
+        "@value": "Horton syndrome"
+      }
+    },
+    {
+      "@id": "_:nb25583fbe07a4877ab376cbc49241881b10",
+      "@type": "skosxl:Label",
+      "skosxl:literalForm": {
+        "@language": "en",
+        "@value": "Paroxysmal nocturnal cephalgia"
+      }
+    },
+    {
+      "@id": "http://id.loc.gov/authorities/subjects/sh85046693",
+      "@type": "skos:Concept",
+      "skos:prefLabel": {
+        "@language": "en",
+        "@value": "Eye-sockets--Diseases"
+      }
+    },
+    {
+      "@id": "http://id.loc.gov/authorities/subjects/sh85085064",
+      "@type": "skos:Concept",
+      "skos:prefLabel": {
+        "@language": "en",
+        "@value": "Migraine"
+      }
+    },
+    {
+      "@id": "http://id.loc.gov/authorities/subjects/sh85059488",
+      "@type": "skos:Concept",
+      "skos:prefLabel": {
+        "@language": "en",
+        "@value": "Headache"
+      }
+    },
+    {
+      "@id": "http://id.loc.gov/authorities/subjects/sh85022123",
+      "@type": "skos:Concept",
+      "skos:prefLabel": {
+        "@language": "en",
+        "@value": "Cerebrovascular disease"
+      }
+    }
+  ],
+  "@id": "/authorities/subjects/sh85027252"
+}
