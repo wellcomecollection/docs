@@ -172,8 +172,16 @@ id problems:
 5. (In Works) How do we ensure changes like 3, above, are reflected?
 6. What is the best order for any of this?
 
-I think that 1 can be solved by having a different format so that concepts in Works are not mintable until they
-have been through the sameAs step.
+1 Can be solved by having a different format so that concepts in Works are not mintable until they
+have been through the sameAs step (and, in fact, if we're fetching them out of a DB at that point, why bother minting in Works, 
+just go straight to having the canonicalID in there).
+
+In 2, the uniqueness constraints are really important for the way the existing minter works. I think this needs to be 
+handled prior to, distinct from, or combined with minting in the concepts pipeline, to be stored in a separate database.
+
+This all points to the need for a minter service (passim).
+
+3 is a bit tricky:
 
 Day 1:
 D003027 = Q166907
@@ -188,6 +196,21 @@ sh85027252 = Q166907
 
 Now we need to make sh85027252 = canonical_id_1
 
+Day 3:
+D003027 = not present on Wikidata - how do we detect that?
+sh85027252 = Q166907
+
+What happens now?
+```mermaid
+graph TD
+    A[Concept Pipeline] -->|Here's a concept id from a source| B
+    B{Is it in sameAs DB}
+    B -->|Yes| C[Return sameAs Record]
+    B -->|No| D[Create sameAs identifiable object]
+    D --> E[Mint id for sameAs object]
+    E --> F[Put sameAs record into sameAs DB]
+```
+Epiphany!  There is no sameAs DB.  It's just the concepts index!
 
 
 ## Out of scope
