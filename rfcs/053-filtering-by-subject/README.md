@@ -33,7 +33,7 @@ Strictly speaking we only need subjects and contributors for this work, but genr
 
 We have filters and aggregations for *label*, not ID.
 
-## Future behaviour
+## Considerations for future behaviour
 
 If we add filtering/aggregations for subjects by ID, we already know how they'll be named: `subjects` and `source.subjects` for works and images, respectively.
 This is consistent with our existing API design.
@@ -59,24 +59,41 @@ Questions:
 
 *   How do we want to approach this filtering?
 
-## Rejected approaches
+## An idea
 
-*   Only support filtering by ID, and mint our own identifiers for unidentified subjects.
-    Then all subjects are identified and we can filter by them.
+We create synthetic source identifiers for unidentified subjects, which uses the label as the value, e.g.
 
-    e.g. such subjects could get a source identifier
+```json
+{
+  "identifierType": {
+    "id": "wellcome-catalogue-label",
+    "label": "Wellcome catalogue label",
+    "type": "IdentifierType"
+  },
+  "value": "Mental health",
+  "type": "Identifier"
+}
+```
 
-    ```json
-    {
-      "identifierType": {
-        "id": "wellcome-catalogue-label",
-        "label": "Wellcome catalogue label",
-        "type": "IdentifierType"
-      },
-      "value": "Mental health",
-      "type": "Identifier"
-    }
-    ```
+This would allow these subjects to get canonical IDs within the platform, but we don't want to put synthetic identifiers in public API responses.
+
+Instead, we suppress them in the API response but keep the canonical ID, so you'd get subjects like:
+
+```json
+"subjects": [
+  {
+    "id": "axbum98n",
+    "identifiers": [],
+    "label": "Mental health",
+    "concepts": [],
+    "type": "Subject"
+  }
+]
+```
+
+This means every subject can be filtered by identifier, and API clients (including the front-end) can find the filter URL.
+
+It adds some complexity to the pipeline, because we have to ensure these synthetic identifiers get scrubbed.
 
 ## See also
 
