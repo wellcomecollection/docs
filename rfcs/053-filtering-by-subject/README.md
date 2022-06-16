@@ -1,4 +1,4 @@
-# RFC 052: Filtering by contributor, genre, and subject
+# RFC 053: Filtering by contributor, genre, and subject
 
 For per-subject and per-person pages, we want to filter for images and works that match a given subject/person.
 For example:
@@ -58,6 +58,25 @@ Questions:
 *   How many identified/unidentified concepts are there in the catalogue?
 
 *   How do we want to approach this filtering?
+
+## Rejected approaches
+
+*   Only support filtering by ID, and mint our own identifiers for unidentified subjects.
+    Then all subjects are identified and we can filter by them.
+
+    e.g. such subjects could get a source identifier
+
+    ```json
+    {
+      "identifierType": {
+        "id": "wellcome-catalogue-label",
+        "label": "Wellcome catalogue label",
+        "type": "IdentifierType"
+      },
+      "value": "Mental health",
+      "type": "Identifier"
+    }
+    ```
 
 ## See also
 

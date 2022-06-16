@@ -49,7 +49,7 @@ When an RFC is merged it provides a guide to implementing that change when it is
   </dd>
 
   <dt>
-    <a href="./052-filtering-by-subject">RFC 052</a>: Filtering by contributor, genre, and subject
+    <a href="./053-filtering-by-subject">RFC 053</a>: Filtering by contributor, genre, and subject
   </dt>
   <dd>
     How we'll support filtering for per-subject pages as part of the concepts work.
