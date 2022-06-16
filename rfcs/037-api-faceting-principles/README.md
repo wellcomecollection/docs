@@ -1,4 +1,4 @@
-# API faceting principles & expectations
+# RFC 037: API faceting principles & expectations
 
 **Status:** Draft
 
@@ -63,7 +63,7 @@ and an aggregation on the labels would be:
 http://host.name/path/docs?aggregations=a.b.label
 ```
 
-**3. Aggregations are returned in an `aggregations` field, with the same name by which they were requested** 
+**3. Aggregations are returned in an `aggregations` field, with the same name by which they were requested**
 
 This means JSON paths are still represented as strings, rather than being expanded. For example, the response to the previous example would include at the top level
 
@@ -139,7 +139,7 @@ But if a separate (non-paired) filter was applied that happened to exclude the `
 
 **6. When a filter and its paired aggregation are both applied, the bucket corresponding to the filtered value is always present**
 
-Explicitly: even if other filters or queries are present which cause a bucket which currently has an applied filter to be empty (ie, it has a count of 0), it still appears in the aggregation. This is necessary so that the interface for the filter can still be rendered. 
+Explicitly: even if other filters or queries are present which cause a bucket which currently has an applied filter to be empty (ie, it has a count of 0), it still appears in the aggregation. This is necessary so that the interface for the filter can still be rendered.
 
 **7. Aggregations on fields contained in sum types return buckets of the type's components**
 

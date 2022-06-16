@@ -14,6 +14,20 @@ When an RFC is merged it provides a guide to implementing that change when it is
 
 <dl>
   <dt>
+    <a href="./008-api-filtering">RFC 008</a>: API Filtering
+  </dt>
+  <dd>
+    Defining a set of patterns for filtering and sorting in the catalogue API.
+  </dd>
+
+  <dt>
+    <a href="./037-api-faceting-principles">RFC 037</a>: API faceting principles & expectations
+  </dt>
+  <dd>
+    Standards for filtering and aggregations in the catalogue API, including naming and response types.
+  </dd>
+
+  <dt>
     <a href="./047-catalogue-api-index-structure">RFC 047</a>: Changing the structure of the Catalogue API index
   </dt>
   <dd>
@@ -32,5 +46,12 @@ When an RFC is merged it provides a guide to implementing that change when it is
   </dt>
   <dd>
     Some discussion about how we might model subjects and people in the concepts API.
+  </dd>
+
+  <dt>
+    <a href="./052-filtering-by-subject">RFC 052</a>: Filtering by contributor, genre, and subject
+  </dt>
+  <dd>
+    How we'll support filtering for per-subject pages as part of the concepts work.
   </dd>
 </dl>
