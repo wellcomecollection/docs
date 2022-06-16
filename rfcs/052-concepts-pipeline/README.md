@@ -170,7 +170,8 @@ id problems:
 3. How do we handle changes to sameAs relationships?
 4. (In Works) At the end of the pipeline, do we want to distinguish between concept ids added by cataloguers and those inherited by sameness?
 5. (In Works) How do we ensure changes like 3, above, are reflected?
-6. What is the best order for any of this?
+6. How do we mint an id for an object that doesnt' yet have an id?
+   1. By minting an id for it and seeing if it works.
 
 1 Can be solved by having a different format so that concepts in Works are not mintable until they
 have been through the sameAs step (and, in fact, if we're fetching them out of a DB at that point, why bother minting in Works, 
@@ -201,16 +202,20 @@ D003027 = not present on Wikidata - how do we detect that?
 sh85027252 = Q166907
 
 What happens now?
+
 ```mermaid
 graph TD
     A[Concept Pipeline] -->|Here's a concept id from a source| B
-    B{Is it in sameAs DB}
-    B -->|Yes| C[Return sameAs Record]
-    B -->|No| D[Create sameAs identifiable object]
-    D --> E[Mint id for sameAs object]
-    E --> F[Put sameAs record into sameAs DB]
+    B{Is it in Concepts Index}
+    B -->|Yes| C[End]
+    B -->|No| D[Mint id for Concepts object]
+    D --> E[Put Concepts record into Concepts Index]
+
+    AA[Works Pipeline] -->|Here's a concept from a source| BA
+    BA{Is it in sameAs DB}
+    BA -->|Yes| CA[Return sameAs Record]
+    BA -->|No| DA[Ignore/Warn/label only]
 ```
-Epiphany!  There is no sameAs DB.  It's just the concepts index!
 
 I think there is something special about reading/importing changes from Wikidata. 
 It has the power to shuffle records around in the concepts index.
@@ -218,15 +223,34 @@ But unless we hold wikidata in its own right, we can't reliably do that shufflin
 Hang about, why are we importing the other concept sources anyway, since all we need is their ids, which are in WD?
 WD is not complete.
 
+### Indexing
+
+Each concept should index (at least) the following keyword fields from each of its identifiers.
+
+* identifierType.id
+* a concatenation of the identifierType.id and the identifier value (QName)
+
+Indexing the identifier type id allows us to create queries with type filters for efficient Elasticsearch querying.
+
+Indexing the combined identifier type and identifier as a QName guards against potential id collisions across different
+schemes.  When Elasticsearch indexes the fields from an array of objects, it does so independently, meaning that it is
+difficult or impossible to write a query that unambiguously matches one of these records but not the other:
+
+* a record with a field containing an object with field1=value1 and field2=value2
+* a record with a field containing at least two objects, one with this field1=value1 and another with field2=value2
+
+
 ## Out of scope
 
 There are some aspects that are out of scope for this phase.
 
 ### Fetching from more than one data source
 
-At this point, we will only be importing from LCSH.
+At this point, we will only be importing from LCSH.  This RFC considers the need to fetch from multiple sources
+and merging synonyms, and attempts to ensure that we do not put something in place that makes it difficult or 
+impossible to do so, but does not specify how this will work.
 
-### Identifying synonyms
+#### Identifying synonyms
 
 As we only have one data source, there are no synonyms to identify. Eventually, Wikidata will be the 
 source of sameAs relationships that will allow us to assign the same Wellcome id to all ids referring to
@@ -235,11 +259,12 @@ the same concept.
 ### The Knowledge Graph
 
 A knowledge graph that links different concepts will eventually exist.  When it does, it can be used
-in a new stage in the pipeline.
+and/or populated in a new stage in the pipeline.
 
 ### Filtering Unused Concepts
 
 At first, we will simply use the entire set of imported concepts. This will be needed regardless of whether we filter 
-them.  Later, we can add a stage to filter the concepts based on what we actually use.
-
+them.  Later, we can add a stage to filter the concepts based on what we actually use.  This will likely come after the 
+end of the pipeline described in this document, and will copy all matching concepts from the index created here into a 
+new index which will become the Concepts Index used by the Concepts API and Catalogue pipeline.
                 
