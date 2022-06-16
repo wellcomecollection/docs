@@ -19,7 +19,7 @@ A new index to feed the concepts API with concepts, harvested from Library of Co
 Wikidata (with the possibility of adding other sources as we see fit), and assigned Wellcome IDs.
 
 To allow the API to be as lightweight as possible, the indexed documents will match the form in which 
-they are returned by the Concepts API e.g.
+they are returned by the Concepts API - currently as below:
 
 ```json
 {
@@ -122,9 +122,12 @@ There are two conditions under which the pipeline may quit early.
 2. The document produced by the Transformer is unchanged since the previous run.
     - It is possible that some changes to a source document are irrelevant to our use of concepts and are dropped in transformation
 
+A third situation where the pipeline produces no change, would be where all of the identifiers are already present
+in the index, but as this would be discovered in the final stage, it is not really an early exit.
+
 ### Data Flow
 
-This pipleline is expected to run on bulk batches only, and not on updates of single concept entries.  Therefore, the 
+This pipeline is expected to run on bulk batches only, and not on updates of single concept entries.  Therefore, the 
 entire batch of concepts is to be kept intact as far into the pipeline as possible.
 
 If, instead, the lists were split into individual concepts at the earliest opportunity, then later stages would have 
@@ -145,83 +148,62 @@ The new minter application will use the same database as the catalogue pipeline 
 in the same form.  This means that any external Concept Identifiers found in Catalogue Works will receive the same 
 Wellcome canonical identifier.
 
-Currently, the 
-
 Although the existing id minter in the catalogue pipeline is mostly agnostic as to the format of the JSON it processes, 
 it is not perfectly reusable as-is. At the top level, it still relies on processing Works retrieved from Elasticsearch.
 This minter will be processing Concepts extracted from a JSONL document.
 
-Wikidata Q166907 tells us that these two are the same:
-MeSH: D003027 
-LCSH: sh85027252
-
-So, assuming we have a canonicalID of h3adp4ne for that same concept, when we encounter MeSH: D003027 or
-LCSH: sh85027252 in a Work, then the id_minter will assign h3adp4ne to it.
-
-The trouble is that there are two uniqueness constraints in the ID Minter DB, and both of them are used to ensure that 
-the system works.  Our canonicalids are the primary key, and collectively, the source identifier and scheme are the other
-uniqueness constraint.  
-
-I think that what we will need is a prior step (and database) that handles sameAs relationships.
-
-id problems:
-1. How do we ensure that we don't coin new ids in the catalogue first, which would cause D003027 and sh85027252 get different canonicalIds?
-2. How do we work around the uniqueness constraints in the id minter db, such that D003027 and sh85027252 can both return the same canonicalId?
-3. How do we handle changes to sameAs relationships?
-4. (In Works) At the end of the pipeline, do we want to distinguish between concept ids added by cataloguers and those inherited by sameness?
-5. (In Works) How do we ensure changes like 3, above, are reflected?
-6. How do we mint an id for an object that doesnt' yet have an id?
-   1. By minting an id for it and seeing if it works.
-
-1 Can be solved by having a different format so that concepts in Works are not mintable until they
-have been through the sameAs step (and, in fact, if we're fetching them out of a DB at that point, why bother minting in Works, 
-just go straight to having the canonicalID in there).
-
-In 2, the uniqueness constraints are really important for the way the existing minter works. I think this needs to be 
-handled prior to, distinct from, or combined with minting in the concepts pipeline, to be stored in a separate database.
-
-This all points to the need for a minter service (passim).
-
-3 is a bit tricky:
-
-Day 1:
-D003027 = Q166907
-sh85027252 not present on Wikidata
-
-D003027 = canonical_id_1
-sh85027252 = canonical_id_2
-
-Day 2:
-D003027 = Q166907
-sh85027252 = Q166907
-
-Now we need to make sh85027252 = canonical_id_1
-
-Day 3:
-D003027 = not present on Wikidata - how do we detect that?
-sh85027252 = Q166907
-
-What happens now?
+This diagram shows the expected flow for an individual concept identifier when encountered in either pipeline.
 
 ```mermaid
 graph TD
-    A[Concept Pipeline] -->|Here's a concept id from a source| B
+    A[Concept Pipeline] -->|Here's a concept id from an authority| B
     B{Is it in Concepts Index}
-    B -->|Yes| C[End]
-    B -->|No| D[Mint id for Concepts object]
+    B -->|Yes| C[No further action]
+    B -->|No| D[Mint id for new Concepts object]
     D --> E[Put Concepts record into Concepts Index]
 
-    AA[Works Pipeline] -->|Here's a concept from a source| BA
-    BA{Is it in sameAs DB}
-    BA -->|Yes| CA[Return sameAs Record]
+    AA[Works Pipeline] -->|Here's a concept id from an authority| BA
+    BA{Is it in Concepts Index}
+    BA -->|Yes| CA[Return Concepts Record]
     BA -->|No| DA[Ignore/Warn/label only]
+
 ```
 
-I think there is something special about reading/importing changes from Wikidata. 
-It has the power to shuffle records around in the concepts index.
-But unless we hold wikidata in its own right, we can't reliably do that shuffling.
-Hang about, why are we importing the other concept sources anyway, since all we need is their ids, which are in WD?
-WD is not complete.
+In both cases, the process will be batched appropriately, rather than operating on individual identifiers, but this
+illustrates the per-ID behaviour.
+
+Any new identifier encountered will create a new record with two identifiers.
+1. The new identifier from the authority
+2. The wellcome canonical identifier generated by the minter.
+
+
+```json
+{
+  "id": "ews89aeb",
+  "label": "United States",
+  "identifiers": [
+     {
+        "identifierType": {
+           "id": "wellcome-canonical",
+           "label": "Wellcome Canonical Identifier",
+           "type": "IdentifierType"
+        },
+        "type": "Identifier",
+        "value": "ews89aeb"
+     },
+    {
+      "identifierType": {
+        "id": "lc-subjects",
+        "label": "Library of Congress Subject Headings (LCSH)",
+        "type": "IdentifierType"
+      },
+      "type": "Identifier",
+      "value": "n78095330"
+    }
+  ],
+  "type": "Subject"
+}
+```
 
 ### Indexing
 
@@ -238,6 +220,26 @@ difficult or impossible to write a query that unambiguously matches one of these
 
 * a record with a field containing an object with field1=value1 and field2=value2
 * a record with a field containing at least two objects, one with this field1=value1 and another with field2=value2
+
+Indexing in this way would allow a terms query to be used to batch retrieve identifiers when checking if they already
+exist.
+
+```json
+{
+   "query": {
+      "filter": {
+          "term": {",identifiers.identifierType": "lc-subjects"}
+      },
+      "terms": {
+         "indentifiers.qname": [
+            "lc-subjects:n78095330",
+            "lc:subjects:sh85027252",
+            ...
+         ]
+      }
+   }
+}
+```
 
 
 ## Out of scope
@@ -267,4 +269,65 @@ At first, we will simply use the entire set of imported concepts. This will be n
 them.  Later, we can add a stage to filter the concepts based on what we actually use.  This will likely come after the 
 end of the pipeline described in this document, and will copy all matching concepts from the index created here into a 
 new index which will become the Concepts Index used by the Concepts API and Catalogue pipeline.
-                
+
+
+## Random thoughts
+Wikidata Q166907 tells us that these two are the same:
+MeSH: D003027
+LCSH: sh85027252
+
+So, assuming we have a canonicalID of h3adp4ne for that same concept, when we encounter MeSH: D003027 or
+LCSH: sh85027252 in a Work, then the id_minter will assign h3adp4ne to it.
+
+The trouble is that there are two uniqueness constraints in the ID Minter DB, and both of them are used to ensure that
+the system works.  Our canonicalids are the primary key, and collectively, the source identifier and scheme are the other
+uniqueness constraint.
+
+I think that what we will need is a prior step (and database) that handles sameAs relationships.
+
+id problems:
+1. How do we ensure that we don't coin new ids in the catalogue first, which would cause D003027 and sh85027252 get different canonicalIds?
+2. How do we work around the uniqueness constraints in the id minter db, such that D003027 and sh85027252 can both return the same canonicalId?
+3. How do we handle changes to sameAs relationships?
+4. (In Works) At the end of the pipeline, do we want to distinguish between concept ids added by cataloguers and those inherited by sameness?
+5. (In Works) How do we ensure changes like 3, above, are reflected?
+6. How do we mint an id for an object that doesnt' yet have an id?
+   1. By minting an id for it and seeing if it works.
+
+1 Can be solved by having a different format so that concepts in Works are not mintable until they
+have been through the sameAs step (and, in fact, if we're fetching them out of a DB at that point, why bother minting in Works,
+just go straight to having the canonicalID in there).
+
+In 2, the uniqueness constraints are really important for the way the existing minter works. I think this needs to be
+handled prior to, distinct from, or combined with minting in the concepts pipeline, to be stored in a separate database.
+
+This all points to the need for a minter service (passim).
+
+3 is a bit tricky:
+
+Day 1:
+D003027 = Q166907
+sh85027252 not present on Wikidata
+
+D003027 = canonical_id_1
+sh85027252 = canonical_id_2
+
+Day 2:
+D003027 = Q166907
+sh85027252 = Q166907
+
+Now we need to make sh85027252 = canonical_id_1
+
+Day 3:
+D003027 = not present on Wikidata - how do we detect that?
+sh85027252 = Q166907
+
+What happens now?
+
+
+I think there is something special about reading/importing changes from Wikidata.
+It has the power to shuffle records around in the concepts index.
+But unless we hold wikidata in its own right, we can't reliably do that shuffling.
+Hang about, why are we importing the other concept sources anyway, since all we need is their ids, which are in WD?
+WD is not complete.
+
