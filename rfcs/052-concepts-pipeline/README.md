@@ -208,7 +208,8 @@ is out of scope for this RFC.
 Although the identifiers are available in the same database used by the catalogue pipeline id minter, external 
 identifiers in Works should not be "mintable" by that application.
 
-This is to avoid the possibility of an identifier being minted without setting up the appropriate sameAs record.
+This is to avoid the possibility of an identifier being minted without first 
+setting up the appropriate sameAs record(s).
 
 Instead, the flow when such a record is encountered should be as follows:
 
@@ -219,6 +220,10 @@ graph TD
     B -->|Yes| C[Return Concept Record]
     B -->|No| D[Ignore/Warn/label only]
 ```
+
+Were canonical Ids minted as part of the catalogue pipeline, then they would 
+have to be "corrected" by this pipeline when, which would add complexity, and
+cause thousands of unused canonical ids to be created.
 
 ### Indexing
 
@@ -283,7 +288,7 @@ it would be beneficial to process the full set once, then process only the updat
 
 ### Destructive changes
 
-There are two types of destructive change that may occur in the completed pipeline:
+There are two types of destructive change that may occur in the eventual pipeline:
 
 1. Deletion of an external identifier
 2. Moving an external identifier to a different Concept
@@ -341,6 +346,9 @@ them.  Later, we can add a stage to filter the concepts based on what we actuall
 end of the pipeline described in this document, and will copy all matching concepts from the index created here into a 
 new index which will become the Concepts Index used by the Concepts API and Catalogue pipeline.
 
+Consideration will also need to be given to how previously removed Concepts
+will be "unfiltered" when a new Work references them.
+
 ### Triggering Concept Changes in Works
 
 This RFC governs the first phase of developing a pipeline to store Concepts for the Concepts API. It does not 
@@ -364,7 +372,7 @@ as a prerequisite to the pipeline.  However, were one to exist, this would use i
 
 ### Platform
 As a new, batch-only pipeline, this offers the opportunity to use a workflow orchestration system 
-like Airflow or AWS Step Functions. What should we use?
+like Airflow or [AWS Step Functions](https://docs.aws.amazon.com/step-functions/index.html). What should we use?
 
 AWS Step functions offers a Workflow Designer and Data flow simulator, and can easily be triggered 
 by a CloudWatch/EventBridge definition.
@@ -372,13 +380,13 @@ by a CloudWatch/EventBridge definition.
 ![The flowchart shows the various steps (as AWS Lambdas) and choices described in this document.](/Users/butcherp/Documents/GitHub/docs/rfcs/052-concepts-pipeline/StepFunctionsDesign.png "A chart depicting an example AWS Step Function for this pipeline")
 ![This flowchart shows how AWS Step Functions displays an execution of a pipeline, with different coloured nodes based on what happened at that stage](StepFunctionsRun.png "Hello World example")
 
-https://bahr.dev/2021/02/04/step-functions-downloader-pattern/#256-kb-result-size-limit
-
 ### Works
 When Works are presented via the API, do we want to distinguish between concept ids added by cataloguers 
 and those inherited by sameness?
 
 How are we to ensure that changes to Concepts are reflected in the Works associated with them?
+
+Will any of those decisions influence decisions within the scope of this RFC.
 
 ## Local Glossary
 
