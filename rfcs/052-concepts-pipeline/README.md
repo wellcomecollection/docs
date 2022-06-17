@@ -366,6 +366,8 @@ as a prerequisite to the pipeline.  However, were one to exist, this would use i
 As a new, batch-only pipeline, this offers the opportunity to use a workflow orchestration system 
 like Airflow or AWS Step Functions. What should we use?
 
+AWS Step functions offers a Workflow Designer and Data flow simulator, and can easily be triggered 
+by a CloudWatch/EventBridge definition.
 
 ### Works
 When Works are presented via the API, do we want to distinguish between concept ids added by cataloguers 
