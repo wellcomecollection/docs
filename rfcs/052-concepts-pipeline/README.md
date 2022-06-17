@@ -163,14 +163,15 @@ graph TD
     A[Concept Pipeline] -->|Here's a concept id from an authority| B
     B{Is it in Concepts Index}
     B -->|Yes| C[No further action]
-    B -->|No| D[Mint id for new Concepts object]
-    D --> E[Put Concepts record into Concepts Index]
+    B -->|No| D{Is this sameAs an existing Concept}
+    D -->|Yes| E[Add it to identifiers list]
+    D -->|No| F[Mint id for new Concepts object]
+    F --> G[Put Concepts record into Concepts Index]
 
     AA[Catalogue Pipeline or API] -->|Here's a concept id from an authority| BA
     BA{Is it in Concepts Index}
     BA -->|Yes| CA[Return Concepts Record]
     BA -->|No| DA[Ignore/Warn/label only]
-
 ```
 
 In both cases, the process will be batched appropriately, rather than operating on individual identifiers, but this
@@ -183,11 +184,11 @@ Each concept should index (at least) the following keyword fields from each of i
 * identifierType.id
 * a concatenation of the identifierType.id and the identifier value (QName)
 
-Indexing the identifier type id allows us to create queries with type filters for efficient Elasticsearch querying.
+Indexing the identifier type id separately allows us to create queries with type filters for efficient Elasticsearch querying.
 
 Indexing the combined identifier type and identifier as a QName guards against potential id collisions across different
 schemes.  When Elasticsearch indexes the fields from an array of objects, it does so independently, meaning that it is
-difficult or impossible to write a query that unambiguously matches one of these records but not the other:
+difficult or impossible to write queries that unambiguously matches one of these records but not the other:
 
 * a record with a field containing an object with field1=value1 and field2=value2
 * a record with a field containing at least two objects, one with this field1=value1 and another with field2=value2
@@ -204,7 +205,7 @@ exist.
       "terms": {
          "indentifiers.qname": [
             "lc-subjects:n78095330",
-            "lc:subjects:sh85027252",
+            "lc-subjects:sh85027252",
             ...
          ]
       }
@@ -296,6 +297,15 @@ At first, we will simply use the entire set of imported concepts. This will be n
 them.  Later, we can add a stage to filter the concepts based on what we actually use.  This will likely come after the 
 end of the pipeline described in this document, and will copy all matching concepts from the index created here into a 
 new index which will become the Concepts Index used by the Concepts API and Catalogue pipeline.
+
+### Triggering Concept Changes in Works
+
+This RFC governs the first phase of developing a pipeline to store Concepts for the Concepts API. It does not 
+govern how Concepts are to be used by Works.
+
+When changes to Concepts occur, it would be correct to ensure that those changes are reflected everywhere they are
+used.  However, this phase only involves identifiers from one external Authority.  It is unlikely that there will be
+changes that need to be reflected immediately elsewhere.
 
 ## Other Future/Related Work
 
