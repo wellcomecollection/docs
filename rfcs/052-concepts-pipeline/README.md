@@ -5,9 +5,13 @@
 ## Executive Summary
 
 In order to populate a new index with concept data harvested from external sources, we will
-create a new concepts pipeline. This pipeline will fetch data from the source, mint Wellcome IDs 
-(with a new Concepts ID Minter), and save the concepts to the new index. This unfiltered concepts
-index will be used by the Concepts API in the first phase, with filtering added in a later phase.
+create a new concepts pipeline. This pipeline will 
+- 
+- fetch data from the source, 
+- mint Wellcome canonical IDs (with a new Concepts ID Minter).
+- save the concepts to the new index. 
+
+This unfiltered concepts index will be used by the Concepts API in the first phase, with filtering added in a later phase.
 
 At first, the pipeline will only import a single source, and will therefore not need to handle merging of synonyms.
 
@@ -69,7 +73,10 @@ Minter -) ConceptsIndex: Save concepts
 ### Triggering
 
 This pipeline is to be triggered periodically based on the expected frequency with which we expect relevant updates to 
-occur in the authority's concept list, and our desire to keep up to date with 
+occur in the authority's concept list, and our desire to keep up to date with it.
+
+The Library of Congress publishes [monthly lists of changes](https://classweb.org/approved-subjects/), implying
+that running this pipeline on a similar frequency would be sufficient.
 
 ### Quitting Early
 There are two conditions under which the pipeline may quit early.
@@ -235,7 +242,7 @@ When the LCSH dataset is updated, a dump of the whole set is published.  It is e
 process the whole set in a reasonable time.  Therefore, no consideration is given in this RFC to the method of
 processing updates, instead of full dumps.
 
-Other datasets may publish a stream of updates (e.g. Wikidata) or periodic deltas.  Where a dataset is very large,
+Large datasets may publish a stream of updates (e.g. Wikidata) or periodic deltas.  Where a dataset is very large,
 it would be beneficial to process the full set once, then process only the updates in subsequent runs.
 
 ### Destructive changes
