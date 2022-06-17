@@ -9,13 +9,17 @@ create a new concepts pipeline. This pipeline will
 - 
 - fetch data from the source, 
 - mint Wellcome canonical IDs (with a new Concepts ID Minter).
-- save the concepts to the new index. 
+- save the concepts to the new index.
+- save sameAs relationships to a new table in the ID Minter database
 
 This unfiltered concepts index will be used by the Concepts API in the first phase, with filtering added in a later phase.
 
 At first, the pipeline will only import a single source, and will therefore not need to handle merging of synonyms.
 
 We will then add further stages to this pipeline to merge synonyms, filter unused concepts and support the knowledge graph.
+
+As a new pipeline operating only in batch mode, this offers an opportunity to use workflow orchestration software 
+such as Apache Airflow or AWS Step Functions.
 
 ## End Goal
 
@@ -78,6 +82,17 @@ occur in the authority's concept list, and our desire to keep up to date with it
 The Library of Congress publishes [monthly lists of changes](https://classweb.org/approved-subjects/), implying
 that running this pipeline on a similar frequency would be sufficient.
 
+### Data Flow
+
+This pipeline is expected to run on bulk batches only, and not on updates of single concept entries.  Therefore, the
+entire batch of concepts is to be kept intact as far into the pipeline as possible.
+
+If, instead, the lists were split into individual concepts at the earliest opportunity, then later stages would have
+to gather batches for efficient processing.  Sending queries for multiple IDs to the Minter database,
+and bulk updates to Elasticsearch are better than doing the same thing one record at a time.
+
+Data is stored between stages, and the next stage is then notified about the document to process.
+
 ### Quitting Early
 There are two conditions under which the pipeline may quit early.
 
@@ -90,24 +105,24 @@ There are two conditions under which the pipeline may quit early.
 A third situation where the pipeline produces no change, would be where all of the identifiers are already present
 in the index, but as this would be discovered in the final stage, it is not really an early exit.
 
-### Data Flow
-
-This pipeline is expected to run on bulk batches only, and not on updates of single concept entries.  Therefore, the 
-entire batch of concepts is to be kept intact as far into the pipeline as possible.
-
-If, instead, the lists were split into individual concepts at the earliest opportunity, then later stages would have 
-to gather batches for efficient processing.  Sending queries for multiple IDs to the Minter database, 
-and bulk updates to Elasticsearch are better than doing the same thing one record at a time.
-
-Data is stored between stages, and the next stage is then notified about the document to process.
-
 ### The new Concepts ID Minter
+#### Goal
+
+An application that accepts a Concept object with one external identifier, and adds a persistent 
+Wellcome canonical id to it.
+
+#### Detail
 
 A new id minter application should be created for this pipeline, to mint IDs for objects in the identifiers list. It will
 accept a JSONL document, and process an appropriate number of lines with each pass.
 
 The new minter application will use the same database as the catalogue pipeline minter, and identifier objects will be
 in the same form.  This ensures that we do not have identifier collisions between Concepts and Works.
+
+A new table in the ID Minter database will be created to maintain sameAs relationships.  This allows the existing minter
+to continue working in exactly the same way - providing 1:1 mappings between canonical ids and other existing ids, 
+and relying on uniqueness constraints to ensure newly minted ids genuinely new, whilst still providing a persistent 
+store that can map between one Wellcome canonical id and multiple external ids.
 
 Although the existing id minter in the catalogue pipeline is mostly agnostic as to the format of the JSON it processes,
 it is not perfectly reusable as-is. At the top level, it still relies on processing Works retrieved from Elasticsearch.
@@ -126,8 +141,9 @@ finding this JSON snippet in a Work.
    "ontologyType": "Concept"
 }
 ```
+
 Where canonicalId is an identifier newly created by the same method as in [Identifiable.scala](https://github.com/wellcomecollection/catalogue-pipeline/blob/main/pipeline/id_minter/src/main/scala/weco/pipeline/id_minter/utils/Identifiable.scala),
-This identifier string will serve as the id for the Concept record, and will also be stored in the indentifiers list:
+This identifier string will serve as the id for the Concept record, and will also be stored in the identifiers list:
 
 ```json
 {
@@ -167,22 +183,42 @@ This diagram shows the expected flow for an individual concept identifier when e
 
 ```mermaid
 graph TD
-    A[Concept Pipeline] -->|Here's a concept id from an authority| B
-    B{Is it in Concepts Index}
+    A[Concept Pipeline] ==>|Here's a concept id <br/>from an authority| B
+    B{In Concepts Index?}
     B -->|Yes| C[No further action]
-    B -->|No| D{Is this sameAs an existing Concept}
-    D -->|Yes| E[Add it to identifiers list]
-    D -->|No| F[Mint id for new Concepts object]
-    F --> G[Put Concepts record into Concepts Index]
-
-    AA[Catalogue Pipeline or API] -->|Here's a concept id from an authority| BA
-    BA{Is it in Concepts Index}
-    BA -->|Yes| CA[Return Concepts Record]
-    BA -->|No| DA[Ignore/Warn/label only]
+    B ==>|No| D{synonym for existing concept?}
+    D -->|Yes| E[Add it to identifiers list of that Concept]
+    D ==>|No| I{In sameAs table?}
+    I -->|Yes| J[Create Concept object from sameAs record]
+    J --> H
+    I ==>|No| K[Create new Concept object with new ID]
+    K ==> G
+    G ==> H[Put Concepts record into Concepts Index]
+    E --> G[Add QNAME->canonicalID to sameAs table in minter DB]
 ```
 
-In both cases, the process will be batched appropriately, rather than operating on individual identifiers, but this
-illustrates the per-ID behaviour.  This flow also omits synonym resolution, which is out of scope for this RFC.
+This illustrates the per-ID behaviour, but in both cases, the process will be batched appropriately, 
+rather than operating on individual identifiers.
+
+The method by which this pipeline determines that a new identifier refers to the same concept as an existing entry
+is out of scope for this RFC.
+
+#### Usage in Relation to Works
+
+Although the identifiers are available in the same database used by the catalogue pipeline id minter, external 
+identifiers in Works should not be "mintable" by that application.
+
+This is to avoid the possibility of an identifier being minted without setting up the appropriate sameAs record.
+
+Instead, the flow when such a record is encountered should be as follows:
+
+```mermaid
+graph TD
+    A[Catalogue Pipeline or API] -->|Here's a concept id from an authority| B
+    B{In Concepts Index?}
+    B -->|Yes| C[Return Concept Record]
+    B -->|No| D[Ignore/Warn/label only]
+```
 
 ### Indexing
 
@@ -321,54 +357,39 @@ changes that need to be reflected immediately elsewhere.
 For some time, the idea of an ID Minter service (e.g. an API) has been floated. This would be a service used by 
 the existing catalogue pipeline and any other system that requires it.
 
-The Concepts pipeline would be one such "other system". This RFC does not propose setting up that service now
+The Concepts Pipeline would be one such "other system". This RFC does not propose setting up that service now
 as a prerequisite to the pipeline.  However, were one to exist, this would use it.
 
 ## Open Questions
 
 ### Platform
+As a new, batch-only pipeline, this offers the opportunity to use a workflow orchestration system 
+like Airflow or AWS Step Functions. What should we use?
 
-Do we run this in a similar fashion to the Catalogue Pipeline, or should we use this opportunity to migrate to
-an orchestration system like Airflow or AWS Step Functions?
 
-## Glossary
+### Works
+When Works are presented via the API, do we want to distinguish between concept ids added by cataloguers 
+and those inherited by sameness?
+
+How are we to ensure that changes to Concepts are reflected in the Works associated with them?
+
+## Local Glossary
 
 ### Authority
 
 An external organisation that maintains a set of concept identifiers.
 
-### Source Document
-
-The published, downloadable form of an authority's set of concepts, e.g. a JSONL dump.
-
 ### External Identifier
 
 The identifier used by an Authority for a Concept.
 
-## Random thoughts
+### QName
 
-So, assuming we have a canonicalID of h3adp4ne for that same concept, when we encounter MeSH: D003027 or
-LCSH: sh85027252 in a Work, then the id_minter will assign h3adp4ne to it.
+The concatenation of the identifier of an Authority, with an identifier from that authority.
 
-The trouble is that there are two uniqueness constraints in the ID Minter DB, and both of them are used to ensure that
-the system works.  Our canonicalids are the primary key, and collectively, the source identifier and scheme are the other
-uniqueness constraint.
+Analogous to a [prefixed XML QName](https://en.wikipedia.org/wiki/QName).
 
-I think that what we will need is a prior step (and database) that handles sameAs relationships.
+### Source Document
 
-id problems:
-1. How do we ensure that we don't coin new ids in the catalogue first, which would cause D003027 and sh85027252 get different canonicalIds?
-2. How do we work around the uniqueness constraints in the id minter db, such that D003027 and sh85027252 can both return the same canonicalId?
-4. (In Works) At the end of the pipeline, do we want to distinguish between concept ids added by cataloguers and those inherited by sameness?
-5. (In Works) How do we ensure changes like 3, above, are reflected?
-6. How do we mint an id for an object that doesnt' yet have an id?
-   1. By minting an id for it and seeing if it works.
+The published, downloadable form of an authority's set of concepts, e.g. a JSONL dump.
 
-1 Can be solved by having a different format so that concepts in Works are not mintable until they
-have been through the sameAs step (and, in fact, if we're fetching them out of a DB at that point, why bother minting in Works,
-just go straight to having the canonicalID in there).
-
-In 2, the uniqueness constraints are really important for the way the existing minter works. I think this needs to be
-handled prior to, distinct from, or combined with minting in the concepts pipeline, to be stored in a separate database.
-
-This all points to the need for a minter service (passim).
