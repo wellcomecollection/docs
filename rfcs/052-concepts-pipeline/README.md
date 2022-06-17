@@ -369,6 +369,11 @@ like Airflow or AWS Step Functions. What should we use?
 AWS Step functions offers a Workflow Designer and Data flow simulator, and can easily be triggered 
 by a CloudWatch/EventBridge definition.
 
+![The flowchart shows the various steps (as AWS Lambdas) and choices described in this document.](/Users/butcherp/Documents/GitHub/docs/rfcs/052-concepts-pipeline/StepFunctionsDesign.png "A chart depicting an example AWS Step Function for this pipeline")
+![This flowchart shows how AWS Step Functions displays an execution of a pipeline, with different coloured nodes based on what happened at that stage](StepFunctionsRun.png "Hello World example")
+
+https://bahr.dev/2021/02/04/step-functions-downloader-pattern/#256-kb-result-size-limit
+
 ### Works
 When Works are presented via the API, do we want to distinguish between concept ids added by cataloguers 
 and those inherited by sameness?
