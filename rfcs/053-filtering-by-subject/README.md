@@ -15,11 +15,14 @@ Strictly speaking we only need subjects and contributors for this work, but genr
 
 1.  On per-concept pages, there's a sample of matching images/works.
 
-2.  On per-concept pages, there's a link to a filtered search for the given concept, directly below the sample results.
+2.  On per-concept pages, there's a link to a filtered search for the identified concept, directly below the sample results.
 
-3.  On work pages, the list of subjects/contributors/genres to link to filtered searches for each subject.
+3.  On work pages, the list of subjects/contributors/genres link to:
 
-4.  In the works API, there are filters and aggregations for subject/contributor/genre.
+    -   a concept page if the subject/contributor is identified (new behaviour)
+    -   a filtered search by label if the subject/contributor/genre is unidentified (existing behaviour)
+
+4.  In the works API, there are filters and aggregations for subject/contributor/genre that support (3).
 
 5.  Given a single work in the works API, there should be an obvious way to construct a filter URL for works with the same subjects/contributors/genres as this work.
 
@@ -39,16 +42,33 @@ If we add filtering/aggregations for subjects by ID, we already know how they'll
 This is consistent with our existing API design.
 
 But do we add filtering/aggregations for subjects by ID?
-We find ourselves in a dilemma:
+How do we handle this in the front-end?
 
-*   We can't rely on filtering by label, because there may be concepts with similar/identical labels but which refer to different things.
+Consider the following flows in the front-end:
+
+1.  A user lands on the concept page for "mental health".
+
+    This includes a list of works with that identified concept.
+    When they click to see the full list of works, they should see filtered search results.
+
+    This filtered search must use ID filtering, because there may be concepts with similar/identical labels but which refer to different things.
     e.g. two members of the same family.
 
-*   We can't rely on filtering by ID, because not all subjects/genres/contributors are identified.
+    Q: How do we distinguish this in the UI from a label search for "mental health"?
 
-From an API perspective, we could easily support both, but it's more complicated in the front-end.
-How do we choose which filter mechanism to use?
-How does an API client choose which filter mechanism to use?
+    Q: Should a user be able to discover this filter through the search UI?
+    If they remove the filter, can they re-add it without going via the concepts page?
+
+2.  A user is on a search page.
+    They want to filter by subject.
+    They click the dropdown to see a list of available subject filters, and pick one.
+
+    Q: Is the list of available subjects based on ID or label?
+    Is it a mixture of both?
+
+    Q: How do we distinguish between a filter for the label "mental health" and the identified concept?
+
+    Q: How do we distinguish between two identified concepts with the same label?
 
 Questions:
 
@@ -58,42 +78,6 @@ Questions:
 *   How many identified/unidentified concepts are there in the catalogue?
 
 *   How do we want to approach this filtering?
-
-## An idea
-
-We create synthetic source identifiers for unidentified subjects, which uses the label as the value, e.g.
-
-```json
-{
-  "identifierType": {
-    "id": "wellcome-catalogue-label",
-    "label": "Wellcome catalogue label",
-    "type": "IdentifierType"
-  },
-  "value": "Mental health",
-  "type": "Identifier"
-}
-```
-
-This would allow these subjects to get canonical IDs within the platform, but we don't want to put synthetic identifiers in public API responses.
-
-Instead, we suppress them in the API response but keep the canonical ID, so you'd get subjects like:
-
-```json
-"subjects": [
-  {
-    "id": "axbum98n",
-    "identifiers": [],
-    "label": "Mental health",
-    "concepts": [],
-    "type": "Subject"
-  }
-]
-```
-
-This means every subject can be filtered by identifier, and API clients (including the front-end) can find the filter URL.
-
-It adds some complexity to the pipeline, because we have to ensure these synthetic identifiers get scrubbed.
 
 ## See also
 
