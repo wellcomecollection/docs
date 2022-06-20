@@ -372,13 +372,16 @@ as a prerequisite to the pipeline.  However, were one to exist, this would use i
 
 ### Platform
 As a new, batch-only pipeline, this offers the opportunity to use a workflow orchestration system 
-like Airflow or [AWS Step Functions](https://docs.aws.amazon.com/step-functions/index.html). What should we use?
+like [Apache Airflow](https://airflow.apache.org) or [AWS Step Functions](https://docs.aws.amazon.com/step-functions/index.html). What should we use?
 
 AWS Step functions offers a Workflow Designer and Data flow simulator, and can easily be triggered 
 by a CloudWatch/EventBridge definition.
 
 ![The flowchart shows the various steps (as AWS Lambdas) and choices described in this document.](/Users/butcherp/Documents/GitHub/docs/rfcs/052-concepts-pipeline/StepFunctionsDesign.png "A chart depicting an example AWS Step Function for this pipeline")
 ![This flowchart shows how AWS Step Functions displays an execution of a pipeline, with different coloured nodes based on what happened at that stage](StepFunctionsRun.png "Hello World example")
+
+These definitions show Lambda invocations, but pretty much any AWS Service can be 
+invoked by a Step Function.
 
 ### Works
 When Works are presented via the API, do we want to distinguish between concept ids added by cataloguers 
