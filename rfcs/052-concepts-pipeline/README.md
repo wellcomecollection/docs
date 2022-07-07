@@ -23,8 +23,11 @@ of adding other sources as we see fit).
 ## Overview
 
 In order to populate a new index with relevant concept data harvested from external sources, we will
-create three new concepts pipelines, and to modify the Sierra transformer to ensure that Wellcome canonical ids are
-minted for all concepts in Works.
+create three new concepts pipelines, and modify the Sierra transformer to ensure that Wellcome canonical ids are
+minted for all concepts in Works.  We will also add a stage to the Catalogue Pipeline that uses the resulting data
+from this pipeline to update Works.
+
+![Overview diagram](big-concepts-pipeline.png)
 
 ### The Concepts Ingest Pipeline
 
@@ -178,9 +181,11 @@ that it would be sufficient to run the Ingest Pipeline for that source on a simi
 
 ## Further Work
 
+The following aspects are not considered here.
+
 * Knowledge Graph construction
 * Synonyms and redirects
-* Composite Identifiers                                                                               
+* Composite Identifiers                                                                             
 
 ## Local Glossary
 
