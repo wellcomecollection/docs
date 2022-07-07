@@ -101,6 +101,8 @@ A new stage will be added, at a point after the Merger.  This new stage will
   so that identifiers are minted for unidentified concepts.
 * In the first phase, with only one source of external identifiers, 
 the Augmentation pipeline should skip the knowledge graph, rather than creating a kind of graph-less graph.
+* Finally the new catalogue pipeline stage can be added.
+  * It is also possible to work on adding this using the current dummy implementation of the API.
 
 ## Other Considerations
 
