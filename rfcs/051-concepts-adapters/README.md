@@ -23,7 +23,7 @@ Based on this, we might transform the LCSH documents to something like:
 
 ```json
 {
-  "id": "<full LCSH URI>", // Necessary for indexing but not used externally
+  "id": "lc-subjects/sh12345678", // QName-type identifier 
   "identifier": {
     "value": "sh12345678",
     "identifierType": "lc-subjects",
@@ -34,12 +34,17 @@ Based on this, we might transform the LCSH documents to something like:
     "<values of skos:altLabel>"
   ]
 }
+
 ```
-### Forwarding changes in external concepts to the concepts augmentation pipeline
+### Ingesting changes 
 
-> Need to work this bit out
+_This section is a bit speculative - we don't necessarily need the answers right now._
 
+We can start by just writing all of the source into an empty index - this is inefficient and we won't know what (if anything) changed, but it will never be wrong.
 
+To know what's changed, we have to start comparing to what's there already. This is of course very inefficient, but we can pass that inefficiency onto the ES cluster by using the [`doc_as_upsert`](https://www.elastic.co/guide/en/elasticsearch/reference/current/docs-update.html#doc_as_upsert) feature of the `update` API alongside the [`noop`](https://www.elastic.co/guide/en/elasticsearch/reference/current/docs-update.html#_detect_noop_updates) feature: with a single API call we'll be able to know whether anything was added.
+
+This leaves us with detecting deletions: the least likely kind of change. I don't think this needs to be addressed right now - if it's something we become aware of we can just write into an empty index again.
 
 ## Questions
 
@@ -51,5 +56,5 @@ Based on this, we might transform the LCSH documents to something like:
     "type": "IdentifierType"
   }
   ```
-  Is this OK?
-- Is the unused `id` on the documents actually necessary? Could we just use the default ES IDs?
+  Is this OK? **Yes, we prefer this**
+- Is the unused `id` on the documents actually necessary? **It's useful to be able to construct queries for these concepts, and the identifier proposed is scalable to various source schemas**
