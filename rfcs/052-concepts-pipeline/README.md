@@ -30,7 +30,7 @@ minted for all concepts in Works.
 
 This pipeline will be triggered 
 - periodically, based on the update schedule of the source and how up-to-date we want each source to be
-- manually? 
+- manually, if the update schedule is irregular, and we want to bring our data up-to-date immediately
 
 - fetch data from the source,
 - transform it to a common format
@@ -42,8 +42,10 @@ in a common format. This will contain Concepts not in use at Wellcome.
 This will not contain any Concepts that are exclusive to Wellcome (those identified by name only in Works).
 
 Records will only contain the data provided by the external source, and will not have been embellished with Wellcome
-data in any way.  
+data in any way.
+
 Records will contain:
+
 * the identifier, 
 * the authority,
 * the primary name
@@ -80,6 +82,14 @@ It will
 - from that, build the concepts store knowledge graph 
   - At this point, there are no relations in the graph, this is future work
 - from that, populate the concepts index to be used by the Concepts API
+
+### Update to the Catalogue Pipeline
+
+A new stage will be added, at a point after the Merger.  This new stage will 
+
+* Find Concepts mentioned in the Work
+* request Concept records for any of them from the Concepts API 
+* Replace the data in the Concept objects in the Work with the data from the Concepts API
 
 ## Skeleton Delivery Plan
 
