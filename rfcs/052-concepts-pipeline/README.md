@@ -191,15 +191,15 @@ The following aspects are not considered here.
 
 ### Authority
 
-[^1]An external organisation that maintains a set of concept identifiers.
+[^1]:An external organisation that maintains a set of concept identifiers.
 
 ### External Identifier
 
-[^2]The identifier used by an Authority for a Concept.
+[^2]:The identifier used by an Authority for a Concept.
 
 ### Source Document
 
-[^3]The published, downloadable form of an authority's set of concepts, e.g. a JSONL dump, XML file or similar.
+[^3]:The published, downloadable form of an authority's set of concepts, e.g. a JSONL dump, XML file or similar.
 
 ### Unidentified Concept
-[^4]A concept referred to in Works by name only, not an explicit unique identifier.
+[^4]:A concept referred to in Works by name only, not an explicit unique identifier.
