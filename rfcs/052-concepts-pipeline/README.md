@@ -35,6 +35,8 @@ This pipeline will be triggered
 - periodically, based on the update schedule of the source and how up-to-date we want each source to be
 - manually, if the update schedule is irregular, and we want to bring our data up-to-date immediately
 
+It will:
+
 - fetch data from the source,
 - transform it to a common format
 - store that common form in a database
