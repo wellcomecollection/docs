@@ -14,6 +14,13 @@ When an RFC is merged it provides a guide to implementing that change when it is
 
 <dl>
   <dt>
+    <a href="./017-url_design">RFC 017</a>: URL design
+  </dt>
+  <dd>
+    Some principles for how we design URLs.
+  </dd>
+
+  <dt>
     <a href="./047-catalogue-api-index-structure">RFC 047</a>: Changing the structure of the Catalogue API index
   </dt>
   <dd>
