@@ -7,10 +7,11 @@ They can also have an impact on the amount of long-term technical debt we carry 
 We therefore follow the following principles:
 
 1. URLs are designed to be persistent—this is the most important thing to consider when minting new URLs or devising a URL scheme. In practice, this means that URLs MUST NOT include:
-a. reference to specific technology;
-b. dates unless the URL is about a date;
-c. status (old/new/draft etc.)
-d. subject unless the URL is about that subject
+
+    a. reference to specific technology; <br/>
+    b. dates unless the URL is about a date; <br/>
+    c. status (old/new/draft etc.) <br/>
+    d. subject unless the URL is about that subject
 
 2. If a URL changes we SHOULD redirect to a new URL and maintain that redirect forever where a semantically equivalent resource exists;
 
@@ -19,11 +20,12 @@ d. subject unless the URL is about that subject
 4. URLs SHOULD be as short as possible but no shorter. Deeply nested URLs have an impact on SEO and long URLs can cause problems when used in emails etc. short URLs are therefore preferable while maintaining sufficient entropy to support future growth.
 
 5. There MUST be one URL per thing and all things have a URL. URLs are there to identify things on the Web and people use URLs to point to those things, this means:
-a. all resources MUST have a unique URL;
-b. URLs can't be used to identify two or more resources;
-c. all fragments SHOULD dereference i.e. .../foo#bar should be addressable at .../foo/bar
-d. fragments (anything after a #) don't count as unique URLs;
-e. hash-bang URLs (#!) and other techniques that rely on client side JS MUST NOT be used.
+
+    a. all resources MUST have a unique URL; <br/>
+    b. URLs can't be used to identify two or more resources; <br/>
+    c. all fragments SHOULD dereference i.e. .../foo#bar should be addressable at .../foo/bar <br/>
+    d. fragments (anything after a #) don't count as unique URLs; <br/>
+    e. hash-bang URLs (#!) and other techniques that rely on client side JS MUST NOT be used.
 
 6. URLs are globally unique. A user MUST be able to share a URL and anyone, anywhere in the world MUST be able to de reference the same resource.
 
