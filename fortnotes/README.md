@@ -1,6 +1,7 @@
 # Fortnotes!
 
 Fortnightly updates about the work of the digital platform team.
+- [2022 August 3](20220803.md)
 - [2022 July 21](20220721.md)
 - [2022 July 6](20220706.md)
 - [2022 June 22](20220622.md)
