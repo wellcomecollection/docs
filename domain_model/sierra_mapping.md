@@ -40,12 +40,15 @@
 |:-------|:--------------------|:------:|
 | 300    | physicalDescription | ✅ |
 | 306    | duration            | ✅ |
+| 310    | currentFrequency    | In development |
+| 321    | formerFrequency     | In development |
+| 362    | designation         | In development |
 
 ## 4XX: Series Statement
 
-| Sierra        | API    | Status         |
-|:--------------|:-------|:--------------:|
-| 440, 490, 830 | partOf | In development |
+| Sierra        | API    | Status |
+|:--------------|:-------|:-------|
+| 440, 490, 830 | partOf | ✅ |
 
 ## 5XX: Note
 
