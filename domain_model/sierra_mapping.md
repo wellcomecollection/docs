@@ -63,29 +63,34 @@
 | 506 $f | accessConditions.status | ✅ |
 | 506 $g | accessConditions.to     | ✅ |
 | 508    | notes [credits]         | ✅ |
-| 510    | notes [references]      | In development - currently notes [publication] |
+| 510    | notes [references]      | ✅ |
 | 511    | notes [credits]         | ✅ |
 | 514    | notes [lettering]       | ✅ |
+| 515    | notes [numbering]       | In development |
 | 518    | notes [time-place]      | ✅ |
 | 520    | description             | ✅ |
 | 524    | notes [citation]        | ✅ |
+| 525    | notes [general]         | In development |
 | 530    | additionalForms         | Future development |
 | 533    | notes [reproduction]    | ✅ |
 | 534    | notes [reproduction]    | ✅ |
 | 535    | notes [location]        | ✅ |
 | 536    | notes [funding]         | ✅ |
 | 540    | notes [terms-of-use]    | ✅ |
-| 541    | notes [acquisition]     | Future development |
+| 541    | notes [acquisition]     | ✅ |
 | 542    | notes [copyright]       | ✅ |
 | 545    | notes [biographical]    | ✅ |
 | 546    | notes [language]        | ✅ |
 | 547    | notes [general]         | ✅ |
-| 561    | notes [ownership]       | In development |
+| 550    | notes [general]         | In development |
+| 561    | notes [ownership]       | ✅ |
 | 562    | notes [general]         | ✅ |
 | 563    | notes [binding]         | ✅ |
+| 580    | notes [general]         | In development |
 | 581    | notes [publications]    | ✅ |
 | 585    | notes [exhibitions]     | ✅ |
 | 586    | notes [awards]          | ✅ |
+| 588    | notes [general]         | In development |
 | 591    | notes [general]         | ✅ |
 | 593    | notes [copyright]       | ✅ |
 
