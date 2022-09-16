@@ -1,4 +1,4 @@
-# Incident retro -  reporting cluster downtime and configuration loss
+# Incident retro - story page appearing then replaced by a 404
 
 **Incident from:** 2022-09-05
 
