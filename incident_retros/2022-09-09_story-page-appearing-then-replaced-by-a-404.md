@@ -1,10 +1,10 @@
 # Incident retro - story page appearing then replaced by a 404
 
-**Incident from:** 2022-09-05
+**Incident from:** 2022-09-09
 
-**Incident until:** 2022-09-08
+**Incident until:** 2022-09-09
 
-**Retro held:** 2022-09-12
+**Retro held:** 2022-09-16
 
 - [Timeline](#timeline)
 - [Analysis of causes](#analysis-of-causes)
