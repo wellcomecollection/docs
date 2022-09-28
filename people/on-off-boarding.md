@@ -4,10 +4,10 @@ When somebody leaves the team, here's a (probably incomplete) checklist of thing
 
 - [ ] Adding them to <https://wellcomecollection.org/humans.txt> (if they're happy to be credited)
 - Sort out the following accounts/services
-  - [ ] Slack (D&T) add to software required on new starter request form or raise a ticket with the service desk
+  - [ ] Slack (D&T) add to software required list in the New Starter Request form or raise a ticket with the service desk
   - [ ] Our GitHub organisation (ask a Dev)
   - [ ] Our Buildkite organisation (ask a Dev)
-  - [ ] Prismic (Ask Danny Birchall)
+  - [ ] Prismic (ask Danny Birchall)
   - [ ] Vercel (Dev)
   - [ ] Elastic Cloud (Dev)
   - [ ] Gitbook (Ashley Ray)
