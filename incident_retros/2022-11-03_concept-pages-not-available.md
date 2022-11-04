@@ -19,7 +19,7 @@ See https://wellcome.slack.com/archives/CQ720BG02/p1667487956149609 and  https:/
 14.44 AC doing the 2022-03-11 reindex to:
 - Fix the snapshot reporter
 - Flush out some pipeline issues
-- 
+
 I’m going to kick off by deleting the 2022-10-14 pipeline, which seems like it was never used
 
 AC thought it was never used based on https://api.wellcomecollection.org/catalogue/v2/_elasticConfig 
@@ -71,8 +71,6 @@ Something went wrong with the deployment of the 2022-10-14 index - bug in we-co 
 
 
 ## Actions
-
-- If queue crosses e.g 1.5 mill messages, stop the ingestor and send a message to Slack (check SQS metrics to determine the threshold). Discussed but decided not to do.
 
 **Alex**
 - Remove all the “clever” build logic from all the scala repos [#5626](https://github.com/wellcomecollection/platform/issues/5626)
