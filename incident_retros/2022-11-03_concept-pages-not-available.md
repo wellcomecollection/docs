@@ -1,5 +1,3 @@
-Filename: 2022-11-03_concept-pages-not-available.md
-
 # Incident retro - concept pages not available
 
 **Incident from:** 2022-11-03
@@ -45,12 +43,12 @@ AC yeah
 
 errr https://buildkite.com/wellcomecollection/catalogue-api-deploy-prod/builds/373#0183e5ce-fcaa-487a-9d99-7c32ff37c073 
 
-service             old image    new image        Git commit
-------------------  -----------  ---------------  ------------
-concepts            ae604a2      -                -
-items               -------      No image found!
-search              -------      No image found!
-snapshot_generator  -------      No image found!
+service | old image | new image | Git commit
+--- | --- | --- | ---
+concepts | ae604a2 | - | -
+items | ------- | No image found! |
+search | ------- | No image found! |
+snapshot_generator | ------- | No image found! |
 
 I’m having to deploy locally with weco-deploy, because Buildkite is unhappy at the missing secrets
 
