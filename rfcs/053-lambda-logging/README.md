@@ -54,10 +54,10 @@ The work plan might look something like this:
 - Provision an Elastic serverless forwarder
 - Create a log group subscription and verify that the forwarder works
 - Create a Terraform module for Lambdas with log groups that subscribe to the forwarder
-- Roll this out across our Lambdas
+- Roll this out across our Lambdas - if we don't use a cross-account Kinesis stream, we'll want to have a log-streaming Lambda per account, like we have with Slack alerts.
 
 ## Caveats and questions
 
-- We've seen CloudWatch logs for Lambdas go missing before - is this a risk? We believe this is due to (mis)configuration of log retention periods, but we're not sure.
+- We've seen CloudWatch logs for Lambdas go missing before - is this a risk? We believe this might be due to (mis)configuration of log retention periods and/or IAM permissions, but we're not sure. Using a consistent Terraform module across our Lambdas will hopefully resolve these issues.
 - Should we use Kinesis or not? Some reasons for using it are given above: I think it would be a good idea.
-- What index should Lambda logs go into? The ECS logs go into `firelens-<yyyy.mm.dd>` indices - we probably shouldn't do the same for these, as they aren't using firelens and may have a different schema.
+- What index should Lambda logs go into? The ECS logs go into `firelens-<yyyy.mm.dd>` indices - we probably shouldn't do the same for these, as they aren't using firelens and may have a different schema. On the other hand, we would like all of our logs to fall under the same index pattern.
