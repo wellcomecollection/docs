@@ -1,0 +1,3 @@
+# Prismic UI
+
+Other areas of our notes will cover placing and editing content in the Prismic UI as an editor, so I won't go into that detail here. I will say that within the Prismic UI, there are Documents and Custom Type tabs. The documents use the data structure from a Custom Type as a base i.e. you are filling in all the required information for the relevant Custom Type when you create a new document based on that type. 
