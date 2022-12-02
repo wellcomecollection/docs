@@ -6,5 +6,27 @@ We try to ensure we are only ever passing the data a page needs to the frontend,
 
 If you check out the `services/prismic` folders within `content/webapp` you will see we have split the fetching and transforming and represented
 that in the folder structure. If we take a look at [articles as an example](https://github.com/wellcomecollection/wellcomecollection.org/blob/main/content/webapp/services/prismic/transformers/articles.ts), you can see how we parse/mutate the incoming data from Prismic
-and display the json in the format we want for the frontpage, in this case `weco.org/articles`.
+and display the json in the format we want for the frontpage, in this case `weco.org/articles`. Below shows you what the transform function returns
+for articles: 
 
+```javascript
+return {
+    ...genericFields,
+    type: 'articles',
+    labels: labels.length > 0 ? labels : [{ text: 'Story' }],
+    format,
+    series,
+    contributors,
+    readingTime: showReadingTime ? readingTimeInMinutes : undefined,
+    datePublished: new Date(datePublished),
+    seasons: transformSingleLevelGroup(data.seasons, 'season').map(season =>
+      transformSeason(season as SeasonPrismicDocument)
+    ),
+    outroResearchLinkText: asText(data.outroResearchLinkText),
+    outroResearchItem: transformContentLink(data.outroResearchItem),
+    outroReadLinkText: asText(data.outroReadLinkText),
+    outroReadItem: transformContentLink(data.outroReadItem),
+    outroVisitLinkText: asText(data.outroVisitLinkText),
+    outroVisitItem: transformContentLink(data.outroVisitItem),
+  };
+```
