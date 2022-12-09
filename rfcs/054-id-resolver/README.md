@@ -1,0 +1,95 @@
+# RFC 054: An Authoritative ID Resolver
+
+## What?
+
+A Catalogue Pipeline stage and Concepts API feature to retrieve additional information about a Concept that is derived from an external authority.
+
+The additional information includes:
+
+* The type of the referent
+* Identifiers and types for any components of a composite type
+
+## Where?
+
+The Catalogue Pipeline stage belongs between the Transformers and the ID Minter.
+
+## Why is it Needed?
+
+This proposal resolves four problems.  The first three of these problems manifest as either duplicate or missing Concepts in the Concepts API.
+
+### Type Inference
+
+Currently, transformers infer the type of a Concept from its use in the input. This can lead to incorrect and
+inconsistent types being applied.
+
+In MARC, for example, `x00` fields contain "Personal Name" fields, so are expected to contain Concepts of type Person.
+Places can be found in `651` (Geographic Term) fields, etc.  In these cases, the Authoritative Identifier for the Concept 
+is extracted from the `$0` subfield.
+
+However, this is neither validated before reaching the pipeline, nor are these rules reliable.
+
+In practice, a `700` field may contain a Person, or it may contain a text attributed to the named person.  Which one it is
+can only be known by checking the identifier from `$0` against a known record.
+
+### LoC namespace
+
+MARC data from Sierra does not distinguish between LCSH and LCNames. They are both signalled by the use of `indicator2=0`.
+As with type, above, the namespace is inferred from the field.  In "Name" fields (`x00`, `x10`, `x11`), it is assumed to be
+LCNames. In "Term" fields (`648`, `650`, `651`), it is assumed to be LCSH.
+
+This is not reliable.  Many "Geographical Terms" are in fact Names of Places.
+
+I believe that this could be resolved by examining the first character of the identifier (n for LCNames, s for LCSH).
+
+### Compound Concepts
+
+Compound concepts in MARC data from Sierra bear an identifier referring to the whole concept, but the transformer
+also breaks them up into the individual constituent concepts.  However, the identifiers for these constituent concepts 
+are only "label-derived".  LoC and MeSH entries for compound concepts also contain the identifiers for the constituents,
+so a new stage could populate these properly.
+
+### Validation
+
+Currently, there is no validation as to whether the given identifier actually exists within the given scheme.
+Even if it does, there is no validation as to whether there is any correspondence between the name of the concept
+and the identifier.
+
+As a result, there are some errors that can currently only be detected by eye.
+
+* Some MeSH identifiers have been found wrongly assigned to the LCSH scheme.  
+* Two LCNames identifiers (n50034502 and n2001003970) do not exist
+* Some identifiers in the LCSH scheme have been parsed/written incorrectly, so they are not identifiers at all.
+
+In addition, there may be some that are very difficult to detect by eye.  An real identifier that refers to something different
+to the label of the field would only be detected when someone follows a link and finds themselves on a wholly unexpected Concept page.
+`n2001003970`, mentioned above, does not exist but `nr2001003970` does.  
+However, that identifer refers to the "Partnership for Governance Reform in Indonesia", whereas
+the associated label in the offending Work is "Pseudo Aristotele., De coloribus., Latin".
+
+## What about the Concepts Embedder?
+
+The Concepts Embedder is a proposed new part of the catalogue pipeline that uses Concepts in the Concept Store.
+It will include information from the Knowledge Graph.  The information described above would be available at the Concept Embedder
+stage, but it is too late in the Catalogue Pipeline.
+
+There is also a circular problem.  If a Concept is not used in the Catalogue, then it does not enter the Knowledge Graph and 
+therefore does not become available at the Concept Embedder stage.  This may mean extra complexity at that stage
+to determine the sameness of Concepts that have been recorded with the wrong Authority Namespace or Type.  Or where
+an Authoritative Concept has been recorded as a top-level, atomic concept in one Work, and as part of a compound in another.
+By resolving those issues before the ID Minter, those Concepts will actually be the same Concept when they reach the
+Concepts Pipeline, rather than multiple Concepts that need to be understood as synonymous.
+
+The proposed stage here operates on Authoritative Concept Identifiers, ensuring that the resulting Catalogue Concepts 
+are correct and consistent before new Canonical Identifiers are minted for them.
+
+
+## Manifestations
+
+### The Person/Agent (Maimonides) problem
+
+ca. 2700 examples where a 700 with $t uses a code in $0 that refers to the Person in $a
+e.g. in https://wellcomecollection.org/works/hqqndr39 (b20241720) "Maimonides, Moses, 1135-1204. Maqālah fī sināʾat al-mantiq." has the id n78096039, which refers to the Person, and not 17115004, which refers to the text.
+ca 800 examples where a 700 with a $t uses a code in $0 that refers to the text.
+e.g. in https://wellcomecollection.org/works/nfnmnc6m (b20241781) (Karo, Joseph ben Ephraim, 1488-1575. Kesef mishneh) (not Karo, Joseph ben Ephraim)
+
+### The name/subject (Glasgow) problem
