@@ -31,10 +31,18 @@ We therefore follow the following principles:
 
 7. URLs can identify: things, lists of things and forms. Query parameters SHOULD be avoided for anything that’s not a list. 
 
-8. URLs SHOULD be hackable. A user should be able to hack back a URL and get a broader set of resources e.g. it should be possible to hack back the URL for a story: .../stories/$story to .../stories/ and be returned a list of all stories.
+8. URLs should use nouns (never verbs) - URLs are for identifying things.
 
-9. URLs MUST NOT include any personally identifiable information, tracking parameters nor state.
+9. The base of a URL path should be a plural (e.g. stories) - it identifies the collections of things. The resource can be singular.
 
-10. All content MUST be served over https
+10. A resource can be a singleton or a collection e.g. /stories/$storyID (the URL for a story) or /stories/by/formats/$format (the URL for all stories of a specific format)
 
-11. URLs MUST be designed alongside the user interface and given the same level of care as any other UI component (possibly more because they are harder to change). We SHOULD try to have beautiful URLs
+11. URLs SHOULD be hackable. A user should be able to hack back a URL and get a broader set of resources e.g. it should be possible to hack back the URL for a story: .../stories/$story to .../stories/ and be returned a list of all stories or .../stories/by/formats/ for all story formats or ...stories/by/date/yyyy/mm/dd should hackable to return all stories published on the year, month or day.
+
+12. URLs MUST NOT include any personally identifiable information, tracking parameters nor state.
+
+13. All content MUST be served over https
+
+14. URLs MUST be designed alongside the user interface and given the same level of care as any other UI component (possibly more because they are harder to change). We SHOULD try to have beautiful URLs
+
+We are publishing a website not a book - make links, link between things and make those links hackable (whther or not they are linked to yet).
