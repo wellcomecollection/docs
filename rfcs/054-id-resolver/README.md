@@ -2,7 +2,7 @@
 
 ## What?
 
-A Catalogue Pipeline stage and Concepts API feature to retrieve additional information about a Concept that is derived from an external authority.
+A Catalogue Pipeline stage and Concepts API feature to retrieve additional information about Concepts that are derived from external authorities.
 
 The additional information includes:
 
