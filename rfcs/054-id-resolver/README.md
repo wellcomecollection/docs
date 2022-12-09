@@ -59,6 +59,7 @@ As a result, there are some errors that can currently only be detected by eye.
 * Some MeSH identifiers have been found wrongly assigned to the LCSH scheme.  
 * Two LCNames identifiers (n50034502 and n2001003970) do not exist
 * Some identifiers in the LCSH scheme have been parsed/written incorrectly, so they are not identifiers at all.
+* The wrong field was being extracted from some TEI records to find the LCSH id.
 
 In addition, there may be some that are very difficult to detect by eye.  An real identifier that refers to something different
 to the label of the field would only be detected when someone follows a link and finds themselves on a wholly unexpected Concept page.
@@ -82,14 +83,49 @@ Concepts Pipeline, rather than multiple Concepts that need to be understood as s
 The proposed stage here operates on Authoritative Concept Identifiers, ensuring that the resulting Catalogue Concepts 
 are correct and consistent before new Canonical Identifiers are minted for them.
 
+## How?
 
-## Manifestations
+### Concepts Pipeline/API
+The Concepts Pipeline Ingestor(s) should, where available, store the official types (maybe translated to our types) 
+and compositions of each Concept in the authoritative-concepts index.
+
+The Concepts API should have a resource that can be called with one or more authoritative identifiers, and returns that information
+from the authoritative index.  This may be a separate private/internal API instance.
+
+The Sierra Transformer should stop guessing whether to use LCNames or LCSubjects, and instead use a new scheme, "LC".
+
+The Catalogue Pipeline should have a new stage between the transformers and the id minter, the new stage:
+
+* extracts identifiers in the same way the id minter does, and requests the official type/composition for any that are in a scheme supported by the API.
+* replaces the type and identifiertype with the "right" value from the API
+* replaces the identifier values of any constituent concepts that have label-derived identifiers, with the official ones (based on similarity of label).
+* rejects and/or warns about documents containing any wrong identifiers (initially, just not known in that scheme, later, consider some comparison between labels).
+
+Everything downstream will behave exactly as it currently does.
+
+## Current Problem Manifestations
 
 ### The Person/Agent (Maimonides) problem
+
+Currently, there are a number of concepts that have the same LCNames identifier, where one is a Person, and the other is an Agent.
+This is due to a rule in the Sierra Transformer that exists because a Personal Name contributor may actually refer to a text, rather than
+a Person (if it has a $t subfield).
 
 ca. 2700 examples where a 700 with $t uses a code in $0 that refers to the Person in $a
 e.g. in https://wellcomecollection.org/works/hqqndr39 (b20241720) "Maimonides, Moses, 1135-1204. Maqālah fī sināʾat al-mantiq." has the id n78096039, which refers to the Person, and not 17115004, which refers to the text.
 ca 800 examples where a 700 with a $t uses a code in $0 that refers to the text.
 e.g. in https://wellcomecollection.org/works/nfnmnc6m (b20241781) (Karo, Joseph ben Ephraim, 1488-1575. Kesef mishneh) (not Karo, Joseph ben Ephraim)
 
+This leads to there being a missing record in the Concepts API, because the input to the Concepts Recorder is necessarily only keyed on
+the authoritative identifier.
+
+This problem is currently masked by the fact that the Concepts Pipeline is only additive.  It is possible that each of the two Concepts can have passed
+all the way through the Concepts Pipeline on separate occasions.  In which case, they will both be present on the API.  Whether this is the case for
+any individual Concept a user requests is currently a question of luck.
+
 ### The name/subject (Glasgow) problem
+
+Currently, there are a number of concepts that have the same Library of Congress identifier, where one is in LCNames and the other 
+in LCSH.  This is because of a transformer rule that assumes that "Terms" refer to Subject Headings and "Names" refer to Names.
+
+This leads to there being two records in the Concepts API for the same referent.
