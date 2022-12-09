@@ -13,6 +13,8 @@ The additional information includes:
 
 The Catalogue Pipeline stage belongs between the Transformers and the ID Minter.
 
+The Concepts API feature will be associated with the authoritative-concepts index.
+
 ## Why is it Needed?
 
 This proposal resolves four problems.  The first three of these problems manifest as either duplicate or missing Concepts in the Concepts API.
@@ -29,7 +31,7 @@ is extracted from the `$0` subfield.
 However, this is neither validated before reaching the pipeline, nor are these rules reliable.
 
 In practice, a `700` field may contain a Person, or it may contain a text attributed to the named person.  Which one it is
-can only be known by checking the identifier from `$0` against a known record.
+can only be known by checking the identifier from `$0` against a known record. (see the Malmonides Problem, below)
 
 ### LoC namespace
 
