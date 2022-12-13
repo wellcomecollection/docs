@@ -2,7 +2,8 @@
 
 ## What?
 
-A Catalogue Pipeline stage and Concepts API feature to retrieve additional information about Concepts that are derived from external authorities.
+A Catalogue Pipeline stage (or preliminary step in the ID Minter) and Concepts API feature to 
+retrieve additional information about Concepts that are derived from external authorities.
 
 The additional information includes:
 
