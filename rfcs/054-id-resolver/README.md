@@ -63,7 +63,7 @@ As a result, there are some errors that can currently only be detected by eye.
 * Some identifiers in the LCSH scheme have been parsed/written incorrectly, so they are not identifiers at all.
 * The wrong field was being extracted from some TEI records to find the LCSH id.
 
-In addition, there may be some that are very difficult to detect by eye.  An real identifier that refers to something different
+In addition, there may be some that are very difficult to detect by eye.  A real identifier that refers to something different
 to the label of the field would only be detected when someone follows a link and finds themselves on a wholly unexpected Concept page.
 `n2001003970`, mentioned above, does not exist but `nr2001003970` does.  
 However, that identifer refers to the "Partnership for Governance Reform in Indonesia", whereas
@@ -91,7 +91,7 @@ are correct and consistent before new Canonical Identifiers are minted for them.
 The Concepts Pipeline Ingestor(s) should, where available, store the official types (maybe translated to our types) 
 and compositions of each Concept in the authoritative-concepts index.
 
-The Concepts API should have a resource that can be called with one or more authoritative identifiers, and returns that information
+The Concepts API should have a service that can be called with one or more authoritative identifiers, and returns that information
 from the authoritative index.  This may be a separate private/internal API instance.
 
 The Sierra Transformer should stop guessing whether to use LCNames or LCSubjects, and instead use a new scheme, "LC".
