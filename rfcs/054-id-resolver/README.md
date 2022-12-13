@@ -105,6 +105,23 @@ The Catalogue Pipeline should have a new stage between the transformers and the 
 
 Everything downstream will behave exactly as it currently does.
 
+## Why a new stage?
+
+This must be done after the identifiers have been found by a transformer and
+before the ID Minter mints canonical identifiers in the id minter database.
+
+Therefore, other options for doing this work could include adding to the ID Minter or the transformers.
+
+It does not belong in the transformers.  Although this problem mostly manifests in Sierra data, it could come from anywhere.
+For example, there are examples coming from TEI data.  The transformers work best by being self-contained, and only transform
+the input given into a Work, rather than performing lookups elsewhere.  So it is best not to burden transformers with this.
+
+It may belong in the ID Minter.  There is some duplication between this task and the id minter, in the extraction of source
+identifiers from the input Work. The only reasons for keeping it separate are - 
+
+* better observability (weak, it's probably just as clear what has happened if resolution and minting are in the same stage)
+* the minter is fairly critical and may be best left alone (also weak, it's well covered in tests) 
+
 ## Current Problem Manifestations
 
 ### The Person/Agent (Maimonides) problem
