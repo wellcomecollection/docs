@@ -131,3 +131,7 @@ Currently, there are a number of concepts that have the same Library of Congress
 in LCSH.  This is because of a transformer rule that assumes that "Terms" refer to Subject Headings and "Names" refer to Names.
 
 This leads to there being two records in the Concepts API for the same referent.
+
+This is further complicated by the Sierra transformer deriving the type from the field - Glasgow is one of the terms that can be found 
+in the Corporate Name field, and so becomes a Concept of type Organisation when it is a Name, but also in the Geographic Term field, 
+meaning it becomes a Concept of type Place when it is a Subject Heading.
