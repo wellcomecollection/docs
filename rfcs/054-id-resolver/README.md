@@ -34,7 +34,8 @@ This is due to a rule in the Sierra Transformer that exists because a Personal N
 a Person (if it has a $t subfield).
 
 ca. 2700 examples where a 700 with $t uses a code in $0 that refers to the Person in $a
-e.g. in https://wellcomecollection.org/works/hqqndr39 (b20241720) "Maimonides, Moses, 1135-1204. Maqālah fī sināʾat al-mantiq." has the id n78096039, which refers to the Person, and not 17115004, which refers to the text.
+e.g. in https://wellcomecollection.org/works/hqqndr39 (b20241720) "Maimonides, Moses, 1135-1204. Maqālah fī sināʾat al-mantiq." has the id n78096039, 
+which refers to the Person, and not 17115004, which refers to the text.
 ca 800 examples where a 700 with a $t uses a code in $0 that refers to the text.
 e.g. in https://wellcomecollection.org/works/nfnmnc6m (b20241781) (Karo, Joseph ben Ephraim, 1488-1575. Kesef mishneh) (not Karo, Joseph ben Ephraim)
 
@@ -61,6 +62,80 @@ In addition, only the lc-names version will be enhanced with Authority data.  Th
 It may be more correct to exclude any "wrong" identifiers as part of the Reccorder, but that would lead to the omission of all identifiers 
 whose identifier type has been incorrectly guessed.
 
+### Problems of homonymy
+
+#### The Aberdeen problem - homonyms with different types
+
+This is a hypothetical problem for which I have seen no evidence, but should be mentioned in case any solution to the above
+problems might cause it to arise.
+
+Unidentified Concepts derive their identifiers from their labels.  It may be the case that multiple genuinely different 
+referents have the same name, but are of different types (e.g. Aberdeen, the Granite City;  vs. Aberdeen, the now disemvowelled company founded there)
+
+#### The John Smith problem - homonyms with the same type
+
+There are evidently multiple authors by the name "John Smith" (https://wellcomecollection.org/concepts/t4jfabht), as they 
+have authored works roughly 340 years apart.  In the case of t4jfabht, this corresponds to lc-names:n86851637,
+but there may be some homonymous unidentified concepts.
+
+This is not something that can be resolved by the pipeline(s).  It must be fixed by 
+
+### Goals
+
+```gherkin
+Feature: Concepts presented in the Works and Concepts APIs
+```
+The scenario representing the end goal for new Concepts with authoritative ids is clear
+```
+Scenario: Concepts with the same authoritative id
+Given two Concepts with the same authoritative id
+When the Concepts reach the end of the Works and Concepts pipelines
+Then both Concepts have the same canonical identifier
+And both Concepts have the same type
+And the type accurately represents the real-world type of the referent
+```
+
+There is less clarity on non-authoritative ids (label-derived)
+```
+Scenario: Concepts with the same non-authoritative id
+Given two Concepts with the same label-derived id
+When the Concepts reach the end of the Works and Concepts pipelines
+Then (what happens? same as above?)
+```
+
+This is because of the hypothetical "Aberdeen Problem" - two concepts with the same name
+that legitimately have different types.  I suspect that in this case, it should be treated 
+in the same way as authoritative Concepts, with the Concept type not being used for differentiation.
+If the Aberdeen problem arises here, it should be handled in the source data by adding an
+authoritative id or differentiating the name.
+
+The `Concepts with the same authoritative id` scenario, above, applies to new and existing concepts alike.
+However, existing concepts have these further considerations:
+
+Wrongly-namespaced identifiers are to be fixed. There is no need to retain the "wrong" canonical id.
+
+```
+Scenario: Wrong identifier scheme
+Given a Concept that is currently in the wrong scheme
+Then the Concept's canonical id will not be the same as it currently is
+```
+
+Correctly-namespaced identifiers should ideally retain their existing canonical id, but this is not always possible.
+In instances of the Maimonedes problem, one of the Concepts will end up with a new canonical identifier.
+
+I don't know how the winner is to be chosen.  Possibly the most specific available?
+
+```
+Given a Concept that is currently in the right scheme
+And the Concept is already in the id minter database
+Then the Concept's canonical id should ideally be the same as it currently is
+
+Given two matching Concepts that are already in the id minter database
+And the two Concepts currently have different canonical ids.
+Then the Concepts' shared canonical id should be the canonical id that is already assigned to one of them.
+```
+
+
 ### Options
 
 Logically, there are three options for resolving this problem.
@@ -85,6 +160,7 @@ Non-LoC schemes (e.g. MeSH), can also be determined reliably from the combinatio
 TEI data also currently just distinguishes between LCSH (or any LoC) and MeSH in the same way. Other schemes are not used.
 
 #### Perfecting the extraction of Concept types
+
 This is impossible, for reasons outlined in the two "Problems", above.  
 There is no way to reliably determine the type of the referent from Sierra MARC data.
 
@@ -120,25 +196,6 @@ Candidate options for mitigation (in order of how early :
 
 Ideally, this issue should be handled as early as possible, rather than mitigated against after the problem 
 has been propagated through databases.
-
-Important factors in the chosen solution.
-
-Given two Concepts with the same authoritative id
-When the Concepts reach the end of the Works and Concepts pipelines
-Then both Concepts have the same canonical identifier
-And both Concepts have the same type
-And the type accurately represents the real-world type of the referent
-
-Given two Concepts with the same non-authoritative id
-When the Concepts reach the end of the Works and Concepts pipelines
-Then (what happens?)
-
-Given a Concept that is currently in the wrong scheme
-Then the Concept's canonical id will not be the same as it currently is
-
-Given a Concept that is currently in the right scheme
-Then the Concept's canonical id should ideally be the same as it currently is
-
 
 
 ##### Source data
