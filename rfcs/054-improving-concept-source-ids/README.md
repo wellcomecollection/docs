@@ -22,7 +22,7 @@ a type and identifier type, both of which are determined from its use in the sou
 That combination of types, along with the identifier value is then mapped to a canonical id in the id minter.
 
 Because the determination of both type and identifier type is imperfect (particularly in Sierra data),
-this can lead to Concepts either being duplicated or omitted from the Concepts API.
+this can lead to Concepts either being duplicated or omitted in the Concepts API.
 
 Improvements to the extraction of type and identifier type information are needed, and ultimately, 
 a new approach for minting canonical ids from authoritative identifiers may be needed.
