@@ -116,7 +116,7 @@ problem that needs to be resolved at all.
 Feature: Concepts presented in the Works and Concepts APIs
 ```
 The scenario representing the end goal for new Concepts with authoritative ids is clear
-```
+```gherkin
 Scenario: Concepts with the same authoritative id
 Given two Concepts with the same authoritative id
 When the Concepts reach the end of the Works and Concepts pipelines
@@ -126,7 +126,7 @@ And the type accurately represents the real-world type of the referent
 ```
 
 There is less clarity on non-authoritative ids (label-derived), but it is likely to be identical to the above.
-```
+```gherkin
 Scenario: Concepts with the same non-authoritative id
 Given two Concepts with the same label-derived id
 When the Concepts reach the end of the Works and Concepts pipelines
@@ -144,7 +144,7 @@ However, existing concepts have these further considerations:
 
 Wrongly-namespaced identifiers are to be fixed. There is no need to retain the "wrong" canonical id.
 
-```
+```gherkin
 Scenario: Wrong identifier scheme
 Given a Concept that is currently in the wrong scheme
 Then the Concept's canonical id will not be the same as it currently is
@@ -153,7 +153,7 @@ Then the Concept's canonical id will not be the same as it currently is
 Correctly-namespaced identifiers should ideally retain their existing canonical id, but this is not always possible.
 In instances of the Maimonedes problem, one of the Concepts will either cease to exist, or end up with a new canonical identifier.
 
-```
+```gherkin
 Given a Concept that is currently in the right scheme
 And the Concept is already in the id minter database
 Then the Concept's canonical id should ideally be the same as it currently is
