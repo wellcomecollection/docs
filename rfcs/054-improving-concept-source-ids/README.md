@@ -147,7 +147,8 @@ Wrongly-namespaced identifiers are to be fixed. There is no need to retain the "
 ```gherkin
 Scenario: Wrong identifier scheme
 Given a Concept that is currently in the wrong scheme
-Then the Concept's canonical id will not be the same as it currently is
+Then the scheme will be corrected
+And the Concept's canonical id will not be the same as it currently is
 ```
 
 Correctly-namespaced identifiers should ideally retain their existing canonical id, but this is not always possible.
