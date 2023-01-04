@@ -8,7 +8,7 @@ of those Concepts in the Catalogue pipeline is inconsistent.
 This is to be fixed in stages:
 
 1. Ensure that, for any given document, all Authoritative Concepts with the same ID and scheme have the same ontologyType
-2. Improve the way the Library of Concept scheme is determined in the Sierra transformer (LCSH vs LCNames)
+2. Improve the way the Library of Congress scheme is determined in the Sierra transformer (LCSH vs LCNames)
 3. Investigate the scale of the issue after these fixes
 4. If necessary, modify the behaviour of the id minter to ignore concept ontologyTypes and/or request fixes in the source data
 
