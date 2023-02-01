@@ -1,6 +1,7 @@
 # Fortnotes!
 
 Fortnightly updates about the work of the digital platform team.
+- [2023 February 1](20230201.md)
 - [2023 January 18](20230118.md)
 - [2023 January 4](20230104.md)
 - [2022 December 7](20221207.md)
