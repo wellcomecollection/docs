@@ -86,3 +86,15 @@ consulted and the resulting query to Elasticsearch will fetch works containing
 both the originally requested Concept, and its equivalents.
 
 Both compound and simple concepts will work in a consistent fashion.
+
+## Further Considerations
+
+The data exists, and will continue to exist, to allow for filtering on
+non-genres in the genre.concepts field. For example, it will remain possible
+to query for `genre.concepts=London`.
+
+Whether this becomes a feature that gets exposed via the API is out of scope
+of this RFC, but it is one that can be supported by the data format.  However,
+the actual data behind it may not be appropriate to support it.  There are 
+220 different Almanacs (e.g. `Almanacs - Pennsylvania - 1765`), 89 different Poems
+(e.g. `Poems - 1740`), but most top level genres are not compounds. 
