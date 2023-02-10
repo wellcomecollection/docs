@@ -7,11 +7,12 @@ page for a Genre should list works about and using that technique.
 
 ## What is it like now?
 
-Currently, Genres behave much like (compound) Subjects.
-The Genre-as-a-whole has its own name and identifier, and it is also 
+Currently, Genres behave a little like (compound) Subjects, in that it is 
 cracked into its constituent concepts, making a concepts list.
 
-Genre is not one of the types extracted from Works by the Concepts Aggregator.
+However, unlike Subjects, the Genre-as-a-whole does not have its own name and identifier
+
+Genre is also not one of the types extracted from Works by the Concepts Aggregator.
 
 The constituent concepts that make up a Genre also behave in a similar manner
 to Subjects, where they are either a Concept ($a), or a more specific sort of Concept
@@ -19,13 +20,18 @@ to Subjects, where they are either a Concept ($a), or a more specific sort of Co
 
 ## Proposal - Catalogue Pipeline
 
-The Genre-as-a-whole stays as it is, being a Concept of type Genre.
-The primary Concept in its concepts list (currently a Concept of type Concept)
-should now also become a Concept of type Genre.
+The Genre-as-a-whole stays as it is, unidentified, but bearing the type Genre.
 
-This will be consistent with the treatment of simple Subjects, where both
-the subject as a whole and the concept in the subject end up with the same
-canonicalId.
+The primary Concept that is currently in its concepts list 
+(a Concept of type Concept, derived from the $a subfield) should now 
+become a Concept of type Genre.
+
+In the case of a compound Genre, a new Concept representing the Genre as a whole should be inserted as the first
+concept in the concepts list.
+
+This will be inconsistent with the way Subjects are represented, but is a better 
+representation of what is happening in the Concepts API.
+
 
 ## Proposal - Concepts Pipeline
 
@@ -40,8 +46,8 @@ with Genre-as-a-Genre (where it will be a Genre).
 ### Determining Genre-ness with the current data
 
 With the current data, the only way to determine whether a Concept is a Genre
-would be to assume that all Concepts may be Genres, and perform a search in 
-the genre and genre.concepts field in order to populate the "works in this genre" list.
+would be to assume that all Concepts may be Genres, and perform a text search in 
+the genre.label and genre.concepts.label field in order to populate the "works in this genre" list.
 
 This is problematic. Because Genres may be compound, searching on genre.concepts
 will pick up things that are not genres.  Searching on genre alone would not
