@@ -20,18 +20,50 @@ to Subjects, where they are either a Concept ($a), or a more specific sort of Co
 
 ## Proposal - Catalogue Pipeline
 
-The Genre-as-a-whole stays as it is, unidentified, but bearing the type Genre.
-
-The primary Concept that is currently in its concepts list 
-(a Concept of type Concept, derived from the $a subfield) should now 
+The primary Concept that is currently in a genre's concepts list
+(a Concept of type Concept, derived from the $a subfield) should now
 become a Concept of type Genre.
 
-In the case of a compound Genre, a new Concept representing the Genre as a whole should be inserted as the first
+### Genre as a whole
+
+There are two options for dealing with genre as a whole.  One is to make it
+work in the same manner as Subjects, the other is to treat it more explicitly
+as an extra Concept.
+
+#### Like a Subject
+
+The most consistent approach is to treat Genres in the same manner as Subjects.
+The Genre-as-a-whole becomes Identifiable, and an id is minted for it.
+
+This would require little if any change to the Catalogue API and Work pages.
+
+Currently, the Concepts pipeline and API extracts "things that look like Concepts"
+from anywhere in a Work. This is anything that has one of the known Concept
+types, and is identified. This currently includes Subjects, and would include
+Genres with this change.
+
+#### As an extra Concept
+
+A less consistent, but possibly more future-looking approach would be to
+treat the whole Genre as an extra concept in its concepts list.
+
+The Genre-as-a-whole stays as it is, unidentified, but bearing the type Genre.
+
+In the case of a compound Genre, a new Concept of type Genre,
+representing the Genre as a whole, could be inserted as the first
 concept in the concepts list.
 
-This will be inconsistent with the way Subjects are represented, but is a better 
-representation of what is happening in the Concepts API.
+This would be inconsistent with the way Subjects are represented, but is a better 
+representation of what is happening in the Concepts pipeline and API.
 
+Rather than Genres being another thing that looks like a Concept to be
+extracted by the Concepts Pipeline, the Works pipeline would be putting it
+in the concepts list.
+
+As this would also require a more significant change to the Catalogue API and
+Works pages to link to the Genre's Concept page, and would result in API data
+containing inconsistent approaches for Genres vs Subjects, it would be better 
+to consider this approach as part of API v3.
 
 ## Proposal - Concepts Pipeline
 
@@ -77,7 +109,7 @@ primary Concept in a Subject's concept list are of type Concept, they are alread
 the same.
 
 However, a compound Genre and an identical compound Subject differ on type,
-so are not the same.
+so even if they were identified, they would not be the same.
 
 ### Determining equivalence with the proposed data
 
