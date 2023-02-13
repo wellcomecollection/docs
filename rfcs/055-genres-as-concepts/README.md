@@ -26,9 +26,9 @@ become a Concept of type Genre.
 
 ### Genre as a whole
 
-There are two options for dealing with genre as a whole.  One is to make it
-work in the same manner as Subjects, the other is to treat it more explicitly
-as an extra Concept.
+There are three options for dealing with genre as a whole.  One is to make it
+work in the same manner as Subjects, another is to treat it more explicitly
+as an extra Concept.  Finally, we can simply ignore it.
 
 #### Like a Subject
 
@@ -64,6 +64,20 @@ As this would also require a more significant change to the Catalogue API and
 Works pages to link to the Genre's Concept page, and would result in API data
 containing inconsistent approaches for Genres vs Subjects, it would be better 
 to consider this approach as part of API v3.
+
+#### Ignore it
+
+Compound Genres are unlike Subjects, in that in the rare situation that they are identified in MARC, 
+the identifier refers to the primary Concept within it, and not to the overall Genre.
+
+e.g. from b30834107
+```
+655  7  |0(DE-588)4135467-9 |aAusstellungskatalog |xMiltärhistorisches Museum der Bundeswehr |y27.04.2018-30.10.2018 |zDresden. |2gnd-content
+```
+The id in $0 refers to the genre [Austellungskatalog](https://portal.dnb.de/opac.htm?method=simpleSearch&cqlMode=true&query=nid%3D4135467-9) 
+and not to anything in the x, y, or z subfields.
+
+As a result, the correct target for a genre link should be to the genre of the primary concept.
 
 ## Proposal - Concepts Pipeline
 
