@@ -10,13 +10,25 @@ page for a Genre should list works about and using that technique.
 Currently, Genres behave a little like (compound) Subjects, in that it is 
 cracked into its constituent concepts, making a concepts list.
 
+Genre Links on Work pages lead to a search for the whole genre in the `genres.label` field.
+
 However, unlike Subjects, the Genre-as-a-whole does not have its own name and identifier
 
-Genre is also not one of the types extracted from Works by the Concepts Aggregator.
+Genre is not one of the types extracted from Works by the Concepts Aggregator.  It is also 
+not a type that is currently assigned to a Concept.
 
 The constituent concepts that make up a Genre also behave in a similar manner
 to Subjects, where they are either a Concept ($a), or a more specific sort of Concept
 (e.g. Place, Period) depending on which subfield they come from.
+
+## What is in MARC?
+
+* Genre is extracted from marcTag:655 fields
+  * there are 1,366,260 such fields
+    * 1755 of them have an identifier
+      * 1688 of those have an identifier in the lcgft scheme
+    * 14903 of them are compounds
+      * 3 of those have an identifier (all in the DNB/GND scheme)
 
 ## Proposal - Catalogue Pipeline
 
@@ -24,7 +36,9 @@ The primary Concept that is currently in a genre's concepts list
 (a Concept of type Concept, derived from the $a subfield) should now
 become a Concept of type Genre.
 
-### Genre as a whole
+Extract lcgft ids as authoritative identifiers for them.
+
+### Compound Genres as a whole
 
 There are three options for dealing with compound genres as a whole in the data.
 
@@ -64,8 +78,8 @@ in the concepts list.
 
 As this would also require a more significant change to the Catalogue API and
 Works pages to link to the Genre's Concept page, and would result in API data
-containing inconsistent approaches for Genres vs Subjects, it would be better 
-to consider this approach as part of API v3.
+containing inconsistent approaches for Genres vs Subjects or Contributors, it would be better 
+to consider this approach as part of API v3, if desired.
 
 #### Do nothing
 
@@ -82,13 +96,13 @@ and not to anything in the x, y, or z subfields.
 As a result, the correct target for a genre link should be to the genre of the primary concept.  This is the same 
 UI behaviour as contributors.
 
-Some compound genres seem excessively fragmented (e.g. Almanacs, which have entries like 
-`Almanacs - Pennsylvania - 1773` and `Almanacs - Massachusetts - 1702`, each with less than half a dozen entries),
-so having `Almanacs` as the concept page is probably more interesting.
-
 There is some conflict here between the apparent semantics of the three fields.  A Genre feels more like a subject, 
 in that the compounds are "things that exist in their own right", whereas the compounding of a Contributor is about 
 the relationship between an Agent and a Work.
+
+Some compound genres seem excessively fragmented (e.g. Almanacs, which have entries like
+`Almanacs - Pennsylvania - 1773` and `Almanacs - Massachusetts - 1702`, each with less than half a dozen entries),
+so having `Almanacs` as the concept page is probably more useful.
 
 ## Proposal - Concepts Pipeline
 
@@ -97,6 +111,8 @@ The concepts pipeline will start extracting Genre as one of the types of Concept
 [RFC 054](../054-authority-vs-canonical-concept-ids) covers the technique
 that will be used to match Genre-as-a-Subject (where it can only be a Concept)
 with Genre-as-a-Genre (where it will be a Genre).
+
+Include LCGFT as an authoritative source.
 
 ## Proposal - website
 
