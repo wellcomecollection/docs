@@ -7,7 +7,7 @@ page for a Genre should list works about and using that technique.
 
 ## What is it like now?
 
-Currently, Genres behave a little like (compound) Subjects, in that it is 
+Currently, Genres behave a little like (compound) Subjects, in that a genre may be 
 cracked into its constituent concepts, making a concepts list.
 
 Genre Links on Work pages lead to a search for the whole genre in the `genres.label` field.
@@ -21,7 +21,7 @@ The constituent concepts that make up a Genre also behave in a similar manner
 to Subjects, where they are either a Concept ($a), or a more specific sort of Concept
 (e.g. Place, Period) depending on which subfield they come from.
 
-## What is in MARC?
+### What is in MARC?
 
 * Genre is extracted from marcTag:655 fields
   * there are 1,366,260 such fields
@@ -121,6 +121,14 @@ The remaining parts of the compound will still be displayed in the link text,
 but are not used to further refine that link.
 
 ## Rationale
+
+There are two goals for the data that need to be supported by this work.
+
+Determining Genre-ness - When rendering a Concept Page or API result for a Genre, how do we know
+that it is a Genre, in order to do genre-specific things, e.g. populate a "works of this type" list.
+
+Determining equivalence - The ability to determine that when a work is about a genre and another work is 
+in that genre, that when they both refer to the same thing.
 
 ### Determining Genre-ness with the current data
 
