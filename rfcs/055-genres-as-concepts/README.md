@@ -112,7 +112,7 @@ The concepts pipeline will start extracting Genre as one of the types of Concept
 that will be used to match Genre-as-a-Subject (where it can only be a Concept)
 with Genre-as-a-Genre (where it will be a Genre).
 
-Include LCGFT as an authoritative source.
+Include [LCGFT](https://id.loc.gov/authorities/genreForms.html) as an authoritative source.
 
 ## Proposal - website
 
