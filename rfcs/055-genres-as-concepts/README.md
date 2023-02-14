@@ -26,9 +26,11 @@ become a Concept of type Genre.
 
 ### Genre as a whole
 
-There are three options for dealing with genre as a whole.  One is to make it
-work in the same manner as Subjects, another is to treat it more explicitly
-as an extra Concept.  Finally, we can simply ignore it.
+There are three options for dealing with compound genres as a whole in the data.
+
+* make it work in the same manner as Subjects,
+* treat it more explicitly as an extra Concept.
+* leave them, they don't exist. (recommended)
 
 #### Like a Subject
 
@@ -65,9 +67,9 @@ Works pages to link to the Genre's Concept page, and would result in API data
 containing inconsistent approaches for Genres vs Subjects, it would be better 
 to consider this approach as part of API v3.
 
-#### Ignore it
+#### Do nothing
 
-Compound Genres are unlike Subjects, in that in the rare situation that they are identified in MARC, 
+Compound Genres are unlike Subjects, in that in the rare situation (three instances) that they are identified in MARC, 
 the identifier refers to the primary Concept within it, and not to the overall Genre.
 
 e.g. from b30834107
@@ -77,7 +79,16 @@ e.g. from b30834107
 The id in $0 refers to the genre [Austellungskatalog](https://portal.dnb.de/opac.htm?method=simpleSearch&cqlMode=true&query=nid%3D4135467-9) 
 and not to anything in the x, y, or z subfields.
 
-As a result, the correct target for a genre link should be to the genre of the primary concept.
+As a result, the correct target for a genre link should be to the genre of the primary concept.  This is the same 
+UI behaviour as contributors.
+
+Some compound genres seem excessively fragmented (e.g. Almanacs, which have entries like 
+`Almanacs - Pennsylvania - 1773` and `Almanacs - Massachusetts - 1702`, each with less than half a dozen entries),
+so having `Almanacs` as the concept page is probably more interesting.
+
+There is some conflict here between the apparent semantics of the three fields.  A Genre feels more like a subject, 
+in that the compounds are "things that exist in their own right", whereas the compounding of a Contributor is about 
+the relationship between an Agent and a Work.
 
 ## Proposal - Concepts Pipeline
 
@@ -86,6 +97,12 @@ The concepts pipeline will start extracting Genre as one of the types of Concept
 [RFC 054](../054-authority-vs-canonical-concept-ids) covers the technique
 that will be used to match Genre-as-a-Subject (where it can only be a Concept)
 with Genre-as-a-Genre (where it will be a Genre).
+
+## Proposal - website
+
+Genre links on Work pages will link to the Concept page for their primary Concept.  
+The remaining parts of the compound will still be displayed in the link text, 
+but are not used to further refine that link.
 
 ## Rationale
 
@@ -127,7 +144,7 @@ so even if they were identified, they would not be the same.
 
 ### Determining equivalence with the proposed data
 
-Both the compound concept and primary Concept within it will be of type Genre.
+The primary Concept within a genre will be of type Genre.
 
 This breaks that automatic link between the primary Concept of a Subject and 
 that of a Genre.  However, this proposal includes a mechanism for determining 
@@ -146,7 +163,7 @@ non-genres in the genre.concepts field. For example, it will remain possible
 to query for `genre.concepts=London`.
 
 Whether this becomes a feature that gets exposed via the API is out of scope
-of this RFC, but it is one that can be supported by the data format.  However,
-the actual data behind it may not be appropriate to support it.  There are 
-220 different Almanacs (e.g. `Almanacs - Pennsylvania - 1765`), 89 different Poems
-(e.g. `Poems - 1740`), but most top level genres are not compounds. 
+of this RFC, but it is one that can be supported by the data format.
+
+There are  220 different Almanacs (e.g. `Almanacs - Pennsylvania - 1765`), 
+89 different Poems (e.g. `Poems - 1740`), but most top level genres are not compounds. 
