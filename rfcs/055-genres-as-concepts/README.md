@@ -26,9 +26,9 @@ to Subjects, where they are either a Concept ($a), or a more specific sort of Co
 * Genre is extracted from marcTag:655 fields
   * there are 1,366,260 such fields
     * 1755 of them have an identifier
-      * 1688 of those have an identifier in the lcgft scheme
+      * 1688 of those have an identifier in the [LCGFT](https://id.loc.gov/authorities/genreForms.html) scheme
     * 14903 of them are compounds
-      * 3 of those have an identifier (all in the DNB/GND scheme)
+      * 3 of those have an identifier (all in the [DNB](https://www.dnb.de/EN/Home/home_node.html)/[GND](https://gnd.network/Webs/gnd/EN/Home/home_node.html) scheme)
 
 ## Proposal - Catalogue Pipeline
 
@@ -112,7 +112,7 @@ The concepts pipeline will start extracting Genre as one of the types of Concept
 that will be used to match Genre-as-a-Subject (where it can only be a Concept)
 with Genre-as-a-Genre (where it will be a Genre).
 
-Include [LCGFT](https://id.loc.gov/authorities/genreForms.html) as an authoritative source.
+Include LCGFT as an authoritative source.
 
 ## Proposal - website
 
