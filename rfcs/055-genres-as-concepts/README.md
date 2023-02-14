@@ -90,7 +90,7 @@ to consider this approach as part of API v3, if desired.
 
 #### Leave them
 
-Compound Genres are unlike Subjects, in that in the rare situation (three instances) that they are identified in MARC, 
+Compound Genres are unlike Subjects, in that rare situation (three instances) that they are identified in MARC, 
 the identifier refers to the primary Concept within it, and not to the overall Genre.  Similarly, LCGFT does not contain
 compounds.
 
