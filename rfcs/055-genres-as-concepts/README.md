@@ -81,7 +81,7 @@ Works pages to link to the Genre's Concept page, and would result in API data
 containing inconsistent approaches for Genres vs Subjects or Contributors, it would be better 
 to consider this approach as part of API v3, if desired.
 
-#### Do nothing
+#### Leave them
 
 Compound Genres are unlike Subjects, in that in the rare situation (three instances) that they are identified in MARC, 
 the identifier refers to the primary Concept within it, and not to the overall Genre.
