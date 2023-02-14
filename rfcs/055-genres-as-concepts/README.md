@@ -58,6 +58,13 @@ from anywhere in a Work. This is anything that has one of the known Concept
 types, and is identified. This currently includes Subjects, and would include
 Genres with this change.
 
+However, the relationship between a compound subject and its identifier differs
+from the relationship between compound genres and their identifiers.  An identified
+genre is an atomic unit that can be further embellished by extra subfields, whereas
+the various subfields form part of the subject.
+
+The consistency gained by treating a Genre like a Subject may therefore be confusing.
+
 #### As an extra Concept
 
 A less consistent, but possibly more future-looking approach would be to
@@ -84,7 +91,8 @@ to consider this approach as part of API v3, if desired.
 #### Leave them
 
 Compound Genres are unlike Subjects, in that in the rare situation (three instances) that they are identified in MARC, 
-the identifier refers to the primary Concept within it, and not to the overall Genre.
+the identifier refers to the primary Concept within it, and not to the overall Genre.  Similarly, LCGFT does not contain
+compounds.
 
 e.g. from b30834107
 ```
@@ -100,9 +108,9 @@ There is some conflict here between the apparent semantics of the three fields. 
 in that the compounds are "things that exist in their own right", whereas the compounding of a Contributor is about 
 the relationship between an Agent and a Work.
 
-Some compound genres seem excessively fragmented (e.g. Almanacs, which have entries like
-`Almanacs - Pennsylvania - 1773` and `Almanacs - Massachusetts - 1702`, each with less than half a dozen entries),
-so having `Almanacs` as the concept page is probably more useful.
+Some compound genres seem excessively specific for this purpose, leading to fragmentation 
+(e.g. Almanacs, which have many entries like `Almanacs - Pennsylvania - 1773` and `Almanacs - Massachusetts - 1702`, 
+each with less than half a dozen entries), so having `Almanacs` as the concept page is probably more useful.
 
 ## Proposal - Concepts Pipeline
 
