@@ -1,0 +1,40 @@
+@startuml
+left to right direction
+package "works catalogue"{
+map work1{
+concept => n84165387, abc123, Concept
+}
+map work2{
+concept => n84165387, def789, Person
+}
+}
+
+package "catalogue concepts" {
+object n84165387{
+id: [abc123, def789]
+type: [Concept, Person]
+authoritativeID: n84165387
+}
+}
+
+package "concept store" {
+object def789 {
+type: Person
+authoritativeID: n84165387
+aka: [abc123]
+}
+
+object abc123{
+type: Person
+authoritativeID: n84165387
+aka: [def789]
+
+}
+
+work1  --> n84165387
+work2  --> n84165387
+n84165387 --> def789
+n84165387 --> abc123
+
+
+@enduml
