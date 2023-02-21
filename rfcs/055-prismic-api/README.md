@@ -25,15 +25,48 @@ We'd like to build a new corresponding API which will allow users to search for 
 
 ### `/articles`
 
-Filter for type eg stories, webcomics
+#### Example response
 
-#### Different kinds of thing (are these 'labels'?)
+```json
+GET /articles/{id}
+{
+    "id": "",
+    "format": "",
+    "title": "",
+    "body": "", // not exposed by default, should require an ?includes=body
+    "standfirst": "",
+    "published": "",
+    "contributors": [
+        {
+            ... // reuse the Contributor model
+        },
+        ...
+    ],
+    "image": {
+        "thumbnail": {
+            ... // reuse the DigitalLocation model
+        },
+        "caption": ""
+    }
+}
+```
 
-- story <https://wellcomecollection.org/articles/Y9vktREAACYA1v2U> at /articles
-- webcomic <https://wellcomecollection.org/articles/Y86rshEAACcAI4g4> at /articles
-- book <https://wellcomecollection.org/books/Y7QWrREAAHC43oH0> at /books
-- series <https://wellcomecollection.org/series/WfpEBCoAACrdd43y> composed of articles
-- in pictures <https://wellcomecollection.org/articles/Y-oAIhAAACAAix32> at /articles
+```json
+GET /articles?query=foo&filters=bar&sort=baz
+{
+    "type": "ResultList",
+    "results": [
+        {
+            ... // as above
+        },
+        ...
+    ],
+    "pageSize": 100,
+    "totalResults": 1000,
+    "totalPages": 10,
+    "nextPage": "/articles?query=foo&filters=bar&sort=baz?page=2",
+}
+```
 
 #### Filters
 
@@ -49,12 +82,67 @@ Filter for type eg stories, webcomics
 
 ### `/exhibitions`
 
+#### Example response
+
+```json
+GET /exhibitions/{id}
+{
+    "id": "",
+    "format": "",
+    "title": "",
+    "status": "",
+    "instantiations": [
+        {
+            "start": "", // ISO 8601 date only (no time)
+            "end": "", // ISO 8601 date only (no time)
+            "place": "",
+            "guide": {
+                ... // reuse the DigitalLocation model
+            }
+        }
+    ],
+    "contributors": [ // behind ?includes=contributors
+        {
+            ... // reuse the Contributor model
+        },
+        ...
+    ],
+    "image": {
+        "thumbnail": {
+            ... // reuse the DigitalLocation model
+        },
+        "caption": ""
+    },
+    "seasons": [
+        "",
+        ...
+    ],
+}
+```
+
+```json
+GET /exhibitions?query=foo&filters=bar&sort=baz
+{
+    "type": "ResultList",
+    "results": [
+        {
+            ... // as above
+        },
+        ...
+    ],
+    "pageSize": 100,
+    "totalResults": 1000,
+    "totalPages": 10,
+    "nextPage": "/exhibitions?query=foo&filters=bar&sort=baz?page=2",
+}
+```
+
 #### Filter
 
 - date
 - status
-- location
-- contributor?
+- place
+- contributor
 - format (ie permanent, exhibition, installation)
 - season
 
@@ -65,13 +153,72 @@ Filter for type eg stories, webcomics
 
 ### `/events`
 
+#### Example response
+
+```json
+GET /events/{id}
+{
+    "id": "",
+    "format": "",
+    "title": "",
+    "status": "",
+    "isOnline": false,
+    "availableOnline": false,
+    "audience": "",
+    "instantiations": [
+        {
+            "start": "", // ISO 8601 datetime
+            "end": "", // ISO 8601 datetime
+            "place": ""
+        }
+    ],
+    "contributors": [ // behind ?includes=contributors
+        {
+            ... // reuse the Contributor model
+        },
+        ...
+    ],
+    "image": {
+        "thumbnail": {
+            ... // reuse the DigitalLocation model
+        },
+        "caption": ""
+    },
+    "series": [
+        "",
+        ...
+    ],
+    "seasons": [
+        "",
+        ...
+    ],
+}
+```
+
+```json
+GET /events?query=foo&filters=bar&sort=baz
+{
+    "type": "ResultList",
+    "results": [
+        {
+            ... // as above
+        },
+        ...
+    ],
+    "pageSize": 100,
+    "totalResults": 1000,
+    "totalPages": 10,
+    "nextPage": "/events?query=foo&filters=bar&sort=baz?page=2",
+}
+```
+
 #### Filter
 
 - date
 - accessibility status (is it audio described, signed, etc)
 - location
 - format (eg discussion)
-- event-series
+- series
 - season
 - audience (eg schools)
 - contributor
@@ -83,23 +230,15 @@ Filter for type eg stories, webcomics
 - date
 - relevance
 
-### `/books`
-
-?????????
-
 ## Open questions
 
 - How do we represent functional content?
-- Should we include the full prismic API response at eg `/articles/{id}`?
-    - should we be able to list all of the docs of a given type at once? what should that url look like?
 - If we want to avoid maintaining multiple versions of the same code, should this work be done as an extension to the concepts API?
-- Works exist at [api.wellcomecollection.org/catalogue/v2/works](api.wellcomecollection.org/catalogue/v2/works), concepts at [/catalogue/v2/concepts](api.wellcomecollection.org/catalogue/v2/concepts), images at [/catalogue/v2/images](api.wellcomecollection.org/catalogue/v2/images).  
+- Works exist at [api.wellcomecollection.org/catalogue/v2/works](api.wellcomecollection.org/catalogue/v2/works), concepts at [/catalogue/v2/concepts](api.wellcomecollection.org/catalogue/v2/concepts), images at [/catalogue/v2/images](api.wellcomecollection.org/catalogue/v2/images).
 Stories etc aren't part of the catalogue - should the URL be different?
 - what are the top level types? is it articles? stories? series?
 - where do books go? they appear on the stories landing page, so should they appear in stories search results? or are they at a separate endpoint?
 - what is a serial? what is a series?
-- is 'In pictures' the same as 'Image gallery'?
-- Should we be able to filter by contributor role? is that something for the first pass or something we address later? which contributor roles are there? yes for stories? no for exhibitions and events?
 - can we filter exhibitions for accessibility, ie whether a digital guide exists? we can for events, but unclear for exhibitions
 - do we have any exhibition contributors who have contributed to more than one? is a filter for exhibition contributors really going to be useful?
 
