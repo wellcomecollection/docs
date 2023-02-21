@@ -1,4 +1,4 @@
-# RFC 054: Prismic API
+# RFC 055: Prismic API
 
 This RFC outlines a new set of API endpoints which will allow wellcomecollection.org users to search and filter content which is stored in Prismic.
 
