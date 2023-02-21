@@ -27,7 +27,7 @@ We'd like to build a new corresponding API which will allow users to search for 
 
 #### Example response
 
-```json
+```http
 GET /articles/{id}
 {
     "id": "",
@@ -51,7 +51,7 @@ GET /articles/{id}
 }
 ```
 
-```json
+```http
 GET /articles?query=foo&filters=bar&sort=baz
 {
     "type": "ResultList",
@@ -84,7 +84,7 @@ GET /articles?query=foo&filters=bar&sort=baz
 
 #### Example response
 
-```json
+```http
 GET /exhibitions/{id}
 {
     "id": "",
@@ -120,7 +120,7 @@ GET /exhibitions/{id}
 }
 ```
 
-```json
+```http
 GET /exhibitions?query=foo&filters=bar&sort=baz
 {
     "type": "ResultList",
@@ -155,7 +155,7 @@ GET /exhibitions?query=foo&filters=bar&sort=baz
 
 #### Example response
 
-```json
+```http
 GET /events/{id}
 {
     "id": "",
@@ -195,7 +195,7 @@ GET /events/{id}
 }
 ```
 
-```json
+```http
 GET /events?query=foo&filters=bar&sort=baz
 {
     "type": "ResultList",
