@@ -1,4 +1,5 @@
 # Glossary
+## Third parties
 
 **Archivematica** - [A tool for born-digital workflows](https://www.archivematica.org/en/). We use Archivematica to package (+metadata) born-digital content.
 
@@ -31,4 +32,88 @@
 **Sierra** - [Our Library Management System](https://www.iii.com/products/sierra-ils/). Sierra manages catalogue records, patrons and more. It exposes a pretty good API which is [well documented](https://techdocs.iii.com/sierraapi/Content/titlePage.htm).
 
 **TEI** - [A metadata standard for text/manuscripts](https://github.com/wellcomecollection/wellcome-collection-tei). We are using this for some non-Western manuscripts as it offers much better metadata than existing library systems and standards.
+
+## Internal terms
+
+In an effort to ensure everyone uses the same language and help with onboarding, here is a incomplete glossary of the terms used in relation to the website content and context.
+
+
+**Archive**
+
+**Article**
+Umbrella term for everything under `/stories`. Could be a story, a webcomic, a photo essay...
+
+**Author**
+
+**Book** 
+[Example](https://wellcomecollection.org/books/Y7QWrREAAHC43oH0)
+Book is a content type in Prismic, displayed on the [Books listing page](https://wellcomecollection.org/books). They are books that are published by Wellcome.
+
+**Collection**
+
+**Concept**
+
+**Contributor**
+
+**Content Type**
+
+**Digital Guide**
+
+**Digitised Item**
+
+**Event**
+[Example](https://wellcomecollection.org/events/Y7P3oxEAAHC43k0_)
+Displayed in various listing pages, including [Events](https://wellcomecollection.org/events)
+<!-- Add description -->
+
+**Exhibition**
+[Example](https://wellcomecollection.org/exhibitions/Yv95yBAAAILuCNv6)
+Displayed in various listing pages, including [Exhibitions](https://wellcomecollection.org/exhibitions)
+<!-- Add description -->
+
+**Exhibition Guide**
+
+**Format**
+
+**Image Gallery**
+
+**In Pictures**
+
+**Installation**
+
+**License/Licence**
+Spelled Licence on the UI (UK spelling) and License in the API.
+<!-- Add description -->
+
+**Manuscript**
+
+**Photo Story**
+
+**Location**
+
+**Role**
+Part of the Contributors object, defines the type of contributor (author, illustrator, etc.)
+
+**Season**
+
+**Serial**
+A serial is a type of series, in which articles are scheduled to be published.
+
+**Series**
+
+**Story**
+Type of article, long-form.
+
+**Subject**
+
+**Type (Content Type)**
+
+**Type (Types/Techniques)**
+
+**Technique**
+
+**Webcomic**
+Type of article
+
+**Work**
 
