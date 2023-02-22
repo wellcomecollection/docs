@@ -140,7 +140,7 @@ GET /exhibitions?query=foo&filters=bar&sort=baz
     "pageSize": 100,
     "totalResults": 1000,
     "totalPages": 10,
-    "nextPage": "/exhibitions?query=foo&filters=bar&sort=baz?page=2",
+    "nextPage": "/exhibitions?query=foo&filters=bar&sort=baz&page=2",
 }
 ```
 
