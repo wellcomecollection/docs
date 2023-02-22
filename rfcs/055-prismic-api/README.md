@@ -21,6 +21,7 @@ We'd like to build a new corresponding API which will allow users to search for 
 - The new API service should be written in typescript, following patterns set by the [concepts API](../050-concepts-api/README.md) for filtering, pagination, error handling, etc.
 - We shouldn't create new IDs for exhibitions, events, stories, etc. There aren't any situations where we should need to merge content from multiple sources, so we should use the document IDs directly from prismic.
 - The elasticsearch index mapping should represent the contract between the pipeline and the API. The API shouldn't need to know anything about the structure of the data in prismic.
+- We won't include an endpoint for /series, nor will we include series nodes in the /articles endpoint. If an article is part of a series, we'll denormalise information from its parent onto the article itself to use for relevance and visual signposting in results.
 
 ## Proposed endpoints
 
@@ -48,7 +49,12 @@ GET /articles/{id}
             ... // reuse the DigitalLocation model
         },
         "caption": ""
-    }
+    },
+    "partOf": [
+        {
+            ... // reuse the partOf model for series
+        }
+    ]
 }
 ```
 
@@ -185,14 +191,11 @@ GET /events/{id}
         },
         "caption": ""
     },
-    "series": [
-        "",
-        ...
-    ],
-    "seasons": [
-        "",
-        ...
-    ],
+    "partOf": [
+        {
+            ... // reuse the partOf model for series and seasons
+        }
+    ]
 }
 ```
 
@@ -237,11 +240,6 @@ GET /events?query=foo&filters=bar&sort=baz
 - If we want to avoid maintaining multiple versions of the same code, should this work be done as an extension to the concepts API?
 - Works exist at [api.wellcomecollection.org/catalogue/v2/works](api.wellcomecollection.org/catalogue/v2/works), concepts at [/catalogue/v2/concepts](api.wellcomecollection.org/catalogue/v2/concepts), images at [/catalogue/v2/images](api.wellcomecollection.org/catalogue/v2/images).
 Stories etc aren't part of the catalogue - should the URL be different? Does `/content` work?
-- what are the top level types? is it articles? stories? series?
-- where do books go? they appear on the stories landing page, so should they appear in stories search results? or are they at a separate endpoint?
-- what is a serial? what is a series?
-- can we filter exhibitions for accessibility, ie whether a digital guide exists? we can for events, but unclear for exhibitions
-- do we have any exhibition contributors who have contributed to more than one? is a filter for exhibition contributors really going to be useful?
 
 ## Next steps
 
