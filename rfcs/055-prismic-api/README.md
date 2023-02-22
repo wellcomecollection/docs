@@ -6,22 +6,21 @@ This RFC outlines a new set of API endpoints which will allow wellcomecollection
 
 We use Prismic CMS to edit and store exhibitions, events, stories, and other pieces of non-catalogue content on wellcomecollection.org.
 
-The site currently allows users to [search for stories](https://wellcomecollection.org/search/stories) using [Prismic's GraphQL API](https://prismic.io/docs/graphql). That MVP implementation has demonstrated that prismic's search functionality isn't good enough to produce relevant results on its own. We would like to replace it with something more configurable, like the system we have for the catalogue.
+The site currently allows users to [search for stories](https://wellcomecollection.org/search/stories) using [Prismic's GraphQL API](https://Prismic.io/docs/graphql). That MVP implementation has demonstrated that Prismic's search functionality isn't good enough to produce relevant results on its own. We would like to replace it with something more configurable, like the system we have for the catalogue.
 
-We're building a pipeline to ingest prismic content into elasticsearch (see separate RFC).
-
-We'd like to build a new corresponding API which will allow users to search for those prismic documents in elasticsearch.
+We're building a pipeline to ingest Prismic content into elasticsearch (see separate RFC).  
+We also need a corresponding API which will allow users to search for those Prismic documents in elasticsearch.
 
 ## Requirements, considerations, constraints
 
 - We'll be considering articles, exhibitions, and events in this first pass. Books won't be included for now, but could be added at a later date.
-- The API should only return enough information for users to figure out whether a result is relevant to them, and provide a link to the relevant page on wellcomecollection.org. The content of the pages themselves should still be fetched from prismic directly.
+- The API should only return enough information for users to figure out whether a result is relevant to them, and provide a link to the relevant page on wellcomecollection.org. The content of the pages themselves should still be fetched from Prismic directly.
 - Though we're describing them as a separate project, the new endpoints should seamlessly fit into the rest of the wellcomecollection.org API suite from a user POV. All of the existing conventions should be followed.
-- Despite prioritising search and defaulting to the prismic API for display, We'll still include a way to fetch a single document by ID, eg `/articles/{id}`.
+- Despite prioritising search and defaulting to the Prismic API for display, We'll still include a way to fetch a single document by ID, eg `/articles/{id}`.
 - The API's URL structure should also be consistent with what appears on the front end of the site. For example, if article on the site appears at `/articles/{id}`, the API equivalent should be at `/articles/{id}`. The same should be true for search results.
 - The new API service should be written in typescript, following patterns set by the [concepts API](../050-concepts-api/README.md) for filtering, pagination, error handling, etc.
-- We shouldn't create new IDs for exhibitions, events, stories, etc. There aren't any situations where we should need to merge content from multiple sources, so we should use the document IDs directly from prismic.
-- The elasticsearch index mapping should represent the contract between the pipeline and the API. The API shouldn't need to know anything about the structure of the data in prismic.
+- We shouldn't create new IDs for exhibitions, events, stories, etc. There aren't any situations where we should need to merge content from multiple sources, so we should use the document IDs directly from Prismic.
+- The elasticsearch index mapping should represent the contract between the pipeline and the API. The API shouldn't need to know anything about the structure of the data in Prismic.
 - We won't include an endpoint for `/series`, nor will we include series nodes in the `/articles` endpoint. If an article is part of a series, we'll denormalise information from its parent onto the article itself to use for relevance and visual signposting in results.
 
 ## Proposed endpoints
@@ -241,6 +240,7 @@ GET /events?query=foo&filters=bar&sort=baz
 - If we want to avoid maintaining multiple versions of the same code, should this work be done as an extension to the concepts API?
 - Works exist at [api.wellcomecollection.org/catalogue/v2/works](api.wellcomecollection.org/catalogue/v2/works), concepts at [/catalogue/v2/concepts](api.wellcomecollection.org/catalogue/v2/concepts), images at [/catalogue/v2/images](api.wellcomecollection.org/catalogue/v2/images).
 Stories etc aren't part of the catalogue - should the URL be different? Does `/content` work?
+- Should we include a `/series` endpoint as part of this work?
 
 ## Next steps
 
