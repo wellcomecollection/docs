@@ -14,6 +14,7 @@ We'd like to build a new corresponding API which will allow users to search for 
 
 ## Requirements, considerations, constraints
 
+- We'll be considering articles, exhibitions, and events in this first pass. Books won't be included for now, but could be added at a later date.
 - The API should only return enough information for users to figure out whether a result is relevant to them, and provide a link to the relevant page on wellcomecollection.org. The content of the pages themselves should still be fetched from prismic directly.
 - Though we're describing them as a separate project, the new endpoints should seamlessly fit into the rest of the wellcomecollection.org API suite from a user POV. All of the existing conventions should be followed.
 - The API url structure should also be consistent with what appears on the front end of the site. For example, an article on the site appears at `/articles/{id}`, so the API equivalent should be `/articles/{id}`. The same should be true for search results.
@@ -235,7 +236,7 @@ GET /events?query=foo&filters=bar&sort=baz
 - How do we represent functional content?
 - If we want to avoid maintaining multiple versions of the same code, should this work be done as an extension to the concepts API?
 - Works exist at [api.wellcomecollection.org/catalogue/v2/works](api.wellcomecollection.org/catalogue/v2/works), concepts at [/catalogue/v2/concepts](api.wellcomecollection.org/catalogue/v2/concepts), images at [/catalogue/v2/images](api.wellcomecollection.org/catalogue/v2/images).
-Stories etc aren't part of the catalogue - should the URL be different?
+Stories etc aren't part of the catalogue - should the URL be different? Does `/content` work?
 - what are the top level types? is it articles? stories? series?
 - where do books go? they appear on the stories landing page, so should they appear in stories search results? or are they at a separate endpoint?
 - what is a serial? what is a series?
