@@ -80,7 +80,7 @@ GET /articles?query=foo&filters=bar&sort=baz
 - date
 - contributor
 - series
-- contentType
+- format
 
 #### Sort
 
