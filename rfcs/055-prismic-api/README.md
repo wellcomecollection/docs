@@ -37,7 +37,7 @@ GET /articles/{id}
     "title": "",
     "body": "", // not exposed by default, should require an ?includes=body
     "standfirst": "",
-    "published": "",
+    "publicationDate": "",
     "contributors": [
         {
             ... // reuse the Contributor model
