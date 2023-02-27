@@ -54,6 +54,7 @@ Book is a content type in Prismic, displayed on the [Books listing page](https:/
 **Concept**
 
 **Contributor**
+Anyone who is relevant to a piece of content. Depending on the content type, it could be the author, a photographer, a curator, a host, etc.
 
 **Content Type**
 
@@ -76,10 +77,13 @@ Displayed in various listing pages, including [Exhibitions](https://wellcomecoll
 **Exhibition Guide**
 
 **Format**
+The options change based on the content type, but for Stories, for example, it could be Webcomic, Long Read, In Picture&hellip; For an Event, it could be Game, Screening, Workshop&hellip;. They are sometimes referred to as the "type" of [insert content type].
 
 **Image Gallery**
+A component that can be added in a Story (Article). These articles will most likely have the format "In Pictures".
 
 **In Pictures**
+A format for a Story (Article) that most likely contains an Image Gallery component.
 
 **Installation**
 
@@ -105,7 +109,7 @@ A serial is a type of series, in which articles are scheduled to be published.
 **Series**
 
 **Story**
-If no format is assigned to an article, its label on the FE defaults to "Story".
+In Prismic, this is the Content Type for Articles (listed at `/articles`). If no format is assigned to an article, its label on the FE defaults to "Story".
 
 **Subject**
 
