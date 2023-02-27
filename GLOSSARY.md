@@ -44,6 +44,8 @@ In an effort to ensure everyone uses the same language and help with onboarding,
 Umbrella term for everything under `/stories`. Could be a story, a webcomic, a photo essay...
 
 **Author**
+A type of Role for Contributors.
+<!-- Add further description -->
 
 **Book** 
 [Example](https://wellcomecollection.org/books/Y7QWrREAAHC43oH0)
@@ -94,6 +96,8 @@ Spelled Licence on the UI (UK spelling) and License in the API.
 **Manuscript**
 
 **Photo Story**
+A Story (Article) content type.
+<!-- Add description -->
 
 **Location**
 
@@ -101,7 +105,7 @@ Spelled Licence on the UI (UK spelling) and License in the API.
 Part of the Contributors object, defines the type of contributor (author, illustrator, etc.)
 
 **Season**
-A season is a grouping of most any content types, but primarily events, exhibitions, stories. The idea is that it's a time-limited, curated programme of activities, and it gets promoted as one programme. e.g.: [What does it mean to be human, now?](https://wellcomecollection.org/seasons/X84FvhIAACUAqiqp)
+A season is a grouping of most any content types, but primarily events, exhibitions, stories. The idea is that it's a time-limited, curated programme of activities, and it gets promoted as one programme. e.g.: [What does it mean to be human, now?](https://wellcomecollection.org/seasons/X84FvhIAACUAqiqp). They are displayed on `/seasons/[id]`.
 
 **Serial**
 A serial is a type of series, in which articles are scheduled to be published.
@@ -118,6 +122,8 @@ In Prismic, this is the Content Type for Articles (listed at `/articles`). If no
 **Type (Types/Techniques)**
 
 **Technique**
+A filter in `/search/works`
+<!-- Add description -->
 
 **Webcomic**
 Type of article
