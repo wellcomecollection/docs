@@ -105,7 +105,7 @@ A serial is a type of series, in which articles are scheduled to be published.
 **Series**
 
 **Story**
-Type of article, long-form.
+If no format is assigned to an article, its label on the FE defaults to "Story".
 
 **Subject**
 
