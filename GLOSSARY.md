@@ -59,6 +59,8 @@ Book is a content type in Prismic, displayed on the [Books listing page](https:/
 
 **Digital Guide**
 
+**Digital Location**
+
 **Digitised Item**
 
 **Event**
@@ -95,6 +97,7 @@ Spelled Licence on the UI (UK spelling) and License in the API.
 Part of the Contributors object, defines the type of contributor (author, illustrator, etc.)
 
 **Season**
+A season is a grouping of most any content types, but primarily events, exhibitions, stories. The idea is that it's a time-limited, curated programme of activities, and it gets promoted as one programme. e.g.: [What does it mean to be human, now?](https://wellcomecollection.org/seasons/X84FvhIAACUAqiqp)
 
 **Serial**
 A serial is a type of series, in which articles are scheduled to be published.
