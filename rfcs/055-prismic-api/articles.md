@@ -54,11 +54,16 @@ GET /articles?query=foo&filters=bar&sort=baz&sortOrder=asc
 
 ## Filters
 
-- publicationDate.from
-- publicationDate.to
-- contributor.agent.label
-- partOf
-- format.label
+- **publicationDate.from**
+  DD-MM-YYYY
+- **publicationDate.to**
+  DD-MM-YYYY
+- **contributor.agent.label**
+  Includes author, artists, photographers
+- **partOf**
+  List of series (e.g. serials - which is a scheduled list of articles, or webcomic series)
+- **format.label**
+  [`Comic`, `Long read`, `Prose poem`, `Podcast`, `In pictures`, `Article`, `Photo story`, `Interview`, `Book extract`]
 
 ## Sort options
 
