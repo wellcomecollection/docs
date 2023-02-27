@@ -85,7 +85,6 @@ GET /exhibitions?query=foo&filters=bar&sort=baz&sortOrder=asc
   e.g. Filmmaker, Curator
 - **format.label**
   [`Permanent Exhibition`, `Season`, `Installation`]
-- **season**
 
 ## Sort options
 
