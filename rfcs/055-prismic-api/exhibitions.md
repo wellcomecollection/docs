@@ -42,8 +42,9 @@ GET /exhibitions/{id}
         "thumbnail": {
             ... // reuse the DigitalLocation model
         },
-        "caption": ""
+        "alt": ""
     },
+    "caption": "",
     "seasons": [
         "",
         ...
@@ -52,7 +53,7 @@ GET /exhibitions/{id}
 ```
 
 ```
-GET /exhibitions?query=foo&filters=bar&sort=baz
+GET /exhibitions?query=foo&filters=bar&sort=baz&sortOrder=asc
 {
     "type": "ResultList",
     "results": [
@@ -64,21 +65,27 @@ GET /exhibitions?query=foo&filters=bar&sort=baz
     "pageSize": 100,
     "totalResults": 1000,
     "totalPages": 10,
-    "nextPage": "/exhibitions?query=foo&filters=bar&sort=baz&page=2",
+    "nextPage": "/exhibitions?query=foo&filters=bar&sort=baz&sortOrder=asc&page=2",
 }
 ```
 
 ## Filters
 
-- instantiations.start.from
-- instantiations.start.to
-- instantiations.end.from
-- instantiations.end.to
-- status.label
-- place.label
-- contributor.agent.label
-- format.label
-- season
+- **instantiations.start.from**
+  DD-MM-YYYY
+- **instantiations.start.to**
+  DD-MM-YYYY
+- **instantiations.end.from**
+  DD-MM-YYYY
+- **instantiations.end.to**
+  DD-MM-YYYY
+- **place.label**
+  List of physical locations, would also include "Online".
+- **contributor.agent.label**
+  e.g. Filmmaker, Curator
+- **format.label**
+  [`Permanent Exhibition`, `Season`, `Installation`]
+- **season**
 
 ## Sort options
 
@@ -90,6 +97,5 @@ Default sort should be by relevance, with a fallback to id if no query is provid
 
 ## Aggregations
 
-- status
 - place
 - contributor

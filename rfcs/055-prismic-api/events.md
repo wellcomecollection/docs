@@ -13,8 +13,6 @@ GET /events/{id}
         "type": "EventFormat"
     },
     "title": "",
-    "status": "",
-    "isOnline": boolean,
     "availableOnline": boolean,
     "interpretations": [
         {
@@ -39,7 +37,7 @@ GET /events/{id}
                 "label": "",
                 "type": "Place"
             },
-
+            "isOnline": boolean
         }
     ],
     "contributors": [ // behind ?includes=contributors
@@ -52,8 +50,9 @@ GET /events/{id}
         "thumbnail": {
             ... // reuse the DigitalLocation model
         },
-        "caption": ""
+        "alt": ""
     },
+    "caption": "",
     "partOf": [
         {
             ... // reuse the partOf model for series and seasons
@@ -63,7 +62,7 @@ GET /events/{id}
 ```
 
 ```
-GET /events?query=foo&filters=bar&sort=baz
+GET /events?query=foo&filters=bar&sort=baz&sortOrder=asc
 {
     "type": "ResultList",
     "results": [
@@ -75,24 +74,34 @@ GET /events?query=foo&filters=bar&sort=baz
     "pageSize": 100,
     "totalResults": 1000,
     "totalPages": 10,
-    "nextPage": "/events?query=foo&filters=bar&sort=baz&page=2",
+    "nextPage": "/events?query=foo&filters=bar&sort=baz&sortOrder=asc&page=2",
 }
 ```
 
 ## Filter
 
-- instantiations.start.from
-- instantiations.start.to
-- instantiations.end.from
-- instantiations.end.to
-- interpretation
-- place
-- format
-- partOf
-- audience
-- contributor
-- isOnline
-- availableOnline
+- **instantiations.start.from**
+  DD-MM-YYYY
+- **instantiations.start.to**
+  DD-MM-YYYY
+- **instantiations.end.from**
+  DD-MM-YYYY
+- **instantiations.end.to**
+  DD-MM-YYYY
+- **interpretation**
+  Interpretations are useful accessibility tools for event searching. They are, for example: Captioned, BSL, Wheelchair friendly
+- **place.label**
+  List of physical locations, would also include "Online".
+- **format.label**
+  [`Session`, `Game`, `Installation`, `Discussion`, `Performance`, `Workshop`, `Chill out`, `Shopping`, `Festival`, `Screening`, `SEND workshop`, `Late`, `Symposium`, `Gallery tour`, `Seminar`, `Study day`, `Walking tour`]
+- **partOf**
+  Part of a series of events (I'm not sure this is possible?)
+- **audience**
+  The public this is geared towards, e.g. Schools
+- **contributor.agent.label**
+  e.g. Facilitator, Host
+- **availableOnline**
+  Was recorded and the video is made available for a rewatch online.
 
 ## Sort
 
@@ -104,7 +113,6 @@ Default sort should be by relevance, with a fallback to id if no query is provid
 
 ## Aggregations
 
-- status
 - place
 - contributor
 - format

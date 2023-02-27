@@ -24,8 +24,9 @@ GET /articles/{id}
         "thumbnail": {
             ... // reuse the DigitalLocation model
         },
-        "caption": ""
+        "alt": ""
     },
+    "caption": "",
     "partOf": [
         {
             ... // reuse the partOf model for series
@@ -35,7 +36,7 @@ GET /articles/{id}
 ```
 
 ```
-GET /articles?query=foo&filters=bar&sort=baz
+GET /articles?query=foo&filters=bar&sort=baz&sortOrder=asc
 {
     "type": "ResultList",
     "results": [
@@ -47,7 +48,7 @@ GET /articles?query=foo&filters=bar&sort=baz
     "pageSize": 100,
     "totalResults": 1000,
     "totalPages": 10,
-    "nextPage": "/articles?query=foo&filters=bar&sort=baz&page=2",
+    "nextPage": "/articles?query=foo&filters=bar&sort=baz&sortOrder=asc&page=2",
 }
 ```
 
