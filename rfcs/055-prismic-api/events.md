@@ -6,58 +6,87 @@
 GET /events/{id}
 {
     "type": "Event",
-    "id": "",
+    "id": "Y8aBHhEAAKRE_9AF",
     "format": {
-        "id": "",
-        "label": ""
+        "id": "Wd-QYCcAACcAoiJS",
+        "label": "Discussion"
         "type": "EventFormat"
     },
-    "title": "",
-    "availableOnline": boolean,
+    "title": "Our Microbes and Our Health",
+    "isOnline": false,
+    "availableOnline": true,
+    "isRelaxed": false,
+    "caption": "Join Claudia Hammond from the BBC and a panel of experts to consider the explosion of scientific knowledge about the millions of microbes that live in and on our bodies. ",
     "interpretations": [
         {
-            "label": "",
+            "id": "WmXl4iQAACUAnyDr",
+            "label": "Captioned (screen)",
             "type": "EventInterpretation"
         },
         ...
     ],
     "audiences": [
         {
-            "label": "",
+            "id": "WlYWByQAACQAWdA0",
+            "label": "Schools",
             "type": "EventAudience"
         },
         ...
     ],
     "instantiations": [
         {
-            "start": "", // ISO 8601 datetime
-            "end": "", // ISO 8601 datetime
+            "start": "2018-12-20T10:44:15+0000",
+            "end": "2018-12-20T16:44:15+0000",
             "place": {
-                "id": "",
-                "label": "",
+                "id": "Wn1fvyoAACgAH_yG",
+                "label": "Reading Room",
                 "type": "Place"
             },
-            "isOnline": boolean
         }
     ],
     "contributors": [ // behind ?includes=contributors
         {
-            ... // reuse the Contributor model
+            ... // reuse the Contributor model (without primaryContributor)
         },
         ...
     ],
     "image": {
-        "thumbnail": {
-            ... // reuse the DigitalLocation model
+        "type": "PrismicImage",
+        "dimensions": { 
+            "width": 4000, 
+            "height": 2670
         },
-        "alt": ""
-    },
-    "caption": "",
-    "partOf": [
-        {
-            ... // reuse the partOf model for series and seasons
+        "alt": "Photograph of a gallery installation showing a bench with yellow cushions facing a large video projection. The projection shows the inside of a McDonalds restaurant looking down from a high viewpoint in which the restaurant floor is beginning to flood with water.',
+        "copyright": "Flooded McDonalds by Superflex | | Wellcome Collection | | | |",
+        "url": "https://images.prismic.io/wellcomecollection/1c4a250965a3f9bd17e636f5fc008b88e1e4c649_ep_000832_027.jpg?auto=compress,format",
+        "32:15": {
+            "dimensions": { 
+                "width": 3200, 
+                "height": 1500 
+            },
+            "alt": "Photograph of a gallery installation showing a bench with yellow cushions facing a large video projection. The projection shows the inside of a McDonalds restaurant looking down from a high viewpoint in which the restaurant floor is beginning to flood with water.",
+            "copyright": "Flooded McDonalds by Superflex | | Wellcome Collection | | | |",
+            "url": "https://images.prismic.io/wellcomecollection/35e056eb53143a449cd612828899b160cb63b3a8_ep_000832_027.jpg?auto=compress,format'
+        },
+        "16:9": {
+            "dimensions": { 
+                "width": 3200, 
+                "height": 1800 
+            },
+            "alt": "Photograph of a gallery installation showing a bench with yellow cushions facing a large video projection. The projection shows the inside of a McDonalds restaurant looking down from a high viewpoint in which the restaurant floor is beginning to flood with water.",
+            "copyright": "Flooded McDonalds by Superflex | | Wellcome Collection | | | |",
+            "url": "https://images.prismic.io/wellcomecollection/09b89fe1bcd0a3a3091bcda6b5f62e5e53d572ca_ep_000832_027.jpg?auto=compress,format'
+        },
+        square: {
+            "dimensions": { 
+                "width": 3200, 
+                "height": 3200 
+            },
+            "alt": "Photograph of a gallery installation showing a bench with yellow cushions facing a large video projection. The projection shows the inside of a McDonalds restaurant looking down from a high viewpoint in which the restaurant floor is beginning to flood with water.",
+            "copyright": "Flooded McDonalds by Superflex | | Wellcome Collection | | | |",
+            "url": "https://images.prismic.io/wellcomecollection/9ed554ac496cb5238a50674c840b40df4fc43acd_ep_000832_027.jpg?auto=compress,format'
         }
-    ]
+    },
 }
 ```
 
@@ -77,43 +106,3 @@ GET /events?query=foo&filters=bar&sort=baz&sortOrder=asc
     "nextPage": "/events?query=foo&filters=bar&sort=baz&sortOrder=asc&page=2",
 }
 ```
-
-## Filter
-
-- **instantiations.start.from**
-  DD-MM-YYYY
-- **instantiations.start.to**
-  DD-MM-YYYY
-- **instantiations.end.from**
-  DD-MM-YYYY
-- **instantiations.end.to**
-  DD-MM-YYYY
-- **interpretation**
-  Interpretations are useful accessibility tools for event searching. They are, for example: Captioned, BSL, Wheelchair friendly
-- **place.label**
-  List of physical locations, would also include "Online".
-- **format.label**
-  [`Session`, `Game`, `Installation`, `Discussion`, `Performance`, `Workshop`, `Chill out`, `Shopping`, `Festival`, `Screening`, `SEND workshop`, `Late`, `Symposium`, `Gallery tour`, `Seminar`, `Study day`, `Walking tour`]
-- **partOf**
-  Part of a series of events (I'm not sure this is possible?)
-- **audience**
-  The public this is geared towards, e.g. Schools
-- **contributor.agent.label**
-  e.g. Facilitator, Host
-- **availableOnline**
-  Was recorded and the video is made available for a rewatch online.
-
-## Sort
-
-- instantiations.start
-- instantiations.end
-- relevance
-
-Default sort should be by relevance, with a fallback to id if no query is provided or where documents have the same score.
-
-## Aggregations
-
-- place
-- contributor
-- format
-- audience
