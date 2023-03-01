@@ -33,7 +33,7 @@ or/and
   Part of a series of events (I'm not sure this is possible?)
 - **audience**
   The public this is geared towards, e.g. Schools
-- **contributor.agent.label**
+- **contributor.agent.id**
   e.g. Facilitator, Host
 - **availableOnline**
   Was recorded and the video is made available for a rewatch online.
@@ -67,7 +67,7 @@ Default sort should be by relevance, with a fallback to id if no query is provid
   DD-MM-YYYY
 - **place.label**
   List of physical locations, would also include "Online".
-- **contributor.agent.label**
+- **contributor.agent.id**
   e.g. Filmmaker, Curator
 - **format.label**
   [`Permanent Exhibition`, `Season`, `Installation`]

@@ -1,4 +1,4 @@
-# RFC 055: Prismic API
+# RFC 055: Content API
 
 This RFC outlines a new set of API endpoints which will allow wellcomecollection.org users to search and filter content which is stored in Prismic.
 
@@ -64,6 +64,3 @@ Read more about the structure of the [exhibitions endpoint](exhibitions.md)
 `https://api.wellcomecollection.org/content/v0/events`
 
 Read more about the structure of the [events endpoint](events.md)
-
-## Open questions
-
