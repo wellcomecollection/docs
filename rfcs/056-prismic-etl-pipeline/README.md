@@ -70,11 +70,11 @@ Then we can build a pipeline that works as follows:
 
 1. A 'window generator' Lambda triggered on schedule, which generates a payload representing a time period/window that is sent to (2).
 2. A 'Prismic ETL' Lambda which consumes time periods (potentially half-bounded or unbounded, for complete reindexes) and then:
-  1. Queries Prismic for all documents (including denormalised data on primary documents) updated within the time window.
-  2. For all secondary documents, query the ES index for already-indexed primary documents that contain them.
-  3. Queries Prismic for all the documents (including denormalised data) from (ii) that are not part of the list returned by (i).
-  4. Transforms the resultant primary documents into JSON objects as described above.
-  5. Indexes these into an Elasticsearch cluster using the Elasticsearch JS client's bulk helpers. 
+   1. Queries Prismic for all documents (including denormalised data on primary documents) updated within the time window.
+   2. For all secondary documents, query the ES index for already-indexed primary documents that contain them.
+   3. Queries Prismic for all the documents (including denormalised data) from (ii) that are not part of the list returned by (i).
+   4. Transforms the resultant primary documents into JSON objects as described above.
+   5. Indexes these into an Elasticsearch cluster using the Elasticsearch JS client's bulk helpers. 
 
 For complete reindexes, it would be straightforward to trigger the Prismic ETL lambda from a local script, with a payload that covers all documents. In this case, it would also be an easy optimisation to disable steps (ii) and (iii), as all documents would be being fetched regardless.
 
