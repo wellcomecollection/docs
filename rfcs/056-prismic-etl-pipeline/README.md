@@ -84,7 +84,7 @@ For complete reindexes, it would be straightforward to trigger the Prismic ETL l
 
 ## Questions and potential issues
 - What do we do about deletions? Do we know if they happen? We could write something similar to the [CALM deletion checker](https://github.com/wellcomecollection/docs/tree/main/rfcs/032-calm-deletions) if necessary. 
-  _**Initial answer**: having checked with the editorial team, deletions very rarely happen with our content. I suggest we hold off on solving this for our initial efforts, especially given our intention to make full reindexes easy._
+  _**Initial answer**: having checked with the editorial team, deletions (and/or archivals) very rarely happen with our content. I suggest we hold off on solving this for our initial efforts, especially given our intention to make full reindexes easy._
 - What about the [Prismic webhook](https://prismic.io/docs/webhooks) rather than polling to detect updates?
   _**Initial answer**: while this has some clear advantages (immediacy of updates being one), I decided against it for the following reasons:_
   - *Reliability issues: if a single update is missed because of bugs in our services or problems on Prismic's side, we have no way of knowing that we missed it.*
