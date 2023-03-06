@@ -8,9 +8,9 @@ GET /articles/{id}
     "type": "Article",
     "id": "XAEEIhQAACsA4eEl",
     "format": {
-        "type": "Format",
+        "type": "ArticleFormat",
         "id": "W7TfJRAAAJ1D0eLK",
-        "name": "Article"
+        "label": "Article"
     },
     "title": "Sick of being lonely",
     "publicationDate": "2018-12-20T10:44:15+0000",
@@ -27,7 +27,7 @@ GET /articles/{id}
                 "label": "Author",
                 "type": "EditorialContributorRole"
             },
-            "type": "Contributor",
+            "type": "Contributor"
         }
     ],
     "image": {
@@ -36,7 +36,9 @@ GET /articles/{id}
             "width": 4000,
             "height": 2670
         },
-        "alt": "Photograph of a gallery installation showing a bench with yellow cushions facing a large video projection. The projection shows the inside of a McDonalds restaurant looking down from a high viewpoint in which the restaurant floor is beginning to flood with water.',"copyright": "Flooded McDonalds by Superflex | | Wellcome Collection | | | |","url": "https: //images.prismic.io/wellcomecollection/1c4a250965a3f9bd17e636f5fc008b88e1e4c649_ep_000832_027.jpg?auto=compress,format",
+        "alt": "Photograph of a gallery installation showing a bench with yellow cushions facing a large video projection. The projection shows the inside of a McDonalds restaurant looking down from a high viewpoint in which the restaurant floor is beginning to flood with water.",
+        "copyright": "Flooded McDonalds by Superflex | | Wellcome Collection | | | |",
+        "url": "https: //images.prismic.io/wellcomecollection/1c4a250965a3f9bd17e636f5fc008b88e1e4c649_ep_000832_027.jpg?auto=compress,format",
         "32:15": {
             "dimensions": {
                 "width": 3200,
@@ -64,7 +66,7 @@ GET /articles/{id}
             "copyright": "Flooded McDonalds by Superflex | | Wellcome Collection | | | |",
             "url": "https://images.prismic.io/wellcomecollection/9ed554ac496cb5238a50674c840b40df4fc43acd_ep_000832_027.jpg?auto=compress,format"
         }
-    },
+    }
 }
 ```
 
@@ -88,10 +90,10 @@ GET /articles?query=foo&filters=bar&sort=baz&sortOrder=asc
 ## Filters
 
 - **publicationDate.from**
-  DD-MM-YYYY
+  YYYY-MM-DD
 - **publicationDate.to**
-  DD-MM-YYYY
-- **contributor.agent.id**
+  YYYY-MM-DD
+- **contributor.agent**
   Includes author, artists, photographers, etc.
 - **format.label**
   [`Comic`, `Long read`, `Prose poem`, `Podcast`, `In pictures`, `Article`, `Photo story`, `Interview`, `Book extract`]
@@ -105,5 +107,5 @@ Default sort should be by relevance, with a fallback to id if no query is provid
 
 ## Aggregations
 
-- contributor.agent.id
+- contributor.agent
 - format.label

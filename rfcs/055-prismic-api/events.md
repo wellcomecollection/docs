@@ -8,9 +8,9 @@ GET /events/{id}
     "type": "Event",
     "id": "Y8aBHhEAAKRE_9AF",
     "format": {
+        "type": "EventFormat",
         "id": "Wd-QYCcAACcAoiJS",
         "label": "Discussion"
-        "type": "EventFormat"
     },
     "title": "Our Microbes and Our Health",
     "isOnline": false,
@@ -41,7 +41,7 @@ GET /events/{id}
                 "id": "Wn1fvyoAACgAH_yG",
                 "label": "Reading Room",
                 "type": "Place"
-            },
+            }
         }
     ],
     "contributors": [
@@ -55,7 +55,7 @@ GET /events/{id}
                 "id": "Wux6DyIAAO5n3lzk",
                 "label": "Artist",
                 "type": "EditorialContributorRole"
-            }
+            },
             "type": "Contributor"
         }
     ],
@@ -65,7 +65,7 @@ GET /events/{id}
             "width": 4000,
             "height": 2670
         },
-        "alt": "Photograph of a gallery installation showing a bench with yellow cushions facing a large video projection. The projection shows the inside of a McDonalds restaurant looking down from a high viewpoint in which the restaurant floor is beginning to flood with water.',
+        "alt": "Photograph of a gallery installation showing a bench with yellow cushions facing a large video projection. The projection shows the inside of a McDonalds restaurant looking down from a high viewpoint in which the restaurant floor is beginning to flood with water.",
         "copyright": "Flooded McDonalds by Superflex | | Wellcome Collection | | | |",
         "url": "https://images.prismic.io/wellcomecollection/1c4a250965a3f9bd17e636f5fc008b88e1e4c649_ep_000832_027.jpg?auto=compress,format",
         "32:15": {
@@ -75,7 +75,7 @@ GET /events/{id}
             },
             "alt": "Photograph of a gallery installation showing a bench with yellow cushions facing a large video projection. The projection shows the inside of a McDonalds restaurant looking down from a high viewpoint in which the restaurant floor is beginning to flood with water.",
             "copyright": "Flooded McDonalds by Superflex | | Wellcome Collection | | | |",
-            "url": "https://images.prismic.io/wellcomecollection/35e056eb53143a449cd612828899b160cb63b3a8_ep_000832_027.jpg?auto=compress,format'
+            "url": "https://images.prismic.io/wellcomecollection/35e056eb53143a449cd612828899b160cb63b3a8_ep_000832_027.jpg?auto=compress,format"
         },
         "16:9": {
             "dimensions": {
@@ -84,18 +84,18 @@ GET /events/{id}
             },
             "alt": "Photograph of a gallery installation showing a bench with yellow cushions facing a large video projection. The projection shows the inside of a McDonalds restaurant looking down from a high viewpoint in which the restaurant floor is beginning to flood with water.",
             "copyright": "Flooded McDonalds by Superflex | | Wellcome Collection | | | |",
-            "url": "https://images.prismic.io/wellcomecollection/09b89fe1bcd0a3a3091bcda6b5f62e5e53d572ca_ep_000832_027.jpg?auto=compress,format'
+            "url": "https://images.prismic.io/wellcomecollection/09b89fe1bcd0a3a3091bcda6b5f62e5e53d572ca_ep_000832_027.jpg?auto=compress,format"
         },
-        square: {
+        "square": {
             "dimensions": {
                 "width": 3200,
                 "height": 3200
             },
             "alt": "Photograph of a gallery installation showing a bench with yellow cushions facing a large video projection. The projection shows the inside of a McDonalds restaurant looking down from a high viewpoint in which the restaurant floor is beginning to flood with water.",
             "copyright": "Flooded McDonalds by Superflex | | Wellcome Collection | | | |",
-            "url": "https://images.prismic.io/wellcomecollection/9ed554ac496cb5238a50674c840b40df4fc43acd_ep_000832_027.jpg?auto=compress,format'
+            "url": "https://images.prismic.io/wellcomecollection/9ed554ac496cb5238a50674c840b40df4fc43acd_ep_000832_027.jpg?auto=compress,format"
         }
-    },
+    }
 }
 ```
 

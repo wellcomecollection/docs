@@ -5,24 +5,24 @@ This document is used to keep track of things we've considered and decided shoul
 - Add a link to digital guides for Exhibitions
 - `/books` endpoint
 - Add `partOf` as a filter in Stories search. (List of series (e.g. serials - which is a scheduled list of articles, or webcomic series))
-
-
 - Functional content (`/pages` ?)
-or/and
 - Building upon `/events` and `/exhibitions`, allowing us to have specific Search pages for them.
+- is it possible to reuse the availability model we have in the catalogue API for `avaialbleOnline` data in `events` / `exhibitions`?
+
+
 
 
 ## Events filters and aggregations
 ### Filter
 
 - **instantiations.start.from**
-  DD-MM-YYYY
+  YYYY-MM-DD
 - **instantiations.start.to**
-  DD-MM-YYYY
+  YYYY-MM-DD
 - **instantiations.end.from**
-  DD-MM-YYYY
+  YYYY-MM-DD
 - **instantiations.end.to**
-  DD-MM-YYYY
+  YYYY-MM-DD
 - **interpretation**
   Interpretations are useful accessibility tools for event searching. They are, for example: Captioned, BSL, Wheelchair friendly
 - **place.label**
@@ -30,10 +30,10 @@ or/and
 - **format.label**
   [`Session`, `Game`, `Installation`, `Discussion`, `Performance`, `Workshop`, `Chill out`, `Shopping`, `Festival`, `Screening`, `SEND workshop`, `Late`, `Symposium`, `Gallery tour`, `Seminar`, `Study day`, `Walking tour`]
 - **partOf**
-  Part of a series of events (I'm not sure this is possible?)
+  Part of a series or season of events
 - **audience**
   The public this is geared towards, e.g. Schools
-- **contributor.agent.id**
+- **contributor.agent**
   e.g. Facilitator, Host
 - **availableOnline**
   Was recorded and the video is made available for a rewatch online.
@@ -58,16 +58,16 @@ Default sort should be by relevance, with a fallback to id if no query is provid
 ### Filters
 
 - **instantiations.start.from**
-  DD-MM-YYYY
+  YYYY-MM-DD
 - **instantiations.start.to**
-  DD-MM-YYYY
+  YYYY-MM-DD
 - **instantiations.end.from**
-  DD-MM-YYYY
+  YYYY-MM-DD
 - **instantiations.end.to**
-  DD-MM-YYYY
+  YYYY-MM-DD
 - **place.label**
   List of physical locations, would also include "Online".
-- **contributor.agent.id**
+- **contributor.agent**
   e.g. Filmmaker, Curator
 - **format.label**
   [`Permanent Exhibition`, `Season`, `Installation`]
