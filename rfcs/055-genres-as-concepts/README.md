@@ -10,7 +10,56 @@ page for a Genre should list works about and using that technique.
 Currently, Genres behave a little like (compound) Subjects, in that a genre may be 
 cracked into its constituent concepts, making a concepts list.
 
-Genre Links on Work pages lead to a search for the whole genre in the `genres.label` field.
+e.g. in b10721599
+
+```
+655  7 Novenas|zMexico.|2rbgenr 
+```
+Becomes the following entry in `genres`, consisting of the two concepts: `Novenas` and `Mexico`
+```json
+{
+  "label": "Novenas - Mexico",
+  "concepts": [
+    {
+      "id": "ggsfmp3a",
+      "identifiers": [
+        {
+          "identifierType": {
+            "id": "label-derived",
+            "label": "Identifier derived from the label of the referent",
+            "type": "IdentifierType"
+          },
+          "value": "novenas",
+          "type": "Identifier"
+        }
+      ],
+      "label": "Novenas",
+      "type": "Concept"
+    },
+    {
+      "id": "puj4yvts",
+      "identifiers": [
+        {
+          "identifierType": {
+            "id": "label-derived",
+            "label": "Identifier derived from the label of the referent",
+            "type": "IdentifierType"
+          },
+          "value": "mexico",
+          "type": "Identifier"
+        }
+      ],
+      "label": "Mexico.",
+      "type": "Place"
+    }
+  ],
+  "type": "Genre"
+}
+```
+
+Genre Links on Work pages lead to a search for the whole genre in the `genres.label` field. e.g.
+[Novenas | Mexico](https://wellcomecollection.org/search/works?genres.label=%22Novenas+-+Mexico%22)
+in the exmaple above.
 
 However, unlike Subjects, the Genre-as-a-whole does not have its own name and identifier
 
@@ -24,11 +73,11 @@ to Subjects, where they are either a Concept ($a), or a more specific sort of Co
 ### What is in MARC?
 
 * Genre is extracted from marcTag:655 fields
-  * there are 1,366,260 such fields
-    * 1755 of them have an identifier
-      * 1688 of those have an identifier in the [LCGFT](https://id.loc.gov/authorities/genreForms.html) scheme
-    * 14903 of them are compounds
-      * 3 of those have an identifier (all in the [DNB](https://www.dnb.de/EN/Home/home_node.html)/[GND](https://gnd.network/Webs/gnd/EN/Home/home_node.html) scheme)
+  * there are [1,368,770](https://c783b93d8b0b4b11900b5793cb2a1865.eu-west-1.aws.found.io:9243/s/sierra/app/discover#/?_g=(filters:!(),refreshInterval:(pause:!t,value:0),time:(from:now-15m,to:now))&_a=(columns:!(),filters:!(('$state':(store:appState),meta:(alias:!n,disabled:!f,index:d5ea4b8c-f58d-409c-8fb7-8a9973ea67f7,key:varField.marcTag,negate:!f,params:(query:'655'),type:phrase),query:(match_phrase:(varField.marcTag:'655')))),index:d5ea4b8c-f58d-409c-8fb7-8a9973ea67f7,interval:auto,query:(language:kuery,query:''),sort:!())) such fields
+    * [1755](https://c783b93d8b0b4b11900b5793cb2a1865.eu-west-1.aws.found.io:9243/s/sierra/app/discover#/?_g=(filters:!(),refreshInterval:(pause:!t,value:0),time:(from:now-15m,to:now))&_a=(columns:!(),filters:!(('$state':(store:appState),meta:(alias:!n,disabled:!f,index:d5ea4b8c-f58d-409c-8fb7-8a9973ea67f7,key:varField.marcTag,negate:!f,params:(query:'655'),type:phrase),query:(match_phrase:(varField.marcTag:'655'))),('$state':(store:appState),meta:(alias:!n,disabled:!f,index:d5ea4b8c-f58d-409c-8fb7-8a9973ea67f7,key:varField.subfields.tag,negate:!f,params:(query:'0'),type:phrase),query:(match_phrase:(varField.subfields.tag:'0')))),index:d5ea4b8c-f58d-409c-8fb7-8a9973ea67f7,interval:auto,query:(language:kuery,query:''),sort:!())) of them have an identifier
+      * [1688](https://c783b93d8b0b4b11900b5793cb2a1865.eu-west-1.aws.found.io:9243/s/sierra/app/discover#/?_g=(filters:!(),refreshInterval:(pause:!t,value:0),time:(from:now-15m,to:now))&_a=(columns:!(),filters:!(('$state':(store:appState),meta:(alias:!n,disabled:!f,index:d5ea4b8c-f58d-409c-8fb7-8a9973ea67f7,key:varField.marcTag,negate:!f,params:(query:'655'),type:phrase),query:(match_phrase:(varField.marcTag:'655'))),('$state':(store:appState),meta:(alias:!n,disabled:!f,index:d5ea4b8c-f58d-409c-8fb7-8a9973ea67f7,key:varField.subfields.tag,negate:!f,params:(query:'0'),type:phrase),query:(match_phrase:(varField.subfields.tag:'0'))),('$state':(store:appState),meta:(alias:!n,disabled:!f,index:d5ea4b8c-f58d-409c-8fb7-8a9973ea67f7,key:varField.subfields.content,negate:!f,params:(query:lcgft),type:phrase),query:(match_phrase:(varField.subfields.content:lcgft)))),index:d5ea4b8c-f58d-409c-8fb7-8a9973ea67f7,interval:auto,query:(language:kuery,query:''),sort:!())) of those have an identifier in the [LCGFT](https://id.loc.gov/authorities/genreForms.html) scheme
+    * [14905](https://c783b93d8b0b4b11900b5793cb2a1865.eu-west-1.aws.found.io:9243/s/sierra/app/discover#/?_g=(filters:!(),refreshInterval:(pause:!t,value:0),time:(from:now-15m,to:now))&_a=(columns:!(),filters:!(('$state':(store:appState),meta:(alias:!n,disabled:!f,index:d5ea4b8c-f58d-409c-8fb7-8a9973ea67f7,key:varField.marcTag,negate:!f,params:(query:'655'),type:phrase),query:(match_phrase:(varField.marcTag:'655'))),('$state':(store:appState),meta:(alias:!n,disabled:!f,index:d5ea4b8c-f58d-409c-8fb7-8a9973ea67f7,key:varField.subfields.tag,negate:!f,params:!(z,y,x,v),type:phrases),query:(bool:(minimum_should_match:1,should:!((match_phrase:(varField.subfields.tag:z)),(match_phrase:(varField.subfields.tag:y)),(match_phrase:(varField.subfields.tag:x)),(match_phrase:(varField.subfields.tag:v))))))),index:d5ea4b8c-f58d-409c-8fb7-8a9973ea67f7,interval:auto,query:(language:kuery,query:''),sort:!())) of them are compounds
+      * [3](https://c783b93d8b0b4b11900b5793cb2a1865.eu-west-1.aws.found.io:9243/s/sierra/app/discover#/?_g=(filters:!(),refreshInterval:(pause:!t,value:0),time:(from:now-15m,to:now))&_a=(columns:!(),filters:!(('$state':(store:appState),meta:(alias:!n,disabled:!f,index:d5ea4b8c-f58d-409c-8fb7-8a9973ea67f7,key:varField.marcTag,negate:!f,params:(query:'655'),type:phrase),query:(match_phrase:(varField.marcTag:'655'))),('$state':(store:appState),meta:(alias:!n,disabled:!f,index:d5ea4b8c-f58d-409c-8fb7-8a9973ea67f7,key:varField.subfields.tag,negate:!f,params:!(z,y,x,v),type:phrases),query:(bool:(minimum_should_match:1,should:!((match_phrase:(varField.subfields.tag:z)),(match_phrase:(varField.subfields.tag:y)),(match_phrase:(varField.subfields.tag:x)),(match_phrase:(varField.subfields.tag:v)))))),('$state':(store:appState),meta:(alias:!n,disabled:!f,index:d5ea4b8c-f58d-409c-8fb7-8a9973ea67f7,key:varField.subfields.tag,negate:!f,params:(query:'0'),type:phrase),query:(match_phrase:(varField.subfields.tag:'0')))),index:d5ea4b8c-f58d-409c-8fb7-8a9973ea67f7,interval:auto,query:(language:kuery,query:''),sort:!())) of those have an identifier (all in the [DNB](https://www.dnb.de/EN/Home/home_node.html)/[GND](https://gnd.network/Webs/gnd/EN/Home/home_node.html) scheme)
 
 ## Proposal - Catalogue Pipeline
 
@@ -62,6 +111,19 @@ However, the relationship between a compound subject and its identifier differs
 from the relationship between compound genres and their identifiers.  An identified
 genre is an atomic unit that can be further embellished by extra subfields, whereas
 the various subfields form part of the subject.
+
+In this MARC field, `(DE-588)4135467-9` refers to exhibition catalogues, regardless of their subject or museum of origin.
+The values of `x` and `y` are embellishments on the `Austellungskatalog` genre.
+
+```
+655  7  |0(DE-588)4135467-9 |aAusstellungskatalog |xMiltärhistorisches Museum der Bundeswehr |y27.04.2018-30.10.2018 |zDresden. |2gnd-content
+```
+
+Whereas in this MARC field (from b17259654), `sh 85118594` refers to the whole subject of ["Science|xStudy and teaching (Elementary)"](https://id.loc.gov/authorities/subjects/sh85118594.html)
+The value of `x` is part of the value of that subject.
+```
+650  0 Science|xStudy and teaching (Elementary)|0sh 85118594 
+```
 
 The consistency gained by treating a Genre like a Subject may therefore be confusing.
 
