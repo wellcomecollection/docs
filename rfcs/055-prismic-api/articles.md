@@ -93,7 +93,7 @@ GET /articles?query=foo&filters=bar&sort=baz&sortOrder=asc
   YYYY-MM-DD
 - **publicationDate.to**
   YYYY-MM-DD
-- **contributor.agent**
+- **contributors.contributor**
   Includes author, artists, photographers, etc.
 - **format.label**
   [`Comic`, `Long read`, `Prose poem`, `Podcast`, `In pictures`, `Article`, `Photo story`, `Interview`, `Book extract`]
@@ -107,5 +107,5 @@ Default sort should be by relevance, with a fallback to id if no query is provid
 
 ## Aggregations
 
-- contributor.agent
+- contributors.contributor
 - format.label

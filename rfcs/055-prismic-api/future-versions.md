@@ -9,10 +9,8 @@ This document is used to keep track of things we've considered and decided shoul
 - Building upon `/events` and `/exhibitions`, allowing us to have specific Search pages for them.
 - is it possible to reuse the availability model we have in the catalogue API for `avaialbleOnline` data in `events` / `exhibitions`?
 
-
-
-
 ## Events filters and aggregations
+
 ### Filter
 
 - **instantiations.start.from**
@@ -33,7 +31,7 @@ This document is used to keep track of things we've considered and decided shoul
   Part of a series or season of events
 - **audience**
   The public this is geared towards, e.g. Schools
-- **contributor.agent**
+- **contributors.contributor**
   e.g. Facilitator, Host
 - **availableOnline**
   Was recorded and the video is made available for a rewatch online.
@@ -53,8 +51,8 @@ Default sort should be by relevance, with a fallback to id if no query is provid
 - format
 - audience
 
-
 ## Exhibitions filters and aggregations
+
 ### Filters
 
 - **instantiations.start.from**
@@ -67,7 +65,7 @@ Default sort should be by relevance, with a fallback to id if no query is provid
   YYYY-MM-DD
 - **place.label**
   List of physical locations, would also include "Online".
-- **contributor.agent**
+- **contributors.contributor**
   e.g. Filmmaker, Curator
 - **format.label**
   [`Permanent Exhibition`, `Season`, `Installation`]
