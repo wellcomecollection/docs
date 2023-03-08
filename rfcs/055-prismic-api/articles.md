@@ -95,8 +95,8 @@ GET /articles?query=foo&filters=bar&sort=baz&sortOrder=asc
   YYYY-MM-DD
 - **contributors.contributor**
   Includes author, artists, photographers, etc.
-- **format.label**
-  [`Comic`, `Long read`, `Prose poem`, `Podcast`, `In pictures`, `Article`, `Photo story`, `Interview`, `Book extract`]
+- **format**
+  IDs corresponding to [`Comic`, `Long read`, `Prose poem`, `Podcast`, `In pictures`, `Article`, `Photo story`, `Interview`, `Book extract`]
 
 ## Sort options
 
@@ -108,4 +108,4 @@ Default sort should be by relevance, with a fallback to id if no query is provid
 ## Aggregations
 
 - contributors.contributor
-- format.label
+- format

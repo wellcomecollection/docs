@@ -25,8 +25,8 @@ This document is used to keep track of things we've considered and decided shoul
   Interpretations are useful accessibility tools for event searching. They are, for example: Captioned, BSL, Wheelchair friendly
 - **place.label**
   List of physical locations, would also include "Online".
-- **format.label**
-  [`Session`, `Game`, `Installation`, `Discussion`, `Performance`, `Workshop`, `Chill out`, `Shopping`, `Festival`, `Screening`, `SEND workshop`, `Late`, `Symposium`, `Gallery tour`, `Seminar`, `Study day`, `Walking tour`]
+- **format**
+  IDs corresponding to [`Session`, `Game`, `Installation`, `Discussion`, `Performance`, `Workshop`, `Chill out`, `Shopping`, `Festival`, `Screening`, `SEND workshop`, `Late`, `Symposium`, `Gallery tour`, `Seminar`, `Study day`, `Walking tour`]
 - **partOf**
   Part of a series or season of events
 - **audience**
@@ -67,8 +67,8 @@ Default sort should be by relevance, with a fallback to id if no query is provid
   List of physical locations, would also include "Online".
 - **contributors.contributor**
   e.g. Filmmaker, Curator
-- **format.label**
-  [`Permanent Exhibition`, `Season`, `Installation`]
+- **format**
+  IDs corresponding to [`Permanent Exhibition`, `Season`, `Installation`]
 
 ### Sort options
 
