@@ -34,99 +34,140 @@
 **TEI** - [A metadata standard for text/manuscripts](https://github.com/wellcomecollection/wellcome-collection-tei). We are using this for some non-Western manuscripts as it offers much better metadata than existing library systems and standards.
 
 ## Internal terms
+In an effort to ensure everyone uses the same language and help with onboarding, here is a incomplete glossary of the terms used in relation to the website content and its context.
+These definitions will apply to all contexts unless otherwise specified (e.g. codebase, UI...)
 
-In an effort to ensure everyone uses the same language and help with onboarding, here is a incomplete glossary of the terms used in relation to the website content and context.
+
+##### Archive
+A work _format_ (twinned with _manuscript_).
+An archive is a collection of items, also referred to as records, that have been created or accumulated by a single person, a group or an organisation. [More information can be found on our website](https://wellcomecollection.org/guides/YL9OAxIAAB8AHsyv#what-is-an-archive-).
 
 
-**Archive**
+##### Article
+Umbrella term for anything under `/stories`. Could have a format of _story_, a _webcomic_, a _photo essay_...
 
-**Article**
-Umbrella term for everything under `/stories`. Could be a story, a webcomic, a photo essay...
 
-**Author**
-A type of Role for Contributors.
-<!-- Add further description -->
-
-**Book** 
+##### Book
 [Example](https://wellcomecollection.org/books/Y7QWrREAAHC43oH0)
 Book is a content type in Prismic, displayed on the [Books listing page](https://wellcomecollection.org/books). They are books that are published by Wellcome.
 
-**Collection**
+##### Closed stores
+One of the _Location_ options, closed stores are places where only staff can go. A a reader has to make a request for items in closed stores.
 
-**Concept**
+##### Collection
 
-**Contributor**
-Anyone who is relevant to a piece of content. Depending on the content type, it could be the author, a photographer, a curator, a host, etc.
 
-**Content Type**
+##### Concept
+1. Concepts are the units of thought — ideas, meanings, or (categories of) objects and events — which underlie many knowledge organization systems. As such, concepts exist in the mind as abstract entities which are independent of the terms used to label them.
+2. We have concept pages which group items (works, images, etc.) linked to the concept (either because they were written by it or about it). [See an example here](https://wellcomecollection.org/concepts/n4fvtc49).
 
-**Digital Guide**
 
-**Digital Location**
+##### Contributor
+1. _Contributor_ in data holds two objects, _Contributor_ and _Role_. The former is about the person (their name) and the latter is about the role they held when contributing to a piece. Depending on the content type, it could be the author, a photographer, a curator, a host, etc.
+2. So _Contributor_ could refer to either the higher level or the person-level.
 
-**Digitised Item**
 
-**Event**
+##### Content Type
+Node type in Prismic, such as Event, Exhibition, Person, Story, etc. This is the higher level node type, which can then have a **format** to categorise it further if need be.
+
+
+##### Digital Guide
+See _Exhibition guide_.
+
+
+##### Digital Location
+One of the _Location_ options, materials that are available online are identified as such. [Example of an online work](https://wellcomecollection.org/works/a222wwjt).
+
+
+##### Digitised Item
+
+
+##### Event
 [Example](https://wellcomecollection.org/events/Y7P3oxEAAHC43k0_)
 Displayed in various listing pages, including [Events](https://wellcomecollection.org/events)
 <!-- Add description -->
 
-**Exhibition**
+
+##### Exhibition
 [Example](https://wellcomecollection.org/exhibitions/Yv95yBAAAILuCNv6)
 Displayed in various listing pages, including [Exhibitions](https://wellcomecollection.org/exhibitions)
 <!-- Add description -->
 
-**Exhibition Guide**
 
-**Format**
-The options change based on the content type, but for Stories, for example, it could be Webcomic, Long Read, In Picture&hellip; For an Event, it could be Game, Screening, Workshop&hellip;. They are sometimes referred to as the "type" of [insert content type].
+##### Exhibition Guide
+[Example](https://www-stage.wellcomecollection.org/guides/exhibitions/Y2omihEAAKLNfLar)
+A Prismic _Content type_ that allows the creation of online exhibition guides in multiple formats, such as BSL videos or audio tours.
+Also referred to as _Digital Guide_.
 
-**Image Gallery**
-A component that can be added in a Story (Article). These articles will most likely have the format "In Pictures".
 
-**In Pictures**
-A format for a Story (Article) that most likely contains an Image Gallery component.
+##### Format
+The options change based on the content type, but for Stories (Articles), for example, it could be Webcomic, Long Read, In Picture&hellip; For an Event, it could be Game, Screening, Workshop&hellip;. They are sometimes referred to as the "type" of [insert content type name].
 
-**Installation**
 
-**License/Licence**
+##### Image Gallery
+A component that can be added in a Story (Article). These articles will most likely have the _format_ "In Pictures".
+
+
+##### In Pictures
+A _format_ for a Story (Article) that most likely contains an Image Gallery component.
+
+
+##### Installation
+
+
+##### License/Licence
+Tells you how you're able to use the material. For example; [PDM](https://creativecommons.org/publicdomain/mark/1.0/), [CC-BY-NC-ND](https://creativecommons.org/licenses/by-nc-nd/2.0/).
 Spelled Licence on the UI (UK spelling) and License in the API.
-<!-- Add description -->
 
-**Manuscript**
 
-**Photo Story**
+##### Location
+Where the item can be found. Could be on the open shelves (readily available to readers), or in _closed stores_, as well as online (known as _digital location_).
+
+
+##### Manuscript
+[Example](https://wellcomecollection.org/works/a29c8r26)
+A work _format_ (twinned with _archive), it is for hand-written material.
+
+##### Photo Story
 A Story (Article) content type.
 <!-- Add description -->
 
-**Location**
 
-**Role**
-Part of the Contributors object, defines the type of contributor (author, illustrator, etc.)
+##### Role
+Part of the _Contributors_ object, defines the type of _contributor_ (author, illustrator, etc.)
 
-**Season**
-A season is a grouping of most any content types, but primarily events, exhibitions, stories. The idea is that it's a time-limited, curated programme of activities, and it gets promoted as one programme. e.g.: [What does it mean to be human, now?](https://wellcomecollection.org/seasons/X84FvhIAACUAqiqp). They are displayed on `/seasons/[id]`.
 
-**Serial**
-A serial is a type of series, in which articles are scheduled to be published.
+##### Season
+A season is a grouping of most any _content types_, but primarily events, exhibitions, stories. The idea is that it's a time-limited, curated programme of activities, and it gets promoted as one programme. e.g.: [What does it mean to be human, now?](https://wellcomecollection.org/seasons/X84FvhIAACUAqiqp). They are displayed on `/seasons/[id]`.
 
-**Series**
 
-**Story**
-In Prismic, this is the Content Type for Articles (listed at `/articles`). If no format is assigned to an article, its label on the FE defaults to "Story".
+##### Serial
+A serial is a type of _series_, in which _articles_ are scheduled to be published.
 
-**Subject**
 
-**Type (Content Type)**
+##### Series
 
-**Type (Types/Techniques)**
 
-**Technique**
+##### Story
+In Prismic, this is the _Content Type_ for _Articles_ (listed at `/articles`). If no format is assigned to an article, its label on the UI defaults to "Story".
+
+
+##### Subject
+
+
+
+##### Type (Types/Techniques)
+
+
+##### Technique
 A filter in `/search/works`
 <!-- Add description -->
 
-**Webcomic**
-Type of article
 
-**Work**
+##### Webcomic
+1. Before the _Article_ _Content type_ was created, there was a _Content type_ called Webcomic. 156 webcomics were created before it was disabled and it was added as an _Article_ _format_ instead. The created Webcomics are still visible and searchable, but new ones can't be created.
+2. _Format_ of Article
+
+
+##### Work
 
