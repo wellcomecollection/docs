@@ -26,7 +26,7 @@ Here are some desirable properties of any change:
 ## Thesis
 
 Although it contains microservies, we still manage the catalogue pipeline as a monolith -- we deploy it as a single unit.
-There are lots of potential gains if we're willing to break it into smaller pieces.
+There are lots of potential gains if we're willing to break it into pieces that are between "individual app" and "entire pipeline".
 
 ## The idea
 
@@ -129,6 +129,8 @@ In this approach, the relation embedder would only have to process it once, rath
 
 *   We have various tools for reindexing at different stages at the pipeline – the reindexer app is one, the "reingest display documents" script is another.
     I'd suggest pulling these together into a single new tool, which can reindex at any stage.
+
+    Running a reindex in one pipeline involves scrolling the output index of the previous pipeline, and sending all the IDs to the appropriate queue.
 
 *   In the past, one of the challenges of having pipelines that reuse an Elastic cluster is cleaning up old indexes -- but I think we could have Terraform do this for us.
 
