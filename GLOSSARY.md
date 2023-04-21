@@ -55,6 +55,7 @@ Book is a content type in Prismic, displayed on the [Books listing page](https:/
 One of the _Location_ options, closed stores are places where only staff can go. A a reader has to make a request for items in closed stores.
 
 ##### Collection
+A complex one, it might be best to refer to [this Gitbook page](https://app.gitbook.com/o/-LumfFcEMKx4gYXKAZTQ/s/18DwJCSD1tjue3OkGDPy/functional-digital-content-style-guide/terminology-all-the-parts-of-wellcome-collection) as it can have multiple meanings in different contexts.
 
 
 ##### Concept
@@ -129,8 +130,7 @@ Where the item can be found. Could be on the open shelves (readily available to 
 A work _format_ (twinned with _archive), it is for hand-written material.
 
 ##### Photo Story
-A Story (Article) content type.
-<!-- Add description -->
+A Story (Article) content type, which is primarily lead by imagery and supported by text, exploring a single narrative or perspective. The creators of this story type are usually photographers, artists or illustrators. All the imagery in this story type is usually created by one person and the work hangs together as a distinct body of work
 
 
 ##### Role
@@ -146,6 +146,8 @@ A serial is a type of _series_, in which _articles_ are scheduled to be publishe
 
 
 ##### Series
+1. Events can be grouped into event series: a grouping of events under a regularly occurring singular title/theme (e.g. Exploring Research, Study Days)
+2. _Articles_ can be grouped into _Story_ series: a grouping of articles connected thematically. These may be guest edited and include articles written by multiple _contributors_ (unlike a _serial_ which tends to have the same contributor(s) across all articles in the serial).
 
 
 ##### Story
