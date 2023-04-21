@@ -68,7 +68,7 @@ One of the _Location_ options, closed stores are places where only staff can go.
 
 
 ##### Content Type
-Node type in Prismic, such as Event, Exhibition, Person, Story, etc. This is the higher level node type, which can then have a **format** to categorise it further if need be.
+Node type in Prismic, such as Event, Exhibition, Person, Story, etc. This is the higher level node type, which can then have a _format_ to categorise it further if need be.
 
 
 ##### Digital Guide
@@ -170,4 +170,4 @@ A filter in `/search/works`
 
 
 ##### Work
-
+This is a complex one, at the time of writing this we have [a ticket](https://github.com/wellcomecollection/wellcomecollection.org/issues/9071) in progress, with some different definitions [listed in a document](https://docs.google.com/document/d/1nAUmwMQen8WuYu7TVz8PxJtp25oYd4Rk1h-5hymUR04/edit). Speak to the team for more information.
