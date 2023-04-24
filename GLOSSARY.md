@@ -81,18 +81,19 @@ One of the _Location_ options, materials that are available online are identifie
 
 
 #### Digitised Item
+<!-- TODO Add description -->
 
 
 #### Event
 [Example](https://wellcomecollection.org/events/Y7P3oxEAAHC43k0_)
 Displayed in various listing pages, including [Events](https://wellcomecollection.org/events)
-<!-- Add description -->
+<!-- TODO Add description -->
 
 
 #### Exhibition
 [Example](https://wellcomecollection.org/exhibitions/Yv95yBAAAILuCNv6)
 Displayed in various listing pages, including [Exhibitions](https://wellcomecollection.org/exhibitions)
-<!-- Add description -->
+<!-- TODO Add description -->
 
 
 #### Exhibition Guide
@@ -114,6 +115,7 @@ A _format_ for a Story (Article) that most likely contains an Image Gallery comp
 
 
 #### Installation
+<!-- TODO Add description -->
 
 
 #### License/Licence
@@ -155,15 +157,16 @@ In Prismic, this is the _Content Type_ for _Articles_ (listed at `/articles`). I
 
 
 #### Subject
+<!-- TODO Add description -->
 
 
 
 #### Type (Types/Techniques)
+<!-- TODO Add description -->
 
 
 #### Technique
-A filter in `/search/works`
-<!-- Add description -->
+<!-- TODO Add description -->
 
 
 #### Webcomic
