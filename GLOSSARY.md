@@ -115,7 +115,14 @@ A _format_ for a Story (Article) that most likely contains an Image Gallery comp
 
 
 #### Installation
-<!-- TODO Add description -->
+A type of _exhibition_ or display, generally smaller scale than an exhibition.
+Installations are:
+- Generally created by an artist, collective, or organisation (_contributor_) as distinct from the curatorial work that is the exhibition
+- May be commissioned specifically for the space, or created in response to the space
+- Smaller scale than an exhibition
+- On display inside or outside the gallery space - is something you can go to
+- Needs to appear in a calendar
+- May have different date ranges to its associated exhibition
 
 
 #### License/Licence
