@@ -83,7 +83,7 @@ rank search terms
 Fetch a set of real search terms from the reporting cluster for each content type, and write them to a local file.
 
 ```bash
-rank search compare --index <index> --query <query> --terms <terms>
+rank search compare-query-speed --index <index> --query <query> --terms <terms>
 ```
 
 Run searches against an index in the rank cluster using a set of real search terms, and compare the speed of the candidate query against the production query.
