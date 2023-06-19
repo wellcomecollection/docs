@@ -77,10 +77,11 @@ rank search --index <index> --query <query> --search-terms <searchTerms>
 Run a search against an index in the rank cluster, outputting formatted results to stdout.
 
 ```bash
-rank search get-terms
+rank search get-terms -n <n> --timestamp <timestamp> 
 ```
 
-Fetch a set of real search terms from the reporting cluster for each content type, and write them to a local file.
+Fetch a set of real search terms from the reporting cluster for each content type, and write them to a local file.  
+`n` should specify the number of terms to fetch, and `timestamp` should specify the point in time before which search terms should be retrieved. If a `timestamp` is not provided, the current time should be used. Specifying a timestamp allows users to fully reproduce a test at a later date or in a different environment.
 
 ```bash
 rank search compare-query-speed --index <index> --query <query> --terms <terms>
