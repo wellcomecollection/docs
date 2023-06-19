@@ -10,12 +10,12 @@ rank
 │   ├── update
 │   ├── delete
 │   ├── get
-│   └── ccr
+│   └── replicate
 ├── task
 │   ├── check
 │   └── delete
 ├── search
-│   ├── terms
+│   ├── get-term
 │   └── compare
 └── test
     ├── run
@@ -53,7 +53,7 @@ rank index get --index <index>
 Fetch a copy of the settings/mapping config for an index in the rank cluster.
 
 ```bash
-rank index ccr --source <source> --target <target>
+rank index replicate --source <source> --target <target>
 ```
 
 Copy an index from the rank cluster to a production cluster using [cross-cluster replication](https://www.elastic.co/guide/en/elasticsearch/reference/current/ccr-what-is.html).
@@ -77,7 +77,7 @@ rank search --index <index> --query <query> --search-terms <searchTerms>
 Run a search against an index in the rank cluster, outputting formatted results to stdout.
 
 ```bash
-rank search terms 
+rank search get-terms
 ```
 
 Fetch a set of real search terms from the reporting cluster for each content type, and write them to a local file.

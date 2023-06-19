@@ -1,6 +1,6 @@
 # RFC 57: Relevance testing
 
-**Status:** Draft  
+**Status:** Draft
 **Last updated:** 2023-06-02
 
 This RFC describes how and why we might write a new version of _rank_, our relevance testing tool.
@@ -63,11 +63,13 @@ These tests aren't data, and shouldn't exist as static files which are read by s
 
 We should instead be writing tests _as_ code, more tightly coupled with the test-runner. Each test should be expressive of the intent of the test, and of how its pass/failure is being calculated.
 
+Pytest's [parametrised tests](https://docs.pytest.org/en/7.1.x/example/parametrize.html) and [fixtures](https://docs.pytest.org/en/6.2.x/fixture.html) might help us achieve this plain-language test-writing style.
+
 ### Rank eval API requests
 
 Our testing needs have developed over time, and we rarely use elasticsearch's rank eval API in the way that it's supposed to be used. In many cases, the requests we use to analyse quality are straightforward `search` requests.
 
-The outputs of our tests are often more binary than the rank eval API's responses, and we're discarding information about scoring which might be useful.  
+The outputs of our tests are often more binary than the rank eval API's responses, and we're discarding information about scoring which might be useful.
 In other cases, we've extended our code to test things which the API doesn't support, eg relative positions of expected results.
 
 These differences are hard to understand from the code, and are not well documented. A new implementation should be clearer about where those divergences are.
@@ -130,12 +132,12 @@ rank
 │   ├── update
 │   ├── delete
 │   ├── get
-│   └── ccr
+│   └── replicate
 ├── task
 │   ├── check
 │   └── delete
 ├── search
-│   ├── terms
+│   ├── get-terms
 │   └── compare
 └── test
     ├── run
