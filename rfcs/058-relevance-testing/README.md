@@ -92,11 +92,16 @@ To keep things moving in cases where we're satisfied with the overall search qua
 
 While the example above might represent a minor degradation in search quality for one intention, it's not something we would normally consider a catastrophic failure. If the same change led to an improvement in search quality for a different set of intentions, we might still want to deploy it.
 
-The scoring and passing of tests should be more nuanced, and should be able to account for the _ideal_ and _worst-case_ scenarios for each test.
+The scoring and passing of tests should be more nuanced, and should be able to account for the _ideal_ and _worst-case_ scenarios for each test. Ideally, we should show show a summary of the scores at the end of each test run, even in cases where the tests pass with ideal scores.
 
 We should still be alerted to any degradations in individual or overall scores in CI, and we should be able to set extreme thresholds for each test which would cause rank to fail.
 
-NB This would represent a meaningful (but incomplete) step towards a proper [NDCG](https://en.wikipedia.org/wiki/Discounted_cumulative_gain) testing implementation, for which we currently don't have the data.
+It's possible to augment pytest's outputs with extra context by writing extra [plugins](https://docs.pytest.org/en/7.1.x/how-to/writing_plugins.html#writing-plugins). By defining a new `pytest_report_header()` or `pytest_terminal_summary()` etc we can be much more explicit about what the output of each test (or group of tests) means.
+
+In those cases where scores are below an ideal threshold but aren't so bad that we want the whole suite to fail, we can use pytest to raise [warnings](https://docs.pytest.org/en/7.1.x/how-to/capture-warnings.html#warns), which fall into a separate section of the output.
+
+NB These changes to scoring would represent a meaningful (but incomplete) step towards a proper [NDCG](https://en.wikipedia.org/wiki/Discounted_cumulative_gain) testing implementation, for which we currently don't have the data.
+
 
 ## Features
 
