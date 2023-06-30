@@ -40,4 +40,11 @@ When an RFC is merged it provides a guide to implementing that change when it is
   <dd>
     Some discussion about how we might model subjects and people in the concepts API.
   </dd>
+
+  <dt>
+    <a href="./059-059-splitting-pipeline-terraform">RFC 059</a>: Splitting the catalogue pipeline Terraform
+  </dt>
+  <dd>
+    Some changes to the workflow for managing different instances of the catalogue pipeline in Terraform; primarily aimed at improving isolation between different pipelines.
+  </dd>
 </dl>
