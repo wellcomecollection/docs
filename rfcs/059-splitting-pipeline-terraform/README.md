@@ -73,7 +73,7 @@ What this should look like for developers:
 
     > I create a pipeline `2001-01-01`, then I copy the folder to create `2002-02-02`.
     >
-    > When I run `run_terraform.sh init` in the `2002-02-02` folder, it notices that the state in `.terraform` points at `s3://…/2001-01-01.tfstate`, but now I'm trying to keep state in `s3://…/2001-01-01.tfstate`.
+    > When I run `run_terraform.sh init` in the `2002-02-02` folder, it notices that the state in `.terraform` points at `s3://…/2001-01-01.tfstate`, but now I'm trying to keep state in `s3://…/2002-02-02.tfstate`.
     >
     > It offers to migrate the state to the new location; if I say yes, it will copy the state and then try to destroy the resources labelled `2001-01-01` on the next plan/apply.
     >
