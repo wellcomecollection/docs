@@ -64,4 +64,4 @@ Experience: Works: Images (cached)
 - Investigate prevent destroy for the indexes
 
 **Alex/Jamie**
-- RFC for having separate stacks per pipeline
+- RFC for having separate stacks per pipeline [#2393](https://github.com/wellcomecollection/catalogue-pipeline/issues/2393)
