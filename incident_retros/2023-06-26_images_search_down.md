@@ -60,7 +60,7 @@ Experience: Works: Images (cached)
 ## Actions
 
 **Paul**
-- pipeline/terraform/modules/pipeline_indices/main.tf config dates are hard coded but should be a variable
+- pipeline/terraform/modules/pipeline_indices/main.tf config dates are hard coded but should be a variable [#2394](https://github.com/wellcomecollection/catalogue-pipeline/pull/2394)
 - Investigate prevent destroy for the indexes
 
 **Alex/Jamie**
