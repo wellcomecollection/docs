@@ -12,6 +12,8 @@
 
 ## Timeline
 
+[Monday 4 September](#monday-4-september-2023)
+
 See [https://wellcome.slack.com/archives/C01FBFSDLUA/p1686565392141259 ](https://wellcome.slack.com/archives/C01FBFSDLUA/p1693813577323909)
 
 NB notes in italics are the info sent out about this incident to give a rough idea of where we were at what point
