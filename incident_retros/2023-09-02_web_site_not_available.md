@@ -233,6 +233,57 @@ java.lang.OutOfMemoryError: Java heap space<br>
 It seems like CloudFront is maybe keeping it up but new queries aren’t working<br>
 I have no idea what’s up, but I’m going to kick off a task redeployment to hopefully bring the API back up and then leave it for the night
 
+## Tuesday 5 September 2023
+Search not working. Rest of the web site looks okay.
+
+*09.25 We are aware that search is not working this morning and we are continuing to work on resolving this issue.*
+
+10.22 AC this is the logging link I'm starting with today: https://logging.wellcomecollection.org/app/discover#/?_g=(filters:!(),refreshInterval:(pause:!t,va[…]transaction*%22'),sort:!(!('@timestamp',desc))) <br>
+It excludes all the HTTP traffic and just shows the rest of the logs<br>
+You can see the OutOfMemoryError: Java heap space at 18:49 last night, but I can't see any corresponding errors this morning<br>
+Looking in ECR, the API code hasn't changed in nearly a fortnight<br>
+And ECS metrics for prod-search-api don't look unreasonable<br>
+Looks like all the tasks were restarted correctly last night<br>
+There's nothing abnormal in the Elastic console<br>
+Latency of the content app was largely flat overnight; a brief spike when the API ran out of memory yesterday and then climbing this morning as the API struggles again<br>
+CloudFront metrics look normal; we don't seem to be serving an abnormally high proportion of traffic
+
+10.49 AC looking at the logs I see us serving a lot of search requests from the API which look like query spam
+
+10.55 AC So I am tempted to introduce a new spam heuristic by expanding the range of characters we consider "unusual": [#10177](https://github.com/wellcomecollection/wellcomecollection.org/pull/10177) Expand the range of characters we consider 'unusual' for spam purposes
+
+11.49 AC I've deployed my spam detection heuristic to prod, will keep an eye on latency. I see latency climbing again
+
+12.16 AC I feel like there are clues pointing towards a renewed spam issue<br>
+I've grabbed the CloudFront logs for the past 36 hours (half of today, all of yesterday)<br>
+Yesterday we served 141,473 search pages on the website<br>
+Today we've already served 113,208 search pages which weren't rejected as spam<br>
+Very sus
+ 
+15.04 AC [#10178](https://github.com/wellcomecollection/wellcomecollection.org/pull/10178) Add a toggle for disabling aggregations in search
+
+15.51 AC disables aggregations in front end search (formats, locations, subjects, types/techniques, contributors, languages)
+
+*17.00 Work has been done to get us to the place where we think search is working and more stable now. *
+
+Tuesday summary:
+- The website seems to be somewhat stable, but it's not fully back yet.
+- We're fairly confident that the issue is not caused by a bug in our code – we can't find any recent change that might have caused the problems we're seeing.
+- We can see the issue is caused by excessive load on the Elasticsearch cluster from searches, but it's unclear why the current search traffic is causing more issues than it used to.
+- As a temporary fix, we've disabled aggregations (i.e. filters) on the website. Aggregations are the most expensive part of the query, and so far these seem to have stopped the site falling over repeatedly.
+- We have a reindexed pipeline ready to go, in case the issue is something to do with the data in the Elasticsearch
+- cluster. We're going to try deploying that tomorrow and see what happens.
+
+Tomorrow:
+- Switch over to the new index in the API
+- Re-enable aggregations on the front end
+- Monitor the site and see what happens
+
+If we're still having issues, we'll raise a support ticket with Elastic.
+
+## Wednesday 6 September 2023
+## Thursday 7 September 2023
+
 ## Analysis of causes
 - 
 
