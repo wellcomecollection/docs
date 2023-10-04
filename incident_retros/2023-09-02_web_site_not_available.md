@@ -12,7 +12,7 @@
 
 ## Timeline
 
-[Saturday 2 September]()
+[Saturday 2 September](#saturday-2-september-2023)
 [Monday 4 September](#monday-4-september-2023)
 [Tuesday 5 September]()
 [Wednesday 6 September](#wednesday-6-september-2023)
