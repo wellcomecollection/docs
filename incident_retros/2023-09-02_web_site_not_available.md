@@ -371,8 +371,67 @@ Tomorrow:
 - Elasticsearch and profile the queries, e.g. removing certain clauses to see if they're the issue in aggregate.
 - Re-enable some of the filters and see if the more aggressive spam detection has reduced the issue to manageable levels.
 
-
 ### Thursday 7 September 2023
+
+07.39 AC Continuing the established next steps from yesterday: I’m going to re-enable the languages filter and keep an eye on the latency
+
+07.58 AC That’s done; so far no latency spike. In the meantime, I built a little local test harness to extract the raw Elasticsearch queries
+
+08.12 AC Enabling the new filter still seems fine
+
+AC tested firing those requests into the ES cluster that isn’t serving prod traffic and found spikes without any query, just with aggregations searching works.
+
+08.17 AC Given the languages toggle has been live for 40 minutes and no issues, I’m going to re-enable the genre/availability toggles which we think should be cheap
+
+08.29 AC I believe we are now back to full search functionality and latency remains good, but we’ll keep an eye on it for a while
+ 
+*08.51 We are now back to full search functionality. We will continue to monitor so that we're satisfied this issue has been fully addressed and will update again later today.*
+
+09.19 AC We are now ~90 minutes past re-enabling the languages filter
+And no visible issues in the tracking
+
+09.25 AC I think I’ve reduced the query about as far as I can go for now – this is a set of 32 queries which, if sent in quick succession, will cause CPU utilisation and latency to spike in the ES cluster that receives it.
+
+10.21 onwards AC and PB debugging the queries that cause the issue:<br>
+there’s a list of reduced queries just above that cause the issue<br>
+if you fire those into ES in quick succession, you see a spike in CPU and latency and the contributors filter seems to be the issue but not the regex part
+
+10. 48 AC the ampersand there makes me wonder if somebody got there from a mangled URL
+because that filter is wrapped in quotes, we just don’t display them in the UI
+
+11.27 PB There is definitely an error here (mea culpa), but whether it is relevant to the problem at hand, I don't know.  For Works the visibility filter is only present as part of the query, so a request without a query term will aggregate over all records, not just the visible ones.
+
+11.27 AC I don’t think that would make a difference (edited) 
+Records which aren’t visible wouldn’t have any values to aggregate over (edited) 
+But I can see it might be more efficient
+
+11.30 AC I wonder if it would be worth binning the requests into “has results” and “has no results” and see if there’s a difference?
+
+11.36 AC Okay, that idea is a bust because the "B. " and "E. Lambert  are the only two such queries
+
+12.09 AC Some thoughts:
+- The mitigation of more aggressive spam prevention seems to be working … or at least the site has stayed up for much longer than it did last time. But if the spambots get cleverer or traffic increases, we’ll be back to square one.
+- The issue is definitely something in the filter code, exactly what I’m not sure – and I can’t think of any “obvious” ways to improve it, because this is already a problem which has had plenty of thought.
+
+Some ideas for next steps:
+1. Talk to Elastic Professional Services about the best way to make this query. It’s what they’re here for, and we are surely not the only people who want this behaviour.
+2. Actually get aggregations off the hot path of search, for real. This would reduce the load on then cluster if we didn’t have to do all the aggregations on every search. 
+ 
+12.21 PB I wonder if collect_mode is the source of our woes.  I'm having a similar melty brain, but I think the self aggregation is not operating on the pruned document set from its parent aggregation, but they are all operating on the same document set, and then getting pruned.
+I think it should already be that way by default, because of the cardinality thing, but I'm not sure.
+
+13.49 AC No ticket yet, we can open support tickets through the portal. Or Jonathan is chatting to them about a possible field trip to their offices anyway but since nothing is actively on fire, we can take our time to formulate the question properly
+
+13.56 PB One more simple thing to try - the self.X aggregation has the same size request as the main aggregation (because it's a copy with a bit extra), I think it should have size=1. Again, it's a bit of straw-clutching, but I don't know what's happening under the hood when it's hunting for the match. If the value in question is collocated with a large set of other values,  then perhaps it's checking all of them until it finds size  different values.
+
+14.58 JP suggests scaling 06-09 back down to 8gb; keep 06-10 for debugging
+
+14.59 AC And maybe we scale 06-10 down for a bit?
+
+I think we currently have four Elastic clusters which feels like a lot
+
+22.05 AC I've disabled language filters again sigh
+
 
 ### Friday 8 September 2023
 08.31 AC The site began redlining again last night, so I disabled filters again
