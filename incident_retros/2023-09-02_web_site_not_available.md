@@ -396,7 +396,7 @@ And no visible issues in the tracking
 there’s a list of reduced queries just above that cause the issue<br>
 if you fire those into ES in quick succession, you see a spike in CPU and latency and the contributors filter seems to be the issue but not the regex part
 
-10. 48 AC the ampersand there makes me wonder if somebody got there from a mangled URL
+10.48 AC the ampersand there makes me wonder if somebody got there from a mangled URL
 because that filter is wrapped in quotes, we just don’t display them in the UI
 
 11.27 PB There is definitely an error here (mea culpa), but whether it is relevant to the problem at hand, I don't know.  For Works the visibility filter is only present as part of the query, so a request without a query term will aggregate over all records, not just the visible ones.
