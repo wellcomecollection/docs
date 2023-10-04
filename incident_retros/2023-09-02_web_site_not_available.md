@@ -16,7 +16,7 @@ See [https://wellcome.slack.com/archives/C01FBFSDLUA/p1686565392141259 ](https:/
 
 NB notes in italics are the info sent out about this incident to give a rough idea of where we were at what point
 
-## Saturday 2 September 2023
+### Saturday 2 September 2023
 
 Updown alerts began at 16.50 for<br>
 Experience: Content:What’s on (origin)<br>
@@ -28,7 +28,7 @@ and other content<br>
 
 It continued to bounce down and up until the morning of Monday 4 September
 
-## Monday 4 September 2023
+### Monday 4 September 2023
 
 08.46 NP messages @weco_devs in #wc-incident-response: Web site's gone AWOL (see wc-platform alerts) - can you please look at this as a priority.
 
@@ -233,7 +233,7 @@ java.lang.OutOfMemoryError: Java heap space<br>
 It seems like CloudFront is maybe keeping it up but new queries aren’t working<br>
 I have no idea what’s up, but I’m going to kick off a task redeployment to hopefully bring the API back up and then leave it for the night
 
-## Tuesday 5 September 2023
+### Tuesday 5 September 2023
 Search not working. Rest of the web site looks okay.
 
 *09.25 We are aware that search is not working this morning and we are continuing to work on resolving this issue.*
@@ -281,8 +281,8 @@ Tomorrow:
 
 If we're still having issues, we'll raise a support ticket with Elastic.
 
-## Wednesday 6 September 2023
-## Thursday 7 September 2023
+### Wednesday 6 September 2023
+### Thursday 7 September 2023
 
 ## Analysis of causes
 - 
