@@ -370,9 +370,27 @@ Tomorrow:
 
 ### Friday 8 September 2023
 
-### Thursday 7 September 2023
+### Monday 11 September 2023
 
-### Thursday 7 September 2023
+### Tuesday 12 September 2023
+
+### Friday 15 September 2023
+
+### Monday 18 September 2023
+
+*09.15 The web site performed normally over the weekend. We have re-enabled the filters and will continue to monitor.*
+
+### Wednesday 20 September 2023
+
+02.41-06.46 Updown down and up alerts for:<br>
+What’s on cached and origin (https://wellcomecollection.org/whats-on )<br>
+Content: Event cached and origin  (https://wellcomecollection.org/events/W4VKXR4AAB4AeXU7 )<br>
+Content: Exhibition cached and origin (https://content.wellcomecollection.org/exhibitions/WZwh4ioAAJ3usf86 )<br>
+
+
+### Tuesday 3 October 2023
+
+*11.53 Resolved - We're closing this incident after extended monitoring. We believe we have effectively mitigated the effects of the requests that were causing issues and no longer believe there is an increased risk of downtime. Thank you for your patience.*
 
 ## Analysis of causes
 - 
