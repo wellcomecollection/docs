@@ -12,7 +12,13 @@
 
 ## Timeline
 
+[Saturday 2 September]()
 [Monday 4 September](#monday-4-september-2023)
+[Tuesday 5 September]()
+[Wednesday 6 September](#wednesday-6-september-2023)
+[Thursday 7 September]()
+[Friday 8 September]()
+[Saturday 2 September]()
 
 See [https://wellcome.slack.com/archives/C01FBFSDLUA/p1686565392141259 ](https://wellcome.slack.com/archives/C01FBFSDLUA/p1693813577323909)
 
@@ -284,6 +290,88 @@ Tomorrow:
 If we're still having issues, we'll raise a support ticket with Elastic.
 
 ### Wednesday 6 September 2023
+
+08.37 AC the new API seems to be missing a handful of works<br>
+I’m going to deploy it anyway, roll forward onto a hopefully-good index<br>
+And I’ve got time to roll back if it breaks before I leave for the office
+
+08.56 AC why is the what’s on page down<br>
+PrismicError: An invalid API response was returned
+
+NP checked just after 09.00 and What’s On was available
+
+10.22 AC I haven't seen any issues since I rolled forward, hmm
+
+11.54 AC [#696](https://github.com/wellcomecollection/catalogue-api/issues/696) API returns a 500 error when regex-like characters sneak into the search templates
+ 
+12.43 AC [#10179](https://github.com/wellcomecollection/wellcomecollection.org/pull/10179) Allow toggling individual aggregations
+
+13.24 AC re-enabling aggregations in search
+
+13:25 I will start off with:<br>
+:white_tick: genres, availabilities, workType<br>
+:x: subjects, contributors, languages<br>
+This ran for 25 minutes with no spikes in latency or anything, so assuming it's all okay
+
+13.49 AC Flipping it round:<br>
+:white_tick: subjects, contributors, languages<br>
+:x: genres, availabilities, workType<br>
+And within seconds those are spiking resources on the cluster. 
+
+13.55 AC I'm going to disable those aggregations, let it cool back to zero, and then start re-enabling them
+
+14.51 AC Now everything is back to the baseline, I'm going to re-enable a single aggregation<br>
+:white_tick: contributors<br>
+:x: genres, availabilities, workType, subjects, languages
+
+15.07 AC This has caused a bunch of 500 errors, which seem to be caused by the workType filter being missing. I'm not sure why this didn't manifest before, but I'm going to change the experiment slightly:<br>
+:white_tick: contributors, workType<br>
+:x: genres, availabilities, subjects, languages
+
+*15.08 We're making improvements to search as the day progresses, and will update you again later today.*
+
+15.29 AC That last variant seems to be more stable, so I'm going to swap contributors and subjects:<br>
+:white_tick: subjects, workType<br>
+:x: genres, availabilities, contributors, languages
+
+15.38 AC And now swapping out again, that previous variant seems stable:<br>
+:white_tick: languages, workType<br>
+:x: genres, availabilities, contributors, subjects
+
+15.42 AC Again no issues, but we think it might be something to do with the interaction between aggregations, so we're going to try what we think are the two most expensive ones:<br>
+:white_tick: subjects, contributors, workType<br>
+:x: genres, availabilities, languages
+ 
+15.56 AC Argh, it's still borked.<br>
+:white_tick: subjects, contributors, workType, languages<br>
+:x: genres, availabilities<br>
+
+I've shoved in a query AWLC TURNING ON ALL THREE FILTERS so we can find the approximate timestamp in the logs
+
+16.11 AC Elastic is stumbling again, languages agg is off
+
+16.38 AC [#10181](https://github.com/wellcomecollection/wellcomecollection.org/pull/10181) Make our spam detection more aggressive
+
+*16.54 We've stabilised search although not all of the filters are currently available.*
+
+Wednesday summary:
+
+Today:
+- Jamie has identified a group of ~800 catalogue API requests which, if made at speed, will cause a latency spike in the Elastic cluster (see script above). This gives us a reproducible test case for exploring this further.
+- We've also deployed a more aggressive spam detection heuristic which should cut some of the spam queries (which return a lot of results and might be causing more expensive aggregations).
+
+Tomorrow:
+- Get the raw Elastic queries for those API requests, cutting out the catalogue API. We can then feed them into
+- Elasticsearch and profile the queries, e.g. removing certain clauses to see if they're the issue in aggregate.
+- Re-enable some of the filters and see if the more aggressive spam detection has reduced the issue to manageable levels.
+
+
+### Thursday 7 September 2023
+
+### Friday 8 September 2023
+
+### Thursday 7 September 2023
+
 ### Thursday 7 September 2023
 
 ## Analysis of causes
