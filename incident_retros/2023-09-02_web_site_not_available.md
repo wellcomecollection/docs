@@ -477,9 +477,38 @@ Content: Exhibition cached and origin (https://content.wellcomecollection.org/ex
 *11.53 Resolved - We're closing this incident after extended monitoring. We believe we have effectively mitigated the effects of the requests that were causing issues and no longer believe there is an increased risk of downtime. Thank you for your patience.*
 
 ## Analysis of causes
-- 
+- Very high latency, split out content and cat apps again to isolate to cat app
+- Requests not noticeably larger & happened without code changes
+- Latency from ES cluster
+- Increasing resource didn’t solve the problem
+- Aggregations are the most expensive part of the query
+- Not clear when/if the site might fall over
 
 ## Actions
 
-**who**
+**Natalie**
+- Onboarding new PMs onto incident protocol - note added to onboarding info 11/9/23
+- Ask ACF if he wants to receive statuspage updates - added ACF 11/9/23
+- When would we use the alert banner - updated web site issues doc with link to how to use global alert: https://www.notion.so/wellcometrust/Site-problems-Who-to-contact-41d5b3a820a649faa2cdf5982b4a4b25?pvs=25#18f45ef51ad14ea09be9ee7c862ba413 
+
+**Alex**
+- Write ticket for getting aggregations off the hot path of search (for PM-less devs to pick up?) [#5728](https://github.com/wellcomecollection/platform/issues/5728)
+
+**Alex/Jamie**
+- Tour of dashboards used in the incident: to do in review meeting
+
+**Alex/Jamie/Paul**
+- Talk to Elastic Professional Services about the best way to make this query - get best minimal reproduction we can to take to Elastic - no action until/unless we know what to ask, which we don’t
+
+**Jamie**
+- Identify features of the web site we might need/want to be able to switch off & implement that e.g. security WONTDO
+
+**Gareth**
+- Have separate toggles for stage and prod [#10204](https://github.com/wellcomecollection/wellcomecollection.org/issues/10204)
+
+**Devs**
+- Make the alert banner easier to use than with regexes
+
+**Done**
+- Get a better view of the size of Next.js props? Use https://github.com/alexwlchan/nextjs-pageweight-analyser
 - 
