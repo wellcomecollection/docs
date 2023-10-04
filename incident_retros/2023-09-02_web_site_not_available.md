@@ -18,10 +18,10 @@
 [Wednesday 6 September](#wednesday-6-september-2023)<br>
 [Thursday 7 September](#thursday-7-september-2023)<br>
 [Friday 8 September](#friday-8-september-2023)<br>
-[Monday 11 September 2023](#monday-11-september-2023)
-[Tuesday 12 September 2023](#tuesday-12-september-2023)
-[Friday 15 September 2023](#friday-15-september-2023)
-[Monday 18 September 2023](#monday-18-september-2023)
+[Monday 11 September 2023](#monday-11-september-2023)<br>
+[Tuesday 12 September 2023](#tuesday-12-september-2023)<br>
+[Friday 15 September 2023](#friday-15-september-2023)<br>
+[Monday 18 September 2023](#monday-18-september-2023)<br>
 
 See [https://wellcome.slack.com/archives/C01FBFSDLUA/p1686565392141259 ](https://wellcome.slack.com/archives/C01FBFSDLUA/p1693813577323909)
 
