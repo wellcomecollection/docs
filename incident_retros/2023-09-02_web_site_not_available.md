@@ -6,6 +6,7 @@
 
 **Retro held:** 2023-09-11
 
+
 - [Timeline](#timeline)
 - [Analysis of causes](#analysis-of-causes)
 - [Actions](#actions)
@@ -22,6 +23,8 @@
 [Tuesday 12 September 2023](#tuesday-12-september-2023)<br>
 [Friday 15 September 2023](#friday-15-september-2023)<br>
 [Monday 18 September 2023](#monday-18-september-2023)<br>
+[Wednesday 20 September](#wednesday-20-september-2023)<br>
+[Tuesday 3 October](#tuesday-3-october-2023)<br>
 
 See [https://wellcome.slack.com/archives/C01FBFSDLUA/p1686565392141259 ](https://wellcome.slack.com/archives/C01FBFSDLUA/p1693813577323909)
 
@@ -372,12 +375,31 @@ Tomorrow:
 ### Thursday 7 September 2023
 
 ### Friday 8 September 2023
+08.31 AC The site began redlining again last night, so I disabled filters again
+
+*9.05 Search performance degraded overnight. We have disabled filters for the time being to improve search performance and will update you again later today. We apologize for the inconvenience*
+
+09.06 AC Okay, so having spent four days on this already, here’s what I think:<br>
+The performance of filters has become a recurrent issue that we can’t “quick fix” our way out of. There is no obvious change or event that occurred last week that we need to roll back. Whatever the fix for this ends up being, it needs more thought and care.
+
+09.34 [#5728](https://github.com/wellcomecollection/platform/issues/5728) Investigate the recent spikes in Elasticsearch resource usage
+
+09.44 AC I have re-enabled filters for now, but I reserve the right to turn them back off later
+
+10.04 AC Some thoughts about what to do next: [Comment on #5728 Investigate the recent spikes in Elasticsearch resource usage](https://github.com/wellcomecollection/platform/issues/5728#issuecomment-1711319630)
+
+*11.59 Filters on search have been enabled for about two hours now. We are continuing to monitor the search performance and will update you again later today.*
+
+*15.51 Search with filters has been running almost all of today. We are going to turn filters off over the weekend as a precaution which will leave the web site and search functioning and stable.*
 
 ### Monday 11 September 2023
+*10.30 The web site performed normally over the weekend. We have re-enabled the filters and will continue to monitor.*
 
 ### Tuesday 12 September 2023
+Brief (1-2 mins) updown alerts for What’s on (cached) and What’s on (origin)
 
 ### Friday 15 September 2023
+*15.30 Search with filters has been running well all week. We are going to turn filters off over the weekend as a precaution which will leave the web site and search functioning and stable.*
 
 ### Monday 18 September 2023
 
