@@ -12,13 +12,13 @@
 
 ## Timeline
 
-[Saturday 2 September](#saturday-2-september-2023)
-[Monday 4 September](#monday-4-september-2023)
-[Tuesday 5 September](#tuesday-5-september-2023)
-[Wednesday 6 September](#wednesday-6-september-2023)
-[Thursday 7 September]()
-[Friday 8 September]()
-[Saturday 2 September]()
+[Saturday 2 September](#saturday-2-september-2023)<br>
+[Monday 4 September](#monday-4-september-2023)<br>
+[Tuesday 5 September](#tuesday-5-september-2023)<br>
+[Wednesday 6 September](#wednesday-6-september-2023)<br>
+[Thursday 7 September](#thursday-7-september-2023)<br>
+[Friday 8 September]()<br>
+[Saturday 2 September]()<br>
 
 See [https://wellcome.slack.com/archives/C01FBFSDLUA/p1686565392141259 ](https://wellcome.slack.com/archives/C01FBFSDLUA/p1693813577323909)
 
