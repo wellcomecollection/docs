@@ -7,7 +7,7 @@ When somebody leaves the team, here's a (probably incomplete) checklist of thing
   - [ ] Slack (D&T) add to software required list in the New Starter Request form or raise a ticket with the service desk
   - [ ] Our GitHub organisation (ask a Dev)
   - [ ] Our Buildkite organisation (ask a Dev)
-  - [ ] Prismic (ask Danny Birchall)
+  - [ ] Prismic (ask Digital Editorial team)
   - [ ] Vercel (Dev)
   - [ ] Elastic Cloud (Dev)
   - [ ] Gitbook (Ashley Ray)
