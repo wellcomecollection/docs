@@ -20,7 +20,7 @@ When somebody leaves the team, here's a (probably incomplete) checklist of thing
 - Other accounts/services that may be required for Platform team members
   - [ ] Gsuite (D&T)
   - [ ] Dovetail (User Researcher)
-  - [ ] Zeplin (Dom)
+  - [ ] [Figma](https://app.gitbook.com/o/-LumfFcEMKx4gYXKAZTQ/s/MaQacfH9yAJ0HD9VdSNQ/a-z-of-tools/figma)
   - [ ] Trello (D&T)
   - [ ] Email lists (D&T) request in new starter request form
   - [ ] SharePoint site (Sharepoint site owner) e.g. Wellcome Collection, Digital Engagement, Digital Experience sites
