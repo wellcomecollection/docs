@@ -24,4 +24,5 @@ When somebody leaves the team, here's a (probably incomplete) checklist of thing
   - [ ] Trello (D&T)
   - [ ] Email lists (D&T) request in new starter request form
   - [ ] SharePoint site (Sharepoint site owner) e.g. Wellcome Collection, Digital Engagement, Digital Experience sites
+- [A-Z list of tools](https://app.gitbook.com/o/-LumfFcEMKx4gYXKAZTQ/s/MaQacfH9yAJ0HD9VdSNQ/a-z-of-tools) may also be helpful with what's used and how to get access
 - [ ] Make sure their C_ cloud account (i.e. AWS access) is sorted by D&T. When somebody leaves, these accounts aren't removed immediately; they're disabled and deleted after a certain period has passed.
