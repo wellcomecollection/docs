@@ -11,7 +11,7 @@ When somebody leaves the team, here's a (probably incomplete) checklist of thing
   - [ ] Vercel (Dev)
   - [ ] Elastic Cloud (Dev)
   - [ ] Gitbook (Ashley Ray)
-  - [ ] Notion (Danny Birchall)
+  - [ ] Notion (Pete Doherty, Kristine Nielsen, Isabelle Foss, Al Cowie-Fraser)
   - [ ] Mailtrap (Dev)
   - [ ] Miro (and if leaving confirm where to transfer their boards) (Ask Natalie or Hannh or add/remove DE Team users)
   - [ ] Hotjar
