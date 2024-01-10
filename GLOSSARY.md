@@ -47,12 +47,18 @@ An archive is a collection of items, also referred to as records, that have been
 Umbrella term for anything under `/stories`. Could have a format of _story_, a _webcomic_, a _photo essay_...
 
 
+#### Audience
+A _content type_ used for _Events_ & _Exhibitions_ that declares what specific audience it's target to. e.g. "16+" or "Experts".
+
+
 #### Book
 [Example](https://wellcomecollection.org/books/Y7QWrREAAHC43oH0)
 Book is a content type in Prismic, displayed on the [Books listing page](https://wellcomecollection.org/books). They are books that are published by Wellcome.
 
+
 #### Closed stores
 One of the _Location_ options, closed stores are places where only staff can go. A a reader has to make a request for items in closed stores.
+
 
 #### Collection
 A complex one, it might be best to refer to [this Gitbook page](https://app.gitbook.com/o/-LumfFcEMKx4gYXKAZTQ/s/18DwJCSD1tjue3OkGDPy/functional-digital-content-style-guide/terminology-all-the-parts-of-wellcome-collection) as it can have multiple meanings in different contexts.
@@ -125,22 +131,31 @@ Installations are:
 - May have different date ranges to its associated exhibition
 
 
+#### Interpretation types
+A _content type_'s access offerings, such as "Audio described", "British Sign Language" or "Captions (online)".
+
+
 #### License/Licence
 Tells you how you're able to use the material. For example; [PDM](https://creativecommons.org/publicdomain/mark/1.0/), [CC-BY-NC-ND](https://creativecommons.org/licenses/by-nc-nd/2.0/).
 Spelled Licence on the UI (UK spelling) and License in the API.
 
 
 #### Location
-Where the item can be found. Could be on the open shelves (readily available to readers), or in _closed stores_, as well as online (known as _digital location_).
+- In works; Where the item can be found. Could be on the open shelves (readily available to readers), or in _closed stores_, as well as online (known as _digital location_).
+- In _Events_ & _Exhibitions_ it relates to the _Place_ content type but used as a synonym.
 
 
 #### Manuscript
 [Example](https://wellcomecollection.org/works/a29c8r26)
 A work _format_ (twinned with _archive), it is for hand-written material.
 
+
 #### Photo Story
 A Story (Article) content type, which is primarily lead by imagery and supported by text, exploring a single narrative or perspective. The creators of this story type are usually photographers, artists or illustrators. All the imagery in this story type is usually created by one person and the work hangs together as a distinct body of work
 
+
+#### Place
+A _content type_ created for any place/location we might need in an _Event_ or an _Exhibition_, e.g. "Level 1 landing" or "Malet Street Gardens".
 
 #### Role
 Part of the _Contributors_ object, defines the type of _contributor_ (author, illustrator, etc.)
