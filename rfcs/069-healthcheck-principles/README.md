@@ -34,7 +34,7 @@ At the moment the health-check endpoints for our services report either OK (20x 
 
 Health checks that indicate if an error requires a task restart and record metrics that can be alarmed on if it does, and that the service itself can react to in the case a restart would not be useful. For example:
 
-- `wellcomecollection.org` notices that Prismic (or Content API, Catalogue API) requests are failing, records metrics to trigger alarsm and adds a notice to the UI that we know there's a problem and are looking at it, but continues to report a 2xx health check to the ALB so it doesn't restart.
+- `wellcomecollection.org` notices that Prismic (or Content API, Catalogue API) requests are failing, records metrics to trigger alarms and adds a notice to the UI that we know there's a problem and are looking at it, but continues to report a 2xx health check to the ALB so it doesn't restart.
 
 - Items API notices that it can't talk to Sierra, records metrics that cause alarms to go off but reports healthy to the ALB so it can continue to serve items requests that don't require a call to sierra.
 
