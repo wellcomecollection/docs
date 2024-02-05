@@ -48,7 +48,7 @@ It's important to note that identifying behavior that requires a restart may be 
 
 This could be implemented simply by:
 
-- Health checks which exercise a single critical happy path e.g. make a request to Elasticsearch.
+- Health checks which exercise a single critical happy path e.g. make a request to Elasticsearch. This request should not be dependent on specific data, i.e. don't make a request for a certain Work, because if that work itself is somehow in error such that it does not exist (e.g. it has failed to pass through the pipeline), a check that expects it to exist will fail.
 
 A more complicated solution could include:
 
