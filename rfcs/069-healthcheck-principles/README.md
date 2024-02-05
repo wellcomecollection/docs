@@ -44,6 +44,8 @@ Health checks that indicate if an error requires a task restart and record metri
 
 We could have something smarter that checks the critical functionality of the application, and only reports unhealthy where that critical function cannot be fulfilled. 
 
+It's important to note that identifying behavior that requires a restart may be very difficult and a good place to start is exercising critical functionality as part of the health check in our applications.
+
 This could be implemented simply by:
 
 - Health checks which exercise a single critical happy path e.g. make a request to Elasticsearch.
