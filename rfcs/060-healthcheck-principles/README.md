@@ -1,4 +1,4 @@
-# RFC 050: Service health-check principles
+# RFC 060: Service health-check principles
 
 This RFC explores how we should implement health-checks in our services, specifically around services that have HTTP interactions / are serviced by load-balancers that implement health-checking.
 
