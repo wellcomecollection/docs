@@ -11,6 +11,8 @@
 
 **DLCS** - [Our image/IIIF server](https://dlcs.info/), run by Digirati, which provides both the actual asset delivery and the IIIF image APIs.
 
+**Ebsco** - [A provider of library metadata services](https://www.ebsco.com/), named for Mr Elton B. Stephens. They provide e-journal metadata to the catalogue pipeline.
+
 **Encore** - [The "frontend" for Sierra](https://www.iii.com/products/encore/), which was historically used on wellcomelibrary.org. This provided search and other user-facing interfaces; much of our work has been to replace it. 
 
 **Goobi** - [Software for digitisation projects](https://www.intranda.com/en/digiverso/goobi/goobi-overview/). The digital production team use Goobi for packaging (+ metadata) digitised content.
