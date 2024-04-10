@@ -1,0 +1,14 @@
+// This is a diagram created with Mermaid (https://mermaid-js.github.io/)
+sequenceDiagram
+    participant WB as web browser
+    participant AA as accounts API
+    WB->>AA: direct user to log in page
+    AA->>WB: authenticate user<br/>return user ID
+    participant SA as stacks API
+    participant SI as Sierra
+    WB->>SA: POST /users/{user-id}/item-requests
+    SA->>AA: Is this a valid user?
+    AA->>SA: Yup!
+    SA->>SI: Place a hold
+    SI->>SA: Acknowledge hold
+    SA->>WB: 201 Created

@@ -1,0 +1,39 @@
+@startuml
+left to right direction
+package "works catalogue"{
+map work1{
+concept => n84165387, abc123, Concept
+}
+map work2{
+concept => n84165387, def789, Person
+}
+}
+
+package "catalogue concepts" {
+object "---n84165387---" as overwritten{
+id: abc123
+type: Concept
+authoritativeID: n84165387
+}
+object n84165387{
+id: def789
+type: Person
+authoritativeID: n84165387
+}
+}
+
+package "concept store" {
+object def789 {
+type: Person
+authoritativeID: n84165387
+}
+
+
+}
+
+work1  --> overwritten
+work2  --> n84165387
+n84165387 --> def789
+
+
+@enduml

@@ -1,0 +1,193 @@
+GET works-merged-2022-04-04/_search
+{
+  "query": {
+    "exists": {"field":"data.collectionPath.path.keyword"}
+  },
+  "size": 0,
+  "runtime_mappings": {
+    "data.collectionPath.path.tail": {
+      "type": "keyword",
+      "script": "emit(doc['data.collectionPath.path.keyword'].value.splitOnToken('/')[-1])"
+    },
+    "data.collectionPath.path.head": {
+      "type": "keyword",
+      "script": "emit(doc['data.collectionPath.path.keyword'].value.splitOnToken('/')[0])"
+    }
+  },
+  "aggs": {
+    "heads": {
+      "terms": {
+        "field": "data.collectionPath.path.head",
+        "size": 10000,
+        "order": {
+          "_key": "asc"
+        }
+
+      }
+
+    }
+  }
+}
+
+GET works-merged-2022-04-04/_search
+{
+  "query": {
+    "bool":{"must": [
+    {"exists": {"field":"data.collectionPath.path.keyword"}},
+    {
+        "range": {
+          "data.collectionPath.path.tail":{
+            "gte":"11ppejw"
+          }
+        }
+    }
+    ]
+    }
+  },
+  "size": 0,
+  "runtime_mappings": {
+    "data.collectionPath.path.tail": {
+      "type": "keyword",
+      "script": "emit(doc['data.collectionPath.path.keyword'].value.splitOnToken('/')[-1])"
+    },
+    "data.collectionPath.path.head": {
+      "type": "keyword",
+      "script": "emit(doc['data.collectionPath.path.keyword'].value.splitOnToken('/')[0])"
+    }
+  },
+  "aggs": {
+    "tails": {
+      "terms": {
+        "field": "data.collectionPath.path.tail",
+        "size": 10000,
+        "order": {
+          "_key": "asc"
+        }
+
+      }
+
+    }
+  }
+}
+
+GET works-merged-2022-04-04/_doc/wm96mmsk
+GET works-merged-2022-04-04/_doc/n7s84nnm
+GET works-indexed-2022-04-04/_search
+{
+  "query": {
+    "term": {"data.collectionPath.path": "3288731i"}
+  }
+}
+GET works-merged-2022-04-04
+GET works-merged-2022-04-04/_search
+{
+  "query": {
+    "term": {"data.collectionPath.path": "3303244i"}
+  }
+}
+GET works-merged-2022-04-04/_search
+{
+  "query": {
+    "match": {"data.collectionPath.path": "540972i"}
+  }
+}
+
+GET works-merged-2022-04-04/_search
+{
+  "query": {
+    "wildcard": {
+      "data.collectionPath.path": {
+        "value": "*/540972i"
+      }
+
+    }
+  }
+}
+GET works-indexed-2022-04-04/_search
+{
+  "query": {
+    "wildcard": {
+      "data.collectionPath.path": {
+        "value": "*/582777i"
+      }
+
+    }
+  }
+}
+
+GET works-merged-2022-04-04/_search
+{
+  "query": {
+    "wildcard": {
+      "data.collectionPath.path.keyword": {
+        "value": "msamer12"
+      }
+
+    }
+  }
+}
+
+GET works-merged-2022-04-04/_search
+{
+  "size": 0,
+  "aggs": {
+    "paths": {
+      "terms": {
+        "field": "data.collectionPath.path.keyword",
+        "size": 10000
+      }
+    }
+  }
+}
+
+GET works-merged-2022-04-04/_search
+{
+
+  "query": {
+    "exists": {"field":"data.collectionPath.path.keyword"}
+  },
+  "size": 0,
+  "runtime_mappings": {
+    "data.collectionPath.path.tail": {
+      "type": "keyword",
+      "script": "emit(doc['data.collectionPath.path.keyword'].value.splitOnToken('/')[-1])"
+    }
+  },
+  "aggs": {
+    "tails": {
+      "terms": {
+        "field": "data.collectionPath.path.tail",
+        "size": 10000
+      }
+    }
+  }
+}
+
+GET works-merged-2022-04-04/_search
+{
+  "query": {
+    "exists": {"field":"data.collectionPath.path.keyword"}
+  },
+  "size": 0,
+  "runtime_mappings": {
+    "data.collectionPath.path.head": {
+      "type": "keyword",
+      "script": "emit(doc['data.collectionPath.path.keyword'].value.splitOnToken('/')[0])"
+    }
+  },
+  "aggs": {
+    "heads": {
+      "terms": {
+        "field": "data.collectionPath.path.head",
+        "size": 10000
+      }
+    }
+  }
+}
+
+
+
+
+
+GET works-indexed-2022-04-04/_doc/n3xnc4av
+GET works-indexed-2022-04-04/_doc/g6djvdbe

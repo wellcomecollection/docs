@@ -1,0 +1,157 @@
+bib_statuses,location,status,opacmsg,rules_for_requesting,example_bib,example_item,count
+,ClosedStores,Available,Online request,,b10000021,i10000021,531037
+,OpenShelves,Available,Open shelves,Item is on open shelves.  Check Location and Shelfmark for location details.,b10000094,i10000112,141657
+,,As above,-,Please request top item.,b10003095,i10003630,31923
+,ClosedStores,Available,Manual request,,b10077959,i15070852,27183
+Closed,ClosedStores,Closed,Unavailable,This item is closed.,b16234248,i15451185,9657
+,ClosedStores,Unavailable,@ digitisation,This item is unavailable.,b10006990,i10007763,6935
+Restricted,ClosedStores,Restricted,Online request,,b16232811,i15449610,5076
+,,As above,,Please request top item.,b10329110,i18947748,5067
+,,As above,Online request,Please request top item.,b10030372,i10036428,4612
+ByAppointment,ClosedStores,Permission required,By appointment,[empty message],b17222473,i16596250,3479
+,ClosedStores,Available,By appointment,,b10335900,i10396068,3359
+,OpenShelves,Missing,Open shelves,This item is missing.,b10002200,i10002601,2272
+Open,ClosedStores,Available,Online request,,b16236907,i15453856,2115
+,ClosedStores,Permission required,By appointment,[empty message],b10331104,i10390856,2009
+,ClosedStores,Available,Staff use only,,b11964819,i16640652,1771
+,ClosedStores,Missing,Online request,This item is missing.,b10000252,i1000032x,1720
+,ClosedStores,Available,Manual request,Please complete a manual request slip.  This item cannot be requested online.,b10109092,i10128062,896
+,ClosedStores,Available,Ask at desk,Item is on open shelves.  Check Location and Shelfmark for location details.,b12692645,i12675295,821
+,ClosedStores,Available,Ask at desk,,b13108815,i13333926,672
+,ClosedStores,Missing,-,This item is missing.,b10012576,i10014093,453
+PermissionRequired,ClosedStores,Permission required,Donor permission,[empty message],b18477859,i17321682,346
+,ClosedStores,Missing,Manual request,This item is missing.,b10550732,i10640472,322
+,OpenShelves,Unavailable,@ digitisation,This item is unavailable.,b10010208,i10011341,286
+,OpenShelves,Available,Online request,Item is on open shelves.  Check Location and Shelfmark for location details.,b10084873,i10100842,277
+,,Available,Online request,,b10120440,i10140323,252
+,ClosedStores,Available,Online request,Item not available due to provisions of Data Protection Act. Return to Archives catalogue to see when this file will be opened.,b18189489,i17124372,218
+,ClosedStores,Unavailable,Unavailable,This item is unavailable.,b11970522,i12082880,185
+,ClosedStores,Available,Open shelves,,b10017409,i10020366,182
+,,Available,,,b15842034,i15078875,179
+Restricted,ClosedStores,Available,Online request,,b16237699,i15454642,170
+,ClosedStores,On holdshelf,Online request,Item is in use by another reader. Please ask at Enquiry Desk.,b10362678,i10424325,158
+Closed,,Closed,Unavailable,This item is closed.,b18164705,i17099596,143
+,ClosedStores,Dept material,By appointment,,b15562876,i14813178,137
+Closed,ClosedStores,Closed,--,This item is closed.,b18267282,i17174454,122
+ByAppointment,ClosedStores,Available,Online request,,b18387378,i17254152,107
+,ClosedStores,Missing,Unavailable,This item is missing.,b10917597,i11064742,96
+TemporarilyUnavailable,ClosedStores,Unavailable,Unavailable,This item is unavailable.,b1830820x,i17197880,89
+,ClosedStores,Closed,By appointment,This item is closed.,b18591279,i17407813,71
+Restricted,ClosedStores,Restricted,Online request,Item not available due to provisions of Data Protection Act. Return to Archives catalogue to see when this file will be opened.,b18500663,i17338566,54
+,ClosedStores,Available,Unavailable,,b11125068,i11301740,48
+,OpenShelves,Available,Open shelves,,b15255578,i14575504,45
+Open,ClosedStores,Available,-,,b18410716,i17272294,45
+Open,ClosedStores,Restricted,Online request,,b16235083,i15452037,43
+,OpenShelves,In cataloguing,Ask at desk,Item is on open shelves.  Check Location and Shelfmark for location details.,b22675243,i19408286,41
+ByAppointment,ClosedStores,Unavailable,@ digitisation,This item is unavailable.,b21322417,i18613664,33
+,,As above,Open shelves,Please request top item.,b10030165,i10036209,30
+,ClosedStores,Permission required,Donor permission,[empty message],b25353974,i18823968,26
+,,Available,-,,b12160805,i14748460,24
+,ClosedStores,Missing,Open shelves,This item is missing.,b1001729x,i10020238,22
+,ClosedStores,Available,-,,b1311671x,i13357062,21
+,OpenShelves,Available,Manual request,Item is on open shelves.  Check Location and Shelfmark for location details.,b13112399,i17133270,21
+,,On exhibition,Exhib. Gallery,On exhibition. Please ask at Enquiry Desk.,b17274539,i19359123,21
+,,Unavailable,@ digitisation,This item is unavailable.,b15007753,i14263233,19
+Unavailable,ClosedStores,Missing,Online request,This item is missing.,b16238692,i15455646,19
+Unavailable,ClosedStores,Missing,Unavailable,This item is missing.,b18403475,i17266464,19
+,OpenShelves,Missing,-,This item is missing.,b1020197x,i10235577,16
+,,Missing,-,This item is missing.,b13573196,i14249339,16
+,ClosedStores,Missing,,This item is missing.,b10552479,i14201719,16
+,,Permission required,By appointment,[empty message],b12023863,i12241672,13
+,ClosedStores,Closed,Unavailable,This item is closed.,b18303602,i17195275,11
+,ClosedStores,As above,-,Please request top item.,b1218679x,i12432180,9
+,ClosedStores,Missing,Staff use only,This item is missing.,b15565737,i16640755,9
+Unavailable,ClosedStores,Available,Online request,,b18595777,i17411373,9
+ByAppointment,ClosedStores,Available,-,Item not available due to provisions of Data Protection Act. Return to Archives catalogue to see when this file will be opened.,b3250200x,i19420614,9
+,OpenShelves,On search,Open shelves,This item is on search.,b10102619,i10120579,8
+,ClosedStores,On search,Online request,This item is on search.,b10167638,i10195981,8
+,ClosedStores,Available,Manual request,Item is on open shelves.  Check Location and Shelfmark for location details.,b13157565,i13423368,8
+,ClosedStores,Dept material,Online request,,b15499789,i14763667,8
+Closed,ClosedStores,Available,Online request,,b17222497,i16596274,8
+,ClosedStores,Closed,--,This item is closed.,b18400802,i17264352,8
+Restricted,ClosedStores,Closed,By appointment,This item is closed.,b19504184,i18079465,8
+,,Available,Unavailable,,b14895614,i14163457,7
+,ClosedStores,Missing,By appointment,This item is missing.,b15603313,i14854454,7
+,ClosedStores,As above,Online request,Please request top item.,b13246021,i14747157,6
+,ClosedStores,Restricted,Online request,,b16443019,i14266647,6
+,ClosedStores,Claims returned,Online request,[empty message],b1556986x,i15024192,6
+,ClosedStores,As above,,Please request top item.,b15879823,i15118563,6
+TemporarilyUnavailable,ClosedStores,Available,Online request,,b19653384,i18183323,6
+,,Available,Manual request,,b11066635,i11235202,5
+,OpenShelves,Available,Online request,,b15380099,i14651130,5
+TemporarilyUnavailable,,Unavailable,Unavailable,This item is unavailable.,b18358214,i17232612,5
+Restricted,ClosedStores,Available,Online request,Item not available due to provisions of Data Protection Act. Return to Archives catalogue to see when this file will be opened.,b18763753,i17540203,5
+,OpenShelves,In cataloguing,Ask at desk,,b31500262,i19408407,5
+,OpenShelves,Claims returned,Open shelves,[empty message],b10010245,i1390856x,4
+,ClosedStores,Available,,,b10162008,i14206602,4
+,OpenShelves,Available,Ask at desk,Item is on open shelves.  Check Location and Shelfmark for location details.,b16596419,i1590412x,4
+Unavailable,ClosedStores,Missing,--,This item is missing.,b1707440x,i16447906,4
+Unavailable,ClosedStores,Available,Online request,Item not available due to provisions of Data Protection Act. Return to Archives catalogue to see when this file will be opened.,b18420941,i17280448,4
+Closed,,Closed,--,This item is closed.,b18596812,i17412213,4
+,,Unavailable,Unavailable,This item is unavailable.,b19461537,i18044499,4
+Closed,ClosedStores,Restricted,Online request,Item not available due to provisions of Data Protection Act. Return to Archives catalogue to see when this file will be opened.,b28153650,i18842513,4
+,ClosedStores,Withdrawn,Unavailable,This item is withdrawn.,b10360542,i10421920,3
+,,Available,Exhib. Gallery,,b16385202,i15606077,3
+,ClosedStores,Dept material,Staff use only,,b16456919,i15765738,3
+Unavailable,ClosedStores,Missing,-,This item is missing.,b18427856,i17285707,3
+ByAppointment,ClosedStores,Closed,Unavailable,This item is closed.,b18678282,i17475867,3
+,ClosedStores,Available,By appointment,Item not available due to provisions of Data Protection Act. Return to Archives catalogue to see when this file will be opened.,b18845794,i17610552,3
+Unavailable,,Missing,Online request,This item is missing.,b18935679,i17682599,3
+Restricted,ClosedStores,Unavailable,@ digitisation,This item is unavailable.,b19200262,i17836566,3
+,,On display,Exhib. Gallery,,b3215981x,i19358556,3
+,ClosedStores,Withdrawn,Online request,This item is withdrawn.,b12098000,i12325193,2
+,,Available,Open shelves,,b12994017,i1317051x,2
+,OpenShelves,Missing,,This item is missing.,b10716634,i14610048,2
+,ClosedStores,In quarantine,Online request,,b15353035,i1464812x,2
+Restricted,,Restricted,Online request,,b17541621,i16909380,2
+,,Available,Staff use only,,b18047646,i1705638x,2
+Restricted,ClosedStores,Available,-,Item not available due to provisions of Data Protection Act. Return to Archives catalogue to see when this file will be opened.,b18376290,i17246076,2
+,ClosedStores,Closed,Online request,This item is closed.,b18454781,i17304878,2
+Closed,ClosedStores,Closed,-,This item is closed.,b18685407,i17480899,2
+Open,ClosedStores,Unavailable,@ digitisation,This item is unavailable.,b18837086,i17603225,2
+ByAppointment,,Permission required,By appointment,[empty message],b20016979,i18303390,2
+,,Closed,Unavailable,This item is closed.,b24387149,i18721138,2
+,OpenShelves,Available,New books,Item is on open shelves.  Check Location and Shelfmark for location details.,b30874233,i19238459,2
+TemporarilyUnavailable,ClosedStores,Closed,Unavailable,This item is closed.,b3183498x,i19343516,2
+ByAppointment,ClosedStores,Available,-,,b32494361,i19416817,2
+ByAppointment,ClosedStores,Restricted,Online request,Item not available due to provisions of Data Protection Act. Return to Archives catalogue to see when this file will be opened.,b32633130,i19423299,2
+,ClosedStores,a,Online request,,b13138443,i13395610,1
+,OpenShelves,As above,-,Please request top item.,b15208710,i14508278,1
+,ClosedStores,Available,Online request,Please complete a manual request slip.  This item cannot be requested online.,b15208849,i14508473,1
+,OpenShelves,Available,,Item is on open shelves.  Check Location and Shelfmark for location details.,b1349885x,i14784270,1
+,OpenShelves,Available,-,Item is on open shelves.  Check Location and Shelfmark for location details.,b12109915,i14817937,1
+,OpenShelves,On exhibition,Open shelves,On exhibition. Please ask at Enquiry Desk.,b13124201,i14927469,1
+,ClosedStores,Missing,Ask at desk,This item is missing.,b15647766,i1493727x,1
+,,On exhibition,-,On exhibition. Please ask at Enquiry Desk.,b15731431,i14980721,1
+,OpenShelves,Missing,Online request,This item is missing.,b15796413,i15043216,1
+,ClosedStores,a,Online request,At digitisation and temporarily unavailable.,b21395287,i16916827,1
+,ClosedStores,Missing,@ digitisation,This item is missing.,b17560895,i16926031,1
+Open,ClosedStores,0,Online request,,b18276842,i17179749,1
+Open,ClosedStores,Permission required,By appointment,[empty message],b18590706,i17407321,1
+ByAppointment,,Available,Online request,,b18782036,i17555589,1
+Open,ClosedStores,Available,--,,b18848357,i1761255x,1
+,ClosedStores,Closed,-,This item is closed.,b18856792,i17619130,1
+Restricted,ClosedStores,a,By appointment,,b19088000,i17758907,1
+Restricted,ClosedStores,Unavailable,Online request,This item is unavailable.,b19173428,i17815125,1
+Closed,ClosedStores,Restricted,Online request,,b19350065,i17951057,1
+TemporarilyUnavailable,ClosedStores,Available,Online request,Item not available due to provisions of Data Protection Act. Return to Archives catalogue to see when this file will be opened.,b19455586,i18038876,1
+,,Missing,Online request,This item is missing.,b19559835,i18121834,1
+ByAppointment,,Unavailable,@ digitisation,This item is unavailable.,b21243189,i18600177,1
+,ClosedStores,Available,By approval,,b21366408,i18616185,1
+ByAppointment,ClosedStores,Available,By appointment,,b21733326,i1869522x,1
+,,Dept material,Staff use only,This item cannot be requested online. Please place a manual request.,b1497535x,i18699145,1
+,ClosedStores,Returned to vendor,Online request,,b12706292,i18721163,1
+,,Available,Open shelves,Item is on open shelves.  Check Location and Shelfmark for location details.,b24724580,i1873084x,1
+Open,ClosedStores,Closed,Unavailable,This item is closed.,b24895787,i18771609,1
+Open,ClosedStores,Closed,By appointment,This item is closed.,b28162870,i18850728,1
+,ClosedStores,On holdshelf,By appointment,Item is in use by another reader. Please ask at Enquiry Desk.,b28168124,i18854801,1
+,ClosedStores,Withdrawn,By appointment,This item is withdrawn.,b28546118,i18929370,1
+,ClosedStores,Available,Staff use only,Item cannot be requested online. Please contact Medical Film & Audio Library.   Email: mfac@wellcome.ac.uk. Telephone: +44 (0)20 76118596/97.,b29134754,i1898230x,1
+,ClosedStores,Available,Unavailable,Item not available due to provisions of Data Protection Act. Return to Archives catalogue to see when this file will be opened.,b29403480,i19014685,1
+Open,ClosedStores,Missing,Online request,This item is missing.,b30156531,i19129658,1
+,OpenShelves,Withdrawn,Unavailable,This item is withdrawn.,b30203892,i1913874x,1
+,,Available,New books,,b30226284,i19165766,1
+ByAppointment,ClosedStores,Available,Staff use only,,b19700003,i19221708,1
+,,On exhibition,Unavailable,On exhibition. Please ask at Enquiry Desk.,b31986432,i19354939,1
+OpenWithAdvisory,ClosedStores,Available,Online request,,b32236542,i19395176,1
+,,In cataloguing,Ask at desk,,b32503738,i19421382,1
