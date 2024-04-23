@@ -59,6 +59,8 @@ Following this logic, we propose the following:
 - Possible changes to location label and/or shelfmarks for offsite items (confirm with library colleagues).
 - Changes to frontend requesting copy to allow for variable requesting schedule.
 
+This means that there will be no *API-consumer-facing indication* that an item is held offsite, other than potentially a reflection of this in the location label (which would not be reliably machine-readable). This leaves the items API free to determine the availability of an offsite item (eg its increased lead time over held-onsite items) based on the location data it receives directly from Sierra.
+
 **Questions**
 
 - Is it really OK to have no machine-readable method for discriminating offsite items in our APIs? Will we end up writing hacks, stuff like `if (location.label.includes("offsite")) { displaySomeOtherUIVariant(); }`?
@@ -67,4 +69,6 @@ Following this logic, we propose the following:
 
 - Addition of a new access method for items that are requested online to be viewed offsite
 - Items API to discriminate using Sierra data as in phase 1
-- User flow in frontend app and/or APIs to be determined using the new access method
+- User flow in frontend app and/or APIs to be determined using the new access method	
+
+For these items there will be an API-consumer-facing indication that the item is to be viewed offsite, in the form of the access method - but this will not give any details about the specifics of that location. As with Phase 1, the specifics will be determined by business logic held in the Items API, which has access to the Sierra data.
