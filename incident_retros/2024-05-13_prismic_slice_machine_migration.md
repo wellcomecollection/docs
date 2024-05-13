@@ -84,23 +84,35 @@ Fix for change expected URL for meta image [#10859](https://github.com/wellcomec
 Add publishDate to articles graphQuery [#128](https://github.com/wellcomecollection/content-api/pull/128) deployed; reindex run Monday 13 May [fixed issue with old article that had to be delisted] Override date bug already existed but wasn’t known about - that date wasn’t fetched by the content API
 
 
-
-
-
-
 ## Analysis of causes
-- High load caused the search service to get into a bad state, and our health-checks are not good enough to recognise that this last task needed booting
-- Three tasks serving search. Two were restarted after a load balancer health check but third didn’t (it was healthy enough to look as if it was alright).
-- Related to: Elasticsearch timeout can be fatal to the ingestor. [#2268](https://github.com/wellcomecollection/catalogue-pipeline/issues/2268) ?
+What happened that we didn’t anticipate?
+- Content API affected
+- Opening times weren’t displaying “name” and “image” as they didn’t have a “label” anymore
+- Promo images aren’t always using the 16:9 version
+- ‘In Pictures’ articles aren’t showing all images by default
+- Old ‘webcomics’ (Body Squabbles) are rendering as image galleries with one image
+- One article from 2017 was somehow listed as the most recently published thing
+- Drafts weren’t migrated
+
+NB Alerts caught the content API issue
+
+Why didn’t our safeguards catch this?
+- Mostly these were subtle changes to the site
+- No end to end tests with the migrated material
 
 
 ## Actions
 
-**Robert**
-- Investigate why bot traffic is still reaching our service
+**DM**
+- Migrate any remaining docs in draft
+- Investigate how to find drafts
 
-**Natalie**
-- Take to planning: Extend load balancer health checks or search API to fail if it can’t connect to ES (including Investigate Elasticsearch timeout can be fatal to the ingestor. #2268)
+**Prismic**
+- To investigate why image weight label crops didn't migrate
 
-**Agnes**
-- Check if updown checks the catalogue API and reports that in Slack
+**NP**
+- Take to planning: Toggle for data from Prismic staging / run e2es on Prismic staging to enable sharing of the site with a wider group before migrating
+
+**Future migrations**
+- Share with more people before migrating e.g. devs and editorial
+- Kickoff with reps from other teams
