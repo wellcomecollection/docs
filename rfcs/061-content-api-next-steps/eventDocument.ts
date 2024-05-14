@@ -95,7 +95,7 @@ const eventDocument = {
   },
   // filter and aggregatableValues modified here to match the object they filters for/aggregate on, eg.
   // locationIds -> "locations.attendance" 
-  // formatIDs -> format
+  // formatIds -> format
   filter: {
     format: 'WcKmiysAACx_A8NR',
     "interpretations.label": [ 'Audio described' ], // if one/some of the Scheduled events had a different interpretation, it would be added here 

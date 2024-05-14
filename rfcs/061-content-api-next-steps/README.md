@@ -13,7 +13,7 @@
 - Aggregations  
 - Sorting  
 
-[Further requests for opinions and insights](#further-requests-for-opinions-and-insights  )  
+[Further requests for opinions and insights](#further-requests-for-opinions-and-insights)  
 - Prismic IDs  
 - How granular do we want to be for filtering by time and date on Events?
 
@@ -42,7 +42,7 @@ This [Github PR](https://github.com/wellcomecollection/content-api/issues/93#iss
 #### Challenge
 There is no way to create an event hierarchy at the moment. In reality, some events come as a set (they become “Scheduled” events) and could use such a thing. The solution adopted by the team is to create a “Parent” event first, which contains the general information including promotional images. Then, “Scheduled” events are added to its “Scheduled” tab:
 
-// place image here 
+![](./schedule-on-event.png)
 
 These Scheduled events are, in reality, sibling events, as, as we said, there is no hierarchy within the Event content type. They are created only to be listed in the Parent event:
 
@@ -237,12 +237,12 @@ https://wellcome.slack.com/archives/C3TQSF63C/p1715251171559049
 ### Events endpoint and response
 `https://api.wellcomecollection.org/content/v0/events?aggregations=format%2Caudiences%2CisAvailableOnline%2Clocations.attendance%2Cinterpretations.label`
 
-See response in `./events-api-response.json`
+See response in `./events-api-response.ts`
 
 ### Event endpoint and response
 `https://api.wellcomecollection.org/content/v0/events/[eventId]`
 
-See response in `./event-api-response.json`
+See response in `./event-api-response.ts`
 
 ### Filters
 This applies both for Events and Articles; we want to align them on [API faceting principles & expectations](https://github.com/wellcomecollection/docs/tree/main/rfcs/037-api-faceting-principles):

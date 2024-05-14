@@ -1,4 +1,9 @@
-{
+// proposal for /events API response 
+// no change to the events in the results array
+// changes to:
+// - aggregation buckets names, eg. audience -> audiences, location -> locations.attendance
+// - addition of the interpretations.label bucket
+const eventsApiResponse = {
   "type": "ResultList",
   "results": [
     {
