@@ -237,12 +237,12 @@ https://wellcome.slack.com/archives/C3TQSF63C/p1715251171559049
 ### Events endpoint and response
 `https://api.wellcomecollection.org/content/v0/events?aggregations=format%2Caudiences%2CisAvailableOnline%2Clocations.attendance%2Cinterpretations.label`
 
-See response in `./events-api-response.ts`
+See response [events-api-response.json](./events-api-response.ts)
 
 ### Event endpoint and response
 `https://api.wellcomecollection.org/content/v0/events/[eventId]`
 
-See response in `./event-api-response.ts`
+See response [event-api-response.json](./event-api-response.ts)
 
 ### Filters
 This applies both for Events and Articles; we want to align them on [API faceting principles & expectations](https://github.com/wellcomecollection/docs/tree/main/rfcs/037-api-faceting-principles):
