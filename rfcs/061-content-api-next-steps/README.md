@@ -239,10 +239,112 @@ https://wellcome.slack.com/archives/C3TQSF63C/p1715251171559049
 
 See response [events-api-response.json](./events-api-response.ts)
 
+Changes are in the `aggregations` part of the reponse 
+
+```javascript
+"aggregations": {
+    "audiences": { // change in bucket name
+      "buckets": [
+        {
+          "data": {
+            "type": "EventAudience",
+            "id": "WlYWECQAACcAWdBf",
+            "label": "Youth event"
+          },
+          "count": 45,
+          "type": "AggregationBucket"
+        },
+      ...moreBuckets
+      ],
+      "type": "Aggregation"
+    },
+    "format": {
+      "buckets": [
+        {
+          "data": {
+            "type": "EventFormat",
+            "id": "Wd-QYCcAACcAoiJS",
+            "label": "Discussion"
+          },
+          "count": 167,
+          "type": "AggregationBucket"
+        },
+      ...moreBuckets
+      ],
+      "type": "Aggregation"
+    },
+    "isAvailableOnline": {
+      "buckets": [
+        {
+          "data": {
+            "type": "OnlineAvailabilityBoolean",
+            "value": false,
+            "label": "Catch-up event"
+          },
+          "count": 419,
+          "type": "AggregationBucket"
+        },
+        {
+          "data": {
+            "type": "OnlineAvailabilityBoolean",
+            "value": true,
+            "label": "Catch-up event"
+          },
+          "count": 63,
+          "type": "AggregationBucket"
+        }
+      ],
+      "type": "Aggregation"
+    },
+    "locations.attendance": { // change in bucket name
+      "buckets": [
+        {
+          "data": {
+            "id": "in-our-building",
+            "label": "In our building",
+            "type": "EventAttendance"
+          },
+          "count": 376,
+          "type": "AggregationBucket"
+        },
+        {
+          "data": {
+            "id": "online",
+            "label": "Online",
+            "type": "EventAttendance"
+          },
+          "count": 81,
+          "type": "AggregationBucket"
+        }
+      ],
+      "type": "Aggregation"
+    }, 
+    "interpretations.label": { 
+      // added bucket for interpretations/access needs 
+      // using interpretations.label to avoid duplication caused by interpretations with same label but different ids
+      "buckets": [
+        {
+          "data": {s
+            "type": "EventInterpretation",
+            "id": "W5JXVSYAACYAGtkh",
+            "label": "Relaxed"
+          },
+          "count": 132,
+          "type": "AggregationBucket"
+        },
+      ...moreBuckets 
+      ],
+      "type": "Aggregation"
+    }
+  }
+```
+
 ### Event endpoint and response
 `https://api.wellcomecollection.org/content/v0/events/[eventId]`
 
 See response [event-api-response.json](./event-api-response.ts)
+
+No change to the API response 
 
 ### Filters
 This applies both for Events and Articles; we want to align them on [API faceting principles & expectations](https://github.com/wellcomecollection/docs/tree/main/rfcs/037-api-faceting-principles):
