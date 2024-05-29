@@ -49,12 +49,11 @@ This [Github PR](https://github.com/wellcomecollection/content-api/issues/93#iss
 
 There is no way to create an event hierarchy at the moment. In reality, some events come as a set (they become “Scheduled” events) and could use such a thing. The solution adopted by the team is to create a “Parent” event first, which contains the general information including promotional images. Then, “Scheduled” events are added to its “Scheduled” tab:
 
-![](./assets/schedule-on-event.png)
+<img src="./assets/schedule-on-event.png" width="400" />
 
 These Scheduled events are, in reality, sibling events, as, as we said, there is no hierarchy within the Event content type. They are created only to be listed in the Parent event:
 
-![](./assets/scheduled.png)
-
+<img src="./assets/scheduled.png" width="400" />
 
 As they contain minimal other information (lacking images, description...), the Scheduled events are not to be seen individually, nor displayed in listing pages. This is done by tagging the event with delist.
 
@@ -246,7 +245,6 @@ In the events endpoint, we chose to add `isChildScheduledEvent: true` to events 
 
 3. **Granularity of dates**
    TBC. [See ticket](https://github.com/wellcomecollection/content-api/issues/130).
-   
 
 ## Proposal
 
