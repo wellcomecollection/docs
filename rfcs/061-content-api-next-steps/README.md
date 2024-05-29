@@ -68,7 +68,7 @@ The parent points to its children by ID, the child has no knowledge of what its 
 - The API returns the Parent event, not the Scheduled events to avoid duplication and/or evenst being listed without image or description.
 - Basically we want to be able to match on a Scheduled event but return its parent in the API response.
 
-Therefore, we need the Parent event document to contain all the filterable values for its Scheduled events.
+Therefore, we need the Parent event document to contain all the filterable values for its Scheduled events, at all levels - display, query, aggregrations.
 In order to achieve this, we modify the graphQuery to fetch the Scheduled event’s data alongside its Parent’s.
 
 ```javascript
@@ -366,7 +366,7 @@ No change to the API response.
 
 ### Filters
 
-This applies both for Events and Articles; we want to align them on [API faceting principles & expectations](https://github.com/wellcomecollection/docs/tree/main/rfcs/037-api-faceting-principles):
+This applies both for Events and Articles; we want to align them on [API faceting principles & expectations](https://github.com/wellcomecollection/docs/tree/main/rfcs/037-api-faceting-principles) ([there is a ticket for this](https://github.com/wellcomecollection/content-api/issues/121)):
 
 - Filters are named by the JSON paths of the identified object that they filter or, if applied to an attribute other than the identifier, the path of that attribute.
 - Aggregations are always paired with identically named filters.
