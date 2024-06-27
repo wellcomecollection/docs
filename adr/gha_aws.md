@@ -16,7 +16,7 @@ At the moment when we deploy things via Buildkite we give "buildkite runners" th
 execute automated CI/CD permissions to assume a set of roles described in [wellcomecollection/aws-account-infrastructure](https://github.com/wellcomecollection/aws-account-infrastructure/tree/main/accounts). 
 
 Specifically [roles like this](https://github.com/wellcomecollection/aws-account-infrastructure/blob/main/accounts/experience/iam_experience_ci.tf) 
-that desribes what permissions in which account a runner can have.
+that describes what permissions in which account a runner can have.
 
 The same group of people with developer credentials via Azure AD can modify this infrastructure
 and have granted those permissions to the Buildkite runners which are running in our AWS accounts.
