@@ -40,7 +40,7 @@ run, and Buildkite is configured not to run builds from forks, these permissions
 the organisation and admin levels in GitHub and Buildkite respectively, **and should not be modified.**
 
 At present only GitHub users who are members of the `wellcomecollection` organisation, and who have write 
-permissions to repositories will have their changes executed in the CI environment. **We should continue to 
+permissions to repositories will have their changes executed in the CI environment, **we should continue to 
 use this model.**
 
 ## Related documentation
