@@ -1,34 +1,11 @@
-# Digital Engagement Platform
+# RFCs & ADRs
 
-This is documentation for Wellcome Collection developers. 
+This repository contains ADRs and RFCs for the Wellcome Collection digital platform. This is platform level documentation
+and individual repositories may contain there own project specific ADRs.
 
-* [Projects](projects/README.md): A list of projects and services supported by Wellcome Collection developers.
-* [Process](PROCESS.md): How we work.
 * [Request for comments (RFCs)](rfcs): A place to discuss possible changes to the Wellcome Collection platform.
-* [Architecture Decision Records (ADRs)](adr): For platform architecture, how things look now (logging, secrets etc).
-* [Research](research): Notes and research on technical stuff that might be useful later.
-* [Howto](howto): Instructions for doing stuff.
+* [Architecture Decision Records (ADRs)](adr): For platform architecture, how things look now (logging, secrets etc)
 
-This documentation is for people who want to know how the platform is built, or want to build more of it.
-If that's not you, you might be looking for:
+For a complete view of Wellcome Collection documentation for developers see:
 
--   [**developers.wellcomecollection.org**][devs] is the documentation for developers who are **using** our APIs.
-
--   [**stacks.wellcometrust.org**][stacks] is our Medium blog with standalone articles about our work.
-
--   [**wellcomecollection.org**][wc] is the public-facing site, including an [images search][works] backed by our APIs.
-
-[platform]: https://github.com/wellcometrust/platform
-[devs]: https://developers.wellcomecollection.org/
-[stacks]: https://stacks.wellcomecollection.org/
-[wc]: https://wellcomecollection.org/
-[works]: https://wellcomecollection.org/works
-
-## Contributing
-
-This documentation is held in our [GitHub][github repo], and also made more discoverable hosting it in [GitBook][gitbook].
-
-You can either edit the documentation
-
-[gitbook]: https://docs.wellcomecollection.org/developers
-[github repo]: https://github.com/wellcomecollection/docs
+* [https://docs.wellcomecollection.org/index](https://docs.wellcomecollection.org/index).
