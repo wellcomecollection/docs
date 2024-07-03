@@ -15,10 +15,10 @@
 - Aggregations
 - Sorting
 
-[Further requests for opinions and insights](#further-requests-for-opinions-and-insights)
+Further requests for opinions and insights
 
-- Prismic IDs
-- How granular do we want to be for filtering by time and date on Events?
+- [Prismic IDs](https://github.com/wellcomecollection/content-api/issues/129)
+- [How granular do we want to be for filtering by time and date on Events?](https://github.com/wellcomecollection/content-api/issues/130)
 
 ## Background information
 
