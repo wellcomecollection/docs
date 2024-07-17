@@ -1,6 +1,7 @@
 # Fortnotes!
 
 Fortnightly updates about the work of the digital platform team.
+- [2024 July 17](20240717.md)
 - [2024 July 3](20240703.md)
 - [2024 June 19](20240619.md)
 - [2024 June 5](20240605.md)
