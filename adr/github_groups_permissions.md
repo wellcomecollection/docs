@@ -2,7 +2,6 @@
 
 Developers can be assigned to the following groups in GitHub:
 - [@wellcomecollection/developers](https://github.com/orgs/wellcomecollection/teams/developers): The default group for engineering roles.
-- [@wellcomecollection/buildkite-reviewers](https://github.com/orgs/wellcomecollection/teams/buildkite-reviewers): Group for folk reviewing code that will run in CI.
 
 These groups are to aid in notification for review only and cover the 2 major languages in the platform:
 - [@wellcomecollection/js-ts-reviewers](https://github.com/orgs/wellcomecollection/teams/js-ts-reviewers): Folk who can review JavaScript and TypeScript things. The [wellcomecollection.org repo](https://github.com/wellcomecollection/wellcomecollection.org) requires a review from this group before you can merge.
