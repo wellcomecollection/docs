@@ -1,4 +1,4 @@
-# RFC 062: Wellcome Collection Graph (WCG) overview and next steps
+# RFC 062: Wellcome Collection Graph overview and next steps
 
 [Context](#context)
 
