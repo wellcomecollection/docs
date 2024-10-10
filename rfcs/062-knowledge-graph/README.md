@@ -148,9 +148,9 @@ Main components:
 
 Works/stories are loaded into the graph in an iterative fashion: 
 
-    1. add Work node
-    2. add associated Person/Subject Concept nodes
-    3. add SourceConcept nodes for each Concept node via cross-references from external data sources
+1. add Work node
+2. add associated Person/Subject Concept nodes
+3. add SourceConcept nodes for each Concept node via cross-references from external data sources
 
 ### Output
 
