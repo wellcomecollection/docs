@@ -9,6 +9,7 @@
 * Architecture
 * Graph model
 * Pipeline
+* Output
 
 [Next steps: Wellcome Collection Graph v2](#next-steps-wellcome-collection-graph-v2)
 * Data sources
@@ -150,6 +151,59 @@ Works/stories are loaded into the graph in an iterative fashion:
     1. add Work node
     2. add associated Person/Subject Concept nodes
     3. add SourceConcept nodes for each Concept node via cross-references from external data sources
+
+### Output
+
+Data from works, stories, concepts, exhibitions, and events are indexed in elasticsearch. 
+
+Neighbour and source concepts from the graph are added to concepts in the following format:
+
+```
+{
+    "label": subject.label,
+    "preferred_label": subject.label,
+    "type": "subject",
+    "works": works,
+    "work_ids": work_ids,
+    "neighbour_labels": neighbour_labels, # This is where neighbour concepts are added
+    "neighbour_ids": neighbour_ids,
+    "stories": stories,
+    "story_ids": story_ids,
+    "variants": variants,
+}
+```
+If a source node is present, the following is added depending on the source:
+```
+# MeSH
+{
+    "mesh_description": mesh_source.description,
+    "mesh_id": mesh_source.source_id,
+    "mesh_preferred_label": mesh_source.preferred_label,
+    "preferred_label": mesh_source.preferred_label,
+}
+# Library of Congress
+{
+    "lc_names_id": lc_names_source.source_id,
+    "lc_names_preferred_label": lc_names_source.preferred_label,
+    "preferred_label": lc_names_source.preferred_label,
+    "preferred_label_source": "lc-names",
+}
+# or
+{
+    "lc_subjects_id": lc_subjects_source.source_id,
+    "lc_subjects_preferred_label": lc_subjects_source.preferred_label,
+    "preferred_label": lc_subjects_source.preferred_label,
+    "preferred_label_source": "lc-subjects",
+}
+# Wikidata
+{
+    "wikidata_description": wikidata_source.description,
+    "wikidata_id": wikidata_source.source_id,
+    "wikidata_preferred_label": wikidata_source.preferred_label,
+    "preferred_label": wikidata_source.preferred_label,
+    "preferred_label_source": "wikidata",
+}
+```
 
 ## Next steps: Wellcome Collection Graph (v2)
 
