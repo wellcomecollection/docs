@@ -229,7 +229,6 @@ Consider deploying the Neo4j database, which was initially only set up locally w
 
 As in v1 of the graph, the MVP use case can be focused on concept enrichment for search, connecting manually tagged concepts in source catalogues to content from external sources. Future extensions may include adding text/image embeddings for graph machine learning, enabling things like clustering of content and concept recommentation through link prediction with graph neural networks. Other extensions to consider may be entity extraction and linking, as used in projects like the Science Museum's heritage connector and the Chinese Palace Museum graph. Another use case may be focused around concept disambiguation, although it remains to be determined to what extent this is still needed after modelling existing linkages/references between the various data sources as edges in the graph.
 
-## References
 
 [1]: https://www.sciencemuseumgroup.org.uk/projects/heritage-connector
 [2]: https://heritagesciencejournal.springeropen.com/articles/10.1186/s40494-023-01042-y
