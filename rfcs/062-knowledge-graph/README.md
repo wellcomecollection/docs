@@ -30,7 +30,7 @@ The usefulness of these concepts could be greatly enhanced by enrichment from ex
 
 A graph consists of two main components: 
 1. Nodes, which represent the unique entities within the graph. For example, there can be a node for each story in the collection, and a node for each concept. Each of these nodes can have other metadata attached to it, such as IDs or publication dates (these are also called node properties).
-2. Edges, which are the connections between the nodes. An edge represents some type of relationship between two nodes, and this can be directed or undirected. For example, there can be an undirected edge between two related concepts which have the same semantic meaning, but come from different ontologies. Or a directed edge from a parent to a child concept within a hierarchy.
+2. Edges, which are the connections between the nodes. An edge represents some type of relationship between two nodes, which is either directed or undirected. For example, there can be an undirected edge between two related concepts which have the same semantic meaning, but come from different ontologies. Or a directed edge from a parent to a child concept within a hierarchy.
 
 Using this approach, we can create a map of all the works and concepts in the collection, with meaningful connections between them. Modelling collection data as a graph offers several advantages:
 
@@ -211,7 +211,7 @@ Here is a brief overview of things to consider when developing v2 of a graph for
 
 **Data sources**
 
-Ensure that local data sources like spreadsheets are excluded. Verify that URLs of external data sources are current and functional, and consider schema verification for input data. Reassess external data acquisition methods, comparing API queries and full data downloads. Explore potential additional data sources and confirm that all relevant information is being captured. Consider update schedules of the different data sources and how these feed into graph updates. 
+Ensure that local data sources like spreadsheets are excluded. Verify that URLs of external data sources are current and functional, and consider schema verification for input data. Reassess external data acquisition methods, comparing API queries and full data downloads. Explore potential additional data sources and confirm that all relevant information is being captured. This includes internal data and the possibility of capturing additional relationships, such as between works themselves. Consider update schedules of the different data sources and how these feed into graph updates. 
 
 **Graph model**
 
@@ -223,7 +223,7 @@ Apply learnings from the Wellcome Academic Graph's pipeline design where applica
 
 **Infrastructure**
 
-Consider deploying the Neo4j database, which was initially only set up locally with the official Docker image in v1 of the graph, which would enable broader access by the platform and ML teams. If the graph is used to enrich concepts for search, plan its integration with existing infrastructure and processes. As above, apply learnings from the Wellcome Academic Graph's setup where applicable.
+Consider a deployed/fully managed graph database, with options other than Neo4j (e.g. AWS Neptune) taken into consideration. This would enable broader access by the platform and ML teams. If the graph is used to enrich concepts for search, plan its integration with existing infrastructure and processes. As above, apply learnings from the Wellcome Academic Graph's setup where applicable.
 
 **MVP and future directions**
 
