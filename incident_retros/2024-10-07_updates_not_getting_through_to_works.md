@@ -65,4 +65,5 @@ ID minter service wasn’t stable
 - Update monitoring so this isn’t missed again
     - Surface date of oldest message
     - Show the status of deployment service
+- Extend message retention period e.g. 3/4 days, to save us if something like this happens on a Friday and we don't catch it till Monday
 
