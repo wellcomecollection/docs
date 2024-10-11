@@ -219,7 +219,7 @@ Re-evaluate the graph model and make sure it represents internal and external da
 
 **Pipeline**
 
-Apply learnings from the Wellcome Academic Graph's pipeline design where applicable. For example, consider using the Neo4j driver with Cypher queries to load data to Neo4j and removing the neomodel dependency for better performance, leveraging existing expertise from the machine learning team. Refactoring changes to increase pipeline performance may also include preprocesssing all source data into nodes and edges before bulk loading them to Neo4j, instead of enriching and loading each work iteratively. Finally, ensure the code meets machine learning team standards by improving Python import readability, adding correctly formatted docstrings, enabling auto-formatting, and adding unit tests.
+Apply learnings from the Wellcome Academic Graph's pipeline design where applicable. For example, consider using the Neo4j driver with Cypher queries to load data to Neo4j and removing the neomodel dependency for better performance, leveraging existing expertise from the machine learning team. Refactoring changes to increase pipeline performance may also include preprocessing all source data into nodes and edges before bulk loading them to Neo4j, instead of enriching and loading each work iteratively. Finally, ensure the code meets machine learning team standards by improving Python import readability, adding correctly formatted docstrings, enabling auto-formatting, and adding unit tests.
 
 **Infrastructure**
 
