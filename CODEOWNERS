@@ -1,2 +1,2 @@
-# These are default codeowners, later rules take precedence
-*	@wellcomecollection/developers
+*   §@wellcomecollection/digital-platform §@wellcomecollection/digital-experience
+    
