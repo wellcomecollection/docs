@@ -69,8 +69,11 @@ We could incrementally refactor the catalogue-pipeline services to use lambdas i
   
 - Lambda is generally considered to be cost-effective for workloads with intermittent or unpredictable traffic patterns (1ms for 1024MB: $0.0000000167).
 
-- Processing speed could be slowed down by [AWS Lambda cold starts](https://aws.amazon.com/blogs/compute/operating-lambda-performance-optimization-part-1/) but this can be optimised by provisioning concurrency.
-  
+- Processing speed could be slowed down by [AWS Lambda cold starts](https://aws.amazon.com/blogs/compute/operating-lambda-performance-optimization-part-1/) but this can be addressed in various ways:
+  - Use of [provisioned concurrency](https://docs.aws.amazon.com/lambda/latest/dg/provisioned-concurrency.html) to keep functions warm.
+  - Sharing data between Lambda invocations, by [taking advantage of persistance in the execution environment](https://docs.aws.amazon.com/lambda/latest/operatorguide/execution-environment.html) / optimising [static initialisation](https://docs.aws.amazon.com/lambda/latest/operatorguide/static-initialization.html).
+  - We may be able to do away with Akka/Pekko in some places, which would reduce both the package size and the internal startup time.
+
 - The concepts-pipeline has demonstrated the value of using AWS Lambdas in a data pipeline.
 
 
