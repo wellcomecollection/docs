@@ -81,7 +81,7 @@ In terms of transition from ECS to lambdas to prevent downtime and allow a smoot
 
 AWS Lambda has a different execution model than ECS, with SQS messages causing Lambda invocations triggered by an AWS Lambda Trigger (managed invocations) and configuration options to dictate how many messages a Lambda invocation handles, how many Lambdas can run at once, and how long any single Lambda can run for. In ECS, tasks are launched by autoscaling rules, those tasks then poll SQS for messages processing and deleting them as they are received. In ECS when there is no more work to do tasks are terminated based on autoscaling rules.
 
-Potential issues may arise around this change in exectution model, specifically:
+Potential issues may arise around this change in execution model, specifically:
 
 ### Concurrency
 
