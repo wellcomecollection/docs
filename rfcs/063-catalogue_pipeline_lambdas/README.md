@@ -109,7 +109,7 @@ A specific concern around batch size:
   (6 MB). The maximum batchsize for lambda is 10 000. This is far less than the batch size that the batcher is currently able to process (up to 120000 `collectionPath`). This could mean fewer nodes are being matched in a batch, reducing the 
   beneficial effect of the batcher on the relation_embedder load. As of 2024-10-23 there are 271791 documents with a collectionPath in the merged index, ie. as many messages that the batcher needs to process as part of a full reindex
 
-When deciding on batching configutation, maximum execution time must be considered in order that we do not attempt to process work that exceeds that limit.
+When deciding on batching configuration, maximum execution time must be considered in order that we do not attempt to process work that exceeds that limit.
 
 While running on ECS batch size was less of a concern as there is no upper execution time, and messages are received by polling SQS for more messages while a task is executing.
 
