@@ -52,7 +52,7 @@ The following points cover in more detail the reasoning behind moving from ECS b
 
 We could incrementally refactor the catalogue-pipeline services to use lambdas instead of ECS. Some considerations are:
 
- - We currently build container images to packages our code for deployment, we may wish to continue doing so for simplicity. See the documentation around [packaging and deploying container based Java Lambdas](https://docs.aws.amazon.com/lambda/latest/dg/java-image.html) that we would need to use to achieve this.
+ - We currently build container images to package our code for deployment, we may wish to continue doing so for simplicity. See the documentation around [packaging and deploying container based Java Lambdas](https://docs.aws.amazon.com/lambda/latest/dg/java-image.html) that we would need to use to achieve this.
 
 - Lambda has built-in scaling capabilities which will allow us to simplify the infrastructure by removing scaling configurations and Cloudwatch alarms on the queues. We would still use the `reindexing_state` to adjust data store provisioning. We 
   could also leverage SQS lambda features to protect the data stores (eg. elasticsearch index at the ingestor stage) from overloading by setting a maximum concurrency on the event source.
