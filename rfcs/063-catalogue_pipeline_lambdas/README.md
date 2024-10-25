@@ -27,7 +27,7 @@ The following points cover in more detail the reasoning behind moving from ECS b
    This model means the messaging and business/processing logic part of the services are entangled in sometimes confusing ways, and we're losing queue management features of AWS SQS (eg. having to keep track of success and failure to delete or retry 
    messaging accordingly).  
  
-   This change is also an opportunity to reassess and possibly refactor out some error handling that may be too particular, over-optimising for performance at the expense of clarity. 
+   This change is also an opportunity to reassess and possibly reduce incidental complexity as we update the services to use AWS Lambda.
 
 - **Potential reductions in cost:**
  
