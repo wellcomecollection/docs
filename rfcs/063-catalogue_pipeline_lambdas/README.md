@@ -155,4 +155,4 @@ Some suggestions for future improvements that could be looked at as part of this
 
 - Should we look into SNS features that allows conditional subscription based on the message body as a replacement for the router?
 
-- Can we consider replacing intermediate indices with S3? We don’t search them; they are acting as a simple JSON stores. 
+- Can we consider replacing intermediate indices with S3? We don't search them; they are acting as a simple JSON stores. 
