@@ -17,7 +17,7 @@ The following points cover in more detail the reasoning behind moving from ECS b
    - Every service also has a high/low message count alarm on its input queue. By [default](pipeline/terraform/modules/stack/variables.tf) services scale up to 12 instances as long as there are messages on the queue, and will scale down when the queue 
      is clear. However some services (eg. ingestors) have specially configured `max_capacity` usually to account for data stores' read/write limits.
 
-   This change aims to remove the need for this scaling logic.
+   This change aims to reduce the need for this scaling logic, by moving more of complexity into a managed service (AWS Lambda).
 
 - **Reduction in app complexity by removing akka/pekko batching:**
 
