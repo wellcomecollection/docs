@@ -147,7 +147,9 @@ Some suggestions for future improvements that could be looked at as part of this
 
 - Can we simplify batcher service processing logic?
 
-- Given that the path_concatenator only processes Sierra record trees, would it be better for this to happen earlier in the pipeline? Could be just after the Sierra transformer business, which removes the need for the router to route the relevant works to have their paths concatenated.  
+- Can we remove the use of [Pekko Streams](https://pekko.apache.org/docs/pekko/current/general/stream/stream-design.html) in some pipeline services? The logic can be  complex and difficult to understand.
+
+- Given that the `path_concatenator` only processes Sierra record trees, would it be better for this to happen earlier in the pipeline? Could be just after the Sierra transformer business, which removes the need for the router to route the relevant works to have their paths concatenated.  
 
 - If we were to wait at the matcher/merger stage for every work to be processed, could we then do without the batcher? We would be able to scan the store populated by the matcher/merger and send all members of a tree together to have their relations embedded, removing the need for a mechanism that limits the “explosion” we have now that is caused by only sending partial trees to the relation_embedder.  
 
