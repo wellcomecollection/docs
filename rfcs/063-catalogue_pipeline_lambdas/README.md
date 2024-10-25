@@ -85,6 +85,9 @@ We could incrementally refactor the catalogue-pipeline services to use lambdas i
 In terms of transition from ECS to lambdas to prevent downtime and allow a smooth transition:
 
 - Update deployment to allow deployment of existing container images to both ECS & Lambda runtime environments.
+  - Lambdas can have their own queue subscribed to upstream service topics
+  - Where services are stateful we will need to make decisions about whether we want shared or duplicated state between ECS and Lambda services.
+    This may give us the opportunity to change data store to be more suited to the Lambda execution model (e.g. S3 over Elasticsearch).
 - Move services over one at a time, testing that a new Lambda service works by dual-running it alongside its ECS counterpart without publishing messages downstream.
 - When satisfied AWS Lambda behaviour for a service has reached parity we can remove the ECS service and infrastructure.
 
