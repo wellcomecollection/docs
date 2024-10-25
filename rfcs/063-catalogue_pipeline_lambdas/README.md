@@ -107,7 +107,8 @@ Concurrency is of particular concern where we are making network requests to ext
 
 ### Batching
 
-Batching describes the number of messages handed to a Lambda to process in one invocation. For the catalogue pipeline we will be invoking Lambdas from non-FIFO SQS messages, and this has [specific restrictions around batch size](https://docs.aws.amazon.com/lambda/latest/dg/with-sqs.html). 
+Batching describes the number of messages handed to a Lambda to process in one invocation. For the catalogue pipeline we will be invoking Lambdas 
+from non-FIFO SQS messages, and this has [specific restrictions around batch size](https://docs.aws.amazon.com/lambda/latest/dg/with-sqs.html). 
 
 Batch size is dictated by a combination of:
 
@@ -117,11 +118,13 @@ Batch size is dictated by a combination of:
 
 Along with concurrency batching dictates how much work is processed at one time. 
 
-A specific concern around batch size: 
+Some specific concerns around batch size: 
 
 > The maximum number of records in each batch that Lambda pulls from your stream or queue and sends to your function. Lambda passes all of the records in the batch to the function in a single call, up to the payload limit for synchronous invocation 
   (6 MB). The maximum batchsize for lambda is 10 000. This is far less than the batch size that the batcher is currently able to process (up to 120000 `collectionPath`). This could mean fewer nodes are being matched in a batch, reducing the 
   beneficial effect of the batcher on the relation_embedder load. As of 2024-10-23 there are 271791 documents with a collectionPath in the merged index, ie. as many messages that the batcher needs to process as part of a full reindex
+
+> FIFO queues allow Content Based Deduplication, which could be an improvement on the current setup because of the explosion of messages downstream of the relation embedder, but if they can't provide enough messages for efficient bulk updates in Elasticsearch, then we won't be able to take advantage of that feature.
 
 When deciding on batching configuration, maximum execution time must be considered in order that we do not attempt to process work that exceeds that limit.
 
