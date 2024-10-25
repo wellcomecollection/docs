@@ -35,9 +35,14 @@ The following points cover in more detail the reasoning behind moving from ECS b
 
 - **Potential increase in speed (deployment and processing):**
 
-   ECS services take a few minutes to start tasks as the auto-scaling rules rely on reported CloudWatch metrics, whereas Lambda invocations are [much faster](https://docs.aws.amazon.com/lambda/latest/operatorguide/execution-environments.html#cold-start-latency). Using [provisioned concurrency](https://docs.aws.amazon.com/lambda/latest/dg/provisioned-concurrency.html) may further increase processing speed, but is likely not necessary, at least for most services.
+  ECS services take a few minutes to start tasks as the auto-scaling rules rely on reported CloudWatch metrics, whereas Lambda invocations are [much faster](https://docs.aws.amazon.com/lambda/latest/operatorguide/execution-environments.html#cold-start-latency). Using [provisioned concurrency](https://docs.aws.amazon.com/lambda/latest/dg/provisioned-concurrency.html) may further increase processing speed, but is likely not necessary, at least for most services.
 
-  Service deployment at present relies on the ECS deployment APIs which take some time to determine that a service is "stable", there is no such process for AWS Lambda and deployments are almost instant.
+  At present service deployment relies on the ECS deployment APIs which take some time to determine that a service is "stable"; there is no such 
+  process for AWS Lambda and deployments are almost instant.
+
+  Another potential speed improvement is that we currently try to compromise between normal running and reindexing with the way we gather messages. 
+  Queue polling logic in our services intended to process messages in large batches means that we see delays during normal running, and towards the end 
+  of a reindex where the batch threshold is not met.
 
 - **Align with concepts pipeline deployment:**  
 
