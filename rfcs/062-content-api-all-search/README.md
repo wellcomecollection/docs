@@ -46,15 +46,28 @@ This list also link to a file which describes what they are to look like in the 
 - **Projects**:  [Transformed indexed Project example](./transformedDocuments/projectDocument.ts)
 - **Seasons**:  [Transformed indexed Season example](./transformedDocuments/seasonDocument.ts)
 
-## API response: Addressable content types list
-<!-- TODO figure out default order -->
-
-### Captions, standfirsts and intro texts
-We have built our content types to use an array of fields to serve the same purpose; what could be called a "description" of the document gets called "Promo caption", "standfirst" (which is a slice, so part of the body), or "Intro text". There is [a ticket which aims to address the case of the Standfirst slices](https://github.com/wellcomecollection/wellcomecollection.org/issues/10753), but in the meantime, I suggest we use only one name for these in the index: "`description`". We will need to determine which content type should use which field as a description, but once that gets indexed, it becomes much easier to reference it by one name.
-
 ### Exhibition highlight tour
 This document is a special case, in that it is one Prismic document that needs to be indexed as two documents: "Audio with transcripts" and "British sign language with subtitles", as they are two different pages on the website ([Audio with transcripts](https://wellcomecollection.org/guides/exhibitions/jason-and-the-adventure-of-254/audio-without-descriptions) and [British sign language with subtitles](https://wellcomecollection.org/guides/exhibitions/jason-and-the-adventure-of-254/bsl)).
 
+### Have all fields in the "query" object align
+Something that will help the search performance would be to have as little fields to look through as possible, and have their names match across content types. We still want certain fields to have more weight than others in terms of relevance, so an option would be to list all the Prismic fields we want to have for each content type, and order them in terms of importance. Then, in the index, the query object could look like:
+
+```
+query: {
+    weight100: "[title]. [subtitle].",
+    weight50: "[body content]. [description].",
+    weight20: "[contributor names]. [format].",
+}
+```
+
+This is of course a very rough example that hopefully explains the theory.
+
+#### Captions, standfirsts and intro texts
+We have built our content types to use an array of fields to serve the same purpose; what could be called a "description" of the document gets called "Promo caption", "standfirst" (which is a slice, so part of the body), or "Intro text". There is [a ticket which aims to address the case of the Standfirst slices](https://github.com/wellcomecollection/wellcomecollection.org/issues/10753), but in the meantime, I suggest we use only one name for these in the index: "`description`". We will need to determine which content type should use which field as a description, but once that gets indexed, it becomes much easier to reference it by one name, at least in the "display" object.
+
+
+## API response: Addressable content types list
+<!-- TODO figure out default order -->
 <!-- TODO -->
 [Full API response](./api-response.ts)  
 
