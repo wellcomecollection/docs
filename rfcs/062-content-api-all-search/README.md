@@ -2,6 +2,7 @@
 
 <!-- TODO add relevant sections -->
 - [Background information](#background-information)
+- ["All" index](#all-index)
 
 ## Background information
 
@@ -47,6 +48,7 @@ This list also link to a file which describes what they are to look like in the 
 
 ## API response: Addressable content types list
 <!-- TODO figure out default order -->
+<!-- TODO figure out how to split Highlight Tour document into a result for Audio and another for BSL -->
 <!-- [API response](./api-response.ts)  -->
 
 ## API response: Collection search
