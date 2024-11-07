@@ -5,7 +5,7 @@
 
 ## Background information
 
-The current "All" search (`/search`) displays separate, statically-ordered grids for Stories, Works, Images and Events. In doing so, we are unwillingly creating a hierarchy of importance between those content types which does not match their actual level of relevance. Each grid also requires its own query call, which is not efficient.
+The current "All" search (wellcomecollection.org/search) displays separate, statically-ordered grids for Stories, Works, Images and Events. In doing so, we are unwillingly creating a hierarchy of importance between those content types which does not match their actual level of relevance. Each grid also requires its own query call, which is not efficient.
 
 As a next step, we are looking at making the "All" search expose all Prismic content types whose documents are available to our users through a UID-based URL (["Addressable content types"](#addressable-content-types)), with the results being ordered by each individual document's relevance score. Works and Images ("Collection search") will also still be available on the page, although their relevance scores will not be weighed against Addressable content types', as you can see on the image below. 
 
@@ -27,33 +27,31 @@ As the new endpoint and index are to be as minimalistic as possible, these "spec
 
 ## "All" index
 We will be creating a single index in Elasticsearch containing all Addressable content types in their most minimalistic form (**TODO add link detailed this**).
-<!-- TODO what does it look like? How does it get updated? -->
 
-### Addressable content types
-- Events
-- Exhibitions
-- Stories
-- Pages
-- Visual stories
-- Exhibition text
-- Exhibition highlight tour
-- Books
-- Projects
-- Seasons
-
-## API response: Addressable content types list
-<!-- TODO figure out default order -->
-
-## API response: Collection search
-<!-- TODO, what shape does this have? -->
-
-
-## Endpoint
-`https://api.wellcomecollection.org/content/v0/all` 
-
-## Documents format
+### Documents format
 - [Page document](./transformedDocuments/pageDocument.ts)
 - [Visual story document](./transformedDocuments/visualStoryDocument.ts)
 
-## API Response
+<!-- TODO what does it look like? How does it get updated? -->
+
+### Addressable content types
+Here is a list of which Prismic content types we consider to be Addressable, in that their documents are all accessible to our users under a UID-based URL.
+
+This list also link to a file which describes what they are to look like in the Elasticsearch index. You may consult [the complete list here](./transformedDocuments) instead.
+- **Events**: [Transformed indexed Event example](./transformedDocuments/eventDocument.ts)
+- **Exhibitions**: [Transformed indexed Exhibition example](./transformedDocuments/exhibitionDocument.ts)
+- **Stories**:  [Transformed indexed Story example](./transformedDocuments/storyDocument.ts)
+- **Pages**:  [Transformed indexed Page example](./transformedDocuments/pageDocument.ts)
+- **Visual stories**:  [Transformed indexed Visual story example](./transformedDocuments/visualStoryDocument.ts)
+- **Exhibition text**:  [Transformed indexed Exhibition Text example](./transformedDocuments/exhibitionTextDocument.ts)
+- **Exhibition highlight tour**:  [Transformed indexed Exhibition Highlight example](./transformedDocuments/exhibitionHighlightDocument.ts)
+- **Books**:  [Transformed indexed Book example](./transformedDocuments/bookDocument.ts)
+- **Projects**:  [Transformed indexed Project example](./transformedDocuments/projectDocument.ts)
+- **Seasons**:  [Transformed indexed Season example](./transformedDocuments/seasonDocument.ts)
+
+## API response: Addressable content types list
+<!-- TODO figure out default order -->
 <!-- [API response](./api-response.ts)  -->
+
+## API response: Collection search
+<!-- TODO, what shape does this have? -->
