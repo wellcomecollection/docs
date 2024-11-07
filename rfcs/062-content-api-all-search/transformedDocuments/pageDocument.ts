@@ -6,7 +6,7 @@ const pageDocument = {
     id: "WwQHTSAAANBfDYXU",
     uid: "opening-times",
     title: "Opening times",
-    caption: "We are a free museum and library connecting science, medicine, life and art.",
+    description: "Aliquam erat volutpat", // (promo.caption || standfirst) ?
     siteSection: "visit-us", // Should this be the uid or the readable name? Is it a label or for links? Probably both.
   },
   query: {
@@ -14,8 +14,9 @@ const pageDocument = {
     // and which Prismic fields they could contain.
     //
     // title: "Opening times",
-    // id: "", // ?
-    // caption: "We are a free museum and library connecting science, medicine, life and art.",
+    // id: "WwQHTSAAANBfDYXU", // do we want to allow search by ID?
+    // description: "Aliquam erat volutpat",
+    // standfirst: "" // Allow both promo.caption AND standfirst to live IN description?
     // body: "Lorem ipsum dolor sit amet"
   },
 };

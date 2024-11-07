@@ -6,17 +6,17 @@ const seasonDocument = {
     id: "WwQHTSAAANBfDYXU",
     uid: "lorem-ipsum",
     title: "Lorem ipsum",
-    standfirst: "Aliquam erat volutpat", // can we align standfirst/caption/introText?
+    description: "Aliquam erat volutpat", // (promo.caption || standfirst) ?
   },
   query: {
     // TODO determine which fields should exist across all content types, what name they should have
     // and which Prismic fields they could contain.
     //
     // type: "Season"
-    // id: "", // ?
-    // title: "",
-    // standfirst: "Aliquam erat volutpat", // can we align standfirst/caption/introText?
-    // caption: "Aliquam erat volutpat", // can we align standfirst/caption/introText? This one has both?
+    // id: "WwQHTSAAANBfDYXU", // do we want to allow search by ID?
+    // title: "Lorem ipsum",
     // body: "Lorem ipsum dolor sit amet",
+    // description: "Aliquam erat volutpat",
+    // standfirst: "" // Allow both promo.caption AND standfirst to live IN description?
   },
 };

@@ -41,15 +41,22 @@ This list also link to a file which describes what they are to look like in the 
 - **Pages**:  [Transformed indexed Page example](./transformedDocuments/pageDocument.ts)
 - **Visual stories**:  [Transformed indexed Visual story example](./transformedDocuments/visualStoryDocument.ts)
 - **Exhibition text**:  [Transformed indexed Exhibition Text example](./transformedDocuments/exhibitionTextDocument.ts)
-- **Exhibition highlight tour**:  [Transformed indexed Exhibition Highlight example](./transformedDocuments/exhibitionHighlightDocument.ts)
+- **Exhibition highlight tour**:  [Transformed indexed Exhibition Highlight examples](./transformedDocuments/exhibitionHighlightDocument.ts). This document gets transformed into two different ones, consult [Exhibition highlight tour section](#exhibition-highlight-tour) below.
 - **Books**:  [Transformed indexed Book example](./transformedDocuments/bookDocument.ts)
 - **Projects**:  [Transformed indexed Project example](./transformedDocuments/projectDocument.ts)
 - **Seasons**:  [Transformed indexed Season example](./transformedDocuments/seasonDocument.ts)
 
 ## API response: Addressable content types list
 <!-- TODO figure out default order -->
-<!-- TODO figure out how to split Highlight Tour document into a result for Audio and another for BSL -->
-<!-- [API response](./api-response.ts)  -->
+
+### Captions, standfirsts and intro texts
+We have built our content types to use an array of fields to serve the same purpose; what could be called a "description" of the document gets called "Promo caption", "standfirst" (which is a slice, so part of the body), or "Intro text". There is [a ticket which aims to address the case of the Standfirst slices](https://github.com/wellcomecollection/wellcomecollection.org/issues/10753), but in the meantime, I suggest we use only one name for these in the index: "`description`". We will need to determine which content type should use which field as a description, but once that gets indexed, it becomes much easier to reference it by one name.
+
+### Exhibition highlight tour
+This document is a special case, in that it is one Prismic document that needs to be indexed as two documents: "Audio with transcripts" and "British sign language with subtitles", as they are two different pages on the website ([Audio with transcripts](https://wellcomecollection.org/guides/exhibitions/jason-and-the-adventure-of-254/audio-without-descriptions) and [British sign language with subtitles](https://wellcomecollection.org/guides/exhibitions/jason-and-the-adventure-of-254/bsl)).
+
+<!-- TODO -->
+[Full API response](./api-response.ts)  
 
 ## API response: Collection search
 <!-- TODO, what shape does this have? -->
