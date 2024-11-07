@@ -28,10 +28,6 @@ As the new endpoint and index are to be as minimalistic as possible, these "spec
 ## "All" index
 We will be creating a single index in Elasticsearch containing all Addressable content types in their most minimalistic form (**TODO add link detailed this**).
 
-### Documents format
-- [Page document](./transformedDocuments/pageDocument.ts)
-- [Visual story document](./transformedDocuments/visualStoryDocument.ts)
-
 <!-- TODO what does it look like? How does it get updated? -->
 
 ### Addressable content types

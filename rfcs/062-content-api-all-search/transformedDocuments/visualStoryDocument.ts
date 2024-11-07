@@ -1,5 +1,3 @@
-// Proposal for transformed visualStoryDocument.
-
 const visualStoryDocument = {
   id: "ZdTCPREAACEA3zK4",
   uid: "jason-and-the-adventure-of-254-visual-story",

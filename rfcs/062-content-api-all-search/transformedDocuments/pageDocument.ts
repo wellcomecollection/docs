@@ -1,5 +1,3 @@
-// Proposal for transformed pageDocument.
-
 const pageDocument = {
   id: "WwQHTSAAANBfDYXU",
   uid: "opening-times",
@@ -8,7 +6,7 @@ const pageDocument = {
     id: "WwQHTSAAANBfDYXU",
     uid: "opening-times",
     title: "Opening times",
-    caption: "We are a free museum and library connecting science, medicine, life and art. You’ll find exhibitions, events and a library in our beautiful building in central London.",
+    caption: "We are a free museum and library connecting science, medicine, life and art.",
     siteSection: "visit-us", // Should this be the uid or the readable name? Is it a label or for links? Probably both.
   },
   query: {
@@ -17,7 +15,7 @@ const pageDocument = {
     //
     // title: "Opening times",
     // id: "", // ?
-    // caption: "We are a free museum and library connecting science, medicine, life and art. You’ll find exhibitions, events and a library in our beautiful building in central London.",
+    // caption: "We are a free museum and library connecting science, medicine, life and art.",
     // body: "Lorem ipsum dolor sit amet"
   },
 };
