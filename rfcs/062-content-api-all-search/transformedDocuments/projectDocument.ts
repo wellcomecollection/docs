@@ -20,6 +20,6 @@ const projectDocument = {
     // description: "Aliquam erat volutpat",
     // standfirst: "" // Allow both promo.caption AND standfirst to live IN description?
     // format: "Film",
-    // contributors: []
+    // contributors: ["John Smith", "Jane Doe"]
   },
 };

@@ -19,6 +19,6 @@ const bookDocument = {
     // description: "Aliquam erat volutpat",
     // standfirst: "" // Allow both promo.caption AND standfirst to live IN description?
     // body: "Lorem ipsum dolor sit amet",
-    // contributors: []
+    // contributors: ["John Smith", "Jane Doe"]
   },
 };
