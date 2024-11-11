@@ -1,19 +1,19 @@
-const apiResponseCollection = {
+const apiResponseCatalogue = {
   works: {
     type: "Works",
     totalResults: 2134,
-    formats: [
+    workType: [
       {
-        id: "a222zvge",
+        id: "a",
         label: "Books",
-        results: 931,
+        count: 931,
       },
       {
-        id: "a223k4ra",
-        label: "Ephemera",
-        results: 398,
+        id: "h", 
+        label: "Archives and manuscripts",
+        count: 398,
       },
-    ],
+    ]
   },
   images: {
     type: "Images",

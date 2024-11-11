@@ -1,5 +1,4 @@
 // Proposal for /all API response.
-// TODO: Add Collections results in here
 
 const apiResponse = {
   type: "ResultList",
@@ -16,18 +15,18 @@ const apiResponse = {
     ],
     works: {
       type: "Works",
-      formats: [
+      workType: [
         {
-          id: "a222zvge", // for link
-          label: "Lorem ipsum",
-          results: 12345,
+          id: "a",
+          label: "Books",
+          count: 931,
         },
         {
-          id: "a223k4ra", // for link
-          label: "Dolor sit",
-          results: 122,
+          id: "h", 
+          label: "Archives and manuscripts",
+          count: 398,
         },
-      ],
+      ]
     },
     images: {
       type: "Images",

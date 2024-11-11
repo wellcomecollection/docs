@@ -9,7 +9,7 @@
 
 The current "All" search (wellcomecollection.org/search) displays separate, statically-ordered grids for Stories, Works, Images and Events. In doing so, we are unwillingly creating a hierarchy of importance between those content types which does not match their actual level of relevance. Each grid also requires its own query call, which is not efficient.
 
-As a next step, we are looking at making the "All" search expose all Prismic content types whose documents are available to our users through a UID-based URL (["Addressable content types"](#addressable-content-types)), with the results being ordered by each individual document's relevance score. Works and Images ("Collection search") will also still be available on the page, although their relevance scores will not be weighed against Addressable content types', as you can see on the image below.
+As a next step, we are looking at making the "All" search expose all Prismic content types whose documents are available to our users through a UID-based URL (["Addressable content types"](#addressable-content-types)), with the results being ordered by each individual document's relevance score. Works and Images ("Catalogue search") will also still be available on the page, although their relevance scores will not be weighed against Addressable content types', as you can see on the image below.
 
 <img src="./assets/prototype.png" alt="Design prototype for the 'All' search page" />
 
@@ -19,7 +19,7 @@ There is to be no filtering nor sorting feature on this page. Therefore, we aim 
 
 We will do so by creating a new endpoint: https://api.wellcomecollection.org/content/v0/all.
 
-Its response will return [an ordered list of Addressable content types](#api-response-addressable-content-types-list), as well as [the relevant results for the Collection search](#api-response-collection-search). (**TODO: figure out what that looks like**)
+Its response will return [an ordered list of Addressable content types](#api-response-addressable-content-types-list), as well as [the relevant results for the Catalogue search](#api-response-collection-search). (**TODO: figure out what that looks like**)
 
 ### Existing endpoints and indexes
 
@@ -83,50 +83,66 @@ We have built our content types to use an array of fields to serve the same purp
 
 [Full API response](./api-response/api-response.ts)
 
-## API response: Collection search
+## API response: Catalogue search
 
-<!-- TODO, what shape does this have? -->
 <!-- WIP -->
+### Prototype image
 
-<img src="./assets/collection-result.png" width="300" alt="Collection results prototype" />
+<img src="./assets/collection-result.png" width="300" alt="Catalogue results prototype" />
+
+### Works
+Works will be represented by their `workType` (formats) being listed under a "Catalogue results" heading. To render the UI, we will need:
+- `label`
+- `count`
+- `id` (for linking to a pre-filtered works search)
+
+We can take those from the [Catalogue API reponse's aggregations' `workType` buckets](https://api.wellcomecollection.org/catalogue/v2/works?aggregations=workType%2Cavailabilities%2Cgenres.label%2Clanguages%2Csubjects.label%2Ccontributors.agent.label&include=production%2Ccontributors%2CpartOf&pageSize=25) and transform them to it simplest form for the Content API response:
+
+<!-- Discuss, should we keep "workType" or change it to "formats"? -->
 
 ```
-{
-  works: {
-    type: "Works",
-    totalResults: 2134,
-    formats: [
-      {
-        id: "a222zvge",
-        label: "Books",
-        results: 931,
-      },
-      {
-        id: "a223k4ra", 
-        label: "Ephemera",
-        results: 398,
-      },
-      ...
-    ],
-  },
-  images: {
-    type: "Images",
-    totalResults: 922,
-    results: [
-      {
-        imageSrc: "http://...",
-        alt: "Lorem ipsum",
-        workId: "yxcd6m5x", // for link
-        size: {}, // ?
-      },
-      {
-        imageSrc: "http://...",
-        alt: "Lorem ipsum",
-        workId: "b5kqccbb", // for link
-        size: {}, // ?
-      },
-      ...
-    ],
-  },
-};
+works: {
+  type: "Works",
+  totalResults: 2134,
+  workType: [
+    {
+      id: "a",
+      label: "Books",
+      count: 931,
+    },
+    {
+      id: "h", 
+      label: "Archives and manuscripts",
+      count: 398,
+    },
+    ...
+  ],
+}
+```
+
+### Images
+
+For the Images results, we need the first 5 results and the total count. The individual results objects can be reduced from [the Catalogue API's image response](https://api.wellcomecollection.org/catalogue/v2/images?aggregations=locations.license%2Csource.genres.label%2Csource.subjects.label%2Csource.contributors.agent.label&pageSize=30). 
+<!-- TODO develop -->
+
+```
+images: {
+  type: "Images",
+  totalResults: 922,
+  results: [
+    {
+      imageSrc: "http://...",
+      alt: "Lorem ipsum",
+      workId: "yxcd6m5x", // for link
+      size: {}, // ?
+    },
+    {
+      imageSrc: "http://...",
+      alt: "Lorem ipsum",
+      workId: "b5kqccbb", // for link
+      size: {}, // ?
+    },
+    ...
+  ],
+}
 ```
