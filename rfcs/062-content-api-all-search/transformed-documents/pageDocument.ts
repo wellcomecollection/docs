@@ -1,4 +1,6 @@
-const pageDocument = {
+import { DocumentMapping } from "../mapping";
+
+const pageDocument: DocumentMapping = {
   id: "WwQHTSAAANBfDYXU",
   uid: "opening-times",
   display: {
@@ -10,13 +12,9 @@ const pageDocument = {
     siteSection: "visit-us", // Should this be the uid or the readable name? Is it a label or for links? Probably both.
   },
   query: {
-    // TODO determine which fields should exist across all content types, what name they should have
-    // and which Prismic fields they could contain.
-    //
-    // title: "Opening times",
-    // id: "WwQHTSAAANBfDYXU", // do we want to allow search by ID?
-    // description: "Aliquam erat volutpat",
-    // standfirst: "" // Allow both promo.caption AND standfirst to live IN description?
-    // body: "Lorem ipsum dolor sit amet"
+    type: "Page",
+    title: "Opening times",
+    description: "[promo caption] [standfirst]",
+    body: "Lorem ipsum dolor sit amet"
   },
 };

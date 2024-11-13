@@ -1,4 +1,6 @@
-const projectDocument = {
+import { DocumentMapping } from "../mapping";
+
+const projectDocument:DocumentMapping = {
   id: "WwQHTSAAANBfDYXU",
   uid: "lorem-ipsum",
   display: {
@@ -10,16 +12,10 @@ const projectDocument = {
     format: "Film"
   },
   query: {
-    // TODO determine which fields should exist across all content types, what name they should have
-    // and which Prismic fields they could contain.
-    //
-    // type: "Project"
-    // id: "WwQHTSAAANBfDYXU", // do we want to allow search by ID?
-    // title: "Lorem ipsum",
-    // body: "Lorem ipsum dolor sit amet",
-    // description: "Aliquam erat volutpat",
-    // standfirst: "" // Allow both promo.caption AND standfirst to live IN description?
-    // format: "Film",
-    // contributors: ["John Smith", "Jane Doe"]
+    type: "Project",
+    title: "[title] [format]", // We want Format to be queriable, is this the right place for it?
+    body: "Lorem ipsum dolor sit amet",
+    description: "[promo caption] [standfirst]",
+    contributors: ["John Smith", "Jane Doe"]
   },
 };

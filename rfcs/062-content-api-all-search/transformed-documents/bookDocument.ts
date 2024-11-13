@@ -1,4 +1,6 @@
-const bookDocument = {
+import { DocumentMapping } from "../mapping";
+
+const bookDocument: DocumentMapping = {
   id: "WwQHTSAAANBfDYXU",
   uid: "lorem-ipsum",
   display: {
@@ -9,16 +11,10 @@ const bookDocument = {
     description: "Aliquam erat volutpat", // (promo.caption || standfirst) ?
   },
   query: {
-    // TODO determine which fields should exist across all content types, what name they should have
-    // and which Prismic fields they could contain.
-    //
-    // type: "Book"
-    // id: "WwQHTSAAANBfDYXU", // do we want to allow search by ID?
-    // title: "Lorem ipsum",
-    // subtitle: "Dolor sit amet",
-    // description: "Aliquam erat volutpat",
-    // standfirst: "" // Allow both promo.caption AND standfirst to live IN description?
-    // body: "Lorem ipsum dolor sit amet",
-    // contributors: ["John Smith", "Jane Doe"]
+    type: "Book",
+    title: "[title] [subtitle]",
+    description: "[promo caption] [standfirst]",
+    body: "Lorem ipsum dolor sit amet",
+    contributors: ["John Smith", "Jane Doe"]
   },
 };
