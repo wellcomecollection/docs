@@ -97,17 +97,18 @@ Works will be represented by their `workType` (formats) being listed under a "Ca
 - `label`
 - `count`
 - `id` (for linking to a pre-filtered works search)
+- `totalResults` count
 
 
 The required fields can be taken from the Catalogue API reponse's aggregations' `workType` buckets: 
 https://api.wellcomecollection.org/catalogue/v2/works?aggregations=workType&include=languages&pageSize=1 
 (adding a query keyword to the params should one be entered). 
 
-As the `workType` bucket is the only thing we really need from the response, I tried to keep the tweak the query to be as simple as possible (e.g. adding an include param limits the results objects), suggestions welcome.
+As the `workType` bucket is the only thing we really need from the response (with the `totalResults` count), I tried to tweak the query to be as simple as possible (e.g. adding an include param limits the results objects), suggestions welcome.
 
 
 ### Images
 
-For the Images results, we need the first 5 results and the total count. We will use the Catalogue API's image endpoint: 
+For the Images results, we need the first 5 results and the `totalResults` ount. We will use the Catalogue API's image endpoint: 
 https://api.wellcomecollection.org/catalogue/v2/images?pageSize=5,
 adding a query param should one be entered. 
