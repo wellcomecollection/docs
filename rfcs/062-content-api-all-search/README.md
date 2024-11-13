@@ -54,19 +54,20 @@ This document is a special case, in that it is one Prismic document that needs t
 
 ### Have all fields in the "query" object align
 
-Something that will help the search performance would be to have as little fields to look through as possible, and have their names match across content types. We still want certain fields to have more weight than others in terms of relevance, so an option would be to list all the Prismic fields we want to have for each content type, and order them in terms of importance. Then, in the index, the query object could look like:
+Something that will help the search performance would be to have as little fields to look through as possible, and have their names match across content types. I suggest:
 
 ```
 query: {
-    weight100: "[title]. [subtitle].",
-    weight50: "[body content]. [description].",
-    weight20: "[contributor names]. [format].",
+  type: string,
+  title: string,
+  description: string,
+  contributors: string[]
 }
 ```
 
-This is of course a very rough example that hopefully explains the theory.
+Most content types will allow this to fit, with one note on the `decription` field: 
 
-#### Captions, standfirsts and intro texts
+#### Description, captions, standfirsts and intro texts
 
 We have built our content types to use an array of fields to serve the same purpose; what could be called a "description" of the document gets called "Promo caption", "standfirst" (which is a slice, so part of the body), or "Intro text". There is [a ticket which aims to address the case of the Standfirst slices](https://github.com/wellcomecollection/wellcomecollection.org/issues/10753), but in the meantime, I suggest we use only one name for these in the index: "`description`". We will need to determine which content type should use which field as a description, but once that gets indexed, it becomes much easier to reference it by one name, at least in the "display" object.
 
