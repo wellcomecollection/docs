@@ -136,6 +136,6 @@ As the `workType` bucket is the only thing we really need from the response (wit
 
 ### Images
 
-For the Images results, we need the first 5 results and the `totalResults` ount. We will use the Catalogue API's image endpoint:
+For the Images results, we need the first 5 results and the `totalResults` count. We will use the Catalogue API's image endpoint:
 https://api.wellcomecollection.org/catalogue/v2/images?pageSize=5,
 adding a query param should one be entered.
