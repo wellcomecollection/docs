@@ -2,6 +2,8 @@
 
 - [Background information](#background-information)
 - [Elasticsearch "All" index](#elasticsearch-all-index)
+  - [Addressable content types](#addressable-content-types)
+  - [Query objects alignment](#query-objects-alignment)
 - [Indexing](#indexing)
 - [Content API response](#content-api-response)
 - [Catalogue search](#catalogue-search)
@@ -18,11 +20,12 @@ As a next step, we are looking at making the "All" search expose all Prismic con
 
 There is to be no filtering nor sorting feature on this page. Therefore, we aim to build something with minimalism in mind, allowing us to have query performance at the forefront of our concerns.
 
-We will do so by creating a new endpoint: https://api.wellcomecollection.org/content/v0/all.
+We will do so by creating a new endpoint: `https://api.wellcomecollection.org/content/v0/all`
 
-Its response will return [an ordered list of Addressable content types](#api-response-addressable-content-types-list), as well as [the relevant results for the Catalogue search](#api-response-collection-search). (**TODO: figure out what that looks like**)
+Its response will return [an ordered list of Addressable content types](#api-response-addressable-content-types-list), as well as everything we need for pagination.
 
 ### Existing endpoints and indexes
+**TLDR; This won't affect them in any way.**
 
 We have wondered if this new endpoint removed the need for our existing, specialist ones (https://api.wellcomecollection.org/content/v0/articles, for example). Could we only use this new one and use a filter when needed? We have determined that the answer was no, as they serve a different purpose.
 
@@ -34,7 +37,7 @@ We will be creating a single index in Elasticsearch containing all Addressable c
 
 ### Addressable content types
 
-Here is a list of which Prismic content types we consider to be Addressable, in that their documents are all accessible to our users under a UID-based URL.
+Here is a list of which Prismic content types we consider to be **Addressable**, in that their documents are all accessible to our users under a UID-based URL.
 
 This list also link to a file which describes what they are to look like in the Elasticsearch index. You may consult [the complete list here](./transformed-documents) instead.
 
@@ -49,13 +52,13 @@ This list also link to a file which describes what they are to look like in the 
 - **Projects**: [Transformed indexed Project example](./transformed-documents/projectDocument.ts)
 - **Seasons**: [Transformed indexed Season example](./transformed-documents/seasonDocument.ts)
 
-### Exhibition highlight tour
+#### Exhibition highlight tour
 
 This document is a special case, in that it is one Prismic document that needs to be indexed as two documents: "Audio with transcripts" and "British sign language with subtitles", as they are two different pages on the website ([Audio with transcripts](https://wellcomecollection.org/guides/exhibitions/jason-and-the-adventure-of-254/audio-without-descriptions) and [British sign language with subtitles](https://wellcomecollection.org/guides/exhibitions/jason-and-the-adventure-of-254/bsl)).
 
 ### Query objects alignment
 
-Something that will help the search performance would be to have as little fields to look through as possible, and have their names match across content types. I suggest:
+Something that will help the search performance would be to have as little fields to look through as possible, and have their names match across content types. We suggest:
 
 ```
 query: {
@@ -67,24 +70,48 @@ query: {
 }
 ```
 
-Should we want any other field to be queriable (such as "Format" for Projects), we will append them to one of the above, based on how we want that field to score. The only other one worth discussing is the `decription` field: 
+Should we want any other field to be queriable (such as "Format" for Projects), we will append them to one of the above, based on how we want that field to score. The only other one worth discussing is the `decription` field:
 
 #### Description, captions, standfirsts and intro texts
 
-We have built our content types to use an array of fields to serve the same purpose; what could be called a "description" of the document gets called "Promo caption", "standfirst" (which is a slice, so part of the body), or "Intro text". There is [a ticket which aims to address the case of the Standfirst slices](https://github.com/wellcomecollection/wellcomecollection.org/issues/10753), but in the meantime, I suggest we use only one name for these in the index: "`description`". We will need to determine which content type should use which field as a description, but once that gets indexed, it becomes much easier to reference it by one name, at least in the "display" object.
+We have built our content types to use an array of fields to serve the same purpose; what could be called a "description" of the document gets called "Promo caption", "standfirst" (which is a slice, so part of the body), or "Intro text". There is [a ticket which aims to address the case of the Standfirst slices](https://github.com/wellcomecollection/wellcomecollection.org/issues/10753), but in the meantime, we suggest we use only one name for these in the index: `description`. We will need to determine which content type should use which field as a description, but once that gets indexed, it becomes much easier to reference it by one name, at least in the "display" object.
 
 ## Indexing
 
-<!-- TODO add diagram that shows flow of data through that service into the new index -->
+**TODO add diagram that shows flow of data through that service into the new index**
 
 For the [mapping](./mapping.ts), I've gone with what we have on our other indices, although I'm sure they could have different parameters, they have served us well so far. Any improvement suggestions welcome.
 
 ## Content API response
 
-<!-- TODO figure out default order -->
-<!-- TODO write up -->
+**TODO figure out default order: https://wellcome.slack.com/archives/CUA669WHH/p1730992108227989**
 
-[Full API response](./api-response.ts)
+```
+{
+  type: "ResultList",
+  results: [
+    {
+      type: "Event",
+      id: "WwQHTSAAANBfDYXU",
+      uid: "lorem-ipsum",
+      title: "Lorem ipsum dolor sit amet",
+      description: "Aliquam erat volutpat."
+    },
+    {
+      type: "Visual story",
+      id: "ZdTCPREAACEA3zK4", 
+      uid: "jason-and-the-adventure-of-254-visual-story",
+      title: "Jason and the adventure of 254 visual story",
+      description: "Aliquam erat volutpat"
+    },
+    ...
+  ],
+  pageSize: 10,
+  totalPages: 49,
+  totalResults: 482,
+  nextPage: "https://api.wellcomecollection.org/content/v0/all?page=2",
+}
+```
 
 ## Catalogue search
 
@@ -95,21 +122,20 @@ As per [this conversation](https://github.com/wellcomecollection/docs/pull/112#d
 ### Works
 
 Works will be represented by their `workType` (formats) being listed under a "Catalogue results" heading. To render the UI, we only will need:
+
 - `label`
 - `count`
 - `id` (for linking to a pre-filtered works search)
 - `totalResults` count
 
-
-The required fields can be taken from the Catalogue API reponse's aggregations' `workType` buckets: 
-https://api.wellcomecollection.org/catalogue/v2/works?aggregations=workType&include=languages&pageSize=1 
-(adding a query keyword to the params should one be entered). 
+The required fields can be taken from the Catalogue API reponse's aggregations' `workType` buckets:
+https://api.wellcomecollection.org/catalogue/v2/works?aggregations=workType&include=languages&pageSize=1
+(adding a query keyword to the params should one be entered).
 
 As the `workType` bucket is the only thing we really need from the response (with the `totalResults` count), I tried to tweak the query to be as simple as possible (e.g. adding an include param limits the results objects), suggestions welcome.
 
-
 ### Images
 
-For the Images results, we need the first 5 results and the `totalResults` ount. We will use the Catalogue API's image endpoint: 
+For the Images results, we need the first 5 results and the `totalResults` ount. We will use the Catalogue API's image endpoint:
 https://api.wellcomecollection.org/catalogue/v2/images?pageSize=5,
-adding a query param should one be entered. 
+adding a query param should one be entered.
