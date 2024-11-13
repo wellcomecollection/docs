@@ -3,7 +3,10 @@
 <!-- TODO add relevant sections -->
 
 - [Background information](#background-information)
-- ["All" index](#all-index)
+- [Elasticsearch "All" index](#elasticsearch-all-index)
+- [Indexation/Updates](#indexationupdates)
+- [Content API response](#content-api-response)
+- [Catalogue search](#catalogue-search)
 
 ## Background information
 
@@ -27,9 +30,9 @@ We have wondered if this new endpoint removed the need for our existing, special
 
 As the new endpoint and index are to be as minimalistic as possible, these "specialist" ones will still be the ones used in Content type-specific listing pages (wellcomecollection.org/stories) or search (wellcomecollection.org/search/articles), as they allow us to provide much more complex information, such as filters and aggregations.
 
-## "All" index
+## Elasticsearch "All" index
 
-We will be creating a single index in Elasticsearch containing all Addressable content types in their most minimalistic form (**TODO add link detailed this**).
+We will be creating a single index in Elasticsearch containing all Addressable content types in their most minimalistic form.
 
 ### Addressable content types
 
@@ -52,7 +55,7 @@ This list also link to a file which describes what they are to look like in the 
 
 This document is a special case, in that it is one Prismic document that needs to be indexed as two documents: "Audio with transcripts" and "British sign language with subtitles", as they are two different pages on the website ([Audio with transcripts](https://wellcomecollection.org/guides/exhibitions/jason-and-the-adventure-of-254/audio-without-descriptions) and [British sign language with subtitles](https://wellcomecollection.org/guides/exhibitions/jason-and-the-adventure-of-254/bsl)).
 
-### Have all fields in the "query" object align
+### Query objects alignment
 
 Something that will help the search performance would be to have as little fields to look through as possible, and have their names match across content types. I suggest:
 
@@ -71,79 +74,40 @@ Most content types will allow this to fit, with one note on the `decription` fie
 
 We have built our content types to use an array of fields to serve the same purpose; what could be called a "description" of the document gets called "Promo caption", "standfirst" (which is a slice, so part of the body), or "Intro text". There is [a ticket which aims to address the case of the Standfirst slices](https://github.com/wellcomecollection/wellcomecollection.org/issues/10753), but in the meantime, I suggest we use only one name for these in the index: "`description`". We will need to determine which content type should use which field as a description, but once that gets indexed, it becomes much easier to reference it by one name, at least in the "display" object.
 
-<!-- How does it get updated? -->
-
-### Indexation/Updates
+## Indexation/Updates
 
 <!-- Same as the other endpoints? Every 15 minutes? -->
 
-## API response: Addressable content types list
+## Content API response
 
 <!-- TODO figure out default order -->
-<!-- TODO -->
+<!-- TODO write up -->
 
-[Full API response](./api-response/api-response.ts)
+[Full API response](./api-response.ts)
 
-## API response: Catalogue search
+## Catalogue search
 
-<!-- WIP -->
-### Prototype image
+As per [this conversation](https://github.com/wellcomecollection/docs/pull/112#discussion_r1836539803), we will be fetching the Catalogue information from the Catalogue API, asynchronously, from the client. This will allow for a separation of concerns should one of the services be unhealthy.
 
 <img src="./assets/collection-result.png" width="300" alt="Catalogue results prototype" />
 
 ### Works
-Works will be represented by their `workType` (formats) being listed under a "Catalogue results" heading. To render the UI, we will need:
+
+Works will be represented by their `workType` (formats) being listed under a "Catalogue results" heading. To render the UI, we only will need:
 - `label`
 - `count`
 - `id` (for linking to a pre-filtered works search)
 
-We can take those from the [Catalogue API reponse's aggregations' `workType` buckets](https://api.wellcomecollection.org/catalogue/v2/works?aggregations=workType%2Cavailabilities%2Cgenres.label%2Clanguages%2Csubjects.label%2Ccontributors.agent.label&include=production%2Ccontributors%2CpartOf&pageSize=25) and transform them to it simplest form for the Content API response:
 
-<!-- Discuss, should we keep "workType" or change it to "formats"? -->
+The required fields can be taken from the Catalogue API reponse's aggregations' `workType` buckets: 
+https://api.wellcomecollection.org/catalogue/v2/works?aggregations=workType&include=languages&pageSize=1 
+(adding a query keyword to the params should one be entered). 
 
-```
-works: {
-  type: "Works",
-  totalResults: 2134,
-  workType: [
-    {
-      id: "a",
-      label: "Books",
-      count: 931,
-    },
-    {
-      id: "h", 
-      label: "Archives and manuscripts",
-      count: 398,
-    },
-    ...
-  ],
-}
-```
+As the `workType` bucket is the only thing we really need from the response, I tried to keep the tweak the query to be as simple as possible (e.g. adding an include param limits the results objects), suggestions welcome.
+
 
 ### Images
 
-For the Images results, we need the first 5 results and the total count. The individual results objects can be reduced from [the Catalogue API's image response](https://api.wellcomecollection.org/catalogue/v2/images?aggregations=locations.license%2Csource.genres.label%2Csource.subjects.label%2Csource.contributors.agent.label&pageSize=30). 
-<!-- TODO develop -->
-
-```
-images: {
-  type: "Images",
-  totalResults: 922,
-  results: [
-    {
-      imageSrc: "http://...",
-      alt: "Lorem ipsum",
-      workId: "yxcd6m5x", // for link
-      size: {}, // ?
-    },
-    {
-      imageSrc: "http://...",
-      alt: "Lorem ipsum",
-      workId: "b5kqccbb", // for link
-      size: {}, // ?
-    },
-    ...
-  ],
-}
-```
+For the Images results, we need the first 5 results and the total count. We will use the Catalogue API's image endpoint: 
+https://api.wellcomecollection.org/catalogue/v2/images?pageSize=5,
+adding a query param should one be entered. 
