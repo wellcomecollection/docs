@@ -1,10 +1,8 @@
 # Content API: All search and indexation of missing content types
 
-<!-- TODO add relevant sections -->
-
 - [Background information](#background-information)
 - [Elasticsearch "All" index](#elasticsearch-all-index)
-- [Indexation/Updates](#indexationupdates)
+- [Indexing](#indexing)
 - [Content API response](#content-api-response)
 - [Catalogue search](#catalogue-search)
 
@@ -64,19 +62,22 @@ query: {
   type: string,
   title: string,
   description: string,
-  contributors: string[]
+  body?: string,
+  contributors?: string[]
 }
 ```
 
-Most content types will allow this to fit, with one note on the `decription` field: 
+Should we want any other field to be queriable (such as "Format" for Projects), we will append them to one of the above, based on how we want that field to score. The only other one worth discussing is the `decription` field: 
 
 #### Description, captions, standfirsts and intro texts
 
 We have built our content types to use an array of fields to serve the same purpose; what could be called a "description" of the document gets called "Promo caption", "standfirst" (which is a slice, so part of the body), or "Intro text". There is [a ticket which aims to address the case of the Standfirst slices](https://github.com/wellcomecollection/wellcomecollection.org/issues/10753), but in the meantime, I suggest we use only one name for these in the index: "`description`". We will need to determine which content type should use which field as a description, but once that gets indexed, it becomes much easier to reference it by one name, at least in the "display" object.
 
-## Indexation/Updates
+## Indexing
 
-<!-- Same as the other endpoints? Every 15 minutes? -->
+<!-- TODO add diagram that shows flow of data through that service into the new index -->
+
+For the [mapping](./mapping.ts), I've gone with what we have on our other indices, although I'm sure they could have different parameters, they have served us well so far. Any improvement suggestions welcome.
 
 ## Content API response
 
