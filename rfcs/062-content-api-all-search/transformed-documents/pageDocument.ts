@@ -8,7 +8,7 @@ const pageDocument: DocumentMapping = {
     id: "WwQHTSAAANBfDYXU",
     uid: "opening-times",
     title: "Opening times",
-    description: "Aliquam erat volutpat", // (promo.caption || standfirst) ?
+    description: "Aliquam erat volutpat", 
     siteSection: "visit-us", // Should this be the uid or the readable name? Is it a label or for links? Probably both.
   },
   query: {

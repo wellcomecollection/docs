@@ -8,7 +8,7 @@ const visualStoryDocument: DocumentMapping = {
     id: "ZdTCPREAACEA3zK4", 
     uid: "jason-and-the-adventure-of-254-visual-story",
     title: "Jason and the adventure of 254 visual story",
-    description: "Aliquam erat volutpat", // (promo.caption || standfirst) ?
+    description: "Aliquam erat volutpat", 
   },
   query: {
     type: "Visual story",

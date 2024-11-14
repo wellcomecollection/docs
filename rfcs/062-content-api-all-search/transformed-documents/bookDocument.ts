@@ -8,7 +8,7 @@ const bookDocument: DocumentMapping = {
     id: "WwQHTSAAANBfDYXU",
     uid: "lorem-ipsum",
     title: "Lorem ipsum",
-    description: "Aliquam erat volutpat", // (promo.caption || standfirst) ?
+    description: "Aliquam erat volutpat",
   },
   query: {
     type: "Book",

@@ -70,11 +70,13 @@ query: {
 }
 ```
 
-Should we want any other field to be queriable (such as "Format" for Projects), we will append them to one of the above, based on how we want that field to score. The only other one worth discussing is the `decription` field:
+Should we want any other field to be queriable (such as "Format" for Projects), we will append them to one of the above, based on how we want that field to score. The only other one worth discussing is the `description` field:
 
 #### Description, captions, standfirsts and intro texts
 
 We have built our content types to use an array of fields to serve the same purpose; what could be called a "description" of the document gets called "Promo caption", "standfirst" (which is a slice, so part of the body), or "Intro text". There is [a ticket which aims to address the case of the Standfirst slices](https://github.com/wellcomecollection/wellcomecollection.org/issues/10753), but in the meantime, we suggest we use only one name for these in the index: `description`. We will need to determine which content type should use which field as a description, but once that gets indexed, it becomes much easier to reference it by one name, at least in the "display" object.
+
+An audit of all such fields will be done as a separate ticket: https://github.com/wellcomecollection/wellcomecollection.org/issues/11401, so all references to such fields in the transformed objects should be taken with this in mind.
 
 ## Indexing
 
