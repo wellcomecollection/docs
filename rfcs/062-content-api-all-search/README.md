@@ -86,7 +86,7 @@ For the [mapping](./mapping.ts), I've gone with what we have on our other indice
 
 ## Content API response
 
-**TODO figure out default order: https://wellcome.slack.com/archives/CUA669WHH/p1730992108227989**
+We have decided not to worry about a default order for a queryless call to the endpoint, as it might have nothing to do with the Content API and be rendered through Prismic content or static code. We are therefore taking that out of the scope of this RFC.
 
 ```
 {
