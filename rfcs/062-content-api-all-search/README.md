@@ -1,4 +1,4 @@
-# Content API: All search and indexation of missing content types
+# Content API: All search and indexing of addressable content types
 
 - [Background information](#background-information)
 - [Elasticsearch "All" index](#elasticsearch-all-index)
