@@ -5,6 +5,8 @@
   - [Addressable content types](#addressable-content-types)
   - [Query objects alignment](#query-objects-alignment)
 - [Indexing](#indexing)
+  - [ETL diagram](#diagram-of-etl-extract-transform-load-pipeline)
+  - [Mapping](#mapping)
 - [Content API response](#content-api-response)
 - [Catalogue search](#catalogue-search)
 
@@ -80,9 +82,11 @@ An audit of all such fields will be done as a separate ticket: https://github.co
 
 ## Indexing
 
-**TODO add diagram that shows flow of data through that service into the new index**
+### Diagram of ETL (extract, transform, load) pipeline
+<img src="./assets/ETL.png" alt="Diagram of the ETL pipeline" />
 
-For the [mapping](./mapping.ts), I've gone with what we have on our other indices, although I'm sure they could have different parameters, they have served us well so far. Any improvement suggestions welcome.
+### Mapping
+[See our suggestion for the mapping here](./mapping.ts). I've gone with what we have on our other indices, although I'm sure they could have different parameters, they have served us well so far. Any improvement suggestions welcome.
 
 ## Content API response
 
