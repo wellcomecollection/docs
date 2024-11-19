@@ -1,0 +1,3 @@
+Language:
+  language_id: str # The ID associated with the language, such as 'lat' for Latin
+  label: str

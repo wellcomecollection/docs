@@ -1,0 +1,88 @@
+edges:
+  - From: Work
+    To: Concept
+    Rel: HAS_CONCEPT
+    Directed: True
+    Attributes: None
+  - From: Work
+    To: Image
+    Rel: HAS_IMAGE
+    Directed: True
+    Attributes: None
+  - From: Work
+    To: Work
+    Rel: PART_OF
+    Directed: True
+    Attributes: None
+  - From: Work
+    To: Work
+    Rel: SUCCEEDED_BY
+    Directed: True
+    Attributes: None
+  - From: Work
+    To: Series
+    Rel: PART_OF
+    Directed: True
+    Attributes: None
+  - From: Work
+    To: Language
+    Rel: HAS_LANGUAGE
+    Directed: True
+    Attributes: None
+  - From: Work
+    To: Location
+    Rel: PRODUCED_IN
+    Directed: True
+    Attributes: None
+  - From: Concept
+    To: Work
+    Rel: CONTRIBUTED_TO
+    Directed: True
+    Attributes:
+      role: str
+  - From: Concept
+    To: SourceConcept
+    Rel: HAS_SOURCE_CONCEPT
+    Directed: True
+    Attributes:
+      qualifier: str
+  - From: Language
+    To: SourceConcept
+    Rel: HAS_SOURCE_CONCEPT
+    Directed: True
+    Attributes: None
+  - From: Location
+    To: SourceConcept
+    Rel: HAS_SOURCE_CONCEPT
+    Directed: True
+    Attributes: None
+  - From: Image
+    To: Image
+    Rel: VISUALLY_SIMILAR
+    Directed: False
+    Attributes: None
+  - From: SourceConcept
+    To: SourceConcept
+    Rel: HAS_PARENT
+    Directed: True
+    Attributes: None
+  - From: SourceConcept
+    To: SourceConcept
+    Rel: NARROWER_THAN
+    Directed: True
+    Attributes: None
+  - From: SourceConcept
+    To: SourceConcept
+    Rel: RELATED_TO
+    Directed: False
+    Attributes: None
+  - From: Concept
+    To: SourceName
+    Rel: HAS_SOURCE_CONCEPT
+    Directed: True
+    Attributes: None
+  - From: SourceName
+    To: SourceName
+    Rel: RELATED_TO
+    Directed: False
+    Attributes: None

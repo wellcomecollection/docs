@@ -1,0 +1,4 @@
+Concept:
+  wellcome_id: str
+  label: str
+  type: str # One of 'Person', 'Concept', 'Organisation', 'Place', 'Agent', 'Meeting', 'Genre', 'Period'

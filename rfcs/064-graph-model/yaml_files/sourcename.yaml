@@ -1,0 +1,10 @@
+SourceName:
+  source_id: str # unique identifier provided by the source vocabulary
+  label: str # label/preferred term from source vocabulary
+  source: str # label-derived, nlm-mesh, lc-subjects, lc-names, wikidata
+  alternative_ids: list # for example MeSH tree numbers or other identifiers from Wikidata
+  alternative_labels: list # LoC variants, MeSH concepts other than preferred term
+  description: str # Concept description, such as MeSH scope note or Wikidata description
+  date_of_birth: date # From LoC or Wikidata
+  date_of_death: date # From LoC or Wikidata
+  place_of_birth: str # From LoC or Wikidata
