@@ -11,6 +11,6 @@ Work:
   availabilities: list # Information available under 'availabilities' -> 'id'
   designation: str # Info such as volume, issue available under 'designation'
   produced_by: str # Production -> agents -> label
-  production_date: neo4j.time.Date # Date if available under 'production'
+  production_date: date # Date if available under 'production'
   alternative_titles: list
   alternative_ids: list # IDs from other systems available under 'identifiers'
