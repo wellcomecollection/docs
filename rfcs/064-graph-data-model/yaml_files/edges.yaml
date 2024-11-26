@@ -68,7 +68,7 @@ edges:
     Attributes: None
   - From: SourceConcept
     To: SourceConcept
-    Rel: NARROWER_THAN
+    Rel: NARROWER_THAN # LoC components and broader/narrower terms
     Directed: True
     Attributes: None
   - From: SourceConcept
