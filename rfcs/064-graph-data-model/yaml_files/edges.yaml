@@ -75,7 +75,8 @@ edges:
     To: SourceConcept
     Rel: RELATED_TO
     Directed: False
-    Attributes: None
+    Attributes:
+      similar_by: str # label, ml, lc-subjects, lc-names, wikidata, mesh
   - From: Concept
     To: SourceName
     Rel: HAS_SOURCE_CONCEPT
@@ -85,4 +86,5 @@ edges:
     To: SourceName
     Rel: RELATED_TO
     Directed: False
-    Attributes: None
+    Attributes:
+      similar_by: str # label, ml, lc-subjects, lc-names, wikidata, mesh
