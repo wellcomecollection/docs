@@ -7,7 +7,8 @@
 
 This RFC outlines the plan for the Library Data Link Explorer web application. This tool will enable Collections Information colleagues the ability to view and debug work relationships independently, potentially replacing the workflow of requesting a developer-run script to produce a matcher graph .dot file. 
 
-![Example DOT Notation Graph](https://hackmd.io/_uploads/ry15cEQmkl.png)
+![Example DOT Notation Graph](https://github.com/user-attachments/assets/c3cdc4f2-6c68-4b82-90c0-dea8da8cc0e5)
+
 *Example .dot graph returned by Matcher logic.*
 
 
@@ -30,7 +31,7 @@ However, CI colleagues currently have no visibility over how records are linked 
 1. **User inputs a work ID**: A Collections Information staff member enters an work ID into the application.
 2. **API fetches the data**: The API queries Elasticsearch for records linked to the work ID.
 3. **Frontend displays the graph**: The frontend renders a visual graph of nodes (works) and edges (relationships), allowing users to explore the connections using a graph library.
-4. **Enhanced Collections Information workflow**: This allows Collections Information I colleagues to independently view and explore relationships between records without requiring software engineer assistance, boosting productivity and collaboration.
+4. **Enhanced Collections Information workflow**: This allows Collections Information colleagues to independently view and explore relationships between records without requiring software engineer assistance, boosting productivity and collaboration.
 
 ---
 
@@ -52,10 +53,9 @@ However, CI colleagues currently have no visibility over how records are linked 
 
 - Frameworks and Dependencies
     - TypeScript
+    - @elastic/elasticsearch client
     - aws-lambda
-    - ts graphviz for generating dotnotation ready for conversion?
-    - AWS SDK for secrets - or is this done in Elasticsearch?
-    
+    - AWS SDK
 
 ---
 
@@ -66,7 +66,7 @@ However, CI colleagues currently have no visibility over how records are linked 
     - renders the matcher graph dynamically using a graph library (see candidates below)
         - uses nodes and edges to show relationships
     - handle error display when no relationships are present?
-    - potentially offer more advanced features than is currently possible (i.e, zoom, node highlighting
+       - potentially offer more advanced features than is currently possible (i.e, zoom, node highlighting)
 - Accessed securely - consider later down the line
 
 ---
@@ -97,21 +97,21 @@ However, CI colleagues currently have no visibility over how records are linked 
 ## Workflow
 
 1. API Development
-    1. using the content-api as a guide for structuring the api endpoint
-    2. implement the matcher logic within the endpoint
-        1. requires cleaning and configuring to both (work) and work with this setup
-    3. add transformation logic to convert dot to JSON
-    4. secure elasticsearch queries using Secrets Manager
+    - using the content-api as a guide for structuring the api endpoint
+    - implement the matcher logic within the endpoint
+        - requires cleaning and configuring to both (work) and work with this setup
+    - add transformation logic to convert dot to JSON
+    - secure elasticsearch queries using Secrets Manager
 2. Frontend Application build
-    1. design base wireframe for working against
-    2. set up Next application
-    3. integrate API endpoint for dynamic data fetching
-    4. render graphs using chosen graph library, giving time to pro/con each
+    - design base wireframe for working against
+    - set up Next application
+    - integrate API endpoint for dynamic data fetching
+    - render graphs using chosen graph library, giving time to pro/con each
 3. Testing 
-    1. done alongside these individual steps, to ensure logic is tested via Jest and Playwright
-        1. inc. e2es and unit tests
+    - done alongside these individual steps, to ensure logic is tested via Jest and Playwright
+        - inc. e2es and unit tests
 4. Deployment
-    1. Using GitHub Actions to automate testing and deployment to production
+    - Using GitHub Actions to automate testing and deployment to production
 
 ---
 
