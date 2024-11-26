@@ -98,10 +98,11 @@ However, CI colleagues currently have no visibility over how records are linked 
 
 1. API Development
     - using the content-api as a guide for structuring the api endpoint
+        - secure elasticsearch queries using Secrets Manager
     - implement the matcher logic within the endpoint
         - requires cleaning and configuring to both (work) and work with this setup
     - add transformation logic to convert dot to JSON
-    - secure elasticsearch queries using Secrets Manager
+    
 2. Frontend Application build
     - design base wireframe for working against
     - set up Next application
