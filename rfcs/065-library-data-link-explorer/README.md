@@ -40,12 +40,13 @@ However, CI colleagues currently have no visibility over how records are linked 
 - An API endpoint, powered by AWS Lambda to:
     - query Elasticsearch for works, returning matched works of the given work id
     - generate a DOT notation graph for this given work id using matcher logic within the endpoint
-    - transform this DOT notation into JSON ready for front end consumption
-- Accessed securely using AWS Secrets Manager for credentials for Elasticsearch
+    - transform this DOT notation into JSON ready for frontend consumption
+- accessed securely using AWS Secrets Manager for credentials for Elasticsearch
 
 ### Helpers
 
-- Use the build of the content-api as an example API endpoint
+- Consider the build of the content-api as an example API endpoint
+- Modify existing matcher logic to correctly integrate it with this application
 - JSON conversion is not strictly necessary, but useful for better graph libraries
 - [existing matcher logic](https://github.com/wellcomecollection/catalogue-pipeline/blob/main/pipeline/matcher_merger/matcher/scripts/getMatcherGraph.ts)
 
@@ -56,6 +57,15 @@ However, CI colleagues currently have no visibility over how records are linked 
     - @elastic/elasticsearch client
     - aws-lambda
     - AWS SDK
+    - Terraform / AWS SDK
+        - preferably Terraform to remain consistent with existing WC output
+
+- Input Validation and Throttling
+    - input sanitisation: validate work IDs to prevent invalid Elasticsearch queries
+    - throttling: use AWS Lambda's concurrency limits to prevent endpoint overuse
+
+- Lambda Function URLs 
+    - to expose the Lambda function as an HTTP endpoint for lightweight interaction
 
 ---
 
@@ -65,26 +75,33 @@ However, CI colleagues currently have no visibility over how records are linked 
     - provides a user interface for CI staff to enter a work id
     - renders the matcher graph dynamically using a graph library (see candidates below)
         - uses nodes and edges to show relationships
-    - handle error display when no relationships are present?
-       - potentially offer more advanced features than is currently possible (i.e, zoom, node highlighting)
-- Accessed securely - consider later down the line
+    - displays errors where no relationships are found or input is invalid 
+        - via the API and rendered for the user to see
+    - potentially offer more advanced features than is currently possible on .dot pdf (i.e, zoom, node highlighting)
 
----
-
-## Infrastructure and Deployment
-
-- Use GitHub Actions for CI/CD to deploy the backend and frontend
-- keeping repositories separate for clarity and modularity between the API/backend logic and frontend application and deployment
-
----
-
-## Graph Library Candidates
+### Graph Library Candidates
 
 - https://js.cytoscape.org/
 - https://www.sigmajs.org/ + [ReactSigma](https://sim51.github.io/react-sigma/) for prebuilt components
 - https://github.com/visjs/vis-network
 - Graphviz wrappers - https://github.com/magjac/d3-graphviz, https://github.com/mdaines/viz-js
 
+---
+
+## Infrastructure and Deployment
+
+- Infrastructure as code
+    - use Terraform to provision AWS resources (Lambda, Secrets Manager)
+
+### CI/CD 
+
+- Use GitHub Actions for CI/CD to automate deployment 
+- separate backend (lambda) and frontend (Vercel) deployment pipelines?
+- under one repo `library-data-link-explorer`
+
+### Hosting
+- Vercel for quick deployment while ensuring no secrets stored here
+- host Lambda functions on AWS, accessed by Function URLs
 ---
 
 ## Testing
@@ -98,21 +115,23 @@ However, CI colleagues currently have no visibility over how records are linked 
 
 1. API Development
     - using the content-api as a guide for structuring the api endpoint
-        - secure elasticsearch queries using Secrets Manager
+        - secure elasticsearch queries using AWS Secrets Manager
     - implement the matcher logic within the endpoint
         - requires cleaning and configuring to both (work) and work with this setup
     - add transformation logic to convert dot to JSON
     
-2. Frontend Application build
-    - design base wireframe for working against
-    - set up Next application
+2. Frontend Development
+    - develop wireframe to work against
+    - set up Next.js application
     - integrate API endpoint for dynamic data fetching
-    - render graphs using chosen graph library, giving time to pro/con each
-3. Testing 
-    - done alongside these individual steps, to ensure logic is tested via Jest and Playwright
-        - inc. e2es and unit tests
+    - test different graph libraries, making best choice for rendering the graph
+3. Testing
+    - write unit tests for API logic and matcher transformations
+    - perform end-to-end (e2es) testing to validate frontend and backend integration
 4. Deployment
-    - Using GitHub Actions to automate testing and deployment to production
+    - Using GitHub Actions for CI/CD
+    - Deploy the backend to AWS Lambda
+    - Deploy the frontend to Vercel
 
 ---
 
