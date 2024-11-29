@@ -14,3 +14,5 @@ Work:
   production_date: date # Date if available under 'production'
   alternative_titles: list
   alternative_ids: list # IDs from other systems available under 'identifiers'
+  location: str # Production location which can be matched to location nodes
+  language_id: str # Language ID which can be matched to Language nodes

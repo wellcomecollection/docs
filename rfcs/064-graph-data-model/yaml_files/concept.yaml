@@ -2,3 +2,4 @@ Concept:
   wellcome_id: str
   label: str
   type: str # One of 'Person', 'Concept', 'Organisation', 'Place', 'Agent', 'Meeting', 'Genre', 'Period'
+  source: str # label-derived, nlm-mesh, lc-subjects, lc-names, viaf, fihrist

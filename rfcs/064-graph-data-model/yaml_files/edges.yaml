@@ -24,16 +24,6 @@ edges:
     Rel: PART_OF
     Directed: True
     Attributes: None
-  - From: Work
-    To: Language
-    Rel: HAS_LANGUAGE
-    Directed: True
-    Attributes: None
-  - From: Work
-    To: Location
-    Rel: PRODUCED_IN
-    Directed: True
-    Attributes: None
   - From: Concept
     To: Work
     Rel: CONTRIBUTED_TO
@@ -45,17 +35,20 @@ edges:
     Rel: HAS_SOURCE_CONCEPT
     Directed: True
     Attributes:
-      qualifier: str
+      qualifier: str # MeSH qualifier
+      matched_by: str # id, label, ml
   - From: Language
     To: SourceConcept
     Rel: HAS_SOURCE_CONCEPT
     Directed: True
-    Attributes: None
+    Attributes:
+      matched_by: str # label, ml
   - From: Location
-    To: SourceConcept
+    To: SourceLocation
     Rel: HAS_SOURCE_CONCEPT
     Directed: True
-    Attributes: None
+    Attributes:
+      matched_by: str # label, ml
   - From: Image
     To: Image
     Rel: VISUALLY_SIMILAR
@@ -76,15 +69,44 @@ edges:
     Rel: RELATED_TO
     Directed: False
     Attributes:
-      similar_by: str # label, ml, lc-subjects, lc-names, wikidata, mesh
-  - From: Concept
-    To: SourceName
-    Rel: HAS_SOURCE_CONCEPT
-    Directed: True
-    Attributes: None
+      source: str # lc-subjects, lc-names, wikidata, mesh
+  - From: SourceConcept
+    To: SourceConcept
+    Rel: SAME_AS
+    Directed: False
+    Attributes:
+      source: str # label, ml, lc-subjects, lc-names, wikidata
   - From: SourceName
     To: SourceName
     Rel: RELATED_TO
     Directed: False
     Attributes:
-      similar_by: str # label, ml, lc-subjects, lc-names, wikidata, mesh
+      source: str # lc-subjects, lc-names, wikidata, mesh
+  - From: SourceName
+    To: SourceName
+    Rel: SAME_AS
+    Directed: False
+    Attributes:
+      source: str # label, ml, lc-subjects, lc-names, wikidata
+  - From: Concept
+    To: SourceName
+    Rel: HAS_SOURCE_CONCEPT
+    Directed: True
+    Attributes:
+      matched_by: str # id, label, ml
+  - From: SourceLocation
+    To: SourceLocation
+    Rel: NARROWER_THAN # LoC components and broader/narrower terms
+    Directed: True
+    Attributes: None
+  - From: SourceLocation
+    To: SourceLocation
+    Rel: LOCATED_IN
+    Directed: True
+    Attributes: None
+  - From: SourceLocation
+    To: SourceLocation
+    Rel: SAME_AS
+    Directed: False
+    Attributes:
+      source: str # ml, lc-subjects, lc-names, wikidata
