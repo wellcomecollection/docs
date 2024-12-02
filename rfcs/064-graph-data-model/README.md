@@ -126,4 +126,5 @@ Number of concept IDs after linkage:
 
 If you look at the top 100 most common concept labels, 93 of these can actually be matched to a vocabulary entry in at least one source via the above process:
 
-<img src="figures/top_100.png" width="600">
+[![top 100 most common](figures/top_100.png)](https://ds.wellcome.data/collection/concepts/linkage/top_100.html)
+
