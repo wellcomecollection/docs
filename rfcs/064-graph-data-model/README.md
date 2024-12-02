@@ -30,7 +30,7 @@ Some works have information available on their production location and/or langua
 
 ### Concept
 
-These are the concepts that works have been manually tagged with. Any concept which has a unique 8-digit identifier will be represented as a `Concept` node. There is no split into 'Person' and 'Concept' nodes at this level, in contrast to the previous graph model. This is because (i) concepts tagged as 'Person' can also include other terms which are not names, and (ii) there are additional types other than 'Concept' and 'Person' (see table below). As these can potentially all be linked to external vocabularies, it makes more sense to keep all of these as `Concept` nodes and add the type tag as a node property (see [concept.yaml](yaml_files/concept.yaml)).
+These are the concepts that works have been manually tagged with. Any concept which has a unique 8-digit identifier will be represented as a `Concept` node. There is no split into Person and Concept nodes at this level, in contrast to the previous graph model. This is because (i) concepts tagged as Person can also include other terms which are not names, and (ii) there are additional types other than Concept and Person (see table below). As these can potentially all be linked to external vocabularies, it makes more sense to keep all of these as `Concept` nodes and add the type tag as a node property (see [concept.yaml](yaml_files/concept.yaml)).
 
 | Concept type  | Count |
 | ------------- | ----- |
@@ -60,14 +60,11 @@ Nodes for concepts from the following external ontologies: LCSH, Wikidata, or Me
 
 ### SourceName
 
-Nodes for names from LCNAF (excluding concepts which are an instance of `MADS/RDF Geographic`, see below) and corresponding Wikidata concepts. MeSH is not included here as it does not include any names. Additional properties are included on `SourceName` nodes which specifically provide relevant context for names (see [sourcename.yaml](yaml_files/sourcename.yaml)): date of birth, date of death, and place of birth. Note that, for simplicity, there is currently no further split into different name categories such as organisation or meeting names (the additional birth date/place properties for these will be empty). However, it should be relatively straightforward to split these further (identifiable via source vocabulary subdivisions and/or parent terms), if necessary. For instance, there may be a need to incorporate specific information for organisations such as their location, founder etc.
+Nodes for names from LCNAF (excluding concepts which are an instance of `MADS/RDF Geographic`, see below) and corresponding Wikidata concepts. MeSH is not included here as it does not include any names. Additional properties are included on `SourceName` nodes which specifically provide relevant context for names (see [sourcename.yaml](yaml_files/sourcename.yaml)): date of birth, date of death, and place of birth. Note that, for simplicity, there is currently no further split into different name categories such as organisation or meeting names (therefore the additional birth date/place properties for these will be empty). However, it should be relatively straightforward to split these further, if necessary, as they are identifiable via source vocabulary subdivisions and/or parent terms. For instance, there may be a need to incorporate specific information for organisations such as their location, founder etc.
 
 ### SourceLocation
 
-* Everything in lc-names or lc-subjects which is an instance of `MADS/RDF Geographic`
-* Anything from Wikidata that is linked to the above
-* MeSH Geographicals (Z tree codes)
-
+Nodes for concepts from LCSH or LCNAF which are an instance of `MADS/RDF Geographic` and MeSH Geographicals (`Z` tree codes). Location-specific properties are included on `SourceLocation` nodes (see [sourcelocation.yaml](yaml_files/sourcelocation.yaml)), such as their coordinates.
 
 ## Edges
 
