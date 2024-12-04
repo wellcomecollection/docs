@@ -56,7 +56,7 @@ In some cases, these manually tagged concepts already come with an identifier fr
 
 ### SourceConcept
 
-Nodes for concepts from the following external ontologies: Library of Congress Subject Headings (LCSH), Wikidata, or Medical Subject Headings (MeSH). Aside from the source identifier and label, properties include a description, alternative identifiers , and alternative labels/synonyms (see [sourceconcept.yaml](yaml_files/sourceconcept.yaml)). Additional properties can be added to incorporate more information from source ontologies, if needed. A full list of source properties is available for [MeSH](https://www.nlm.nih.gov/mesh/xml_data_elements.html) and [Wikidata](https://www.wikidata.org/wiki/Wikidata:Database_reports/List_of_properties/all). It is worth noting that Wikidata in particular has a wide range of properties, including links to various other external databases (e.g.the National Portrait Gallery, OpenAlex and many more), and a decision may need to be made whether to include all of these under `alternative_ids`.
+Nodes for concepts from the following external ontologies: Library of Congress Subject Headings (LCSH), Wikidata, or Medical Subject Headings (MeSH). Aside from the source identifier and label, properties include a description, alternative identifiers, and alternative labels/synonyms (see [sourceconcept.yaml](yaml_files/sourceconcept.yaml)). Additional properties can be added to incorporate more information from source ontologies, if needed. A full list of source properties is available for [MeSH](https://www.nlm.nih.gov/mesh/xml_data_elements.html) and [Wikidata](https://www.wikidata.org/wiki/Wikidata:Database_reports/List_of_properties/all). It is worth noting that Wikidata in particular has a wide range of properties, including links to various other external databases (e.g.the National Portrait Gallery, OpenAlex and many more), and a decision may need to be made whether to include all of these under `alternative_ids`.
 
 ### SourceName
 
@@ -104,9 +104,17 @@ All edges can be viewed in [edges.yaml](yaml_files/edges.yaml).
 
 * `LOCATED_IN`: Hierarchical relationship between locations. For example, when mapping locations from LoC to Wikidata, countries can be identified via property P17, and cities/states/counties via P131.
 
-## Other considerations
+## Future directions and other considerations
 
-The graph data model includes a variety of information and links from the different source ontologies. However, the intention is not to make any assumptions on what should eventually be displayed on concept pages and how, as this will require more extensive user research. Furthermore, while enrichment of concept pages via source ontologies is the current focus of the graph, it is only one of its possible use cases. For example, a graph can also facilitate visualisation of the Collection and support ML tasks via graph embeddings, as described previously in [RFC #62]((../062-knowledge-graph/README.md)). Having said that, it is possible to incrementally build the graph based on the above data model, starting with concepts and adding more data as needed.
+The graph data model includes a variety of information and links from the different source ontologies. This can enable various improvements to concept pages in the future, such as:
+
+* Filtering and aggregating works related to a single, unified concept which exists in multiple source ontologies. This extends to label-derived concepts which can be matched to these.
+* Displaying relevant information from external data sources on concept pages, such as descriptions, birth dates, and links to other data.
+* Providing onward journeys from concept pages to related, broader/narrower concepts and concepts that frequently co-occur on works.
+
+Furthermore, a graph enables network analysis which can identify isolated concept pages, highly connected clusters of interlinked concepts, and concepts acting as bridges between such groups.
+
+However, the intention is not to make any assumptions on what should eventually be displayed on concept pages and how, as this will require more extensive user research. Furthermore, while enrichment of concept pages via source ontologies is the current focus of the graph, it is only one of its possible use cases. For example, a graph can also facilitate visualisation of the Collection and support ML tasks via graph embeddings, as described previously in [RFC #62]((../062-knowledge-graph/README.md)). Having said that, it is possible to incrementally build the graph based on the above data model, starting with concepts and adding more data as needed.
 
 ## Appendix
 
