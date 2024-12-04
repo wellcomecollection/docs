@@ -22,7 +22,7 @@ Series nodes only have a `title` property (see [series.yaml](yaml_files/series.y
 
 ### Image
 
-Nodes for images which are part of works. Suggested attributes can be viewed in [image.yaml](yaml_files/image.yaml), and include information such as the identifier and iiif url.
+Nodes for images which are part of works. Suggested attributes can be viewed in [image.yaml](yaml_files/image.yaml), and include information such as the identifier and iiif url. While images could feasibly be linked to the the subjects of the works they are associated with, these edges are not strictly needed to get this information (the suggested graph model enables traversal of edges which can provide this information via `Image`<-`HAS_IMAGE`-`Work`-`HAS_CONCEPT`->`Concept`).
 
 ### Location and language (optional)
 
