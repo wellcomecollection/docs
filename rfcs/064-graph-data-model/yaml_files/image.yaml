@@ -1,0 +1,7 @@
+Image:
+  wellcome_id: str
+  access: str
+  avarage_colour: str # colour code e.g. '#aca69a'
+  url: str # locations -> iiif url
+  type: str
+  

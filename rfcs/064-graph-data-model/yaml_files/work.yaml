@@ -1,0 +1,18 @@
+Work:
+  wellcome_id: str # Wellcome unique ID
+  title: str
+  description: str
+  physical_description: str
+  type: str # 'Work', 'Series', 'Section', or 'Collection' available under 'type'
+  work_type: str # Type of work such as Books, Audio, etc. available under WorkType -> label
+  holding_type: str # Digital or physical location available under holdings -> location -> type
+  lettering: str # Information available under 'lettering'
+  notes: list # Type and contents from notes as JSON (consider alternative format, if possible)
+  availabilities: list # Information available under 'availabilities' -> 'id'
+  designation: str # Info such as volume, issue available under 'designation'
+  produced_by: str # Production -> agents -> label
+  production_date: date # Date if available under 'production'
+  alternative_titles: list
+  alternative_ids: list # IDs from other systems available under 'identifiers'
+  location: str # Production location which can be matched to location nodes
+  language_id: str # Language ID which can be matched to Language nodes
