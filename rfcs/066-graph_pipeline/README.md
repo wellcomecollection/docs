@@ -114,12 +114,6 @@ MeSH data will be loaded in full from https://nlmpubs.nlm.nih.gov/projects/mesh/
 
 These are other pipeline considerations which apply to the graph in general, independently from the source data.
 
-### Idempotence
-
-* All insert operations should be idempotent so that we're not creating duplicate data
-* `MERGE` queries in Cypher
-* Constraints
-
 ### Edge directionality
 
 * Edges are all directional in the database (undesirable for performance reasons to run an undirected query)
