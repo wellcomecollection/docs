@@ -24,7 +24,9 @@ LoC source data has a monthly update frequency. Corresponding graph updates may 
 
 ### Wikidata
 
-JSON dumps containing all Wikidata entities in a single JSON array can be found under "https://dumps.wikimedia.org/wikidatawiki/entities/". However, due to the large size of these data dumps (currently, `latest-all.json.gz` is approximately 140 GB), only as subset of Wikidata source concepts will be loaded to the graph. This is in contrast to the other data sources and may be associated with some pipeline complexities, which are discussed below. The current plan is to use SPARQL queries to load tems which contain references to/from LoC and/or MeSH, as well as their parent terms.
+JSON dumps containing all Wikidata entities in a single JSON array can be found under "https://dumps.wikimedia.org/wikidatawiki/entities/". However, due to the large size of these data dumps (currently, `latest-all.json.gz` is approximately 140 GB), only as subset of Wikidata source concepts will be loaded to the graph. This is in contrast to the other data sources and may be associated with some additional pipeline complexities. 
+
+The current plan is to use SPARQL queries to load tems which contain references to/from LoC and/or MeSH, as well as their parent terms.
 
 The following query retrieves all Wikidata items referencing any LCSH or LCNAF identifier (`anyValueP244`), and returns the following properties for each item: 
 * Wikidata identifier
