@@ -134,7 +134,7 @@ However, the current graph data model does include some edges which do not have 
 
 ### List properties
 
-* List properties not possible in Neptune (presumably due to query performance reasons) and will be set to concatenated strings
+It is not possible to create array type properties in AWS Neptune (see [here](https://docs.aws.amazon.com/neptune/latest/userguide/bulk-load-tutorial-format-opencypher.html) for an overview of possible data types). Any list properties (such as `alternative_labels`) will be concatenated to a string, with a `||` separator between individual items. While this can be seen as a limitation, we may benefit from better query performance resulting from indexing of these strings in the graph database.
 
 ### Label-derived concepts
 
