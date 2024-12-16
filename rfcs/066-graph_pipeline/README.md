@@ -121,8 +121,16 @@ These are other pipeline considerations which apply to the graph in general, ind
 
 ### Edge directionality
 
-* Edges are all directional in the database (undesirable for performance reasons to run an undirected query)
-* Some edges should be queryable from both sides, e.g. `SAME_AS` (no inherent directionality). Represent with two directional edges
+When creating an edge between two nodes in a graph database such as AWS Neptune, the edge is always directed, even if the direction is omitted in the Cypher query. For example, the following query will create a directed edge from node a to node b:
+```
+MATCH
+    (a:NodeA {property_a: property_a}),
+    (b:NodeB {property_b: property_b})
+MERGE (a)-[r:REL]-(b)
+```
+Furthermore, it is undesirable in terms of query performance to run undirected queries, as explained [here](https://docs.aws.amazon.com/neptune/latest/userguide/best-practices-opencypher-directed-edges.html).
+
+However, the current graph data model does include some edges which do not have any inherent directionality and should be queryable from both sides (for example, `SAME_AS` edges between two source concepts from different ontologies). To avoid introducing an artificial hierarchy between ontologies, and given that this will not add too much storage overhead, these relationships will be represented with two directed edges.
 
 ### List properties
 
