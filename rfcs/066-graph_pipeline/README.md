@@ -4,9 +4,9 @@ This RFC outlines considerations for the development of the cagalogue-graph pipe
 
 ## Loading data from external sources
 
-Where possible, data for source concept nodes will be loaded to the graph in full. This currently applies to data from Library of Congress Subject Headings (LCSH), Library of Congress Name Authority File (LCNAF), and MeSH. Unless the size of the data is prohibitive (for example, in the case of Wikidata), the slightly higher storage needs will be outweighed by advantages associated with minimising dependencies, resulting in simplified pipeline logic and updates. 
+Where possible, data for source concept nodes will be loaded to the graph in full. This currently applies to data from Library of Congress Subject Headings (LCSH), Library of Congress Name Authority File (LCNAF), and Medical Subject Headings (MeSH). Unless the size of the data is prohibitive (for example, in the case of Wikidata), the slightly higher storage needs will be outweighed by advantages associated with minimising dependencies, resulting in simplified pipeline logic and updates. 
 
-For instance, if we were to only load source entries which appear in our concepts, we would need to fetch new data every time a previously unseen concept is added to the graph. This includes any label-derived concepts we want to match to LoC and MeSH. For example, let's say we add a new LoC source node, we would in turn have to fetch other nodes from LoC (for example, broader/narrower terms). Following this, we would need to add any Wikidata concepts associated with these. For these Wikidata entries, we would then need to check if there is a MeSH term associated to it. If the MeSH term is not already present in the graph, any parent terms which appear in the hierarchy would also have to be loaded. 
+For instance, if we were to only load source nodes linked to our concepts, we would need to fetch new data every time a previously unseen concept is added to the graph. This includes any label-derived concepts we want to match to LoC and MeSH. For example, let's say we add a new LoC source node, we would in turn have to fetch other nodes from LoC (for example, broader/narrower terms). Following this, we would need to add any Wikidata concepts associated with these. For these Wikidata entries, we would then need to check if there is a MeSH term associated to it. If the MeSH term is not already present in the graph, any parent terms which appear in the hierarchy would also have to be loaded. 
 
 Instead, if we load source nodes and edges from LoC and MeSH in full, we would only need to add an edge between the new concept and the source it is connected to. Source node and edge extraction can happen independently, and their frequency can be scheduled around updates to LoC and MeSH. To make sure there are no dependencies between different sources, the data will be loaded in multiple passes, whereby nodes and within-vocabulary edges will be loaded first, followed by edges between different vocabularies.
 
@@ -75,7 +75,7 @@ The following query retrieves all Wikidata items referencing any MeSH or MeSH+qu
 * `MeSH descriptor` identifier
 * `MeSH descriptor and qualifier` identifier
 
-Wikidata entries will reference MeSH identifiers either with or without qualifier, but not both.
+Wikidata entries contain references to MeSH identifiers either with or without qualifier, but not both.
 
 ```
 SELECT DISTINCT ?item ?itemDescription ?itemAltLabel ?instance_of ?instance_ofLabel ?instance_ofDescription ?instance_ofAltLabel ?subclass_of ?subclass_ofLabel ?subclass_ofDescription ?subclass_ofAltLabel ?country ?countryLabel ?countryDescription ?countryAltLabel ?coordinate_location ?MeSH_descriptor_ID ?MeSH_descriptor_qualifier_ID WHERE {
@@ -105,10 +105,15 @@ SELECT DISTINCT ?item ?itemDescription ?itemAltLabel ?instance_of ?instance_ofLa
 There needs to be some logic to split concepts from Wikidata correctly into `SourceConcept`, `SourceName`, and `SourceLocation` nodes, which can be designed in the following way: Any item with a `country` property will be a `SourceLocation`, anything referencing a LCNAF identifier which is not a location will be a `SourceName`, and anything else a `SourceConcept`.
 
 ### MeSH
-MeSH data will be loaded in full from https://nlmpubs.nlm.nih.gov/projects/mesh/MESH_FILES/xmlmesh/. It will not be necessary to schedule frequent updates as the source data is only updated annually.
+MeSH data will be loaded in full from https://nlmpubs.nlm.nih.gov/projects/mesh/MESH_FILES/xmlmesh/. The It will not be necessary to schedule frequent updates as the source data is only updated annually. 
 
-* Connecting MeSH to LoC via UMLS https://www.nlm.nih.gov/research/umls/index.html (something to consider for future iteration of graph pipeline)
-* Data issues with manually tagged concepts - flag upstream and add checks in pipeline, e.g. for identifier matching label, before loading edges between concept and source nodes based on identifier
+Since MeSH does not contain any names, we only need to split these into `SourceConcept` and `SourceLocation`, which will be implemented as follows: MeSH terms from the `Geographicals` branch (identifiable via their `Z` tree code) will be loaded as `SourceLocation` nodes, everything else will be loaded as `SourceConcept`.
+
+There are some concepts in the catalogue which come with a MeSH qualifier. MeSH identifiers with a qualifier code will be split such that the concept is linked to its MeSH identifier via a `HAS_SOURCE_CONCEPT` edge and the qualifier added as an edge property.
+
+It is worth noting that an analysis of MeSH concepts from the catalogue has revealed data quality issues affecting some concepts, such as mismatches between labels and MeSH identifiers. For example, there are concepts tagged as MeSH but which have a LoC-type identifier, and MeSH terms such as Sanitation with an identifier which does not link back to Sanitation. Rather than building additional logic into the pipeline to clean this data, we will instead add data quality checks (to make sure we only load source nodes for concepts where the label matches the identifier) and flag these issues directly with the cataloguers. While this will result in a delay for some MeSH concepts to be added to the graph, it will avoid some complexity within the pipeline code.
+
+MeSH concepts will initially only be indirectly linked to LoC concepts via `SAME_AS` edges between Wikidata and these sources. However, there is a possibility to extract direct links from the [UMLS metathesaurus](https://www.nlm.nih.gov/research/umls/index.html), which covers both MeSH and LCSH, in a future iteration of the graph pipeline.
 
 ## Other considerations
 
@@ -122,3 +127,8 @@ These are other pipeline considerations which apply to the graph in general, ind
 ### List properties
 
 * List properties not possible in Neptune (presumably due to query performance reasons) and will be set to concatenated strings
+
+### Label-derived concepts
+
+* matched by label via `HAS_SOURCE_CONCEPT` edges to external ontologies
+* enable matching by ml algorithm in the future
