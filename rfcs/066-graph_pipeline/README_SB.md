@@ -16,24 +16,26 @@ diagram below):
 ![implementation.png](figures%2Fimplementation.png)
 
 Items will be indexed in the order indicated in the diagram. This ordering ensures that nodes are always indexed
-before edges, and source concepts are always loaded before Wellcome catalogue concepts.
+before edges, and source concepts are always indexed before Wellcome catalogue concepts. Adhering to this ordering will
+ensure that at the end of each pipeline run, the graph will be correct and complete. Not adhering to this ordering
+would result in missing nodes or edges.
 
-`SAME_AS` edges between SourceConcept nodes will be extracted in two stages. The first involves running a SPARQL query
-against Wikidata to extract all linked LoC and MeSH subjects. The second involves downloading the external links file
-from LoC and extracting all linked Wikidata subjects. The ordering of these two stages does not matter, and in the
-diagram they are both labeled `3`. In the first version of the graph, only one of these stages might be implemented.
+`SAME_AS` edges (connecting SourceConcept nodes) will be extracted in two stages. The first stage will involve running a
+SPARQL query against Wikidata to extract all linked LoC and MeSH subjects. The second stage will involve downloading the
+external links file from LoC and extracting all linked Wikidata subjects. The ordering of these two stages does not
+matter, and in the diagram they are both labeled `3`. In the first version of the graph, only one of these stages might
+be implemented.
 
-`HAS_SOURCE_CONCEPT` edges will also be extracted in two stages. In the first stage, edges will be created
-based on source concept IDs explicitly referenced by catalogue concepts. For example, if a given catalogue item lists
-an LoC concept as a source concept, a `HAS_SOURCE_CONCEPT` edge will be created between the catalogue concept and the
-LoC concept. (In the diagram, this stage is labeled `5`.) In the second stage, all catalogue concepts will be streamed
-into the `ConceptsMatcher`, which will use an
-algorithm to create additional `HAS_SOURCE_CONCEPT` edges. For the purposes of this RFC, the `ConceptsMatcher` is a
-black box, but in practice it might create edges based on matching labels, or based on a machine learning
-algorithm. (In the diagram, this stage is labeled `6`). In the first version of the graph, only the first stage might be
-implemented.
+`HAS_SOURCE_CONCEPT` edges (connecting Concept nodes to SourceConcept nodes) will also be extracted in two stages. In
+the first stage, edges will be created based on source concept IDs explicitly referenced by catalogue concepts. For
+example, if a given catalogue item lists an LoC concept as a source concept, a `HAS_SOURCE_CONCEPT` edge will be created
+between the catalogue concept and the LoC concept. (In the diagram, this stage is labeled `5`.) In the second stage, all
+catalogue concepts will be streamed into the `ConceptsMatcher`, which will use an algorithm to create
+additional `HAS_SOURCE_CONCEPT` edges. For the purposes of this RFC, the `ConceptsMatcher` is a black box, but in
+practice it might create edges based on matching labels, or based on a machine learning algorithm. (In the diagram, this
+stage is labeled `6`.) In the first version of the graph, only the first stage might be implemented.
 
-Additionally, the implementation will follow these principles:
+Additionally, the implementation will follow these general principles:
 
 * All components will utilise streaming via Python generators when processing individual items to ensure that we only
   hold a fraction of the full dataset in memory at any given time.
@@ -42,9 +44,9 @@ Additionally, the implementation will follow these principles:
   validation and type safety.
 * Repeatedly inserting the same node or edge into the graph should only result in one node or edge being created. In
   practice this means implementing all operations as "upsert" operations. In openCypher language, this means using
-  `MERGE` instead of `CREATE`.
-
-TODO: Is there a case where we would prefer using CREATE instead of MERGE?
+  `MERGE` instead of `CREATE`. This will ensure that repeated runs of the pipeline on the same source data will be
+  idempotent without requiring additional pipeline logic for tracking which items have already been inserted into the
+  graph.
 
 ## Architecture
 
@@ -87,3 +89,7 @@ overhead, as processed items would have to be serialised and deserialised betwee
 Each invocation of the `extractor` Lambda function will only execute one Transformer, based on the input passed to the
 Lambda function. Execution will be orchestrated via AWS Step Functions. Execution order will follow the ordering in the
 diagram above — top to bottom, and nodes before edges.
+
+The full pipeline will be configured to run regularly but on an infrequent schedule (once every few months or similar)
+due to source concepts not being updated frequently. The sub-pipeline processing Wellcome catalogue concepts can be
+scheduled to run more frequently.
