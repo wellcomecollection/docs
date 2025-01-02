@@ -104,6 +104,8 @@ SELECT DISTINCT ?item ?itemDescription ?itemAltLabel ?instance_of ?instance_ofLa
 
 There needs to be some logic to split concepts from Wikidata correctly into `SourceConcept`, `SourceName`, and `SourceLocation` nodes, which can be designed in the following way: Any item with a `country` property will be a `SourceLocation`, anything referencing a LCNAF identifier which is not a location will be a `SourceName`, and anything else a `SourceConcept`.
 
+As noted in [RFC #64](../064-graph-data-model/README.md), Wikidata has a wide range of properties, and we may need to modify our queries to include additional metadata in future iterations of the graph pipeline. For example, Wikidata includes links to a wide range of external databases (e.g.the National Portrait Gallery, OpenAlex and many more), which we may want to add to `alternative_ids`.
+
 ### MeSH
 MeSH data will be loaded in full from https://nlmpubs.nlm.nih.gov/projects/mesh/MESH_FILES/xmlmesh/. The It will not be necessary to schedule frequent updates as the source data is only updated annually. 
 
