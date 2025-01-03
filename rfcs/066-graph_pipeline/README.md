@@ -235,3 +235,10 @@ diagram above — top to bottom, and nodes before edges.
 The full pipeline will be configured to run regularly but on an infrequent schedule (once every few months or similar)
 due to source concepts not being updated frequently. The sub-pipeline processing Wellcome catalogue concepts can be
 scheduled to run more frequently.
+
+## Revised architecture
+
+Adding entities to the graph via the `indexer` Lambda function (as described in the previous section) has performance
+limitations in practice. Therefore, we have replaced this Lambda function with a `loader` Lambda function, which loads
+entities into the graph via [Neptune bulk loader](https://docs.aws.amazon.com/neptune/latest/userguide/bulk-load.html).
+This way, we can load millions of nodes/edges into the database within minutes (rather than hours).
