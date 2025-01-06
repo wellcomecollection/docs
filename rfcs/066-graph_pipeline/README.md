@@ -1,6 +1,6 @@
 # RFC 066: Catalogue Graph pipeline
 
-This RFC outlines considerations for the development of the cagalogue-graph pipeline. The first iteration of the graph will be focused on concepts and their enrichment with data from external ontologies, as discussed below.
+This RFC outlines considerations for the development of the catalogue-graph pipeline. The first iteration of the graph will be focused on concepts and their enrichment with data from external ontologies, as discussed below.
 
 ## Loading data from external sources
 
