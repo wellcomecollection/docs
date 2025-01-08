@@ -1,4 +1,4 @@
-# RFC 066: Prismic API ID casing
+# RFC 067: Prismic API ID casing
 
 ## TL;DR
 - Use kebab-case for Custom type API IDs (plural/singular for reusable/single respectively)
