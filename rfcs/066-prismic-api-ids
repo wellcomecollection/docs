@@ -11,9 +11,7 @@ We’d like to make sure our Prismic API IDs are written with consistent casing 
 ## Custom type API IDs
 These should be kebab-cased and plural when the type is ‘reusable’ as opposed to ‘single’ (e.g. the reusable ‘Exhibition highlight tour’ Custom type has the API ID `exhibition-highlight-tours`, whereas the single ‘Global alert’ Custom type has the API ID `global-alert`).
 
-We have done this fairly consistently although a couple of reusable content types have been given singular API IDs – `card` and `collection-venue`.
-
-Should we try to update these two to `cards` and `collection-venues` or just live with it?
+SliceMachine makes these snake_case by default but allows this to be overridden easily in the GUI - we've done this fairly consistently although a couple of reusable content types have been given singular API IDs – `card` and `collection-venue`. I don't think there's any mileage in updating everything to snake_case since *none* of them are in that format currently. I'm not sure if we should try to update to `cards` and `collection-venues` or just live with those as they are?
 
 ## Field API IDs
 We have a mixture of snake_case and camelCase field API IDs. SliceMachine defaults to snake_case (based on the label), although this is readily overridable in the GUI at the point of adding the field.
