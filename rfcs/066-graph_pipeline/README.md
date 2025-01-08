@@ -144,15 +144,26 @@ In the first iteration of the graph pipeline, label-derived nodes which have the
 
 ## Implementation
 
-The catalogue graph pipeline will be implemented in Python. The pipeline will consist of the following components (see
-diagram below):
+The catalogue graph pipeline will be implemented in Python. The pipeline will support two modes of operation — a **bulk**
+mode and an **incremental** mode. The bulk mode will be used to load all entities into the graph via 
+[Neptune bulk loader](https://docs.aws.amazon.com/neptune/latest/userguide/bulk-load.html). The incremental mode will
+run openCypher queries against the cluster to update nodes or edges as needed.
+
+Originally we were planning to only utilise openCypher queries, but this approach came with performance limitations and
+lots of transient errors when loading a large number of items at once, which is why we decided to use Neptune bulk
+loader for bulk loads. This way, we can load millions of nodes/edges into the database within minutes rather than hours. 
+
+The pipeline will consist of the following components (see diagram below):
 
 * Each concept source (e.g. MeSH, LoC, Wellcome catalogue) will have a corresponding `Source` class, which will
-  include logic for downloading raw concepts and stream them to subsequent components for processing.
+  include logic for downloading raw concepts and streaming them to subsequent components for processing.
 * Each combination of concept source and concept type (e.g. LoC name, LoC location, MeSH concept) will have a
   corresponding `Transformer` class, which will include logic for extracting nodes and edges (separately) from each raw
   concept and converting them into the desired format for indexing into the Neptune database.
-* Transformed concepts will be streamed in batches to the `CypherQueryBuilder`, which will be responsible for creating
+* Transformed concepts will be streamed in batches to some destination, which will depend on whether the pipeline is 
+  running in bulk mode or in incremental mode:
+  * In **bulk** mode, concepts will be streamed to S3 where they will be picked up by the Neptune bulk loader. 
+  * In **incremental** mode, concepts will be streamed to the `CypherQueryBuilder`, which will be responsible for creating
   openCypher upsert queries.
 
 ![implementation.png](figures%2Fimplementation.png)
@@ -185,31 +196,45 @@ Additionally, the implementation will follow these general principles:
 * Final graph datatypes (included as yaml files in RFC 064) will be expressed as Pydantic models for automatic data
   validation and type safety.
 * Repeatedly inserting the same node or edge into the graph should only result in one node or edge being created. In
-  practice this means implementing all operations as "upsert" operations. In openCypher language, this means using
-  `MERGE` instead of `CREATE`. This will ensure that repeated runs of the pipeline on the same source data will be
+  practice this means implementing all operations as "upsert" operations. In openCypher terminology, it means using
+  `MERGE` instead of `CREATE`. When running Neptune bulk uploads, it means specifying unique IDs for all nodes and 
+  edges. Adhering to this rule will ensure that repeated runs of the pipeline on the same source data will be
   idempotent without requiring additional pipeline logic for tracking which items have already been inserted into the
   graph.
 
 ## Architecture
 
-The catalogue graph pipeline will run on a serverless event-driven architecture. All processing will be done by two
-Lambda functions, an `extractor` Lambda function, and an `indexer` Lambda function.
+The catalogue graph pipeline will run on a serverless event-driven architecture. All processing will be done by three
+Lambda functions, an `extractor` Lambda function, a `bulk_loader` Lambda function (only used in bulk mode), and
+an `indexer` Lambda function (only used in incremental mode).
 
 The `extractor` will be responsible for:
 
 1. Communicating with concept sources and extracting a stream of raw source concepts via `Source` classes.
 2. Transforming each item in the stream into a source concept via `Transformer` classes, utilising the corresponding
    Pydantic models.
-3. Batching multiple items and building final openCypher queries using the `CypherQueryBuilder` before sending the
-   queries into an SNS topic, which will be connected to an SQS queue.
+3. Batching multiple items and uploading them into an S3 file in a format specified by Neptune bulk loader (in bulk 
+   mode) or building final openCypher queries using the `CypherQueryBuilder` before sending the queries into an SNS
+   topic connected to an SQS queue (in incremental mode).
 
-The `indexer` will be responsible for:
+Each invocation of the `extractor` Lambda function will only execute one Transformer, based on the input passed to the
+Lambda function. Execution will be orchestrated via AWS Step Functions. Execution order will follow the ordering in the
+diagram above — top to bottom, and nodes before edges.
 
-1. Consuming queries in the SQS queue via
-   an [event source mapping](https://docs.aws.amazon.com/lambda/latest/dg/invocation-eventsourcemapping.html) and
-   executing the queries against the cluster using
-   the `NeptuneClient` class. Importantly, the `indexer` will be agnostic to the content of the queries, all logic
-   constructing the queries will be contained in the `extractor`.
+### Bulk mode architecture
+
+The `batch_loader` will be responsible for triggering Neptune bulk load operations from S3 files populated by
+the `extractor`.
+
+The full pipeline in bulk mode will be configured to run regularly but on an infrequent schedule (once every few
+months or similar) due to source concepts not being updated frequently.
+
+### Incremental mode architecture
+
+The `indexer` will be responsible for consuming queries in the SQS queue via
+an [event source mapping](https://docs.aws.amazon.com/lambda/latest/dg/invocation-eventsourcemapping.html) and executing
+the queries against the cluster using the `NeptuneClient` class. Importantly, the `indexer` will be agnostic to the
+content of the queries, all logic constructing the queries will be contained in the `extractor`.
 
 There are several reasons for separating out the `indexer` functionality into its own Lambda function and placing it
 behind an SQS queue:
@@ -228,17 +253,5 @@ behind an SQS queue:
 The `extractor` could also be separated into several smaller microservices, but this would add a cost and performance
 overhead, as processed items would have to be serialised and deserialised between individual steps.
 
-Each invocation of the `extractor` Lambda function will only execute one Transformer, based on the input passed to the
-Lambda function. Execution will be orchestrated via AWS Step Functions. Execution order will follow the ordering in the
-diagram above — top to bottom, and nodes before edges.
-
-The full pipeline will be configured to run regularly but on an infrequent schedule (once every few months or similar)
-due to source concepts not being updated frequently. The sub-pipeline processing Wellcome catalogue concepts can be
-scheduled to run more frequently.
-
-## Revised architecture
-
-Adding entities to the graph via the `indexer` Lambda function (as described in the previous section) has performance
-limitations in practice. Therefore, we have replaced this Lambda function with a `loader` Lambda function, which loads
-entities into the graph via [Neptune bulk loader](https://docs.aws.amazon.com/neptune/latest/userguide/bulk-load.html).
-This way, we can load millions of nodes/edges into the database within minutes (rather than hours).
+Incremental mode will only be used for updating Wellcome concepts to keep in sync with Elasticsearch indexes populated
+by the catalogue pipeline. Source concepts will only be updated via bulk mode on a regular schedule.
