@@ -9,12 +9,19 @@
 We’d like to make sure our Prismic API IDs are written with consistent casing and that we’re following defaults from Prismic so that we’re going with the grain as far as possible and not having to manually override auto-generated SliceMachine files.
 
 ## Custom type API IDs
-These should be kebab-cased and plural when the type is ‘reusable’ as opposed to ‘single’ (e.g. the reusable ‘Exhibition highlight tour’ Custom type has the API ID `exhibition-highlight-tours`, whereas the single ‘Global alert’ Custom type has the API ID `global-alert`).
+When we started using Prismic we decided that these should be kebab-cased. Also, if the type was ‘reusable’ it should be plural, if it was 'single' it should be singular. For example, the reusable 'Exhibition highlight tour' type has an API ID of `exhibition-highlight-tours` whereas the single 'Global alert' type has an API ID of `global-alert`.
 
-SliceMachine makes these snake_case by default but allows this to be overridden easily in the GUI - we've done this fairly consistently although a couple of reusable content types have been given singular API IDs – `card` and `collection-venue`. I don't think there's any mileage in updating everything to snake_case since *none* of them are in that format currently. I'm not sure if we should try to update to `cards` and `collection-venues` or just live with those as they are?
+SliceMachine makes these snake_case by default but allows this to be overridden easily in the Graphical User Interface (GUI) and to-date we have made *all* of them kebab-case, so there probably isn't a good case for changing these to snake_case now.
+
+A couple of reusable content types have been given singular API IDs – `card` and `collection-venue` – should we consider changing these two to `cards` and `collection-venues`?
 
 ## Field API IDs
-We have a mixture of snake_case and camelCase field API IDs. SliceMachine defaults to snake_case (based on the label), although this is readily overridable in the GUI at the point of adding the field.
+Field API IDs are individual properties on a Custom type or Slice. More often than not these are individual words (e.g. `title`), which keeps things simple. When there's more than one word, we now have a mixture of snake_case and camelCase field API IDs.
+
+- [Example of a camelCase field](https://github.com/wellcomecollection/wellcomecollection.org/blob/main/common/views/slices/CollectionVenue/model.json#L37)
+- [Example of a snake_case field](https://github.com/wellcomecollection/wellcomecollection.org/blob/main/common/views/slices/GuideStop/model.json#L31)
+
+SliceMachine defaults to snake_case (based on the label), although this is readily overridable in the GUI at the point of adding the field.
 
 We exclusively work with camelCased variables in TypeScript and while snake_cased object properties aren’t a problem (e.g. `data.some_property`), we wouldn’t be able to destructure those properties off the `data` object without it being a linting error:
 
@@ -31,7 +38,9 @@ const { someProperty } = data; // <-- ✨
 So perhaps the preference should be for updating the field names at point of creation to be camelCased to remove the need for an extra renaming variable step in the TypeScript.
 
 ## Slice IDs
-Prior to our use of SliceMachine, we gave our Slices kebab-cased IDs. However, SliceMachine requires that Slices have snake_cased IDs (it doesn’t let you override it in the GUI). When we migrated to SliceMachine we updated the Slice IDs in the files that SliceMachine generated to be camelCased in order to be able to use our existing code consistently. But any subsequent change to the Slice through SliceMachine will revert the ID to snake_case and we have to remember to override it back to camelCase. For newer Slices we have kept the default (snake_case) ids rather than override them to camelCase.
+Prior to our use of SliceMachine, we gave our Slices camelCased IDs. However, SliceMachine requires that Slices have snake_cased IDs (it doesn’t let you override it in the GUI). When we migrated to SliceMachine we updated the Slice IDs in the [code](https://github.com/wellcomecollection/wellcomecollection.org/blob/main/common/views/slices/index.ts) and [type](https://github.com/wellcomecollection/wellcomecollection.org/blob/main/common/prismicio-types.d.ts) files that it generates to be camelCased in order to be able to use our existing code consistently. But each subsequent change to the Slice through SliceMachine will revert the IDs to snake_case and we have to remember to override it back to camelCase in several places across these two files. For newer Slices we have kept the default (snake_case) ids rather than override them to camelCase. 
 
 I don’t think we deal directly with the Slice IDs. Instead, we send all of them (in [a `components` object](https://github.com/wellcomecollection/wellcomecollection.org/blob/main/common/views/slices/index.ts#L5-L29)) along to SliceMachine, so the linting problems mentioned above don’t arise. As such, I propose that we move to using snake_case for all Slice IDs.
 
+## New vs. legacy
+Whatever pattern we decide to go with in future, we also need to decide whether we should apply it to legacy content. Doing it for all content old and new would obviously be good for consistency but needs to be weighed against the effort required and risks associated with migrating the content.
