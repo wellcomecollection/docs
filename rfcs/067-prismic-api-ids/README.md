@@ -1,9 +1,9 @@
 # RFC 067: Prismic API ID casing
 
 ## TL;DR
-- Use kebab-case for Custom type API IDs (plural/singular for reusable/single respectively)
-- Use camelCase for all (Custom type and Slice) field API IDs
-- Use snake_case for Slice API IDs
+- Use kebab-case for Custom type API IDs (plural/singular for reusable/single respectively) – this has to be overridden in SliceMachine. Or _possibly_ convert all of these to snake_case (which wouldn't need to be overridden in SliceMachine) for consistency with Slice API IDs
+- Use camelCase for all (Custom type and Slice) field API IDs – this has to be overridden in SliceMachine
+- Use snake_case for Slice API IDs – this is SliceMachine default
 
 ## Background
 We’d like to make sure our Prismic API IDs are written with consistent casing and that we’re following defaults from Prismic so that we’re going with the grain as far as possible and not having to manually override auto-generated SliceMachine files.
@@ -44,3 +44,6 @@ I don’t think we deal directly with the Slice IDs. Instead, we send all of the
 
 ## New vs. legacy
 Whatever pattern we decide to go with in future, we also need to decide whether we should apply it to legacy content. Doing it for all content old and new would obviously be good for consistency but needs to be weighed against the effort required and risks associated with migrating the content.
+
+## Proposal
+We do a spike to establish the effort and risk around renaming various API IDs and decide what to do next based on the outcomes.
