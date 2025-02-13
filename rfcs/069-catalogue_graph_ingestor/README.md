@@ -70,9 +70,9 @@ The current index mapping in the concepts pipeline [is visible here](https://git
 The following Cypher query can be used to extract the data from the graph database:
 
 ```cypher
-MATCH (source:Concept) 
-OPTIONAL MATCH (source)-[r]->(t)
-RETURN source, collect(r) as relationships, collect(t) as targets SKIP 10 LIMIT 10
+MATCH (s:Concept) 
+OPTIONAL MATCH (s)-[r]->(t)
+RETURN s as source, r as relationship, t as target SKIP 10 LIMIT 10
 ```
 
 This will return data in the form:
@@ -94,30 +94,26 @@ This will return data in the form:
           "type": "Genre"
         }
       },
-      "relationships": [
-        {
-          "~id": "HAS_SOURCE_CONCEPT:cqasd7dz-->sh85107158",
-          "~entityType": "relationship",
-          "~start": "cqasd7dz",
-          "~end": "sh85107158",
-          "~type": "HAS_SOURCE_CONCEPT",
-          "~properties": {}
+      "relationship": {
+        "~id": "HAS_SOURCE_CONCEPT:cqasd7dz-->sh85107158",
+        "~entityType": "relationship",
+        "~start": "cqasd7dz",
+        "~end": "sh85107158",
+        "~type": "HAS_SOURCE_CONCEPT",
+        "~properties": {}
+      },
+      "target": {
+        "~id": "sh85107158",
+        "~entityType": "node",
+        "~labels": [
+          "SourceConcept"
+        ],
+        "~properties": {
+          "id": "sh85107158",
+          "label": "Proclamations",
+          "source": "lc-subjects"
         }
-      ],
-      "targets": [
-        {
-          "~id": "sh85107158",
-          "~entityType": "node",
-          "~labels": [
-            "SourceConcept"
-          ],
-          "~properties": {
-            "id": "sh85107158",
-            "label": "Proclamations",
-            "source": "lc-subjects"
-          }
-        }
-      ]
+      }
     }
   ]
 }
@@ -133,8 +129,6 @@ In order to reproduce the data model described above we will need to query the g
 - Source Concept ID: `targets.~id`
 - Source Concept Label: `targets.~properties.label`
 - Source Concept Source: `targets.~properties.source`
-
-**Note:** How do we deal with multiple relationships and targets? 
 
 ### Ingestor Implementation
 
