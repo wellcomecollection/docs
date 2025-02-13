@@ -173,6 +173,12 @@ The split ingestor will be implemented as follows:
 
 ![Ingestor Loader / Indexer](./figures/ingestor_loader_indexer.png)
 
+#### Python services with shared code in the catalogue pipeline
+
+Above we state that it makes sense to put the concept ingestor code alongside the existing catalogue pipeline code. 
+
+With the current implementation of the catalogue graph code, placing the ingestor code in a separate folder will make importing catalogue graph code slightly more complicated, we’ll probably have to modify PYTHONPATH or similar. It would be preferable to reuse existing catalogue graph code (e.g. the BaseNeptuneClient class) in the ingestor, so we will need to cater for this in the setup of the catalogue pipeline project.
+
 ## Further work
 
 There is further work to be done in order to extract more complex relatioshipts and flatten them on to records ingested into Elasticsearch, this will be covered in future RFCs.
