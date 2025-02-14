@@ -91,6 +91,7 @@ This will return data in the form:
           "id": "cqasd7dz",
           "label": "Proclamations",
           "source": "label-derived",
+          "alternativeLabels": ["Shouting"],
           "type": "Genre"
         }
       },
@@ -123,12 +124,18 @@ We can paginate through records by using the `SKIP` and `LIMIT` clauses in the q
 
 In order to reproduce the data model described above we will need to query the graph database for the following data:
 
-- Concept ID: `source.~id`
-- Concept Label: `source.~properties.label`
-- Concept Type: `source.~properties.type`
-- Source Concept ID: `targets.~id`
-- Source Concept Label: `targets.~properties.label`
-- Source Concept Source: `targets.~properties.source`
+| API response      | Graph database response                  |
+|-------------------|------------------------------------------|
+| id                | source.~properties.id                    |
+| label             | source.~properties.label                 |
+| type              | source.~properties.type                  |
+| sameAs            | n/a: Not implemented                     |
+| alternativeLabels | target.~properties.alternative_labels    |
+| identifiers.value | target.~properties.id                    |
+| identifiers.type  | n/a: "Identifier"                        |
+| identifiers.identifierType.id    | target.~properties.source |
+| identifiers.identifierType.label | n/a: Use lookup table?    |
+| identifiers.identifierType.type  | n/a: "IdentifierType"     |
 
 ### Ingestor Implementation
 
