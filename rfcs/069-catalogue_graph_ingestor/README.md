@@ -59,7 +59,7 @@ Currently the Concepts API provides the following endpoints in use by the Wellco
 }
 ```
 
-A search endpoint is also provided, following [this RFC](https://github.com/wellcomecollection/docs/tree/main/rfcs/050-concepts-api#endpoint-3-listing-and-searching-concepts) but is not currently in use by the website. We should aim to provide enough data to reproduce the existing in-use API endpoint, and consider provideing for the search endpoint out of scope for now.
+A search endpoint is also provided, following [this RFC](https://github.com/wellcomecollection/docs/tree/main/rfcs/050-concepts-api#endpoint-3-listing-and-searching-concepts) but is not currently in use by the website. We should aim to provide enough data to reproduce the existing in-use API endpoint, and consider providing for the search endpoint out of scope for now.
 
 The current index mapping in the concepts pipeline [is visible here](https://github.com/wellcomecollection/concepts-pipeline/blob/main/recorder/src/main/resources/index.json). The transform from concept object to indexable document is [defined here](https://github.com/wellcomecollection/concepts-pipeline/blob/main/common/src/main/scala/weco/concepts/common/model/Concept.scala#L17). We should aim to reproduce this data model in the Catalogue Graph Ingestor.
 
@@ -67,7 +67,7 @@ The current index mapping in the concepts pipeline [is visible here](https://git
 
 #### Data Model and Cypher Queries
 
-The following Cypher query can be used to extract the data from the graph database:
+The following Cypher query can be used to extract the required data from the graph database:
 
 ```cypher
 MATCH (s:Concept) 
@@ -120,9 +120,9 @@ This will return data in the form:
 }
 ```
 
-We can paginate through records by using the `SKIP` and `LIMIT` clauses in the query. We should aim to extract all records in the graph database in a single query, and then ingest them into Elasticsearch in batches.
+We can paginate through records by using the `SKIP` and `LIMIT` clauses in the query. We should aim to page through all records in the graph database, and then ingest them into Elasticsearch in batches. We **will not consider a static scroll** window for this implementation as data will not be updated while we are ingesting it.
 
-In order to reproduce the data model described above we will need to query the graph database for the following data:
+The table describes the mapping of the graph database response to that required for the Elasticsearch index:
 
 | API response      | Graph database response                  |
 |-------------------|------------------------------------------|
@@ -139,7 +139,7 @@ In order to reproduce the data model described above we will need to query the g
 
 ### Ingestor Implementation
 
-The ingestor will be implemented in Python and will be responsible for querying the graph database for concept data and ingesting it into Elasticsearch. The ingestor will be triggered by a new state machine in the existing Catalogue pipeline Step Functions. 
+The ingestor will be implemented in Python and will be responsible for querying the graph database for concept data and ingesting it into Elasticsearch. The ingestor will be triggered by a new state machine that is part of the catalogue pipeline infrastructure. 
 
 We should implement the ingestor using AWS Lambda initially, and if we discover the process exceeds the 15 minute limit we should consider using an ECS task to process the data in batches. In the first case we should implement the code in a way that allows us to invoke it locally using the command line, which can form a potential basis for the ECS task implementation if required. See the [catalogue graph extractor for reference](https://github.com/wellcomecollection/catalogue-pipeline/blob/d0aff621472f5bbec9ecdb5626a9bc4d7a77a78f/catalogue_graph/src/extractor.py#L70) on how to implement this.
 
@@ -147,7 +147,7 @@ We should implement the ingestor using AWS Lambda initially, and if we discover 
 
 The ingestor could be split into 2 steps; a loading step from neptune into S3, then an indexing step from S3 into Elastisearch. Splitting the ingestor is desirable for these reasons:
 
-- We may want to control the rate of ingestion into Elastisearch separately from extracting data from Neptune for ingestion, to avoid overwhelming the Elastisearch cluster when we perform batch updates.
+- We may want to control the ingestion rate into Elastisearch separately from extracting data from Neptune for ingestion, to avoid overwhelming the Elastisearch cluster when we perform batch updates.
 - Trialling having services use S3 as an intermediate data-store rather than Elastisearch as a model for other pipeline services (we might have the services read and write data in parquet to S3).
 - Allows chunkability if we want to further parallelise operations in the future, e.g. split the batch read into blocks of 10,000 records, each is their own file which can be built and operated on independently. This might be useful in the future with Elastisearch serverless as read and write operations are decoupled and scaling up writing might be desirable.
 - Allows more interruptibility of services, if the ingestion step fails, only that needs to be re-run, rather than extraction and ingestion.
@@ -178,8 +178,8 @@ The split ingestor will be implemented as follows:
 
 Above we state that it makes sense to put the concept ingestor code alongside the existing catalogue pipeline code. 
 
-With the current implementation of the catalogue graph code, placing the ingestor code in a separate folder will make importing catalogue graph code slightly more complicated, we’ll probably have to modify PYTHONPATH or similar. It would be preferable to reuse existing catalogue graph code (e.g. the BaseNeptuneClient class) in the ingestor, so we will need to cater for this in the setup of the catalogue pipeline project.
+With the current implementation of the catalogue graph code, placing the ingestor code in a separate folder will make importing catalogue graph code slightly more complicated, we’ll probably have to modify `PYTHONPATH` or similar. It would be preferable to reuse existing catalogue graph code (e.g. the BaseNeptuneClient class) in the ingestor, so we will need to cater for this in the setup of the catalogue pipeline project.
 
 ## Further work
 
-There is further work to be done in order to extract more complex relatioshipts and flatten them on to records ingested into Elasticsearch, this will be covered in future RFCs.
+There is further work to be done in order to extract more complex relationships and flatten them on to records ingested into Elasticsearch, this will be covered in future RFCs.
