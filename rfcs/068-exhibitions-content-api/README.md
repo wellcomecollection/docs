@@ -36,33 +36,41 @@ but their format on the card (yellow label) will be the Exhibition Format that w
 <img src="./exhibition-card.png" alt="Exhibition cards" style="max-width: 550px;" />
 
 Meaning the value of "format" should differ in the `filter` and `aggregrations` objects versus the `display` object. I suggest we make the Exhibition format queryable, so keeping the Exhibition format in the `query` object.
+
+For the sake of this document, let's determine that the "custom UUID" for the Event type "Exhibition" (which does not exist in Prismic) is `abcdef-123`. 
+In this example, this document is of Exhibition type "Season":
 ```
   display: {
     format: {
-      type: 'EventFormat';
-      id: [Exhibition format ID];
-      label?: [Exhibition format];
+      type: 'EventFormat',
+      id: "Xk5QHxEAACUAe4gV",
+      label?: "Season"
     };
   },
   query: {
-    format: 'Exhibition, [Exhibition format]' // This way it's queryable under both identifiers
+    format: 'Exhibition, Season' // This way it's queryable under both identifiers
   },
   filter: {
-    format: [custom uuid]
+    format: "abcdef-123"
   }
   aggregatableValues: {
-    format: """{"type":"EventFormat","id":"[custom uuid]","label":"Exhibition"}"""
+    format: """{"type":"EventFormat","id":"abcdef-123","label":"Exhibition"}"""
   }
 ```
 
 May it be noted that having a different value for `format` in those objects is not the preferred way of operating; this is an exception that will be documented in the code. We considered adding a new field (`label`), but it seemed overkill for now, as only Exhibitions need a different value from `format`.
 Should we want to have a third Content Type that should "become an event", we might want to change the logic across.
 
-## API response
-TODO
-`/exhibitions/[exhibitionId]`:
-`/exhibitions`:
-`/events-exhibitions`:
+## Filter out exhibitions
+We won't be creating a new endpoint, so we need the capacity to filter out Exhibitions to feed Events listing pages.
+
+```
+"must_not": {
+  "match": { 
+    "filter.format": "abcdef-123"
+  }
+}
+```
 
 
 ## Front-end integration decisions
