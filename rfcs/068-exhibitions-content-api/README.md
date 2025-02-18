@@ -48,7 +48,7 @@ In this example, this document is of Exhibition type "Season":
     };
   },
   query: {
-    format: 'Exhibition, Season' // This way it's queryable under both identifiers
+    format: ['Exhibition', 'Season'] // This way it's queryable under both identifiers
   },
   filter: {
     format: "abcdef-123"
