@@ -35,7 +35,7 @@ All exhibitions will fit under the Format filter "Exhibition":
 but their format on the card (yellow label) will be the Exhibition Format that was selected in Prismic (e.g. Display, Installation...):
 <img src="./exhibition-card.png" alt="Exhibition cards" style="max-width: 550px;" />
 
-Meaning the value of "format" should differ in the `filter` and `aggregrations` objects versus the `display` object. I suggest we make the Exhibition format queryable, so keeping the Exhibition format in the `query` object.
+Meaning the value of "format" should differ in the `filter` and `aggregrations` objects versus the `display` object. I suggest we concatenate the Exhibition type with the string "Exhibition" in the `query` object format, so both are queryable. 
 
 For the sake of this document, let's determine that the "custom UUID" for the Event type "Exhibition" (which does not exist in Prismic) is `abcdef-123`. 
 In this example, this document is of Exhibition type "Season":
@@ -62,7 +62,7 @@ May it be noted that having a different value for `format` in those objects is n
 Should we want to have a third Content Type that should "become an event", we might want to change the logic across.
 
 ## Filter out exhibitions
-We won't be creating a new endpoint, so we need the capacity to filter out Exhibitions to feed Events listing pages.
+We won't be creating a new endpoint, so we need the capacity to filter out Exhibitions to feed Events listing pages. I suggest we do so with a `must_not` `match` query.
 
 ```
 "must_not": {
