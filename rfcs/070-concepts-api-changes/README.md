@@ -99,7 +99,7 @@ This page only has one additional piece of information not shown on other theme 
 Like current theme pages, new theme page designs include sections listing works and images related to the given theme.
 However, new theme pages expand the number of available tabs, providing more extensive filtering options.
 
-Current theme pages populate their Works tabs by making requests to the catalogue API, specifying the canonical ID of
+Current theme pages populate their Works tabs by making requests to the catalogue API, specifying the Wellcome ID of
 the given theme as a filter. New theme pages will use the same approach, applying additional filters as needed.
 
 ### Contributor theme pages
@@ -109,7 +109,7 @@ New Contributor theme pages include tabs for filtering all works linked to the g
 > <img src="img/works_tabs_person.png" alt="works_tabs_person" width="600"/>
 
 These tabs will be populated by applying the relevant `workType` filter. For example, to obtain all books about John Thomson,
-a search request will be made to the catalogue API, specifying a `subjects` filter (including IDs of all 'merged' John Thomson concepts)
+a search request will be made to the catalogue API, specifying a `subjects` filter (including IDs of all 'linked' John Thomson concepts)
 and a `workType` filter (including the ID of the 'Books' `workType`).
 
 ### Subject theme pages
@@ -139,40 +139,50 @@ and computationally expensive if done across multiple levels (i.e. retrieving wo
 sub topics of sub topics, etc.). Therefore, we should limit ourselves to one level only (i.e. direct children).
 
 
-## Merging concepts across sources
+## Connecting concepts across sources
 
 Due to storing `HAS_SOURCE_CONCEPT` edges between catalogue concepts and source concepts, and `SAME_AS` edges
-between source concepts, the catalogue graph allows us to 'merge' identical concepts into a single unified theme page.
-For example, if a work references a LoC subject heading `Sanitation` and a different work references a MeSH term `Sanitation`,
-both of these works would link to (and be listed on) the same `Sanitation` theme page.
+between source concepts, the catalogue graph allows us to make connections between concepts derived from different
+ontologies. For example, if a work references a LoC subject heading `Sanitation` and a different work references
+a MeSH term `Sanitation`, we can connect the two works and show them on both the LoC-derived concept page,
+and the MeSH-derived concept page.
 
-To enable this functionality, all 'merged' concepts will be stored in the Elasticsearch index as a single document,
-which will include all of their canonical IDs. This is similar to the `sameAs` field
-in the current concepts index but is more space-efficient, since only one copy is stored 
-of all identical concepts.
+To enable this functionality, the new *single concept endpoint* should return the Wellcome IDs of all 'connected' (or 'linked') concepts
+so that we can retrieve the works and images from all of them.
+
+In practice, this implies showing some works on multiple theme pages. For example, given the graph below (where 'C' nodes
+refer to concepts and 'SC' nodes refer to source concepts), the implications for individual theme pages would be as follows:
+
+| Concept page | Show works and images from |
+|--------------|----------------------------|
+| C1           | C1 and C2                  |
+| C2           | C1 and C2                  |
+| C3           | C1, C2, C3, and C4         |
+| C4           | C3 and C4                  |
+
+Because C3 is connected to two source concepts (SC1 and SC3), it would show works and images referencing any of the four concepts.
+This can only happen for label-derived concepts, which are linked to source concepts based on labels rather than
+hard-coded source concept IDs. This behaviour is acceptable (and even desirable), because label-derived concepts are often ambiguous,
+which means we often cannot accurately link them to just one concrete source concept. 
+
+> <img src="img/connecting_concepts.png" alt="connecting_concepts" width="600"/>
 
 ## New *single concept endpoint* API response example
 
-Imagine a scenario where a user visits the following `Sanitation` concept page: https://wellcomecollection.org/concepts/eva7r2dw.
+Imagine a scenario where a user visits the following `Sanitation` theme page: https://wellcomecollection.org/concepts/eva7r2dw.
 
-The Wellcome ID in the URL is `eva7r2dw`, which corresponds to a MeSH-derived concept. However, by running a graph query
-utilising `SAME_AS` and `HAS_SOURCE_CONCEPT` edges, we can 'merge' this concept with three other Wellcome concepts:
+The Wellcome ID in the URL is `eva7r2dw`, which corresponds to a MeSH-derived source concept:
 
-| Concept ID                                                                                                    | Source               | Label       |
-|:--------------------------------------------------------------------------------------------------------------|----------------------|-------------|
-| [mwyumfq2](https://wellcomecollection.org/concepts/mwyumfq2)                                                  | label-derived        | Cleanliness |
-| [d8z89dv6](https://wellcomecollection.org/concepts/d8z89dv6)                                                  | LoC subject headings | Sanitation  |
-| [jubdg55b](https://wellcomecollection.org/concepts/jubdg55b)                                                  | label-derived        | Sanitation  |
+| Source concept ID | Source | Label      | Description                                                                                          |
+|:------------------|--------|------------|------------------------------------------------------------------------------------------------------|
+| D012499           | MeSH   | Sanitation | The development and establishment of environmental conditions favorable to the health of the public. |
 
-The Elasticsearch index will store all of these ids in a single document, and they will be returned together from the API.
+Running a graph query utilising `SAME_AS` and `HAS_SOURCE_CONCEPT` edges reveals that there are two more source concepts linked to this concept:
 
-Running more graph queries reveals that the four concepts above are linked to three separate source concepts via `HAS_SOURCE_CONCEPT` edges:
-
-| Source concept ID | Source               | Linked to                 | Label      | Description                                                                                          |
-|:------------------|----------------------|---------------------------|------------|------------------------------------------------------------------------------------------------------|
-| D012499           | MeSH                 | `eva7r2dw` and `jubdg55b` | Sanitation | The development and establishment of environmental conditions favorable to the health of the public. |
-| sh85117296        | LoC subject headings | `d8z89dv6` and `jubdg55b` | Sanitation |                                                                                                      |
-| sh00007929        | LoC subject headings | `jubdg55b`                | Sanitation |                                                                                                      |
+| Source concept ID | Source               | Label      | Description |
+|:------------------|----------------------|------------|-------------|
+| sh85117296        | LoC subject headings | Sanitation |             |
+| sh00007929        | LoC subject headings | Sanitation |             |
 
 And these source concepts are linked to a Wikidata source concept:
 
@@ -180,8 +190,19 @@ And these source concepts are linked to a Wikidata source concept:
 |:------------------|----------|----------------------------|------------|------------------------------------------------------------------------------------------------------------|
 | Q949149           | Wikidata | `D012499` and `sh85117296` | Sanitation | public health conditions related to clean drinking water and adequate disposal of human excreta and sewage |
 
-The source identifiers of all of these source concepts will be stored together in Elasticsearch, and they will all be returned
-from the API in a single list.
+
+The metadata from all of these source concepts will be used to populate various fields in the API response (e.g. `description`).
+
+Running more graph queries reveals that all of these source concepts link to three more Wellcome concepts:
+
+| Concept ID                                                                                                    | Source               | Label       |
+|:--------------------------------------------------------------------------------------------------------------|----------------------|-------------|
+| [mwyumfq2](https://wellcomecollection.org/concepts/mwyumfq2)                                                  | label-derived        | Cleanliness |
+| [d8z89dv6](https://wellcomecollection.org/concepts/d8z89dv6)                                                  | LoC subject headings | Sanitation  |
+| [jubdg55b](https://wellcomecollection.org/concepts/jubdg55b)                                                  | label-derived        | Sanitation  |
+
+All of these concept IDs will be included in the *single concept endpoint* API response so that we can use them when querying
+the catalogue API for works/images to show on the theme page. 
 
 Next, we can use a combination of `NARROWER_THAN` and `SAME_AS` edges between source concepts, and `HAS_SOURCE_CONCEPT` edges
 to obtain a list of catalogue concepts which are broader than the four catalogue concepts listed above:
@@ -205,34 +226,17 @@ Putting everything together, we can construct a full JSON response returned to t
 ```
 GET /concepts/eva7r2dw
 {
-  // The Wellcome IDs of all 'merged' concepts are included
-  "id": ["eva7r2dw", "d8z89dv6", "mwyumfq2", "jubdg55b"],
+  "id": "eva7r2dw"
   
-  // The identifiers of all source concepts are included
+  // Only the identifier of the linked MeSH concept is included
   "identifiers": [
-    // Notice that there are two LoC identifiers. This is because LoC sometimes stores duplicate concepts.
-    {
-      "identifierType": "lc-subjects",
-      "value": "sh85117296",
-      "type": "Identifier"
-    },
-    {
-      "identifierType": "lc-subjects",
-      "value": "sh00007929",
-      "type": "Identifier"
-    },    
     {
       "identifierType": "nlm-mesh",
       "value": "D012499",
       "type": "Identifier"
-    },
-    {
-      "identifierType": "wikidata",
-      "value": "Q949149",
-      "type": "Identifier"
     }
-  ],
-   
+  ]
+  
   // The MeSH label takes priority over any other labels
   "label": "Sanitation",
   
@@ -248,19 +252,48 @@ GET /concepts/eva7r2dw
     "Sanitation systems"
   ]
     
-  // If a more specific type was available, we would choose it over a less specific type.
-  // For example, sometimes two 'merged' concepts might have types 'Agent' and 'Person'. In this case, we would 
-  // choose 'Person'. 
   "type": "Concept"
 
   // The MeSH description takes priority over the Wikidata description.
   "description": "The development and establishment of environmental conditions favorable to the health of the public.",
   
-  // Notice that only one Wellcome ID is listed for each linked concept even when multiple 'merged' IDs are available.
-  // We only need to supply one ID (at random), and when the user visits the corresponding theme page, the other 'merged'
-  // IDs will be supplied by Elasticsearch.
-  // In other words, one Wellcome ID should always be enough to uniquely identify a theme page, even if the 
-  // theme page comprises several concepts, each with its own ID.    
+  "matchedConcepts": [
+    {
+      "id": "d8z89dv6",
+      "identifiers": [
+        {
+          "identifierType": "lc-subjects",
+          "value": "sh85117296",
+          "type": "Identifier"
+        }
+      ]
+    },
+    {
+      "id": "jubdg55b",
+      "identifiers": [
+        {
+          "identifierType": "label-derived",
+          "value": "sanitation",
+          "type": "Identifier"
+        }
+      ]
+    },    
+    {
+      "id": "mwyumfq2",
+      "identifiers": [
+        {
+          "identifierType": "label-derived",
+          "value": "cleanliness",
+          "type": "Identifier"
+        }
+      ]
+    } 
+  ]  
+    
+  // Only one Wellcome ID is listed for each linked concept even when multiple 'linked' IDs are available.
+  // When choosing which ID to include, IDs from the same ontology will be preferred. (For example, if we are on 
+  // a LoC-derived theme page and there is a LOC-derived page narrower than the current page, we choose it 
+  // over other narrower pages from different ontologies.)
   "narrowerThan": [
     {
         "label": "Public Health",
@@ -307,14 +340,14 @@ Some label-derived concepts are currently linked to multiple source concepts fro
 For example, the label-derived concept `Cleanliness` is connected to three separate LoC subject headings — `Sanitation`, `Hygiene`, and `Baths`.
 All of these connections were created by matching the label of the label-derived concept to alternative labels of the LoC source concepts.
 This and similar connections can pose several issues:
-  * By linking all of these concepts together, we would be merging the concept pages for 'Sanitation', 'Hygiene', and 'Baths'
-    into a single page. 
+  * By linking all of these concepts together, we would be showing works and images referencing any of the three LoC
+    concepts on a single concept page. 
   * In cases where a concept is connected to a given source concept **and** the parent of the source concept, we would end up
     listing a given concept as a related concept on its own theme page (i.e. a concept would be related to, or part of, itself).
 
-To avoid these issues, we should limit ourselves to creating at most one `HAS_SOURCE_CONCEPT` node from a label-derived concept node.
-The algorithm for doing this might prioritise some ontologies over others (e.g. only attempt matching on LoC labels if 
-no MeSH matches found) and prefer labels over alternative labels. If multiple matches are still found, the source
+To avoid these issues, we should limit ourselves to creating at most one `HAS_SOURCE_CONCEPT` edge per ontology. When choosing
+which edge to create, we could prioritise labels over alternative labels (i.e. only use alternative labels for matching
+if matching based on labels did not produce an edge). In cases where multiple matches are found, the source
 identifiers of the matches could be sorted and the first one could be chosen (to guarantee consistency between
 transformer runs).
 
