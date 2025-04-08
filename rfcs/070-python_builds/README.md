@@ -16,13 +16,13 @@ the [Appendix](appendix.md), alongside some description of their differences.
 
 ### Problems
 
-The differences between the projects give rise to various problems
+The differences between the projects give rise to various challenges
 
 * keeping things up to date - Python itself, dependencies, common settings
 * different standards - type checking, introducing previously ignored warnings if we harmonise linting rules
 * sharing code in different projects within the same repository
 * ensuring all required code and dependencies get deployed
-* running the same environment locally and on CI (PYTHONPATH, installed dependencies, Python versions)
+* running an equivalent environment locally on CI, and in production (PYTHONPATH, installed dependencies, Python versions)
 * different ways to specify production vs development dependencies
 
 ### Out of Scope
@@ -116,11 +116,10 @@ Three Actions are to be defined in the .github repository:
 A "Python Check" Github Action in the .github repository
 
 This will:
-* Default to using a common Python version
-  * individual projects may override this if there are compatibility problems
 * Be parameterised with
   * path to base of python project
   * whether to care about types
+* [Read the .python-version file](https://github.com/actions/setup-python/blob/main/docs/advanced-usage.md#using-the-python-version-file-input) 
 * install requirements with UV
 * run ruff
 * run pytest
@@ -132,13 +131,17 @@ Two Python Build actions
 - one to build and publish Docker Images to ECR
 - one to zip a project for use in AWS Lambda (replicating the behaviour [here](https://github.com/wellcomecollection/catalogue-pipeline/blob/6376672ef4338ab9496d4f5b3eb671eefd3e5923/.github/workflows/catalogue-graph-build.yml#L1) in a common fashion)
 
+These will also be parameterised similarly to Python Check
+
 ## Getting there from here
 
 ### Converting existing projects
 
-We should convert existing projects to the new common approach, starting with the Catalogue Pipeline inferrers.
+We should gradually migrate existing projects to the new common approach, starting with the 
+[Catalogue Pipeline inferrers](https://github.com/wellcomecollection/catalogue-pipeline/tree/92727715888204ca82b86cc0fbf478e5ca46f2dc/pipeline/inferrer).
 
-
+Migrating the pipeline inferrers should exercise most of the challenges outlined above, which will
+demonstrate the value of the approach and simplify any subsequent migrations.
 
 ### Project Template
 

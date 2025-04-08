@@ -55,13 +55,11 @@ projects.
 
 [Sierra_api](https://github.com/wellcomecollection/sierra_api) is "meant for quick experiments and exploration", and does not have any build process or deployment
 
-
 The only Python files in [catalogue-api](https://github.com/wellcomecollection/catalogue-api) are some maintenance scripts. No build process, no tests.
 
 Most of the Python files in [platform-infrastructure](https://github.com/wellcomecollection/platform-infrastructure) are tests themselves.
 However, there are also two Lambdas used for alerting. No build process, no tests for the Python itself.
 This repository also defines a Docker image designed to harmonise our use of flake8.
-
 
 #### Dependency Management
 [Rank](https://github.com/wellcomecollection/rank) uses [Poetry](https://python-poetry.org)
@@ -74,7 +72,7 @@ separate requirements used in production vs. development.  It comes down to ad-h
 Poetry solves this, as does the more modern [UV](https://docs.astral.sh/uv).
 
 #### Testing
-All projects that have tests currently use pytest, so there is no difference there.
+All projects that have tests currently use pytest. There are no differences to consider.
 
 #### tox
 
