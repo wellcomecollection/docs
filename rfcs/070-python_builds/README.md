@@ -143,6 +143,10 @@ We should gradually migrate existing projects to the new common approach, starti
 Migrating the pipeline inferrers should exercise most of the challenges outlined above, which will
 demonstrate the value of the approach and simplify any subsequent migrations.
 
+Initially, the shared github actions can be defined in the catalogue pipeline project. There is sufficient
+variety within the catalogue pipeline (inferrers, catalogue graph) to demonstrate that this approach
+can be applied across all repositories.
+
 ### Project Template
 
 Entirely new Python projects are not common, so the work involved in creating
