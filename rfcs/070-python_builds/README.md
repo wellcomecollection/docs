@@ -147,6 +147,12 @@ Initially, the shared github actions can be defined in the catalogue pipeline pr
 variety within the catalogue pipeline (inferrers, catalogue graph) to demonstrate that this approach
 can be applied across all repositories.
 
+The next priority project to migrate would be [editorial photography ingest](https://github.com/wellcomecollection/editorial-photography-ingest).
+
+Following this, there is no urgent need to migrate all existing Python projects in this way, as many of them are 
+rarely updated.  However, once the framework has been implemented, it should be relatively simple
+to do so.
+
 ### Project Template
 
 Entirely new Python projects are not common, so the work involved in creating
