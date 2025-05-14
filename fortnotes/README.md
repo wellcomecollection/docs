@@ -1,6 +1,7 @@
 # Fortnotes!
 
 Fortnightly updates about the work of the digital platform team.
+- [2025 May 14](20250514.md)
 - [2025 April 30](20250430.md)
 - [2025 April 16](20250416.md)
 - [2025 April 2](20250402.md)
