@@ -1,5 +1,9 @@
 # RFC 070: Concepts API changes
 
+This RFC describes changes to the concepts API, which will be used to support new theme pages on the Wellcome Collection website.
+
+**Last modified:** 2025-03-13T18:14:09+00:00
+
 ## Background
 
 This RFC outlines plans towards replacing our existing concepts API (introduced in [this RFC](https://github.com/wellcomecollection/docs/tree/main/rfcs/050-concepts-api) and implemented [here](https://github.com/wellcomecollection/catalogue-api/tree/main/concepts)) 

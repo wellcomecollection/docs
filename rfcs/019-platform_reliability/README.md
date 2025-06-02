@@ -1,10 +1,10 @@
-## Platform Reliability
+# RFC 019: Platform Reliability
 
-**Status:** :building_construction: Draft :construction:
+This RFC proposes a set of actions to improve the reliability of the Wellcome Collection platform, based on a review of current issues and discussions with the team.
 
-**Last updated:** 2020/02/04
+**Last modified:** 2020-03-20T15:57:38+00:00
 
-### Overview / background
+## Context
 
 Following on from a review of current reliability issues, here is aggregated what was discussed into some proposals for action.
 

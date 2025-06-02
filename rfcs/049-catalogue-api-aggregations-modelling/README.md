@@ -1,5 +1,11 @@
 # RFC 049: Changing how aggregations are retrieved by the Catalogue API
 
+This RFC proposes a change to how aggregations are handled in the Catalogue API, allowing us to remove the internal/display model coupling that currently exists.
+
+**Last modified:** 2022-05-13T12:43:30+01:00
+
+## Background
+
 For [RFC 047], we changed the catalogue API to serialise public API responses from an opaque `display` field in the Elasticsearch documents.
 
 Previously we were storing the pipeline's internal model in Elasticsearch.

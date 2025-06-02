@@ -1,6 +1,8 @@
 # RFC 001: Matcher architecture
 
-**Last updated: 02 November 2018.**
+This RFC proposes an architecture for the matcher and merger components of the reindexer, which are responsible for identifying and merging related works in the catalogue.
+
+**Last modified:** 2018-11-02T16:46:57+00:00
 
 ## Background
 

@@ -1,6 +1,8 @@
 # RFC 007: Goobi Upload
 
-**Last updated: 02 November 2018.**
+This RFC proposes a new mechanism for uploading assets to Goobi workflows, replacing existing mechanisms with a more efficient and automated solution.
+
+**Last modified:** 2018-11-02T16:46:57+00:00
 
 ## Problem statement
 

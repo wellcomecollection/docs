@@ -1,4 +1,10 @@
-# URL Design
+# RFC 017: URL Design
+
+This RFC proposes a set of principles for designing URLs on wellcomecollection.org, ensuring they are persistent, user-friendly, and globally unique.
+
+**Last modified:** 2022-12-09T15:25:52+00:00
+
+## Context
 
 URLs are part of the user's online experience--they affect a user's ability to reliably share and reference online resources and discover and interact with the content and services we produce. 
 

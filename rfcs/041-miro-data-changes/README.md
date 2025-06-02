@@ -1,4 +1,10 @@
-# Tracking changes to the Miro data
+# RFC 041: Tracking changes to the Miro data
+
+This RFC describes a proposal for tracking changes to the Miro data, which is used to populate the Catalogue API.
+
+**Last modified:** 2021-05-19T09:17:59+01:00
+
+## Context
 
 The Miro data was originally exported as a collection of XML files, one per letter prefix.
 We have split these XML files into a series of JSON files, one per image.

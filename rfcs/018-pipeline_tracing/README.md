@@ -1,16 +1,16 @@
-## Pipeline Tracing
+# RFC 018: Pipeline Tracing 
 
-**Status:** :building_construction: Draft :construction:
+This RFC outlines a proposal for adding distributed tracing to the Wellcome Collection catalogue pipeline. The goal is to improve debugging and monitoring of the pipeline by tracking the flow of data through it, from the adapters right through to ingest.
 
-**Last updated:** 2020/01/28
+**Last modified:** 2020-01-29T10:36:52+00:00
 
-### Overview / background
+## Overview / background
 
 When things go wrong in the pipeline, debugging them involves a confusing and slow mix of checking DLQs and reading through the logs of several separate services in order to figure out what went wrong, for which documents, and where. This slows down development across the catalogue and makes it harder to catch bugs.
 
 As well as more comprehensive, structured logging in the constituent services of the pipeline, it would be beneficial to track the flow of data through it, from the adapters right through to ingest.
 
-### Proposed solution
+## Proposed solution
 
 The [OpenTracing](https://opentracing.io/) project defines a common API and methodology for distributed tracing: tracing requests through multiple services whilst propagating and accumulating context throughout, enabling profiling and monitoring of the whole application.
 
@@ -24,7 +24,7 @@ An example of a distributed trace in Elastic APM:
 
 ![a distributed trace in elastic APM](https://user-images.githubusercontent.com/4429247/73259713-44adf980-41c0-11ea-8ddb-1e1c4e5ff631.png)
 
-### Implementation details
+## Implementation details
 
 [This example](https://github.com/bvader/pipelineapmexample) is a useful reference, 
 
@@ -33,11 +33,11 @@ An example of a distributed trace in Elastic APM:
 - Spans to be annotated with the source identifiers and (post-minter) the minted identifiers.
 - At this stage, no further tracing to be implemented within services, and auto-instrumentation + transaction "activation" to be disabled due to the multithreading problems that we know these can cause.
 
-### Potential drawbacks
+## Potential drawbacks
 
 There are few-to-no drawbacks to adding tracing to the pipeline. However, the lack of auto-instrumentation provided by Elastic APM for our specific stack will make adding further tracing (ie, outside the scope of this RFC) more arduous than it would be if we were using Spring/Java, for example. This is partially addressed in the following section.
 
-### Alternatives
+## Alternatives
 
 There are a handful of Scala-specific tracing tools which could potentially be easier to integrate and provide better auto-instrumentation than Elastic APM: for example, [Kamon](kamon.io), [Zipkin](https://zipkin.io/) (including [akka-tracing](https://github.com/levkhomich/akka-tracing)), and [Lightbend Telemetry](https://developer.lightbend.com/docs/telemetry/current/home.html).
 However, most of these are (a) paid and (b) even where they can send data to Elasticsearch, they don't work with Elastic APM, which we get for free and are already using with the catalogue API.

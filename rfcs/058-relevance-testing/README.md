@@ -1,11 +1,10 @@
-# RFC 57: Relevance testing
-
-**Status:** Draft
-**Last updated:** 2023-06-02
+# RFC 058: Relevance testing
 
 This RFC describes how and why we might write a new version of _rank_, our relevance testing tool.
 
-## Background
+**Last modified:** 2023-06-20T14:04:56+01:00
+
+## Context
 
 We develop and test the relevance of our search results using a tool called _rank_. By making sure that our queries return the expected results for a set of known, indicative search terms, we can be confident that search is performing as intended.
 

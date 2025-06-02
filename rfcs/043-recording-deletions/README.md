@@ -1,4 +1,10 @@
-# Removing deleted records from (re)indexes
+# RFC 043: Removing deleted records from (re)indexes
+
+This RFC proposes a change to the way we handle deleted source records in the Catalogue API index.
+
+**Last modified:** 2021-07-26T14:26:24+01:00
+
+## Context
 
 In the pipeline, when a record is deleted from a source system, we don't expunge it from the pipeline -- instead, we create a stub Work "this has been deleted".
 This returns a 410 Gone from the API and a special message on /works:

@@ -1,6 +1,8 @@
 # RFC 013: Release & Deployment tracking
 
-**Last updated: 24 January 2019.**
+This RFC proposes a new approach to tracking releases and deployments of services in the Wellcome Collection platform, moving away from the current reliance on Terraform for deployment. The approach described has been superseded by improvements in native AWS ECS deployment capabilities, but the tagging and tracking concepts remain relevant.
+
+**Last modified:** 2020-04-08T14:40:00+01:00
 
 ## Background
 

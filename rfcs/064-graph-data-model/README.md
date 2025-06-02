@@ -1,5 +1,9 @@
 # RFC 064: Graph data model
 
+An update to the previous [RFC #62](../062-knowledge-graph/README.md) on the knowledge graph, focusing on a new graph data model for concept enrichment and linking to external ontologies.
+
+**Last modified:** 2024-12-05T16:31:45+00:00
+
 ## Context
 
 Following from [062-knowledge-graph](../062-knowledge-graph/README.md), which provides an overview of a past prototype and proposal for a new graph based on data from the Collection and external ontologies, this RFC focuses on a new graph data model. While the primary/current focus of the suggested model is the enrichment of concepts, other data and attributes are also included as these may enable future machine learning work and visualisation. The graph data model is designed to enable enrichment of concepts while keeping original labels and sources intact. This is to make sure we are always able to tell where a new link or piece of information was acquired from, whether it be manual tagging, a particular source ontology, or ML inference.

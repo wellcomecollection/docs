@@ -1,6 +1,8 @@
 # RFC 011: Network Architecture
 
-**Last updated: 09 January 2019.**
+This RFC proposes a network architecture for Wellcome Collection services, ensuring effective security, maintenance, and scalability as the number of services grows.
+
+**Last modified:** 2019-10-16T16:33:39+01:00
 
 ## Background
 

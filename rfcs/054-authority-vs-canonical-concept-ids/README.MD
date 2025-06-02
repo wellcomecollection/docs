@@ -1,5 +1,9 @@
 # RFC 054: Authoritative ids with multiple Canonical ids.
 
+This RFC proposes a change to the way Concepts are stored in the catalogue-concepts index
+
+**Last modified:** 2023-02-10T11:51:49+00:00
+
 ## The problem
 
 Some authoritative ids (including label-derived ones) correspond to more than one Concept in the Works catalogue.

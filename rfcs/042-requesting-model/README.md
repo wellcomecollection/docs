@@ -1,4 +1,10 @@
-# How do we tell users how to find stuff?
+# RFC 042: Requesting model
+
+This RFC describes how we will model the data for physical items in the catalogue API, so that users can find out how to access them.
+
+**Last modified:** 2021-05-20T12:29:35+01:00
+
+## Context
 
 **As part of the work to add physical items to [wellcomecollection.org](https://wellcomecollection.org), users should be able to work out how to find items.**
 

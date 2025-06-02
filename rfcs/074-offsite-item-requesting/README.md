@@ -1,4 +1,10 @@
-# RFC 060: Offsite requesting
+# RFC 074: Offsite requesting
+
+This RFC outlines the plan for enabling online requesting of items that are held offsite, with a phased approach to accommodate both onsite and offsite viewing.
+
+**Last modified:** 2024-04-23T11:57:13+01:00
+
+## Context
 
 We want library patrons to be able to make online requests for items that are held offsite. Some of these items will be recalled to Wellcome Collection for viewing, whereas some will require patrons to travel elsewhere to view. 
 

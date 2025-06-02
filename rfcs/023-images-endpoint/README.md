@@ -1,8 +1,8 @@
 # RFC 023: Images endpoint
 
-**Status:** :construction: Draft :building_construction:
+This RFC proposes an initial images endpoint for the catalogue API, allowing for searching and fetching images from the visual collections.
 
-**Last updated:** 27/04/2020
+**Last modified:** 2020-05-06T15:53:14+01:00
 
 ## Context and requirements
 

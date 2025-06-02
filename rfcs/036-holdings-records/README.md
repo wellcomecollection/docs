@@ -1,5 +1,11 @@
 # RFC 036: Modelling holdings records
 
+This RFC describes how we will model holdings records in the Catalogue API.
+
+**Last modified:** 2021-03-03T13:24:57+00:00
+
+## Context
+
 Holdings records are a type of record in Sierra, alongside bibs and items (which we already present through the Catalogue API).
 
 In library science, the *holdings* are the materials owned (or "held") by a library.

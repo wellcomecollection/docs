@@ -1,6 +1,10 @@
-# Born Digital in IIIF
+# RFC 046: Born Digital in IIIF
 
-_This RFC is a proposal for how Wellcome can represent born digital archival material using IIIF._
+This RFC is a proposal for how Wellcome can represent born digital archival material using IIIF.
+
+**Last modified:** 2022-04-21T10:00:00+01:00
+
+## Context
 
 The extensible nature of IIIF means that that this is not a particularly difficult technical challenge, with many possible models, but there are considerable implications for interoperability. The work is intended to be generally useful to others beyond Wellcome, and should not cause problems for people wishing to consume IIIF from publishers that have a mixture of born digital and digitised content, especially when consumers can't be expected to know beforehand whether a particular Manifest contains born digital material or not.
 

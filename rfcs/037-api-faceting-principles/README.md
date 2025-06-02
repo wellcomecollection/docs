@@ -1,8 +1,8 @@
-# API faceting principles & expectations
+# RFC 037: API faceting principles & expectations
 
-**Status:** Draft
+This RFC describes the principles and expectations for how we expect the Catalogue API to behave in terms of faceting, filtering, and aggregating data. It aims to provide a clear and consistent framework for building a faceted search interface that can effectively handle multiple dimensions of data.
 
-**Last updated:** 16/03/2021
+**Last modified:** 2021-03-24T12:01:02+00:00
 
 ## Background
 

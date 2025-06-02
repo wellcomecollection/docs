@@ -1,6 +1,10 @@
 # RFC 033: Api internal model versioning
 
-## Current status
+This RFC describes a proposal for how to version the internal model used by the catalogue API, to allow for independent deployment of the API and the catalogue pipeline.
+
+**Last modified:** 2021-02-01T09:17:45+00:00
+
+## Context
 
 Currently our API and catalogue pipeline both live in our catalogue repo and have a dependency to the internal model module.
 

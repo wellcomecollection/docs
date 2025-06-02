@@ -1,8 +1,8 @@
 # RFC 032: Calm deletion watcher
 
-**Status:** Draft
+This RFC describes a proposal for a Calm deletion watcher, which will allow us to detect deleted Calm records and update the VHS accordingly.
 
-**Last updated:** 28/01/2021
+**Last modified:** 2021-02-09T17:03:48+00:00
 
 ## Background
 

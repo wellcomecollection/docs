@@ -1,8 +1,8 @@
 # RFC 044: Tracking Patron Deletions
 
-**Status:** Draft
+This RFC describes a proposal for tracking patron deletions in the Sierra API and removing corresponding records from Auth0.
 
-**Last updated:** 3/2/22
+**Last modified:** 2022-02-09T14:42:06+00:00
 
 ## Context
 

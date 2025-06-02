@@ -1,5 +1,9 @@
 # RFC 027: Pipeline Intermediate Storage
 
+This RFC describes a proposal for how to store intermediate works in the catalogue pipeline, to allow for more efficient and cost-effective processing of works.
+
+**Last modified:** 2020-09-07T10:21:33+01:00
+
 ## Background
 
 Whilst on the whole we aim to make to make the inner workings of pipeline as stateless as possible (receiving transformable input at the source and writing works to an index at the sink), there are a number of places where the business logic requires us to store work data in an intermediate state. Namely the matcher and merger require the ability to lookup unmerged works by ID from the `recorder` store, and the upcoming enricher requires an additional intermediate store of merged works in order to perform denormalisation consistently.

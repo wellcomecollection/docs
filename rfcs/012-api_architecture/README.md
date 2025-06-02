@@ -1,6 +1,8 @@
 # RFC 012: API Architecture
 
-**Last updated: 09 January 2019.**
+This RFC proposes a solution for serving Wellcome Collection APIs from a single domain, `api.wellcomecollection.org`, using AWS API Gateway and CloudFront.
+
+**Last modified:** 2019-01-25T15:26:28+00:00
 
 ## Background
 

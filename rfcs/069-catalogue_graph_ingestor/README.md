@@ -4,7 +4,9 @@ Following on from the [Catalogue Graph pipeline](https://github.com/wellcomecoll
 this RFC outlines the requirements for the Catalogue Graph Ingestor to replace 
 the existing Concepts Pipeline. 
 
-## Background
+**Last modified:** 2025-02-18T14:31:18+00:00
+
+## Context
 
 The Catalogue Graph Ingestor will be responsible for ingesting data from the 
 Graph database into Elasticsearch so that it can be made available via the 

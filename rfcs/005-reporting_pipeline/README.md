@@ -1,6 +1,8 @@
 # RFC 005: Reporting Pipeline
 
-**Last updated: 02 November 2018.**
+This RFC proposes a reporting pipeline for the Wellcome Collection data, allowing for analytics and reporting on data from various sources.
+
+**Last modified:** 2018-11-02T16:46:57+00:00
 
 ## Background
 
