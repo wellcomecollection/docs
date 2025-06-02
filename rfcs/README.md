@@ -2,6 +2,12 @@
 
 An RFC is a place to discuss possible changes to the Wellcome Collection platform.
 
+## Table of contents
+
+- [What is an RFC?](#what-is-an-rfc)
+- [How do I format an RFC?](#how-do-i-format-an-rfc)
+- [RFC Listing](#rfc-listing)
+
 ## What is an RFC?
 
 Please create an RFC if you have an idea about how to make a big change to the way we do things currently and need a place to share that with your colleagues.
@@ -10,7 +16,27 @@ The process of creating an RFC, discussing that RFC in a pull request, amending 
 
 When an RFC is merged it provides a guide to implementing that change when it is useful to do so, or provides context to an [Architecture decision record (ADR) document](../adr/).
 
-## Table of contents
+## How do I format an RFC?
+
+An RFC is a markdown file in the `rfcs` directory. It should be named with a number and a short description, e.g. `070-concepts-api-changes.md`.
+The filename should be prefixed with the next available number in the sequence, and the title of the RFC should match the filename.
+
+The RFC **must** include the following sections:
+
+- **Title:** A short, descriptive title for the RFC, in the format `RFC {number}: {title}`.
+- **Last modified:** The date and time the RFC was last modified, in ISO 8601 format (use `date -u +"%Y-%m-%dT%H:%M:%SZ"`)
+- **Context:** A brief description of the problem or opportunity that the RFC addresses.
+
+The RFC **should** include the following sections:
+
+- **Proposal:** A detailed description of the proposed solution, including any relevant technical details, diagrams, or examples.
+- **Alternatives considered:** A discussion of any alternative solutions that were considered, and why they were not chosen.
+- **Impact:** A description of the impact of the proposed solution, including any potential risks or challenges.
+- **Next steps:** A list of next steps for implementing the proposed solution, including any dependencies or prerequisites.
+
+## RFC Listing
+
+_This is generated from the RFCs in this directory using `.script/create_table_summary.py`._
 
 | RFC ID | Title | Summary | Last Modified |
 |---------|---------|-----------|---------------|
