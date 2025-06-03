@@ -3,7 +3,7 @@
 This RFC collects some initial thinking on how we might represent concepts in the catalogue API.
 It's a starting point for discussions; not a final design.
 
-
+**Last modified:** 2022-05-31T10:06:03+01:00
 
 ## Goals
 

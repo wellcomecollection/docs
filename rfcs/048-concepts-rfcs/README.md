@@ -1,8 +1,8 @@
 # RFC 048: Concepts work plan
 
-**Status:** :construction: Draft :building_construction:
+This RFC outlines the work plan for introducing concepts to the Wellcome digital platform, including the design of a concepts API, knowledge graph population, and integration with works.
 
-**Last updated:** 29/04/2022
+**Last modified:** 2022-05-10T13:14:58+01:00
 
 ## Context
 

@@ -2,6 +2,8 @@
 
 This RFC outlines considerations for the development of the catalogue-graph pipeline. The first iteration of the graph will be focused on concepts and their enrichment with data from external ontologies, as discussed below.
 
+**Last modified:** 2025-01-08T15:36:09+00:00
+
 ## Loading data from external sources
 
 Where possible, data for source concept nodes will be loaded to the graph in full. This currently applies to data from Library of Congress Subject Headings (LCSH), Library of Congress Name Authority File (LCNAF), and Medical Subject Headings (MeSH). Unless the size of the data is prohibitive (for example, in the case of Wikidata), the slightly higher storage needs will be outweighed by advantages associated with minimising dependencies, resulting in simplified pipeline logic and updates. 

@@ -1,4 +1,8 @@
-# Content-api: next steps
+# RFC 061: Content API next steps
+
+This RFC documents the next steps for the Content API, specifically focusing on the addition of Prismic Events to the API. It outlines the background information, challenges encountered, decisions made, and the proposal for how the API will be structured moving forward.
+
+**Last modified:** 2024-07-03T16:37:28+01:00
 
 [Background information](#background-information)  
 [Challenges encountered and decisions made](#challenges-encountered-and-decisions-made)

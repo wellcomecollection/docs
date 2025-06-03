@@ -1,6 +1,8 @@
 # RFC 068: Exhibitions in Content API
-Exhibitions are to be added to Events search, becoming Events & Exhibitions search. We'll therefore be working on indexing Exhibitions in a more intentional manner. 
-That indexing and subsquent API endpoint will power the Events & Exhibitions search as well as, eventually, the existing listing pages.
+
+Exhibitions are to be added to Events search, becoming Events & Exhibitions search. We'll therefore be working on indexing Exhibitions in a more intentional manner. That indexing and subsquent API endpoint will power the Events & Exhibitions search as well as, eventually, the existing listing pages.
+
+**Last modified:** 2025-02-18T17:15:49+00:00
 
 ## Indexing Exhibitions
 I can think of two ways to go about indexing Exhibitions for ranking against Events to make sense and be easier to handle.

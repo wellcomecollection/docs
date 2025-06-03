@@ -1,4 +1,8 @@
-# Transitive hierarchies in Sierra
+# RFC 072: Transitive Sierra hierarchies
+ 
+This RFC proposes a new stage in the Works pipeline to allow for transitive Sierra hierarchies.
+
+**Last modified:** 2022-04-20T15:52:34+01:00
 
 ## The problem
 

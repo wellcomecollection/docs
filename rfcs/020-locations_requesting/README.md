@@ -1,6 +1,8 @@
 # RFC 020: Locations and requesting
 
-**Last updated: 14 February 2020.**
+This RFC describes a proposal for how to model item locations in the Catalogue API, and how to build a new Stacks API that allows users to request physical items.
+
+**Last modified:** 2020-03-06T12:02:29+00:00
 
 ## Background
 

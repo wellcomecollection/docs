@@ -1,5 +1,11 @@
 # RFC 035: Modelling MARC 856 "web linking entry"
 
+This RFC describes how we will model MARC 856 "web linking entry" in the Catalogue API.
+
+**Last modified:** 2021-02-24T14:15:02+00:00
+
+## Context
+
 [MARC field 856](https://www.loc.gov/marc/bibliographic/concise/bd856.html) is used to link to other resources, and it has a variety of uses at Wellcome.
 Among other things, it links to websites, electronic journals, and links to canned searches in our catalogue.
 

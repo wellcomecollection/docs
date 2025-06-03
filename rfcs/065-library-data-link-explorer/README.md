@@ -1,16 +1,12 @@
 # RFC 065: Library Data Link Explorer
 
-
-# Library Data Link Explorer
-
-## Overview
-
 This RFC outlines the plan for the Library Data Link Explorer web application. This tool will enable Collections Information colleagues the ability to view and debug work relationships independently, potentially replacing the workflow of requesting a developer-run script to produce a matcher graph .dot file. 
+
+**Last modified:** 2024-11-27T17:37:23+00:00
 
 ![Example DOT Notation Graph](https://github.com/user-attachments/assets/c3cdc4f2-6c68-4b82-90c0-dea8da8cc0e5)
 
 *Example .dot graph returned by Matcher logic.*
-
 
 **The application will consist of:**
 

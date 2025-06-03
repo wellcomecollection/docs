@@ -2,6 +2,8 @@
 
 This RFC proposes a change to how we manage the Terraform for instances of the catalogue pipeline.
 
+**Last modified:** 2023-07-03T10:39:33+01:00
+
 ## Background
 
 We run multiple instances of the catalogue pipeline.

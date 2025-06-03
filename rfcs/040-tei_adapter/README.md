@@ -1,4 +1,8 @@
-# TEI Adapter
+# RFC 040: TEI Adapter
+
+This RFC proposes an adapter to harvest TEI files from GitHub and store them in a VersionedStore.
+
+**Last modified:** 2021-06-24T17:11:32+01:00
 
 ## What is TEI
 
@@ -9,7 +13,9 @@ time of writing in April 2021 there are 622 TEI files, but the collection of man
 
 Currently, all information stored in TEI files is not surfaced anywhere except the GitHub repository. 
 Many of the TEI files have a Sierra record that they link to, but not all of them – and the record contains minimal information. 
+
 ## How we do it
+
 ### Do we need an adapter?
 
 We need to be able to propagate updates to TEI files as they happen through to the API, and we also need to be able to

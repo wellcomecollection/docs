@@ -1,6 +1,8 @@
 # RFC 008: API Filtering
 
-**Last updated: 19 October 2018.**
+This RFC proposes a consistent approach to filtering and sorting resources in our APIs, ensuring a uniform developer experience.
+
+**Last modified:** 2019-09-24T13:00:32+01:00
 
 ## Problem statement
 

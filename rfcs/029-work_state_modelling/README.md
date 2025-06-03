@@ -1,6 +1,10 @@
 # RFC 029: Work state modelling
 
-## Background
+This RFC proposes a new way of modelling works in the catalogue pipeline and API, separating the type of work from its state in the pipeline. This aims to improve composability, clarity, and ease of adding new types or states.
+
+**Last modified:** 2020-09-07T14:40:36+01:00
+
+## Context
 
 The central model to the catalogue pipeline and API is the `Work` model. We currently have a relatively complex type hierarchy to represent different sorts of work, as well as their state within the pipeline. For example works extending from `IdentifiedBaseWork` (`IdentifiedWork`, `IdentifiedInvisibleWork`, `IdentifiedRedirectedWork`) indicate works that have been minted by the ID minter, whereas corresponding works extending from `TransformedBaseWork` have not. Data that is common to these different sort of works is held in the `WorkData` case class. 
 

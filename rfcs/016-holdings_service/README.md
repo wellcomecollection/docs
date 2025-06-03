@@ -1,13 +1,8 @@
-# **RFC 016: Holdings service**
+# RFC 016: Holdings service
 
-- Status: **Deprecated** refer to [020-locations_requesting](../020-locations-requesting/README.md)
-- Last updated: 24 September 2019.
+This RFC proposes a now deprecated approach to building a holdings service, which has been superseded by the [020-locations_requesting](../020-locations-requesting/README.md) RFC.
 
-## Glossary
-
-- Holding: TBD
-- Availability: TBD
-- ...TBD
+**Last modified:** 2020-03-03T16:46:23+00:00
 
 ## Motivation
 

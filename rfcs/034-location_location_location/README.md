@@ -1,5 +1,11 @@
 # RFC 034: Modelling Locations in the Catalogue API
 
+This RFC describes how we will model locations in the Catalogue API, and how we will return them in the API.
+
+**Last modified:** 2021-02-08T09:24:19+00:00
+
+## Context
+
 As part of upcoming work to add holdings, online resources, and more detailed journal information to the Catalogue API, we need to expand the range of locations which are presented by the API.
 
 Additionally, we want to model locations in a way that can be reused by the requesting service.

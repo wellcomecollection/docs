@@ -1,5 +1,11 @@
 # RFC 062: Wellcome Collection Graph overview and next steps
 
+Enriching concepts in the Wellcome Collection with a knowledge graph to enhance discovery and exploration of the collection online.
+
+**Last modified:** 2024-10-11T12:15:29+01:00
+
+## Table of contents
+
 [Context](#context)
 
 [Background](#background)

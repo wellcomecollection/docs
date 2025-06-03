@@ -1,6 +1,8 @@
 # RFC 014: Born digital workflow
 
-**Last updated: 10 June 2019.**
+This RFC proposes an initial workflow for managing born-digital archives using Archivematica, which will be integrated with our new storage service.
+
+**Last modified:** 2019-06-13T14:27:03+01:00
 
 ## Background
 

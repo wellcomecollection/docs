@@ -1,5 +1,11 @@
 # RFC 055: Genres as Concepts
 
+This RFC proposes to treat Genres as Concepts, in the same manner as Subjects.
+
+**Last modified:** 2023-03-06T15:49:16+00:00
+
+## Context
+
 Genres (type/technique) should be treated in the same manner as Concepts.
 This includes introducing Concept pages for them that work in a similar manner to those
 for Agents (where works about and by the Agent are listed separately). A Concept

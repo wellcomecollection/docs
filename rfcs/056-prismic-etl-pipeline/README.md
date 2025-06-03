@@ -1,8 +1,8 @@
 # RFC 056: Prismic to Elasticsearch ETL pipeline
 
-**Status:** Draft
+This RFC proposes a mechanism for extracting data from Prismic, transforming it, and loading it into Elasticsearch to make our editorial content more discoverable via an API.
 
-**Last updated:** 23/2/2023
+**Last modified:** 2023-03-02T11:39:12+00:00
 
 ## Context
 In order to make our editorial content - including stories, comics, exhibitions and events - more discoverable, we want to be able to search it via an API as described in [RFC 055](https://github.com/wellcomecollection/docs/tree/main/rfcs/055-prismic-api).

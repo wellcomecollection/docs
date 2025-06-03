@@ -1,5 +1,9 @@
 # RFC 031: Relation Batcher
 
+This RFC describes a proposal for how to batch works in the relation embedder, to improve performance and reduce duplicate work.
+
+**Last modified:** 2020-11-10T11:02:09+00:00
+
 ## Background
 
 The `relation_embedder` was recently introduced into the pipeline to denormalise related works into a works data, so that a particular work in an archive retrieved from the API will contain it's children, ancestors and siblings.

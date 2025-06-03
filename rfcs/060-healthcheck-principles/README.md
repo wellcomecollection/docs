@@ -2,6 +2,8 @@
 
 This RFC explores how we should implement health-checks in our services, specifically around services that have HTTP interactions / are serviced by load-balancers that implement health-checking.
 
+**Last modified:** 2024-02-07T15:40:51+00:00
+
 ## Background
 
 At the moment the health-check endpoints for our services report either OK (20x response) or not (anything else). This status in impactful in 2 modes of operation:

@@ -1,5 +1,11 @@
 # RFC 047: Changing the structure of the Catalogue API index
 
+This RFC proposes a change to the structure of the Catalogue API index, which is used to store and retrieve documents for the Catalogue API.
+
+**Last modified:** 2022-04-29T10:23:20+01:00
+
+## Context
+
 We use the Elasticsearch index for the catalogue API for several purposes:
 
 *   To serialise the public API responses

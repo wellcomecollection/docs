@@ -1,6 +1,10 @@
-## Pipeline merging
+# RFC 030: Pipeline merging
 
-### What is merging and why do we need it
+This RFC describes a proposal for how to merge works in the catalogue pipeline, to avoid issues with works becoming "stuck" in the pipeline.
+
+**Last modified:** 2020-10-09T12:12:13+01:00
+
+## Context
 
 The pipeline feeds from different sources. Records from different sources may contain information relating 
 to other records withing the same source or in a different one. We want to present this information in the 
@@ -13,7 +17,7 @@ To achieve this the pipeline merges works by:
  - adding relevant information to the target from the other works in the set
  - redirecting all the others works in the set to the target
 
-### What happens when merging?
+## What happens when merging?
 
 These are a few cases that may happen when merging:
 
@@ -31,9 +35,9 @@ These are a few cases that may happen when merging:
     - B:2 redirected to A:1
     - C:1 no longer redirected 
 
-### How this currently works
+## How this currently works
 
-#### Matcher
+### Matcher
 The matcher receives individual works and updates stores the state of the graph.
 
 - It receives A:1 which says that A:1 -> B:1
@@ -49,7 +53,7 @@ The matcher receives individual works and updates stores the state of the graph.
     - Updates A:1, B:2 ad belonging to AB
     - it sends `[[A:1,B:2],[C:1]]` to the merger
 
-#### Merger
+### Merger
 The merger reads the ids and versions received by the matcher from the recorder store 
 and decides if and how to merge based on internal rules. If it decides to merge it updates the works as:
 - Fills `numberOfSources` field on the work selected as target with the number of works merged into it
@@ -57,11 +61,11 @@ and decides if and how to merge based on internal rules. If it decides to merge 
 
 if it decides not to merge, it sends the works unchanged
 
-##### Previous behaviour
+#### Previous behaviour
 At some point (ie probably a few weeks ago) the merger used to send a `merged` boolean flag
  to the ingestor that basically indicated if the work had been tampered with by the merger.
 
-#### Ingestor
+### Ingestor
 Because updates to works can get to the ingestor out of order, the ingestor assigns a version 
 to each work. Works are ingested if they're version is greater or equal than the one already present 
 in the index.
@@ -85,7 +89,7 @@ elastic search greater or equal than versioning, the unlinked version would have
 ingested (provided no message out of order issues)
 
 
-### Problems
+## Problems
 
 There are a number of issues with the current approach:
 - We need to multiply `transformerVersion` by 1000 to make it take precedence 
@@ -100,7 +104,7 @@ over `numberOfSources` because `numberOfSources` can be quite high (650 is the r
  currently aware of merging happening at some point, which it shouldn't be. It also makes the 
  versioning logic very hard to follow and modify
 
-### Discarded ideas
+## Discarded ideas
 
 Jamie and I came up with multiple ideas to tweak the current behaviour, each one with some problems:
 - Go back to the `merged` flag: it has issues with multiple sources and it has issues 
@@ -114,7 +118,7 @@ this would succeed in unlinking, but again would fail to add a work to a group
 that was the result of a previous unlink operation
 
 
-### Solution proposed
+## Solution proposed
 
 The solution suggested by Nic is that we pass through in the work a field with the timestamp 
 of the last update.

@@ -1,5 +1,9 @@
 # RFC 026: Relation Embedder
 
+This RFC describes a proposal for how to denormalise relations between works in the catalogue pipeline, to improve the API response times and allow for richer queries.
+
+**Last modified:** 2020-09-07T10:16:09+01:00
+
 ## Background
 
 Recently we have started ingesting archive data from Calm. An archive according to our model is a collection of works arranged hierarchically in a tree structure according to some path. For example, the works with paths `A`, `A/1`, `A/1/X`, `A/1/Y` and `A/2` would form the following tree:

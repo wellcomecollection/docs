@@ -1,10 +1,8 @@
-# RFC 055: Content API
-
-**Status:** Draft
-
-**Last updated:** 2023-03-06
+# RFC 073: Content API
 
 This RFC outlines a new set of API endpoints which will allow wellcomecollection.org users to search and filter content which is stored in Prismic.
+
+**Last modified:** 2023-03-08T12:09:12+00:00
 
 ## Background
 

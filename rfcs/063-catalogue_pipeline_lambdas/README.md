@@ -1,10 +1,12 @@
-# Catalogue Pipeline services from ECS to Lambda 
+# RFC 063: Catalogue Pipeline services from ECS to Lambda
+
+Discuss the potential benefits and challenges of moving the catalogue pipeline services from AWS Elastic Container Service (ECS) to AWS Lambda.
+
+**Last modified:** 2024-10-25T10:16:40+01:00
 
 ## Context
 
 Catalogue-pipeline services run on [Elastic Container Service (ECS)](https://aws.amazon.com/ecs/). The infrastructure includes scaling to account for resource needs during a reindex (scale up) or day-to-day running of the pipeline (scale down). Scaling is achieved using ECS auto scaling rules driven from CloudWatch metrics on queue depth. Other newer projects leverage AWS Lambda to run similar tasks, and there is an opportunity to remove complexity in the catalogue pipeline and align with newer projects.
-
-## Background
 
 The following points cover in more detail the reasoning behind moving from ECS based compute to AWS Lamdba:
 

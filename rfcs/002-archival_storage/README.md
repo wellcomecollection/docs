@@ -1,6 +1,8 @@
 # RFC 002: Archival Storage Service
 
-**Last updated: 16 August 2019.**
+This RFC proposes a service for storing archival and access copies of digital assets, ensuring long-term preservation and compliance with industry standards.
+
+**Last modified:** 2020-06-01T08:46:31+01:00
 
 ## Problem statement
 

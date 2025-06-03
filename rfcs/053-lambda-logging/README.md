@@ -1,5 +1,11 @@
 # RFC 053: Logging in Lambdas
 
+This RFC proposes a solution for logging in AWS Lambdas, aiming to provide a consistent and efficient way to capture and stream logs from Lambda functions to an Elasticsearch cluster.
+
+**Last modified:** 2022-11-30T15:57:23+00:00
+
+## Context
+
 In [RFC 022](https://github.com/wellcomecollection/docs/tree/main/rfcs/022-logging), we identified that our application logs - which were then stored in Cloudwatch - were costing us money, were hard to query, and were inconsistent. We proposed (and went on to implement) an architecture in which ECS services contained a logging sidecar container that used Fluent Bit to stream logs directly to an Elasticsearch cluster. This continues to serve us well.
 
 However, we've now got a non-trivial number of production applications that are run as AWS Lambdas, rather than as Docker containers in ECS: namely, the [Identity APIs](https://github.com/wellcomecollection/identity) and the [concepts pipeline services](https://github.com/wellcomecollection/concepts-pipeline). To have better visibility over these applications, as well as for consistency, we now want to get our Lambda logs into the logging cluster in the same format as we have our other application logs.

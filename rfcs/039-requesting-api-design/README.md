@@ -1,4 +1,8 @@
-# Requesting API design
+# RFC 039: Requesting API design
+
+This RFC describes the design of a new API for requesting items in the catalogue.
+
+**Last modified:** 2021-04-26T12:30:14+01:00
 
 ## Background
 

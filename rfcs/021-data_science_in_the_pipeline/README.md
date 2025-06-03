@@ -1,8 +1,8 @@
 # RFC 021: Data science in the pipeline
 
-**Status:** 🏗 Draft 🚧
+This RFC outlines a proposal for integrating data science services into the Wellcome Collection catalogue pipeline. The goal is to augment works and images with data inferred from them using data science techniques, such as feature vectors and colour palettes for images.
 
-**Last updated:** 2020/07/29
+**Last modified:** 2020-07-29T11:05:28+01:00
 
 ## Motivation
 
