@@ -9,7 +9,9 @@ Discussing a replacement architecture for the catalogue pipeline adapters, movin
 
 - [Context](#context)
     - [Required functionality of adapters](#required-functionality-of-adapters)
-    - [Current architecture](#current-architecture)
+    - [Current architecture overview](#current-architecture)
+    - [Problems with current architecture](#problems-with-current-architecture)
+    - [Other considerations](#other-considerations)
 - [Proposal](#proposal)
   - [Scalability testing](#scalability-testing)
   - [New adapter architecture using iceberg](#new-adapter-architecture-using-iceberg)
@@ -29,7 +31,7 @@ An adapter decouples synchronizing changes from a source system, with the proces
 - Notifying the rest of the pipeline that changes have occurred, so that they can be processed.
 - During a reindex, notifying the rest of the pipeline about the current state of the source system, so that it can be transformed and indexed in totality.
 
-### Current architecture
+### Current architecture overview
 
 The current adapters use a Versioned Hybrid Store (VHS) to store data from source systems, which is a custom storage format that provides versioning and schema-less data storage. This has worked well for many years, but has some drawbacks that we want to address.
 
@@ -51,22 +53,27 @@ Transformer services read data from the VHS, transforms it into a format suitabl
 
 Notifications from the adapters are used to trigger the transformers to process data, this happens in a "push" model where the adapters notify the transformers about changes to individual records via SNS/SQS.
 
-## Problems with current architecture
+### Problems with current architecture
 
+There are several problems with the current architecture that we want to address, apart from updating the design to use more modern technologies and without the need to work around previous limitations of S3.
 
-    problems with current approach
-        keeping unused version
-        difficult to inspect source data
-        novel approach, difficult to understand
+1. **Keeping unused versions**: The VHS retains all versions of a record, however we do not make use of the versioning functionality in the VHS, there is no mechanism for accessing old versions, and there is no provision for cleaning up old versions of records. This has resulted in large amounts of unused data being stored, which is costly.
 
-        schema-less data in source tables, we catch issues upstream 
-            potential benefits drawbacks of not enforcing schema here 
-            (if source schema changes we don't care, but we would still have to implement changes upstream)
-            where do we enforce schema now?, what does it look like?
+2. **Difficult to inspect source data**: As records are stored in S3 with an index in DynamoDB and the data stored in S3 is scheme-less, it is difficult to inspect the source data directly and understand its structure and contents in aggregate. 
 
-    systems transformation project and requirement for major adapter rewrite
+3. **Novel approach, difficult to understand**: The VHS is a custom storage format that is not  used outside of Wellcome Collection, which makes it difficult for new developers to understand and work with. It also means that we have to maintain our own custom code for reading and writing data, which adds complexity.
 
-    move to lambdas, and use of python
+4. **Schema-less data storage**: The VHS allows for schema-less data storage, which means that we do not enforce a schema on the data stored in the VHS. This can lead to issues with data quality and consistency, as we do not have a mechanism for validating the structure of the data before it is written to the store. While this has allowed us to handle changes in source systems more easily, it has also led to records of the same data model having different structures.
+
+   Although data stored in the VHS is schema-less transformers are responsible for decoding source data, and reference source data types in their code. This means that if a source system changes its schema, we have to update the transformers to handle the new schema in any case, negating some of the benefits of schema-less storage.
+
+### Other considerations
+
+The ongoing Wellcome Collection Systems Transformation Project (WCSTP) aims to replace the current Library Management System (LMS) and Collection Management System (CMS). This will involve rewriting the adapters for these systems, which provides an opportunity to update the architecture of the adapters to use more modern technologies and approaches.
+
+We are in the process of moving to use Lambda functions for many of our catalogue pipeline components, in order to reduce infrastructure management overhead and improve scalability, and to do so using Python as the primary language for development. We will need to ensure that the new adapter architecture is compatible with this approach.
+
+Recent development of the catalogue graph discussed in other RFCS [RFC 066: Catalogue Graph](https://github.com/wellcomecollection/docs/tree/main/rfcs/066-graph_pipeline) has shown that we can use AWS Step Functions to orchestrate complex workflows, which could be used to manage the flow of data through the adapters and transformers.
 
 ## Proposal 
     to use apache iceberg
