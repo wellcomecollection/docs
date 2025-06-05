@@ -129,6 +129,21 @@ Iceberg is well-suited to this problem for several reasons:
 - **Support for schema evolution**: [Iceberg allows us to evolve the schema](https://iceberg.apache.org/docs/latest/evolution/) of our tables over time, which is important as source systems change and we need to adapt to new data structures.
 - **Time travel**: Iceberg provides support for time travel, which allows us to query historical versions of the data. This is useful for debugging and understanding changes in the data over time. Automatically cleaning up old snapshots is also supported.
 
+## Current System (VHS) vs. Apache Iceberg Tables
+
+This table focuses on key differences in table format, schema management, data versioning, data discovery/governance, and maintainability, derived from Wellcome Collection's RFC 075.
+
+| Feature | Current System (VHS) | Proposed System (Apache Iceberg ) |
+| ----- | ----- | ----- |
+| **Table Format Standard** | In-house developed standard. | Open standard table format that abstracts underlying data files. |
+| **Schema Management** | No enforced schema for stored data. | Well-defined schema with schema evolution (column changes) without rewriting data. |
+| **Underlying Data Store** | DynamoDB for indexes & S3 for storage, no specific file format. | Uses columnar formats like Parquet for efficient storage and querying, relies on a single data store for indexes and objects e.g. S3. |
+| **Querying** | No direct support, records can be discovered by using id/version index in DynamoDB. | SQL support via Iceberg spec, allowing for familiar querying with tools like Spark, Polars, and DuckDB. |
+| **Data Versioning / Time Travel** | VHS records older versions but has no mechanism for deletion or retrieval. | Full time travel via snapshots for historical queries and easy rollbacks. |
+| **Data Discovery** | Depends on knowing the underlying data structure. | Centralized metadata via Iceberg spec improves discovery, governance, and cataloging. |
+| **Maintainability** | Relies on internal knowledge. | Leverages widely adopted open-source technologies (Iceberg, Spark). Easier to find developers with relevant skills (e.g., Spark, SQL). Large community support and extensive documentation available. |
+
+
 ### Iceberg tables in more detail
 
 Iceberg tables are a logical abstraction that provides a structured way to manage large datasets. They consist of metadata and data files, where the metadata describes the structure of the table, including its schema, partitions, and snapshots. The data files are typically stored in columnar formats like Parquet, which allows for efficient storage and querying.
