@@ -30,6 +30,7 @@ Discussing a replacement architecture for the catalogue pipeline adapters, movin
       - [Full reindex mode](#full-reindex-mode)
   - [Conclusion of initial testing](#conclusion-of-initial-testing)
 - [New adapter architecture using iceberg](#new-adapter-architecture-using-iceberg)
+- [Alternatives considered](#alternatives-considered)
 - [Impact](#impact)
 - [Next steps](#next-steps)
 
@@ -136,11 +137,11 @@ This table focuses on key differences in table format, schema management, data v
 
 | Feature | Current System (VHS) | Proposed System (Apache Iceberg ) |
 | ----- | ----- | ----- |
-| **Table Format Standard** | In-house developed standard. | Open standard table format that abstracts underlying data files. |
+| **Table Format Standard** | In-house developed. | Open standard table format that abstracts underlying data files. |
 | **Schema Management** | No enforced schema for stored data. | Well-defined schema with schema evolution (column changes) without rewriting data. |
 | **Underlying Data Store** | DynamoDB for indexes & S3 for storage, no specific file format. | Uses columnar formats like Parquet for efficient storage and querying, relies on a single data store for indexes and objects e.g. S3. |
 | **Querying** | No direct support, records can be discovered by using id/version index in DynamoDB. | SQL support via Iceberg spec, allowing for familiar querying with tools like Spark, Polars, and DuckDB. |
-| **Data Versioning / Time Travel** | VHS records older versions but has no mechanism for deletion or retrieval. | Full time travel via snapshots for historical queries and easy rollbacks. |
+| **Data Versioning / Time Travel** | VHS records older versions but has no mechanism for deletion or retrieval. | Full time travel via snapshots for historical queries and easy rollbacks, optionally cleaning up old snapshots. |
 | **Data Discovery** | Depends on knowing the underlying data structure. | Centralized metadata via Iceberg spec improves discovery, governance, and cataloging. |
 | **Maintainability** | Relies on internal knowledge. | Leverages widely adopted open-source technologies (Iceberg, Spark). Easier to find developers with relevant skills (e.g., Spark, SQL). Large community support and extensive documentation available. |
 
@@ -158,8 +159,6 @@ Iceberg tables are a logical abstraction that provides a structured way to manag
 **Iceberg table metadata**: Iceberg tables maintain metadata that describes the structure of the table, including its schema, partitions, and snapshots. This metadata is stored in a separate file (the "metadata file") and is used to manage the data files that make up the table. The metadata file allows us to efficiently query the table and understand its structure without having to read all the data files.
 
 **Updates in Iceberg**: Iceberg tables support updates and deletes by creating new data files that contain the changes, rather than modifying existing files. This allows us to maintain a history of changes to the data, which can be useful for auditing and debugging purposes. The metadata file is updated to reflect the new state of the table after each change.
-
-**Maintaining Iceberg tables**: Table updates and schema changes result in new data files being created, and the metadata file being updated to reflect the new state of the table via snapshots. When these operations happen old data files are not immediately deleted, but are instead retained for a period of time to allow for time travel and auditing per table configuration. Consequently, Iceberg tables can grow in size over time, and it is important to have a mechanism for cleaning up old data files and snapshots to manage storage costs.
 
 **Example of a table update in Iceberg**
 
@@ -219,6 +218,8 @@ graph TD
     DFY1_s1 -. "<i>No change</i>" .-> DFY1_s2;
     MFY1 -. "<i>Manifest for ID='Y'<br/>content unchanged</i>" .-> MFY1_reused;
 ```
+
+**Maintaining Iceberg tables**: Table updates and schema changes result in new data files being created, and the metadata file being updated to reflect the new state of the table via snapshots. When these operations happen old data files are not immediately deleted, but are instead retained for a period of time to allow for time travel and auditing per table configuration. Consequently, Iceberg tables can grow in size over time, and it is important to have [a mechanism for cleaning up old data files](https://iceberg.apache.org/docs/1.5.1/maintenance/) and snapshots to manage storage costs.
 
 See the [Iceberg documentation](https://iceberg.apache.org/docs/latest/) for more information about how Iceberg tables work, including details about the metadata file, snapshots, and partitioning.
 
@@ -587,23 +588,47 @@ We were looking to specifically understand the following anecdotally the results
         standard parts of schema required for this
 
 ## Alternatives considered
-    why we might use it, why it's not suitable
 
-    monolithic parquet file
-    manual sharding in parquet
-    file per source work
-    using plain S3 buckets with Iceberg
+Apache Iceberg with S3 Tables is a multi-layered approach to solving the problems with the current VHS architecture. However we considered several alternatives that choose simpler approaches to the problem.
+
+- **Using S3 with Parquet files**: This would involve storing source data in a monolithic Parquet file, loading that file into memory for processing, and writing back to S3. If the source data is small enough, this could be a viable option, but on testing with Calm and Sierra source data, it was found that this approach would not scale well due to memory constraints.
+
+- **Manual sharding in S3 using Parquet**: This would involve manually sharding the source data into smaller Parquet files, which could then be processed in parallel. This approach would require more manual effort to manage the sharding and would not provide the same level of flexibility as Iceberg tables.
+
+- **File per source work**: This would involve storing each source work in a separate file, which could then be processed independently. This approach would not provide the same level of flexibility as Iceberg tables and would not allow for efficient querying of the data, on any index other than the file name.
+
+- **Using plain S3 buckets with Iceberg**: This would involve using Iceberg tables without the S3 Tables feature, which would require more manual management of the table snapshots and partitions. This approach would not provide the same level of automation and ease of use as using S3 Tables. Although S3 Tables does not provide the same visbility into the underlying data as plain S3, it does allow sufficient GET object access to retrieve all the data in a table directly if required, avoiding concerns about vendor lock-in.
 
 ## Impact
-    easier to query source data
-    schema required for source data in adapter
-    reduction in catalogue data pipeline novelty
-    potentially cheaper with reduced storage requirements (storing all versions at the moment)
-    simpler from architecture perspective
-    
-    diverse adapters (we'll need to accomodate both approaches as we switch over)
+
+We expect that moving to Iceberg tables will have a positive impact on the catalogue pipeline adapters, including:
+
+- Reduced storage costs due to better compression and the ability to clean up old snapshots.
+
+- Transformers will need to move to a batched approach to accomodate the performance characteristics of Iceberg tables.
+
+- The Reindexer will need to be updated to work with Iceberg tables.
+
+- Improved performance and scalability of the data pipeline, as Iceberg tables are designed to handle large volumes of data and provide efficient query execution.
+
+- Opportunities provided by improved access to the source data, allowing developers to query and understand source data more easily. Possibly replacing some of the existing "reporting" functionality in the pipeline.
+
+- Simplified architecture and reduced complexity, as Iceberg tables provide a well-defined schema and metadata management system that is widely used in the data engineering community.
+
+- Schema enforced at the Adapter, rather than the Transformer which may help to ensure data quality and consistency but will require changes to the existing transformers to handle a shared schema. In addition changes to the source data schema will require us to update table schemas and partitions.
+
+- Divergent approaches to Adapters and Transformers as we switch over we will need to maintain both the existing VHS-based adapters and the new Iceberg-based adapters for a period of time. This will require careful management of the data flow and processing to ensure that both approaches work correctly and do not conflict with each other.
 
 ## Next steps
-    move an existing adapter over to familiarise ourselves further and test in production?
-    begin implementation for new CMS?
-    
+
+Following this RFC we should attempt to move an existing adapter over to Iceberg tables, to test the architecture and implementation in practice. This will allow us to identify any issues or challenges with the new architecture and make any necessary adjustments before rolling it out more widely. 
+
+We propose to re-write the EBSCO adapter as a first step, as it is a relatively simple adapter that will allow us to test the new architecture without introducing too much complexity and already avoids the VHS architecture by using S3 directly.
+
+This will require us to:
+
+- Set up a framework for orchestrating using AWS Step Functions, which will allow us to manage the flow of data through the adapters and transformers, and handle both reindex and incremental update modes.
+
+- Ensure that the new adapter architecture is compatible with the existing catalogue pipeline infrastructure, which operates using SNS/SQS event messaging per `Work` update.
+
+- Understand the complexity of re-writing Transformers to work with Iceberg tables, and how to handle the shared schema between adapters and transformers.
