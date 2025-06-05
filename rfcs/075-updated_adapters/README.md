@@ -14,6 +14,7 @@ Discussing a replacement architecture for the catalogue pipeline adapters, movin
     - [Other considerations](#other-considerations)
 - [Proposal to use Apache Iceberg](#proposal)
   - [Why is it suited to this problem?](#why-is-it-suited-to-this-problem)
+    - [Current System (VHS) vs. Apache Iceberg Tables](#current-system-vhs-vs-apache-iceberg-tables)
   - [Iceberg tables in more detail](#iceberg-tables-in-more-detail)
     - [Why columnar formats?](#why-columnar-formats)
     - [Parquet files](#parquet-files)
