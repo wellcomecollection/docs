@@ -23,7 +23,12 @@ Discussing a replacement architecture for the catalogue pipeline adapters, movin
   - [Initial testing](#initial-testing)
     - [Performance performing queries and upserts](#performance-performing-queries-and-upserts)
     - [Table schemas and partitions](#table-schemas-and-partitions)
-    - [Testing with calm and sierra data](#testing-with-calm-and-sierra-data)
+    - [Testing with calm and sierra data](#testing-with-calm-and-sierra-data)\
+    - [Reproducing processing in reindex and incremental update modes](#reproducing-processing-in-reindex-and-incremental-update-modes)
+      - [Incremental mode](#incremental-mode)
+      - [Full reindex mode](#full-reindex-mode)
+  - [Conclusion of initial testing](#conclusion-of-initial-testing)
+- [New adapter architecture using iceberg](#new-adapter-architecture-using-iceberg)
 - [Impact](#impact)
 - [Next steps](#next-steps)
 
