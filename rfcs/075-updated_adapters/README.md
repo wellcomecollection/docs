@@ -54,12 +54,12 @@ flowchart TD
     A[Window Generator] -->|Sends time windows| B[Adapters]
     B -->|Fetches changes from source system| G[Source System]
     B -->|Writes changes to VHS| C[VHS]
+    B -->|Notifies Transformer about changes| D[Transformer]
     D[Transformer]
     D -->|Reads Source data from VHS| C[VHS]
     D -->|Transforms data and writes to| E[Elasticsearch]
     F[Reindexer] -->|Reads IDs from VHS| C
     F[Reindexer] -->|Notifies Transformer| D
-   
 ```
 
 
