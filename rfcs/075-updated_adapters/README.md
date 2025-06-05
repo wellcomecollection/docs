@@ -129,7 +129,7 @@ Iceberg is well-suited to this problem for several reasons:
 - **Support for schema evolution**: [Iceberg allows us to evolve the schema](https://iceberg.apache.org/docs/latest/evolution/) of our tables over time, which is important as source systems change and we need to adapt to new data structures.
 - **Time travel**: Iceberg provides support for time travel, which allows us to query historical versions of the data. This is useful for debugging and understanding changes in the data over time. Automatically cleaning up old snapshots is also supported.
 
-## Current System (VHS) vs. Apache Iceberg Tables
+#### Current System (VHS) vs. Apache Iceberg Tables
 
 This table focuses on key differences in table format, schema management, data versioning, data discovery/governance, and maintainability, derived from Wellcome Collection's RFC 075.
 
