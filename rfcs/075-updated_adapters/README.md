@@ -54,7 +54,7 @@ flowchart TD
     A[Window Generator] -->|Sends time windows| B[Adapters]
     B -->|Fetches changes from source system| G[Source System]
     B -->|Writes changes to VHS| C[VHS]
-    B -->|Notifies Transformer about changes| D[Transformer]
+    B -->|Notifies Transformer| D[Transformer]
     D[Transformer]
     D -->|Reads Source data from VHS| C[VHS]
     D -->|Transforms data and writes to| E[Elasticsearch]
@@ -127,9 +127,68 @@ Iceberg tables are a logical abstraction that provides a structured way to manag
 
 **Iceberg table metadata**: Iceberg tables maintain metadata that describes the structure of the table, including its schema, partitions, and snapshots. This metadata is stored in a separate file (the "metadata file") and is used to manage the data files that make up the table. The metadata file allows us to efficiently query the table and understand its structure without having to read all the data files.
 
-**Updates and deletes in Iceberg**: Iceberg tables support updates and deletes by creating new data files that contain the changes, rather than modifying existing files. This allows us to maintain a history of changes to the data, which can be useful for auditing and debugging purposes. The metadata file is updated to reflect the new state of the table after each change.
+**Updates in Iceberg**: Iceberg tables support updates and deletes by creating new data files that contain the changes, rather than modifying existing files. This allows us to maintain a history of changes to the data, which can be useful for auditing and debugging purposes. The metadata file is updated to reflect the new state of the table after each change.
 
 **Maintaining Iceberg tables**: Table updates and schema changes result in new data files being created, and the metadata file being updated to reflect the new state of the table via snapshots. When these operations happen old data files are not immediately deleted, but are instead retained for a period of time to allow for time travel and auditing per table configuration. Consequently, Iceberg tables can grow in size over time, and it is important to have a mechanism for cleaning up old data files and snapshots to manage storage costs.
+
+**How parquet files are updated in a table**
+
+```mermaid
+graph TD
+    %% Styles
+    classDef tableMeta fill:#ECEFF1,stroke:#90A4AE,color:#263238,font-weight:bold;
+    classDef snapshot fill:#B3E5FC,stroke:#0288D1,color:#01579B,font-weight:bold;
+    classDef manifestFile fill:#E1F5FE,stroke:#03A9F4,color:#0277BD;
+    classDef dataFileNew fill:#A5D6A7,stroke:#2E7D32,color:#1B5E20;
+    classDef dataFileOld fill:#FFCCBC,stroke:#FF5722,color:#BF360C;
+    classDef dataFileUnchanged fill:#CFD8DC,stroke:#607D8B,color:#37474F;
+
+    subgraph "Before Update (Snapshot S1)"
+        TM1["TableMetadata (v1)"]:::tableMeta
+        S1["Snapshot S1"]:::snapshot
+        MFX1["Manifest M<sub>X1</sub> (ID='X')"]:::manifestFile
+        MFY1["Manifest M<sub>Y1</sub> (ID='Y')"]:::manifestFile
+        DFX1_old["data_X1.parquet (ID='X')"]:::dataFileOld
+        DFX2_s1["data_X2.parquet (ID='X')"]:::dataFileUnchanged
+        DFY1_s1["data_Y1.parquet (ID='Y')"]:::dataFileUnchanged
+
+        TM1 --> S1;
+        S1 --> MFX1;
+        S1 --> MFY1;
+        MFX1 --> DFX1_old;
+        MFX1 --> DFX2_s1;
+        MFY1 --> DFY1_s1;
+    end
+
+    subgraph "After Update (Snapshot S2)"
+        DFX1_new["data_X1_new.parquet (ID='X')<br/><i>(Updated data)</i>"]:::dataFileNew
+        TM2["TableMetadata (v2)"]:::tableMeta
+        S2["Snapshot S2"]:::snapshot
+        MFX2["New Manifest M<sub>X2</sub> (ID='X')"]:::manifestFile
+        MFY1_reused["Manifest M<sub>Y1</sub> (ID='Y')<br/><i>(Reused)</i>"]:::manifestFile
+        DFX2_s2["data_X2.parquet (ID='X')<br/><i>(Carried over)</i>"]:::dataFileUnchanged
+        DFY1_s2["data_Y1.parquet (ID='Y')<br/><i>(Carried over)</i>"]:::dataFileUnchanged
+        
+        TM2 --> S2;
+        S2 --> MFX2;
+        S2 --> MFY1_reused;
+        MFX2 --> DFX1_new;
+        MFX2 --> DFX2_s2;
+        MFY1_reused --> DFY1_s2;
+    end
+
+    %% Process Links
+    DFX1_old -- "UPDATE writes new file" --> DFX1_new;
+    S1 --> |"New Snapshot created"| S2;
+    DFX1_old -.-> |"Old file orphaned"| S2;
+
+    %% Indicate reuse clearly
+    DFX2_s1 -. "<i>No change</i>" .-> DFX2_s2;
+    DFY1_s1 -. "<i>No change</i>" .-> DFY1_s2;
+    MFY1 -. "<i>Manifest for ID='Y'<br/>content unchanged</i>" .-> MFY1_reused;
+```
+
+See the [Iceberg documentation](https://iceberg.apache.org/docs/latest/) for more information about how Iceberg tables work, including details about the metadata file, snapshots, and partitioning.
 
 ### Initial testing
 
@@ -140,6 +199,70 @@ We have conducted some initial testing of Iceberg tables to understand their per
 There is reason to be cautious as the current adapters perform many individual updates to records, a model that may not be well-suited to Iceberg tables, which [although it is used for stream processing](https://aws.amazon.com/blogs/big-data/stream-real-time-data-into-apache-iceberg-tables-in-amazon-s3-using-amazon-data-firehose/) may have limitations. We will need to move to a model where we batch updates and writes to the Iceberg tables, rather than performing many individual updates.
 
 As discussed above, upserts create new data files that contain the changes, rather than modifying existing files, and table maintenance operations like cleaning up old snapshots are required to manage storage costs.
+
+Using [this script to upsert small dummy data into Iceberg tables](./upsert_dummy_data.py), we did some initial testing.
+
+**Dummy schema**
+
+```python
+from pyiceberg.schema import Schema, NestedField, IntegerType, StringType, TimestampType
+from pyiceberg.partitioning import PartitionSpec, PartitionField
+from pyiceberg.transforms import BucketTransform, DayTransform
+
+schema = Schema(
+    NestedField(1, "id", IntegerType(), required=True),
+    NestedField(2, "name", StringType(), required=False),
+    NestedField(3, "message", StringType(), required=True),
+    # last modified field
+    NestedField(4, "last_modified", TimestampType(), required=True),
+    identifier_field_ids=[1]  # 'id' is the primary key
+)
+
+partition_spec = PartitionSpec(
+    fields=[
+        PartitionField(source_id=1, field_id=1000, transform=BucketTransform(num_buckets=10), name="id"),
+        PartitionField(source_id=4, field_id=1001, transform=DayTransform(), name="last_modified")
+    ]
+)
+
+# Generate dummy data
+
+import random
+import datetime
+
+data = []
+
+for i in range(1000000):
+    # generate random data for the above schema
+    id_value = i
+    name_value = f"name_{i}" if random.random() > 0.1 else None  # 10% chance of being None
+    message_value = f"message_{i}"
+    data.append({
+        "id": id_value,
+        "name": name_value,
+        "message": message_value,
+        "last_modified": datetime.datetime.now(datetime.timezone.utc)
+    })
+```
+
+Performance results using S3 Tables with Iceberg:
+
+```
+Upserting 1 records...
+Upserted 1 records in 4.25 seconds
+Upserting 10 records...
+Upserted 10 records in 8.08 seconds
+Upserting 100 records...
+Upserted 100 records in 13.05 seconds
+Upserting 1000 records...
+Upserted 1000 records in 15.29 seconds
+Upserting 10000 records...
+Upserted 10000 records in 23.25 seconds
+Upserting 100000 records...
+Upserted 100000 records in 96.67 seconds
+Upserting 1000000 records...
+Upserted 1000000 records in 896.22 seconds
+```
 
 Queries in Iceberg can result in scanning a large amount of data depending on table partitioning, so reducing the amount of data scanned to find the required records is important for performance. This can be achieved both by partitioning the table effectively and by batching reading many records in a single query, rather than reading individual records.
 
