@@ -446,22 +446,96 @@ calm_iceberg_partition_spec = PartitionSpec(
 )
 ```
 
-Testing was performed by loading the Calm and Sierra source data into Iceberg tables using the schemas defined above, and then performing queries and upserts on the data.
-
-See the associated script to extract and load from Sierra and Calm source data into Iceberg tables: [load_adapter_data.py](./load_adapter_data.py).
-
 #### Testing with calm and sierra data
 
 We have conducted some initial testing using the Calm and Sierra source data, which is representative of the scale of data we expect to handle in the catalogue pipeline. This testing has shown that Iceberg tables can handle the scale of data we expect, and that they provide good performance for both querying and upserting data.
 
+Testing was performed by loading the Calm and Sierra source data into Iceberg tables using the schemas defined above, and then performing queries and upserts on the data.
+
+See the associated script to extract and load from Sierra and Calm source data into Iceberg tables: [load_adapter_data.py](./load_adapter_data.py).
+
+#### Reproducing processing in reindex and incremental update modes
 
 
-    loading calm and sierra data to iceberg tables
-    testing querying and upsert performance from 
+Source data stored in an Iceberg table needs to be easily queryable from the relevant transformer. Two transformer modes of operation need to be supported — _incremental mode_ and _full reindex mode_.
 
-    reproduce: 
-        https://github.com/wellcomecollection/platform/issues/6030
-        https://github.com/wellcomecollection/platform/issues/6029 
+**Incremental mode**
+
+When running in incremental mode, transformers need to be able to run filter queries to retrieve items which were modified in a given time window (i.e. 'return all records which changed in the last 15 minutes'). We can achieve this using pyiceberg by calling `scan` on the required table and including a row filter:
+
+```python
+from pyiceberg.expressions import GreaterThanOrEqual, And, LessThan
+import polars as pl
+from datetime import datetime
+
+
+def get_incremental_chunk(window_start: str, window_end: str) -> pl.DataFrame:
+    start = datetime.strptime(window_start, "%Y-%m-%d %H:%M:%S")
+    end = datetime.strptime(window_end, "%Y-%m-%d %H:%M:%S")
+
+    df = table.scan(
+        row_filter=And(GreaterThanOrEqual("modified_time", start), LessThan("modified_time", end))
+    ).to_polars()
+
+    return df
+
+window_start = "2025-05-14 13:15:00"
+window_end = "2025-05-14 13:30:00"
+
+print(get_incremental_chunk(window_start, window_end))
+```
+
+When running in a Lambda function, this query takes ~10 seconds. When running locally, it usually takes much longer (60+ seconds), depending on data transfer speed.
+
+Once the data is retrieved, we can transform it as usual and index it into Elasticsearch.
+
+**Full reindex mode**
+
+When running in full reindex mode, transformers need to be able to split the Iceberg data into a reasonably-sized chunks for processing in parallel. (Downloading and processing all data at once would be memory-intensive and likely slower.) 
+
+To achieve this, we can make use of Iceberg's partitioning system. Each table partition is stored in a separate parquet file, which can be downloaded and processed independently. The example snippet below retrieves the fifth partition  and converts it into a Polars dataframe, utilising a snapshot ID to ensure consistency across parallel transformer runs:
+
+```py
+import polars as pl
+
+def get_full_reindex_chunk(snapshot_id: int, index: int) -> pl.DataFrame:
+    scan = table.scan(snapshot_id=snapshot_id)
+    tasks = scan.plan_files()
+
+    task = tasks[index]
+    s3_uri = task.file.file_path
+    
+    df = pl.read_parquet(s3_uri)
+    return df
+
+snapshot_id = 7984644022679652000
+index = 5
+get_full_reindex_chunk(snapshot_id, index)
+```
+
+Assuming the Iceberg table has 10 partitions in total, we could run 10 parallel instances of the transformer, each processing a separate partition. (In practice, we might need to reduce the parallelism so that we don't overwhelm the Elasticsearch cluster.)
+
+#### Conclusion of initial testing
+
+We were looking to specifically understand the following:
+
+- Can we reduce the amount of storage space we use for adapters?
+   _Yes, Iceberg tables are significantly smaller than their VHS object store equivalent with the proviso this benefit may dfrop if we store many snapshots_.
+
+- Can we make source data in catalogue pipeline adapters more accessible to developers?
+  _Yes, source data can be queried in minutes with a variety of tools_.
+
+- Is the tooling for Iceberg in Python sufficient to write an adapter?
+   _Yes, it seems to be the case that `pyiceberg` and other tools are in a state to enable writing a full adapter_.
+
+- Can we achieve performant table updates at a scale required by current adapters?
+   _Yes, dependent on correct table partitioning and sorting we can perform updates at a useful scale in a reasonable time_.
+
+- Which tools do we need:
+  - Can we use Parquet with Iceberg? 
+     _No, this will likely not be practical at our scale due to memory constraints_ 
+  - Do we need S3 Tables, or can we use plain S3?
+    _Yes, it's likely that S3 Tables automated compaction / snapshot removal will be useful, without significantly compromising access to the underlying data_
         
 ### New adapter architecture using iceberg
 
