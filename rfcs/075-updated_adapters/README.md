@@ -45,6 +45,24 @@ The current architecture consists of several components:
 - **Adapters**: These are services that fetch changes from source systems and write them to the Versioned Hybrid Store (VHS). They also notify the rest of the pipeline about changes.
 - **Reindexer**: This is a service that understands how to query the VHS and generates upstream notifications for the rest of the pipeline. It is used to reindex data from source systems when necessary, e.g. when the `Work` model changes and we need to re-transform and reindex all data.
 
+The Window Generator sends message to the Adapters, which gets data from the source system, store stores the data in the VHS, and notifies the Transformer about changes. The Transformer reads from the VHS, transforms the data into a format suitable for indexing, and writes it to Elasticsearch. The reindexer is used to reindex data from the VHS when necessary, e.g. when the `Work` model changes.
+
+The Reindexer is initiated when we wish to reprocess all data from a source system, and is not part of the normal data processing flow. It reads from the VHS and sends messages to a Transformer to process data, which then writes it to Elasticsearch. The reindexer also reindexes data from the VHS, which is useful when we need to reprocess all data from a source system.
+
+```mermaid
+flowchart TD
+    A[Window Generator] -->|Sends time windows| B[Adapters]
+    B -->|Fetches changes from source system| G[Source System]
+    B -->|Writes changes to VHS| C[VHS]
+    D[Transformer]
+    D -->|Reads Source data from VHS| C[VHS]
+    D -->|Transforms data and writes to| E[Elasticsearch]
+    F[Reindexer] -->|Reads IDs from VHS| C
+    F[Reindexer] -->|Notifies Transformer| D
+   
+```
+
+
 #### Relationship to the Work model
 
 The granularity of the data stored in the VHS is at the level of individual records, that can be transformed into the `Work` model. The VHS stores data in a schema-less format, which allows for flexibility in the data model, but also means that we have to handle schema changes upstream in the source systems. 
@@ -113,12 +131,196 @@ Iceberg tables are a logical abstraction that provides a structured way to manag
 
 **Maintaining Iceberg tables**: Table updates and schema changes result in new data files being created, and the metadata file being updated to reflect the new state of the table via snapshots. When these operations happen old data files are not immediately deleted, but are instead retained for a period of time to allow for time travel and auditing per table configuration. Consequently, Iceberg tables can grow in size over time, and it is important to have a mechanism for cleaning up old data files and snapshots to manage storage costs.
 
+### Initial testing
+
+We have conducted some initial testing of Iceberg tables to understand their performance characteristics when making queries and upserts on the scale of the adapter source data we currently have in the catalogue pipeline, and with upsert operations that are similar to those performed by the current adapters.
+
+#### Performance performing queries and upserts
+
+There is reason to be cautious as the current adapters perform many individual updates to records, a model that may not be well-suited to Iceberg tables, which [although it is used for stream processing](https://aws.amazon.com/blogs/big-data/stream-real-time-data-into-apache-iceberg-tables-in-amazon-s3-using-amazon-data-firehose/) may have limitations. We will need to move to a model where we batch updates and writes to the Iceberg tables, rather than performing many individual updates.
+
+As discussed above, upserts create new data files that contain the changes, rather than modifying existing files, and table maintenance operations like cleaning up old snapshots are required to manage storage costs.
+
+Queries in Iceberg can result in scanning a large amount of data depending on table partitioning, so reducing the amount of data scanned to find the required records is important for performance. This can be achieved both by partitioning the table effectively and by batching reading many records in a single query, rather than reading individual records.
+
+#### Table schemas and partitions
+
+Another change from the VHS is that Iceberg tables require a schema to be defined for the data stored in them. This means that we will need to define a schema for each adapter, which will be used to validate the data before it is written to the table. 
+
+In testing we we're able to quickly define schemas for the Calm and Sierra source data, which allowed us to validate the data before writing it to the Iceberg tables.
+
+**Example schema for Sierra source data**
+
+```python
+from pyiceberg.schema import Schema, NestedField
+from pyiceberg.partitioning import PartitionSpec, PartitionField
+from pyiceberg.transforms import BucketTransform
+from pyiceberg.types import (
+    StringType,
+    ListType,
+    MapType,
+    TimestampType,
+    StructType,
+)
+
+def make_record_map_type(base_field_id, base_element_id):
+    """
+    Helper to generate a MapType for item_records, holdings_records, or order_records.
+    Ensures unique field_ids and element_ids for each usage.
+    """
+    return MapType(
+        key_id=base_field_id + 100,  # must be unique and int
+        value_id=base_field_id + 200,  # must be unique and int
+        key_type=StringType(),
+        value_type=StructType(
+            NestedField(field_id=base_field_id + 0, name="id", field_type=StringType(), required=False),
+            NestedField(field_id=base_field_id + 1, name="data", field_type=StringType(), required=False),
+            NestedField(field_id=base_field_id + 2, name="modified_date", field_type=TimestampType(), required=False),
+            NestedField(field_id=base_field_id + 3, name="bib_ids", field_type=ListType(element_id=base_element_id + 0, element_type=StringType(), element_required=False), required=False),
+            NestedField(field_id=base_field_id + 4, name="unlinked_bib_ids", field_type=ListType(element_id=base_element_id + 1, element_type=StringType(), element_required=False), required=False),
+        )
+    )
+
+sierra_iceberg_schema = Schema(
+    NestedField(
+        field_id=1,
+        name="id",
+        field_type=StringType(),
+        required=True
+    ),
+    NestedField(
+        field_id=2,
+        name="maybe_bib_record",
+        field_type=StructType(
+            NestedField(field_id=21, name="id", field_type=StringType(), required=False),
+            NestedField(field_id=22, name="data", field_type=StringType(), required=False),
+            NestedField(field_id=23, name="modified_date", field_type=TimestampType(), required=False),
+        ),
+        required=False
+    ),
+    NestedField(
+        field_id=3,
+        name="item_records",
+        field_type=make_record_map_type(31, 340),
+        required=True
+    ),
+    NestedField(
+        field_id=4,
+        name="holdings_records",
+        field_type=make_record_map_type(41, 440),
+        required=True
+    ),
+    NestedField(
+        field_id=5,
+        name="order_records",
+        field_type=make_record_map_type(51, 540),
+        required=True
+    ),
+    NestedField(
+        field_id=6,
+        name="modified_time",
+        field_type=TimestampType(),
+        required=True
+    ),
+    identifier_field_ids=[1]
+)
+
+sierra_iceberg_partition_spec = PartitionSpec(
+    fields=[
+        PartitionField(source_id=1, field_id=1000, transform=BucketTransform(num_buckets=100), name="id"),
+    ]
+)
+```
+
+**Example schema for Calm source data**
+
+```python
+from datetime import datetime
+
+from pyiceberg.schema import Schema, NestedField, BooleanType, StringType, TimestampType, StructType, ListType
+from pyiceberg.partitioning import PartitionSpec, PartitionField
+from pyiceberg.transforms import BucketTransform, DayTransform
+
+calm_data_fields = [
+   'UserText2', 'Link_To_Digitised', 'Appraisal', 'Level', 'Location', 'Format',
+    'PreviousNumbers', 'UserWrapped5', 'UserText7', 'Created', 'UserWrapped6',
+    'CountryCode', 'UserText3', 'Title', 'ACCESS', 'Arrangement', 'CustodialHistory',
+    'SDB_Type', 'CONTENT', 'Inscription', 'SDB_Ref', 'Transmission', 'AccessStatus',
+    'TargetAudience', 'Condition', 'CreatorName', 'CONSERVATIONREQUIRED', 'Format_Details',
+    'UserWrapped2', 'Digital_Date_Created', 'UserText9', 'Copyright_Expiry', 'Accruals',
+    'Material', 'Description', 'Acquisition', 'UserText8', 'AccessCategory',
+    'Digitised', 'UserText4', 'Modifier', 'Copyright', 'UserDate1', 'ClosedUntil',
+    'Ordering_Status', 'Digital_Last_Modified', 'Bnumber', 'Creator', 'ConservationStatus',
+    'AV_Timecode', 'MISC_Reference', 'Language', 'IDENTITY', 'RCN', 'Producible_Unit',
+    'RelatedMaterial', 'Digital_File_Path', 'UserText5', 'Access_Licence',
+    'Sources_Guides_Used', 'RefNo', 'ExitNote', 'UserWrapped4', 'AccessConditions',
+    'RepositoryCode', 'UserWrapped7', 'CONTEXT', 'Digital_File_Format', 'Data_Import_Landing',
+    'ALLIED_MATERIALS', 'Date', 'ConservationPriority', 'Originals', 'Notes',
+    'Metadata_Licence', 'UserText6', 'AV_Target_Audience_Details', 'Extent', 'AltRefNo',
+    'RecordID', 'RecordType', 'Player_Code', 'SDB_URL', 'UserWrapped3', 'PublnNote',
+    'UserWrapped8', 'Credits', 'CatalogueStatus', 'AdminHistory', 'Copies', 'Modified',
+    'Document'
+]
+
+# reproduce the schema in Iceberg
+
+# Starting field_id for fields within the 'data' struct.
+# Ensure this range doesn't overlap with top-level field_ids.
+# We also need unique element_ids for the ListType.
+# Let's assign field_ids from 100 onwards, and element_ids from 1000 onwards.
+next_data_field_id = 100
+next_element_id = 1000 # For elements within ListType
+
+data_fields_list = []
+for field_name in calm_data_fields:
+    current_field_id = next_data_field_id
+    current_element_id = next_element_id
+    next_data_field_id += 1
+    next_element_id +=1
+
+    data_fields_list.append(
+        NestedField(
+            field_id=current_field_id,
+            name=field_name,
+            field_type=ListType(
+                element_id=current_element_id,
+                element_type=StringType(),
+                element_required=False
+            ),
+            required=False # Assuming the list field itself is optional
+        )
+    )
+
+# Construct the StructType for 'data' using the generated list of NestedFields
+data_schema = StructType(*data_fields_list)
+
+# Define the main schema using the compacted data_schema
+calm_iceberg_schema = Schema(
+    NestedField(field_id=1, name="id", field_type=StringType(), required=True),
+    NestedField(field_id=2, name="data", field_type=data_schema, required=False),
+    NestedField(field_id=3, name="retrieved_at", field_type=TimestampType(), required=False),
+    NestedField(field_id=4, name="published", field_type=BooleanType(), required=False),
+    identifier_field_ids=[1] # Assign a schema ID as a list
+)
+
+# bucket partition on id into 100 buckets
+calm_iceberg_partition_spec = PartitionSpec(
+    fields=[
+        PartitionField(source_id=1, field_id=1000, transform=BucketTransform(num_buckets=100), name="id"),
+        # PartitionField(source_id=3, field_id=1001, transform=DayTransform(), name="retrieved_at"),
+    ]
+)
+```
+
+Testing was performed by loading the Calm and Sierra source data into Iceberg tables using the schemas defined above, and then performing queries and upserts on the data.
+
+See the associated script to extract and load from Sierra and Calm source data into Iceberg tables: [load_adapter_data.py](./load_adapter_data.py).
+
+#### Testing with calm and sierra data
+
+We have conducted some initial testing using the Calm and Sierra source data, which is representative of the scale of data we expect to handle in the catalogue pipeline. This testing has shown that Iceberg tables can handle the scale of data we expect, and that they provide good performance for both querying and upserting data.
 
 
-### Scalability testing
-    why?
-        discuss what is happening when queries and upserts occur
-        relationship to table clean-up operations
 
     loading calm and sierra data to iceberg tables
     testing querying and upsert performance from 
