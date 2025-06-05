@@ -599,6 +599,8 @@ Apache Iceberg with S3 Tables is a multi-layered approach to solving the problem
 
 - **Using plain S3 buckets with Iceberg**: This would involve using Iceberg tables without the S3 Tables feature, which would require more manual management of the table snapshots and partitions. This approach would not provide the same level of automation and ease of use as using S3 Tables. Although S3 Tables does not provide the same visbility into the underlying data as plain S3, it does allow sufficient GET object access to retrieve all the data in a table directly if required, avoiding concerns about vendor lock-in.
 
+- **Using Elasticsearch as the primary data store**: This would involve storing source data directly in Elasticsearch, which would allow for efficient querying and indexing. This approach would require further reliance on Elasticsearch as a data store, our current hosted implementation is expensive and relies on provisioning a cluster to handle the scale of data we expect. 
+
 ## Impact
 
 We expect that moving to Iceberg tables will have a positive impact on the catalogue pipeline adapters, including:
