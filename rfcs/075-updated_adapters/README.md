@@ -12,9 +12,18 @@ Discussing a replacement architecture for the catalogue pipeline adapters, movin
     - [Current architecture overview](#current-architecture)
     - [Problems with current architecture](#problems-with-current-architecture)
     - [Other considerations](#other-considerations)
-- [Proposal](#proposal)
-  - [Scalability testing](#scalability-testing)
-  - [New adapter architecture using iceberg](#new-adapter-architecture-using-iceberg)
+- [Proposal to use Apache Iceberg](#proposal)
+  - [Why is it suited to this problem?](#why-is-it-suited-to-this-problem)
+  - [Iceberg tables in more detail](#iceberg-tables-in-more-detail)
+    - [Why columnar formats?](#why-columnar-formats)
+    - [Parquet files](#parquet-files)
+    - [Iceberg table metadata](#iceberg-table-metadata)
+    - [Updates in Iceberg](#updates-in-iceberg)
+    - [Maintaining Iceberg tables](#maintaining-iceberg-tables)
+  - [Initial testing](#initial-testing)
+    - [Performance performing queries and upserts](#performance-performing-queries-and-upserts)
+    - [Table schemas and partitions](#table-schemas-and-partitions)
+    - [Testing with calm and sierra data](#testing-with-calm-and-sierra-data)
 - [Impact](#impact)
 - [Next steps](#next-steps)
 
@@ -93,7 +102,7 @@ We are in the process of moving to use Lambda functions for many of our catalogu
 
 Recent development of the catalogue graph discussed in other RFCS [RFC 066: Catalogue Graph](https://github.com/wellcomecollection/docs/tree/main/rfcs/066-graph_pipeline) has shown that we can use AWS Step Functions to orchestrate complex workflows, which could be used to manage the flow of data through the adapters and transformers.
 
-## Proposal 
+## Proposal to use Apache Iceberg
 
 We propose to replace the current Versioned Hybrid Store (VHS) with Apache Iceberg tables as the underlying storage format for the catalogue pipeline adapters. 
 
@@ -131,7 +140,9 @@ Iceberg tables are a logical abstraction that provides a structured way to manag
 
 **Maintaining Iceberg tables**: Table updates and schema changes result in new data files being created, and the metadata file being updated to reflect the new state of the table via snapshots. When these operations happen old data files are not immediately deleted, but are instead retained for a period of time to allow for time travel and auditing per table configuration. Consequently, Iceberg tables can grow in size over time, and it is important to have a mechanism for cleaning up old data files and snapshots to manage storage costs.
 
-**How parquet files are updated in a table**
+**Example of a table update in Iceberg**
+
+The following diagram illustrates how an Iceberg table update works in a table partitioned by `id`, showing the creation of new data files, the update of the metadata file, and the retention of old data files.
 
 ```mermaid
 graph TD
