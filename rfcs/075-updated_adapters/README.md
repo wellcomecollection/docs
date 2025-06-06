@@ -1,4 +1,3 @@
-
 # RFC 075: Using Apache Iceberg tables in Catalogue Pipeline adapters
 
 Discussing a replacement architecture for the catalogue pipeline adapters, moving away from the Versioned Hybrid Store (VHS) using Apache Iceberg as the underlying storage format.
@@ -41,7 +40,7 @@ Discussing a replacement architecture for the catalogue pipeline adapters, movin
 
 The function of "adapters" in the catalogue pipeline is to provide a standard interface for the rest of the catalogue pipeline to act on data from source systems without direct concern for the load or availability of those systems. See this [description of adapters in the pipeline](https://docs.wellcomecollection.org/catalogue-pipeline/fetching-records-from-source-catalogues/what-is-an-adapter).
 
-An adapter decouples synchronizing changes from a source system, with the process of transforming, matching and merging that happen later in the pipeline. An adapter can be thought of as serving 4 main purposes:
+An adapter decouples the synchronization of changes from a source system from the process of transforming, matching, and merging that happens later in the pipeline. An adapter can be thought of as serving 4 main purposes:
 
 ### Required functionality of adapters
 
@@ -54,9 +53,9 @@ An adapter decouples synchronizing changes from a source system, with the proces
 
 The current adapters use a Versioned Hybrid Store (VHS) to store data from source systems, which is a custom storage format that provides versioning and schema-less data storage. This has worked well for many years, but has some drawbacks that we want to address.
 
-See this blog post on the [Versioned Hybrid Store (VHS)](https://stacks.wellcomecollection.org/creating-a-data-store-from-s3-and-dynamodb-8bb9ecce8fc1) for more information about the current implementation. In summary the VHS is a custom storage format that combines S3 and an index in DynamoDB to provide a versioned, schema-less data store that can be queried on the id and version of a record. 
+See this blog post on the [Versioned Hybrid Store (VHS)](https://stacks.wellcomecollection.org/creating-a-data-store-from-s3-and-dynamodb-8bb9ecce8fc1) for more information about the current implementation. In summary, the VHS is a custom storage format that combines S3 and an index in DynamoDB to provide a versioned, schema-less data store that can be queried on the id and version of a record.
 
-The VHS allows for storing multiple versions of a record, and was originally designed to overcome the limitations of S3 as a data store, which did not at the time provide [read after write consistency](https://aws.amazon.com/blogs/aws/amazon-s3-update-strong-read-after-write-consistency/).
+The VHS allows for storing multiple versions of a record. It was originally designed to overcome the limitations of S3 as a data store, which at the time did not provide [strong read-after-write consistency](https://aws.amazon.com/blogs/aws/amazon-s3-update-strong-read-after-write-consistency/).
 
 The current architecture consists of several components:
 
@@ -84,9 +83,9 @@ flowchart TD
 
 #### Relationship to the Work model
 
-The granularity of the data stored in the VHS is at the level of individual records, that can be transformed into the `Work` model. The VHS stores data in a schema-less format, which allows for flexibility in the data model, but also means that we have to handle schema changes upstream in the source systems. 
+The granularity of the data stored in the VHS is at the level of individual records, that can be transformed into the `Work` model. The VHS stores data in a schema-less format, which allows for flexibility in the data model, but also means that we have to handle schema changes upstream in the source systems.
 
-Transformer services read data from the VHS, transforms it into a format suitable for indexing, and writes it to Elasticsearch. 
+Transformer services read data from the VHS, transforms it into a format suitable for indexing, and writes it to Elasticsearch.
 
 Notifications from the adapters are used to trigger the transformers to process data, this happens in a "push" model where the adapters notify the transformers about changes to individual records via SNS/SQS.
 
@@ -94,13 +93,13 @@ Notifications from the adapters are used to trigger the transformers to process 
 
 There are several problems with the current architecture that we want to address, apart from updating the design to use more modern technologies and without the need to work around previous limitations of S3.
 
-1. **Keeping unused versions**: The VHS retains all versions of a record, however we do not make use of the versioning functionality in the VHS, there is no mechanism for accessing old versions, and there is no provision for cleaning up old versions of records. This has resulted in large amounts of unused data being stored, which is costly.
+1. **Keeping unused versions**: The VHS retains all versions of a record. However, we do not make use of this versioning functionality; there is no mechanism for accessing old versions, and no provision for cleaning up old versions of records. This has resulted in large amounts of unused data being stored, which is costly.
 
-2. **Difficult to inspect source data**: As records are stored in S3 with an index in DynamoDB and the data stored in S3 is scheme-less, it is difficult to inspect the source data directly and understand its structure and contents in aggregate. 
+2. **Difficult to inspect source data**: Records are stored in S3 with an index in DynamoDB, and the data in S3 is schema-less. Consequently, it is difficult to inspect the source data directly and understand its structure and contents in aggregate.
 
-3. **Novel approach, difficult to understand**: The VHS is a custom storage format that is not  used outside of Wellcome Collection, which makes it difficult for new developers to understand and work with. It also means that we have to maintain our own custom code for reading and writing data, which adds complexity.
+3. **Novel approach, difficult to understand**: The VHS is a custom storage format that is not used outside of Wellcome Collection, which makes it difficult for new developers to understand and work with. It also means that we have to maintain our own custom code for reading and writing data, which adds complexity.
 
-4. **Schema-less data storage**: The VHS allows for schema-less data storage, which means that we do not enforce a schema on the data stored in the VHS. This can lead to issues with data quality and consistency, as we do not have a mechanism for validating the structure of the data before it is written to the store. While this has allowed us to handle changes in source systems more easily, it has also led to records of the same data model having different structures.
+4. **Schema-less data storage**: The VHS allows for schema-less data storage, meaning we do not enforce a schema on the data stored in the VHS. This can lead to issues with data quality and consistency, as we lack a mechanism for validating data structure before it is written. While this has allowed us to handle changes in source systems more easily, it has also resulted in records that theoretically share a data model having different structures in practice.
 
    Although data stored in the VHS is schema-less transformers are responsible for decoding source data, and reference source data types in their code. This means that if a source system changes its schema, we have to update the transformers to handle the new schema in any case, negating some of the benefits of schema-less storage.
 
@@ -114,7 +113,7 @@ Recent development of the catalogue graph discussed in other RFCS [RFC 066: Cata
 
 ## Proposal to use Apache Iceberg
 
-We propose to replace the current Versioned Hybrid Store (VHS) with Apache Iceberg tables as the underlying storage format for the catalogue pipeline adapters. 
+We propose to replace the current Versioned Hybrid Store (VHS) with Apache Iceberg tables as the underlying storage format for the catalogue pipeline adapters.
 
 [Apache Iceberg](https://iceberg.apache.org/) is an open-source table format for large analytic datasets that provides features such as ACID transactions, schema evolution, and time travel. It is designed to work with cloud storage systems like Amazon S3, and has support in a variety of data processing libraries in Python.
 
@@ -128,7 +127,7 @@ Iceberg is well-suited to this problem for several reasons:
 - **Support in tooling**: Iceberg has support in a variety of data processing libraries, including Python libraries like Polars and DuckDB, as well as Spark. This means that we can use familiar tools to work with the data.
 - **Support in the data engineering community**: Iceberg is widely used in the data engineering community, which means that there is good knowledge and resources available for working with it.
 - **Support in AWS**: Iceberg has good support in AWS, with features like S3 Tables, Glue Catalog, and querying using Athena. This means that we can easily integrate Iceberg tables into our existing AWS infrastructure.
-  - **S3 Tables**: Iceberg tables can be stored in S3, which provides a cost-effective and scalable storage solution. In addition, [S3 Tables](https://docs.aws.amazon.com/AmazonS3/latest/userguide/s3-tables.html) support for automatic table maintenance operations like cleaning up old snapshots and optimizing partitions.
+  - **S3 Tables**: Iceberg tables can be stored in S3, which provides a cost-effective and scalable storage solution. In addition, [S3 Tables](https://docs.aws.amazon.com/AmazonS3/latest/userguide/s3-tables.html) provide support for automatic table maintenance operations like cleaning up old snapshots and optimizing partitions.
   - **Glue Catalog**: Iceberg tables can be registered in the [AWS Glue Catalog](https://docs.aws.amazon.com/glue/latest/dg/components-overview.html#data-catalog-intro), which provides a REST API adhering to the Iceberg specification, but also allows integration with other AWS services like Athena for querying.
 - **Querying using SQL**: Iceberg tables can be queried using SQL, which makes it easy to work with the data and allows us to use familiar query languages.
 - **Support for schema evolution**: [Iceberg allows us to evolve the schema](https://iceberg.apache.org/docs/latest/evolution/) of our tables over time, which is important as source systems change and we need to adapt to new data structures.
@@ -155,7 +154,7 @@ Iceberg tables are a logical abstraction that provides a structured way to manag
 
 **Why columnar formats?** Columnar formats like Parquet are well-suited for analytical workloads, as they allow for efficient compression and query performance. They store data in a column-oriented fashion, which means that data for each column is stored together, allowing for better compression and faster access to specific columns when querying.
 
-**Parquet files** are a popular columnar storage format that is widely used in the data engineering community. Finding data inside a [Parquet file](https://parquet.apache.org/docs/file-format/) is aided by the use of [row groups](https://parquet.apache.org/documentation/latest/#row-groups), which are logical partitions of the data within a Parquet file. Row groups allow for efficient reading of specific subsets of data, as they contain metadata about the data stored within them.
+**Parquet files** are a popular columnar storage format that is widely used in the data engineering community. Finding data inside a [Parquet file](https://parquet.apache.org/docs/file-format/) is aided by [row groups](https://parquet.apache.org/documentation/latest/#row-groups), which are logical partitions of the data within a Parquet file. Row groups allow for efficient reading of specific subsets of data, as they contain metadata about the data stored within them.
 
 **Immutability in Parquet files**: Parquet files are immutable, meaning that once they are written, they cannot be modified. Storing data using Parquet alone would require us to write a new file for each change, which can lead to inefficiencies and increased storage costs. Iceberg tables address this by providing a layer of abstraction that allows us to manage changes to the data without having to rewrite entire files.
 
@@ -228,11 +227,11 @@ See the [Iceberg documentation](https://iceberg.apache.org/docs/latest/) for mor
 
 ### Initial testing
 
-We have conducted some initial testing of Iceberg tables to understand their performance characteristics when making queries and upserts on the scale of the adapter source data we currently have in the catalogue pipeline, and with upsert operations that are similar to those performed by the current adapters.
+We have conducted initial tests of Iceberg tables to understand their performance characteristics for queries and upserts at the scale of our current adapter source data. These tests also used upsert operations similar to those performed by the current adapters.
 
 #### Performing queries and upserts
 
-The current adapters perform many individual updates to records, a model that may not be well-suited to Iceberg tables which [although it is used for stream processing](https://aws.amazon.com/blogs/big-data/stream-real-time-data-into-apache-iceberg-tables-in-amazon-s3-using-amazon-data-firehose/) may have limitations if we continue with this approach. We will need to move to a model where we batch updates and writes to the Iceberg tables, rather than performing many individual updates.
+The current adapters perform many individual updates to records. This model may not be well-suited to Iceberg tables; although Iceberg is used for stream processing, continuing with frequent individual updates might introduce limitations. We will likely need to move to a model where we batch updates and writes to the Iceberg tables.
 
 As discussed above, upserts create new data files that contain the changes, rather than modifying existing files, and table maintenance operations like cleaning up old snapshots are required to manage storage costs.
 
@@ -304,9 +303,9 @@ Queries in Iceberg can result in scanning a large amount of data depending on ta
 
 #### Table schemas and partitions
 
-Another change from the VHS is that Iceberg tables require a schema to be defined for the data stored in them. This means that we will need to define a schema for each adapter, which will be used to validate the data before it is written to the table. 
+Another change from the VHS is that Iceberg tables require a schema to be defined for the data stored in them. This means that we will need to define a schema for each adapter, which will be used to validate the data before it is written to the table.
 
-In testing we we're able to quickly define schemas for the Calm and Sierra source data, which allowed us to validate the data before writing it to the Iceberg tables.
+In testing, we were able to quickly define schemas for the Calm and Sierra source data, which allowed us to validate the data before writing it to the Iceberg tables.
 
 **Example schema for Sierra source data**
 
@@ -485,7 +484,7 @@ Source data stored in an Iceberg table needs to be easily queryable from the rel
 
 **Incremental mode**
 
-When running in incremental mode, transformers need to be able to run filter queries to retrieve items which were modified in a given time window (i.e. 'return all records which changed in the last 15 minutes'). We can achieve this using pyiceberg by calling `scan` on the required table and including a row filter:
+When running in incremental mode, transformers need to be able to run filter queries to retrieve items modified within a given time window (e.g., "return all records which changed in the last 15 minutes"). We can achieve this using pyiceberg by calling `scan` on the required table and including a row filter:
 
 ```python
 from pyiceberg.expressions import GreaterThanOrEqual, And, LessThan
@@ -515,9 +514,9 @@ Once the data is retrieved, we can transform it as usual and index it into Elast
 
 **Full reindex mode**
 
-When running in full reindex mode, transformers need to be able to split the Iceberg data into a reasonably-sized chunks for processing in parallel. (Downloading and processing all data at once would be memory-intensive and likely slower.) 
+When running in full reindex mode, transformers need to be able to split the Iceberg data into reasonably-sized chunks for processing in parallel. Downloading and processing all data at once would be memory-intensive and likely slower.
 
-To achieve this, we can make use of Iceberg's partitioning system. Each table partition is stored in a separate parquet file, which can be downloaded and processed independently. The example snippet below retrieves the fifth partition  and converts it into a Polars dataframe, utilising a snapshot ID to ensure consistency across parallel transformer runs:
+To achieve this, we can make use of Iceberg's partitioning system. Each table partition is stored in a separate parquet file, which can be downloaded and processed independently. The example snippet below retrieves the fifth partition and converts it into a Polars dataframe, utilising a snapshot ID to ensure consistency across parallel transformer runs:
 
 ```py
 import polars as pl
@@ -537,7 +536,7 @@ index = 5
 get_full_reindex_chunk(snapshot_id, index)
 ```
 
-Assuming the Iceberg table has 10 partitions in total, we could run 10 parallel instances of the transformer, each processing a separate partition. (In practice, we might need to reduce the parallelism so that we don't overwhelm the Elasticsearch cluster.)
+Assuming the Iceberg table has 10 partitions in total, we could run 10 parallel instances of the transformer, each processing a separate partition. However, in practice, we might need to reduce the parallelism to avoid overwhelming the Elasticsearch cluster.
 
 #### Conclusion of initial testing
 
@@ -555,18 +554,11 @@ We were looking to specifically understand the following anecdotally the results
 - **Can we achieve performant table updates at a scale required by current adapters?**
    _Yes, dependent on correct table partitioning and sorting we can perform updates at a useful scale in a reasonable time_.
 
-- **Which tools do we need:**
-  - **Can we use Parquet without Iceberg?** 
-     _No, this will likely not be practical at our scale due to memory constraints_ 
-
-  - **Do we need S3 Tables, or can we use plain S3?**
-    _Yes, it's likely that S3 Tables automated compaction / snapshot removal will be useful, without significantly compromising access to the underlying data_
-        
 ### New adapter architecture using iceberg
 
 In this section we'll consider how we might implement the new adapter architecture using Iceberg tables, and how it would fit into the existing catalogue pipeline infrastructure taking into account the existing work on the catalogue graph project and the use of [AWS Step Functions](https://docs.aws.amazon.com/step-functions/latest/dg/welcome.html).
 
-In AWS Step Functions tasks can be both Lambda functions and ECS tasks, which allows us to use Python Lambdas for most of the processing, while also allowing us to use ECS tasks for more complex processing that may exceed the time limits of a Lambda function.
+In AWS Step Functions, tasks can be either Lambda functions or ECS tasks. This allows us to use Python Lambdas for most processing and ECS tasks for more complex operations that might exceed Lambda time limits.
 
 Step Functions provide a Map workflow state that allows us to run a task in parallel for each item in a list, which can be used to process the data in parallel. This is useful for both the incremental update and full reindex modes of operation.
 
@@ -624,7 +616,7 @@ graph TD
 In this architecture, we have a state machine that is triggered by a CloudWatch schedule. The state machine consists of three main steps:
 
 1. **Window Generator**
-    - The window generator can be implemented as a Lambda function that calculates the start and end times for the time window based on the current time and the desired frequency of updates (e.g., every 15 minutes).
+    - The window generator can be implemented as a Lambda function that calculates the start and end times for the time window based on the current time and the desired frequency of updates (for example, every 15 minutes).
     - It then sends these details to the adapter, which will use them to query the source system for records that have changed within that time window.
 2. **Adapter**
    - The adapter is responsible for querying the source system and retrieving the records that have changed within the time window. 
@@ -700,7 +692,7 @@ In this architecture, we have a state machine that is triggered by a manual rein
    - The reindexer is responsible for reading the full Iceberg table in batches, using the `pyiceberg` library to query the table and retrieve the data.
    - It then sends the batches to the transformer for processing, which can be done in parallel using the Map state in Step Functions.
 
-For the reindexer to be agnostic of adapter type there will need to be common schema parts that are used by all adapters, such as the `id` field and the `last_modified` field. This will allow the reindexer to read the full table and pass the data to the transformer for processing.
+For the reindexer to be agnostic of adapter implementation, there will need to be common schema parts used by all adapters, such as the `id` field and the `last_modified` field. This will allow the reindexer to read the full table and pass the data to the transformer for processing.
 
 An optimisation may be possible where the reindexer uses the [plan functionality in `pyiceberg`](https://py.iceberg.apache.org/reference/pyiceberg/table/#pyiceberg.table.DataScan.plan_files) to retrieve a list of all the parquet files in the current snapshot and that list is used in the state map workflow to hand the transformers files to work on in parallel.
 
@@ -738,7 +730,7 @@ graph TD
 #### Use of S3 Tables
 
 We will use the AWS feature [S3 Tables](https://docs.aws.amazon.com/AmazonS3/latest/userguide/s3-tables.html) to manage Iceberg tables on S3. This will provide us with a number of benefits, including:
-- **Automatic snapshot management**: S3 Tables will automatically manage the snapshots and partitions of the Iceberg tables, which will help us to keep the tables clean and optimised for performance. This will also help us to reduce storage costs by removing old snapshots and data files that are no longer needed.
+- **Automatic snapshot management**: S3 Tables will automatically manage the snapshots and partitions of the Iceberg tables, which will help us to keep the tables clean and optimised for performance. This also helps reduce storage costs by removing old snapshots and unneeded data files.
 - **Optimised performance**: S3 Tables will provide us with [improved performance by automatic compaction and data pruning](https://aws.amazon.com/blogs/storage/how-amazon-s3-tables-use-compaction-to-improve-query-performance-by-up-to-3-times/), which will help us to achieve the performance characteristics we need for the catalogue pipeline.
 
 **Connecting using `pyiceberg`**
@@ -817,7 +809,7 @@ Apache Iceberg with S3 Tables is a multi-layered approach to solving the problem
 
 - **Using plain S3 buckets with Iceberg**: This would involve using Iceberg tables without the S3 Tables feature, which would require more manual management of the table snapshots and partitions. This approach would not provide the same level of automation and ease of use as using S3 Tables. Although S3 Tables does not provide the same visbility into the underlying data as plain S3, it does allow sufficient GET object access to retrieve all the data in a table directly if required, avoiding concerns about vendor lock-in.
 
-- **Using Elasticsearch as the primary data store**: This would involve storing source data directly in Elasticsearch, which would allow for efficient querying and indexing. This approach would require further reliance on Elasticsearch as a data store, our current hosted implementation is expensive and relies on provisioning a cluster to handle the scale of data we expect. 
+- **Using Elasticsearch as the primary data store**: This would involve storing source data directly in Elasticsearch, which would allow for efficient querying and indexing. This approach would require further reliance on Elasticsearch as a data store, our current hosted implementation is expensive and relies on provisioning a cluster to handle the scale of data we expect.
 
 ## Impact
 
@@ -841,7 +833,7 @@ We expect that moving to Iceberg tables will have a positive impact on the catal
 
 ## Next steps
 
-Following this RFC we should attempt to move an existing adapter over to Iceberg tables, to test the architecture and implementation in practice. This will allow us to identify any issues or challenges with the new architecture and make any necessary adjustments before rolling it out more widely. 
+Following this RFC we should attempt to move an existing adapter over to Iceberg tables, to test the architecture and implementation in practice. This will allow us to identify any issues or challenges with the new architecture and make any necessary adjustments before rolling it out more widely.
 
 We propose to re-write the EBSCO adapter as a first step, as it is a relatively simple adapter that will allow us to test the new architecture without introducing too much complexity and already avoids the VHS architecture by using S3 directly.
 
