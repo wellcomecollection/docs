@@ -569,7 +569,7 @@ We will need to keep retain the functionality of the existing adapters, includin
 ```mermaid
 graph TD
     subgraph "Trigger"
-        A[("CloudWatch Schedule")]
+        A["CloudWatch Schedule"]
     end
 
     subgraph "State Machine"
