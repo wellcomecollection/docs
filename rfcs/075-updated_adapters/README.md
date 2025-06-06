@@ -30,6 +30,9 @@ Discussing a replacement architecture for the catalogue pipeline adapters, movin
       - [Full reindex mode](#full-reindex-mode)
   - [Conclusion of initial testing](#conclusion-of-initial-testing)
 - [New adapter architecture using iceberg](#new-adapter-architecture-using-iceberg)
+    - [Incremental Update Architecture](#incremental-update-architecture)
+    - [Reindex Architecture](#reindex-architecture)
+    - [Use of S3 Tables](#use-of-s3-tables)
 - [Alternatives considered](#alternatives-considered)
 - [Impact](#impact)
 - [Next steps](#next-steps)
@@ -107,7 +110,7 @@ The ongoing Wellcome Collection Systems Transformation Project (WCSTP) aims to r
 
 We are in the process of moving to use Lambda functions for many of our catalogue pipeline components, in order to reduce infrastructure management overhead and improve scalability, and to do so using Python as the primary language for development. We will need to ensure that the new adapter architecture is compatible with this approach.
 
-Recent development of the catalogue graph discussed in other RFCS [RFC 066: Catalogue Graph](https://github.com/wellcomecollection/docs/tree/main/rfcs/066-graph_pipeline) has shown that we can use AWS Step Functions to orchestrate complex workflows, which could be used to manage the flow of data through the adapters and transformers.
+Recent development of the catalogue graph discussed in other RFCS [RFC 066: Catalogue Graph](https://github.com/wellcomecollection/docs/tree/main/rfcs/066-graph_pipeline) has shown that we can use [AWS Step Functions](https://docs.aws.amazon.com/step-functions/latest/dg/welcome.html) to orchestrate complex workflows, which could be used to manage the flow of data through the adapters and transformers.
 
 ## Proposal to use Apache Iceberg
 
@@ -561,32 +564,246 @@ We were looking to specifically understand the following anecdotally the results
         
 ### New adapter architecture using iceberg
 
-    What might things look like if we used Iceberg:
+In this section we'll consider how we might implement the new adapter architecture using Iceberg tables, and how it would fit into the existing catalogue pipeline infrastructure taking into account the existing work on the catalogue graph project and the use of [AWS Step Functions](https://docs.aws.amazon.com/step-functions/latest/dg/welcome.html).
 
-    #### Use of AWS Step Functions
-        success in catalogue graph project, 
-        how often might updates propagate? should aim for 15 minutes?
-        adapters will write iceberg table
-        transformers will read iceberg table 
-        transformers will continue to write to ES (for now)
+In AWS Step Functions tasks can be both Lambda functions and ECS tasks, which allows us to use Python Lambdas for most of the processing, while also allowing us to use ECS tasks for more complex processing that may exceed the time limits of a Lambda function.
 
-    #### Use of Lambda / ECS Tasks
-        python lambdas where possible
-        ECS tasks if we exceed time limits
-        both can be orchestrated using step functions (examples in catalogue graph project)
+Step Functions provide a Map workflow state that allows us to run a task in parallel for each item in a list, which can be used to process the data in parallel. This is useful for both the incremental update and full reindex modes of operation.
 
-    #### Use of S3 Tables
-        provides table clean up, optimised for performance
-        how this works
-            provides iceberg REST API, get object only
+We will need to keep retain the functionality of the existing adapters, including the ability to run in both incremental update and full reindex modes, while also ensuring that the new architecture is compatible with the existing catalogue pipeline.
 
-    #### Iceberg Table Configuration
-        cleaning up table snapshots
-        table partitions for optimal performance
+#### Incremental Update Architecture
 
-    #### Reproducing reindexer functionality
-        new reindexer can query iceberg tables
-        standard parts of schema required for this
+```mermaid
+graph TD
+    subgraph "Trigger"
+        A[("CloudWatch Schedule")]
+    end
+
+    subgraph "State Machine"
+        B(Window Generator)
+        C(Adapter)
+        F(Transformer)
+    end
+
+    subgraph "Data Stores"
+        D(Source System)
+        E["fa:fa-table Apache Iceberg Table<br>(on S3)"]
+        G["fa:fa-database Elasticsearch<br>(works-source index)"]
+    end
+
+    subgraph "Downstream Consumer"
+        H(SNS/SQS)
+        I(Existing Pipeline)
+    end
+
+    %% Define the flow
+    A -- Triggers on schedule --> B;
+    B -- Generates time window --> C;
+    C -- Queries for changed records --> D;
+    D -- Returns records --> C;
+    C -- Stores records in table --> E;
+    C -- Notifies with batch record details --> F;
+    F -- Queries table for window's records --> E;
+    F -- Transforms data & stores 'Work' model --> G;
+    F -- Sends per-record notifications --> H;
+    H -- Forwards events --> I;
+
+    %% Styling
+    classDef stepFunctions fill:#FF9900,stroke:#333,stroke-width:2px,color:white;
+    classDef dataStores fill:#232F3E,stroke:#333,stroke-width:2px,color:white;
+    classDef trigger fill:#AAB7B8,stroke:#333,stroke-width:2px,color:black;
+    classDef consumer fill:#1D8102,stroke:#333,stroke-width:2px,color:white;
+
+    class B,C,F stepFunctions;
+    class D,E,G dataStores;
+    class A trigger;
+    class H,I consumer;
+```
+
+In this architecture, we have a state machine that is triggered by a CloudWatch schedule. The state machine consists of three main steps:
+
+1. **Window Generator**
+    - The window generator can be implemented as a Lambda function that calculates the start and end times for the time window based on the current time and the desired frequency of updates (e.g., every 15 minutes).
+    - It then sends these details to the adapter, which will use them to query the source system for records that have changed within that time window.
+2. **Adapter**
+   - The adapter is responsible for querying the source system and retrieving the records that have changed within the time window. 
+   - It then writes these records to an Iceberg table on S3, using the defined schema and partitioning.
+   - The adapter also sends a notification to the transformer with the details of the records that have changed, which will be used to process the data further.
+3. **Transformer**
+   - The transformer can be implemented as a Lambda function or ECS Task that queries the Iceberg table using the `pyiceberg` library, transforms the data and writes the transformed data to Elasticsearch for consumption by downstream consumers.
+   - It may be possible to re-use some of the existing transformer code in Scala. Apache Spark is a good candidate for use in an updated transformer, as it has good support for Iceberg tables and is available in Scala.
+   - It also sends notifications for each record processed, which can be used to trigger further processing in the existing pipeline.
+
+#### Full Reindex Architecture
+
+```mermaid
+graph TD
+    subgraph "Triggers"
+        A2["Manual Reindex Trigger"]
+    end
+
+    subgraph "State Machine"
+        C(Adapter)
+        J(Reindexer)
+        F(Transformer)
+    end
+
+
+    subgraph "Data Stores"
+        D(Source System)
+        E["fa:fa-table Apache Iceberg Table<br>(on S3)"]
+        G["fa:fa-database Elasticsearch<br>(works-source index)"]
+    end
+
+    subgraph "Downstream Consumer"
+        H(SNS/SQS)
+        I(Existing Pipeline)
+    end
+
+    %% --- Delta Update Flow (Scheduled) ---
+
+    C -- Queries for changed records --> D;
+    D -- Returns records --> C;
+    C -- Stores records in table --> E;
+    C -- Notifies with window details --> F;
+    F -- Queries table for window's records --> E;
+
+    %% --- Reindex Flow (On-demand) ---
+    A2 -- Triggers reindex --> J;
+    J -- Reads full table in batches --> E;
+    J -- "Sends batches for parallel processing (Map State)" --> F;
+
+    %% --- Common Flow (Post-Transform) ---
+    F -- Transforms data & stores 'Work' model --> G;
+    F -- Sends per-record notifications --> H;
+    H -- Forwards events --> I;
+
+    %% Styling
+    classDef stepFunctions fill:#FF9900,stroke:#333,stroke-width:2px,color:white;
+    classDef dataStores fill:#232F3E,stroke:#333,stroke-width:2px,color:white;
+    classDef trigger fill:#AAB7B8,stroke:#333,stroke-width:2px,color:black;
+    classDef manualTrigger fill:#3498DB,stroke:#333,stroke-width:2px,color:white;
+    classDef consumer fill:#1D8102,stroke:#333,stroke-width:2px,color:white;
+
+    class B,C,F,J stepFunctions;
+    class D,E,G dataStores;
+    class A trigger;
+    class A2 manualTrigger;
+    class H,I consumer;
+```
+
+In this architecture, we have a state machine that is triggered by a manual reindex trigger. This new state machine has one extra step compared to the incremental update architecture:
+
+**Reindexer**
+
+   - The reindexer is responsible for reading the full Iceberg table in batches, using the `pyiceberg` library to query the table and retrieve the data.
+   - It then sends the batches to the transformer for processing, which can be done in parallel using the Map state in Step Functions.
+
+For the reindexer to be agnostic of adapter type there will need to be common schema parts that are used by all adapters, such as the `id` field and the `last_modified` field. This will allow the reindexer to read the full table and pass the data to the transformer for processing.
+
+An optimisation may be possible where the reindexer uses the [plan functionality in `pyiceberg`](https://py.iceberg.apache.org/reference/pyiceberg/table/#pyiceberg.table.DataScan.plan_files) to retrieve a list of all the parquet files in the current snapshot and that list is used in the state map workflow to hand the transformers files to work on in parallel.
+
+```mermaid
+graph TD
+    subgraph "Reindex State Machine (AWS Step Functions)"
+        A[Reindexer]
+        B((Map State<br>for each file))
+        C(Transformer)
+
+        A -- Reads snapshot plan<br>gets list of files --> D
+        A -- Passes file list<br>to Map State --> B
+        B -- Invokes Transformer<br>for each file --> C
+    end
+
+    subgraph "Data Stores"
+        D["fa:fa-table Apache Iceberg Table<br>(on S3)"]
+        E["fa:fa-database Elasticsearch<br>(works-source index)"]
+    end
+
+    %% --- Data Flow within the State Machine ---
+    C -- Reads assigned Parquet file --> D
+    C -- Transforms records & indexes --> E
+
+    %% Styling
+    classDef stateMachine fill:#FF9900,stroke:#333,stroke-width:2px,color:white;
+    classDef dataStores fill:#232F3E,stroke:#333,stroke-width:2px,color:white;
+    classDef mapState fill:#3498DB,stroke:#333,stroke-width:2px,color:white,stroke-dasharray: 5 5;
+
+    class A,C stateMachine;
+    class B mapState;
+    class D,E dataStores;
+```
+
+#### Use of S3 Tables
+
+We will use the AWS feature [S3 Tables](https://docs.aws.amazon.com/AmazonS3/latest/userguide/s3-tables.html) to manage Iceberg tables on S3. This will provide us with a number of benefits, including:
+- **Automatic snapshot management**: S3 Tables will automatically manage the snapshots and partitions of the Iceberg tables, which will help us to keep the tables clean and optimised for performance. This will also help us to reduce storage costs by removing old snapshots and data files that are no longer needed.
+- **Optimised performance**: S3 Tables will provide us with [improved performance by automatic compaction and data pruning](https://aws.amazon.com/blogs/storage/how-amazon-s3-tables-use-compaction-to-improve-query-performance-by-up-to-3-times/), which will help us to achieve the performance characteristics we need for the catalogue pipeline.
+
+**Connecting using `pyiceberg`**
+
+The following snippet shows how to connect to an Iceberg table using `pyiceberg` and S3 Tables. This assumes that you have already set up the S3 Tables catalog in AWS Glue and have the necessary permissions to access it.
+
+```python
+from pyiceberg.catalog import load_catalog
+
+import os
+
+s3_tables_bucket = "pipeline-adapter-dumps"
+namespace = "adapter_dumps"
+catalog_name = "s3tablescatalog"
+
+full_table_name = f"{namespace}.{iceberg_table_name}"
+
+# Set the environment variable for the AWS credentials
+os.environ["AWS_PROFILE"] = "platform-developer"
+
+catalog = load_catalog(
+  catalog_name,
+  **{
+    "type": "rest",    
+    "warehouse": f"12345678910:s3tablescatalog/{s3_tables_bucket}",
+    "uri": f"https://glue.eu-west-1.amazonaws.com/iceberg",
+    "rest.sigv4-enabled": "true",
+    "rest.signing-name": "glue",
+    "rest.signing-region": "eu-west-1",
+  }
+)
+```
+
+**Table configuration**
+
+Table maintainance and configuration is discussed in the [S3 Tables documentation](https://docs.aws.amazon.com/AmazonS3/latest/userguide/s3-tables-maintenance.html). This includes compaction and snapshot management. e.g.
+
+```json
+{
+  "status": "enabled",
+  "settings": {
+    "icebergSnapshotManagement": {
+      "minSnapshotsToKeep": 5,
+      "maxSnapshotAgeHours": 1000
+    },
+    "icebergCompaction": {
+      "targetFileSizeMB": 256
+    }
+  }
+}
+```
+
+There is further "table _bucket_ maintenance" configuration that is specifically related to removing unreferenced data files. e.g.
+
+```json
+{
+    "status":"enabled",
+    "settings":{
+        "icebergUnreferencedFileRemoval":{
+            "unreferencedDays":4,
+            "nonCurrentDays":10
+        }
+    }
+}
+```
 
 ## Alternatives considered
 
