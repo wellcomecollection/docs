@@ -470,13 +470,13 @@ calm_iceberg_partition_spec = PartitionSpec(
 
 #### Testing with Calm and Sierra data
 
-We have conducted some initial testing using the Calm and Sierra source data, which is representative of the scale of data we expect to handle in the catalogue pipeline. This testing has shown that Iceberg tables can handle the scale of data we expect, and that they provide good performance for both querying and upserting data.
+We have conducted some initial testing using the Calm and Sierra source data, which is representative of the scale of data we expect to handle in the catalogue pipeline. This testing has shown that Iceberg tables can handle the scale of data we expect, and that it provides good performance for both querying and upserting data.
 
 Testing was performed by loading the Calm and Sierra source data into Iceberg tables using the schemas defined above, and then performing queries and upserts on the data.
 
 See the associated script to extract and load from Sierra and Calm source data into Iceberg tables: [load_adapter_data.py](./load_adapter_data.py).
 
-#### Reproducing processing in reindex and incremental update modes
+#### Processing in reindex and incremental update modes
 
 Source data stored in an Iceberg table needs to be easily queryable from the relevant transformer. Two transformer modes of operation need to be supported — _incremental mode_ and _full reindex mode_.
 
@@ -541,7 +541,7 @@ Assuming the Iceberg table has 10 partitions in total, we could run 10 parallel 
 We were looking to specifically understand the following anecdotally the results of our initial testing are as follows:
 
 - **Can we reduce the amount of storage space we use for adapters?**
-   _Yes, Iceberg tables are significantly smaller than their VHS object store equivalent with the proviso this benefit may dfrop if we store many snapshots_.
+   _Yes, Iceberg tables are significantly smaller than their VHS object store equivalent with the proviso this benefit may drop if we store many snapshots_.
 
 - **Can we make source data in catalogue pipeline adapters more accessible to developers?**
   _Yes, source data can be queried in minutes with a variety of tools_.
@@ -553,8 +553,9 @@ We were looking to specifically understand the following anecdotally the results
    _Yes, dependent on correct table partitioning and sorting we can perform updates at a useful scale in a reasonable time_.
 
 - **Which tools do we need:**
-  - **Can we use Parquet with Iceberg?** 
+  - **Can we use Parquet without Iceberg?** 
      _No, this will likely not be practical at our scale due to memory constraints_ 
+
   - **Do we need S3 Tables, or can we use plain S3?**
     _Yes, it's likely that S3 Tables automated compaction / snapshot removal will be useful, without significantly compromising access to the underlying data_
         
