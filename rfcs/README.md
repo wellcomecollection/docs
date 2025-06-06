@@ -40,6 +40,7 @@ _This is generated from the RFCs in this directory using `.script/create_table_s
 
 | RFC ID | Title | Summary | Last Modified |
 |---------|---------|-----------|---------------|
+| [075-updated_adapters](./rfcs/075-updated_adapters/README.md) | RFC 075: Using Apache Iceberg tables in Catalogue Pipeline adapters | Discussing a replacement architecture for the catalogue pipeline adapters, moving away from the Versioned Hybrid Store (VHS) using Apache Iceberg as the underlying storage format. | **Last modified:** 2025-06-06T14:01:45Z |
 | [070-concepts-api-changes](../rfcs/070-concepts-api-changes/README.md) | RFC 070: Concepts API changes | This RFC describes changes to the concepts API, which will be used to support new theme pages on the Wellcome Collection website. | **Last modified:** 2025-03-13T18:14:09+00:00 |
 | [071-python_builds](../rfcs/071-python_builds/README.md) | RFC 071: Python Building and Deployment | Building and deploying Python projects | **Last modified:** 2025-03-13T18:14:09+00:00 |
 | [068-exhibitions-content-api](../rfcs/068-exhibitions-content-api/README.md) | RFC 068: Exhibitions in Content API | Exhibitions are to be added to Events search, becoming Events & Exhibitions search. We'll therefore be working on indexing Exhibitions in a more intentional manner. That indexing and subsquent API endpoint will power the Events & Exhibitions search as well as, eventually, the existing listing pages. | **Last modified:** 2025-02-18T17:15:49+00:00 |
