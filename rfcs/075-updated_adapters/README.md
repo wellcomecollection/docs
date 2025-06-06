@@ -227,9 +227,9 @@ See the [Iceberg documentation](https://iceberg.apache.org/docs/latest/) for mor
 
 We have conducted some initial testing of Iceberg tables to understand their performance characteristics when making queries and upserts on the scale of the adapter source data we currently have in the catalogue pipeline, and with upsert operations that are similar to those performed by the current adapters.
 
-#### Performance performing queries and upserts
+#### Performing queries and upserts
 
-There is reason to be cautious as the current adapters perform many individual updates to records, a model that may not be well-suited to Iceberg tables, which [although it is used for stream processing](https://aws.amazon.com/blogs/big-data/stream-real-time-data-into-apache-iceberg-tables-in-amazon-s3-using-amazon-data-firehose/) may have limitations. We will need to move to a model where we batch updates and writes to the Iceberg tables, rather than performing many individual updates.
+The current adapters perform many individual updates to records, a model that may not be well-suited to Iceberg tables which [although it is used for stream processing](https://aws.amazon.com/blogs/big-data/stream-real-time-data-into-apache-iceberg-tables-in-amazon-s3-using-amazon-data-firehose/) may have limitations if we continue with this approach. We will need to move to a model where we batch updates and writes to the Iceberg tables, rather than performing many individual updates.
 
 As discussed above, upserts create new data files that contain the changes, rather than modifying existing files, and table maintenance operations like cleaning up old snapshots are required to manage storage costs.
 
