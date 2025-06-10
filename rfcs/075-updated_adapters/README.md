@@ -83,7 +83,9 @@ flowchart TD
 
 #### Relationship to the Work model
 
-The granularity of the data stored in the VHS is at the level of individual records, that can be transformed into the `Work` model. The VHS stores data in a schema-less format, which allows for flexibility in the data model, but also means that we have to handle schema changes upstream in the source systems.
+The granularity of the data stored in the VHS is at the level of individual records that can be transformed into the `Work` model. 
+
+The VHS stores data in a schema-less format, which allows us to handle changes in a source systems data model more easily. If the source system changes its schema, we can update the transformers to handle the new schema without having to rewrite, or re-retrieve data to the VHS. 
 
 Transformer services read data from the VHS, transforms it into a format suitable for indexing, and writes it to Elasticsearch.
 
