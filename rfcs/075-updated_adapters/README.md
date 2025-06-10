@@ -566,7 +566,21 @@ Step Functions provide a Map workflow state that allows us to run a task in para
 
 We will need to keep retain the functionality of the existing adapters, including the ability to run in both incremental update and full reindex modes, while also ensuring that the new architecture is compatible with the existing catalogue pipeline.
 
+#### Schema management 
+
+Iceberg tables require a schema to be defined for the data stored in them. This means that we will need to define a schema for each adapter, which will be used to validate the data before it is written to the table. This is a change from the current VHS architecture, where the VHS can store schemaless data. In practise we perform some validation before storing data in the VHS, but are intentionally permissive to allow for flexibility in the data stored.
+
+We would seek to avoid having to update the schema for every small change in the source data, as this would be time-consuming and expensive. Instead, we will aim to define a schema that is flexible enough to accommodate changes in the source data without requiring frequent updates, mirroring the approach we take with the existing VHS adapters. See the Sierra example schema defined in the [load_adapter_data.py](./load_adapter_data.py) script for an example of how we can define a flexible schema.
+
+There is a trade off between flexibility and the ability to query source data, as a more flexible schema reduces the ability to query source data on undescribed fields. We will need to find a balance between these two requirements, and ensure that the schema is defined in a way that allows us to query the data effectively while still being flexible enough to accommodate changes in the source data. In practise having a schema that records only necessary fields such as `id` and `last_modified` will be sufficient, while allowing improved ability over a VHS implementation to query source data by other fields.
+
 #### Incremental Update Architecture
+
+Currently adapters validate data on a record by record basis before inserting it into the VHS, and if a record fails to validate it is skipped and the rest of the batch is processed. We need to consider how to handle this when upserting a batch to an Iceberg table. If a batch fails to process, we need to ensure that the data is not lost and that the batch can be retried later to ensure that all data is processed correctly. 
+
+We can achieve this by splitting the adapter into an "extraction" step and a "transformation" step, where the extraction step is responsible for querying the source system and writing the data in the change to a persistent store, and the transformation step is responsible for reading the data from the persistent store, transforming it, and writing it to an Iceberg table. This allows us to retry the extraction step if it fails, without losing any data, and ensures that the transformation step can be retried independently of the extraction step.
+
+However in the first case we should be able to implement the adapter in a single step, as the extraction and transformation steps can be combined into a single process for simplicity. In the case we run into issues with re-requesting failed batches, we can split the adapter into two steps later.
 
 ```mermaid
 graph TD
