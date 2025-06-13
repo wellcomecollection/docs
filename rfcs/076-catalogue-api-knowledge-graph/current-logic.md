@@ -8,12 +8,15 @@ There have been [a few different tickets](https://github.com/wellcomecollection/
 - [This .org helpers file](https://github.com/wellcomecollection/wellcomecollection.org/blob/main/content/webapp/components/RelatedWorks/RelatedWorks.helpers.tsx) containing the queries
 
 ## Table of contents
-- [Related works component (FE)](#related-works-component)
+- [Related works component](#related-works-component)
 - [Current queries](#current-queries)
     - [Subject related queries](#subject-related-queries)
     - [Date range](#date-range)
     - [Types/techniques](#typestechniques)
+- [Query changes](#query-changes)
 - [Interesting works to consider](#interesting-works-to-consider)
+    - [Date range vs date-related subject label](#date-range-vs-date-related-subject-label)
+    - [Same results](#same-results)
 
 ## Related works component
 The component [gets added to a works page](https://github.com/wellcomecollection/wellcomecollection.org/blob/main/content/webapp/pages/works/%5BworkId%5D/index.tsx#L207) if the work has at least one subject label.
@@ -86,10 +89,14 @@ So up to two queries are done, by looping through the above's results:
 ## Interesting works to consider
 Throughout our work, we found some works whose related works results made it clear more work would be required on the logic.
 
+### Date range vs date-related subject label
 https://wellcomecollection.org/works/a2262ru9
 https://wellcomecollection.org/works/a376cmj9
+
 It's strange when one of the subject label is date related, because we then also have the century tab. That can be the same century, or a different work if the work is a modern one about a different century.
 
+### Same results
 https://wellcomecollection.org/works/a22xvp3c
+
 Many works will display the same results for most of their tabs. The answer would be to fetch more works and compare and filter, but we chose to not to that at this stage.
 
