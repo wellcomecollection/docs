@@ -1,10 +1,11 @@
 # RFC 076: Enriching catalogue API data from the knowledge graph
 
-Draft
+_Draft_
 
 [GitHub issue](https://github.com/wellcomecollection/platform/issues/6047)
 
 ## Related works
-We wanted to document some of the current logic currently in use on the Front-End. The current implementation is a temporary one while the component is being tested and improved upon, and so it is likely to change. Those changes will also be documented. We thought it was relevant to document it here as its final solution will very probably benefit from this work. Feel free to completely restructure this, or to move it elsewhere when you get to tackling this RFC.
 
-[Current related work logic](./current-logic.md)
+This section documents the logic currently used on the Front-End to display related works. The implementation described here is provisional and may evolve as the component is tested and refined. Any future changes will also be recorded. Documenting this logic is intended to inform and support the development of a more robust, long-term solution as part of this RFC.
+
+For details, see: [Current related work logic](./current-logic.md)
