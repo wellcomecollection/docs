@@ -24,7 +24,7 @@ The component [gets added to a works page](https://github.com/wellcomecollection
 ## Current queries
 The base of all queries lies with the subject labels. If a work does not have any subject labels, we don't query for the others at all, since their results would be too generic.
 
-The queries are split in three categories:
+The queries are split into three categories:
 - Subject related
 - From the same century (date range) with similar subjects
 - Genres related, with similar subjects
