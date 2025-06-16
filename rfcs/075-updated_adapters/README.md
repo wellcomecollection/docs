@@ -821,6 +821,8 @@ Apache Iceberg with S3 Tables is a multi-layered approach to solving the problem
 
 - **Manual sharding in S3 using Parquet**: This would involve manually sharding the source data into smaller Parquet files, which could then be processed in parallel. This approach would require more manual effort to manage the sharding and would not provide the same level of flexibility as Iceberg tables.
 
+- **Hive partitioning in S3 using Parquet**: Hive partitioning is a widely used, de facto standard for organizing data files based on partition key values (e.g., `.../date=2025-06-01/`), (not explicitly part of the Parquet specification). Many data processing tools leverage this convention. However, this approach still requires manual management of partition directories and metadata, and lacks snapshotting, metadata, and schema evolution features provided by Apache Iceberg. 
+
 - **File per source work**: This would involve storing each source work in a separate file, which could then be processed independently. This approach would not provide the same level of flexibility as Iceberg tables and would not allow for efficient querying of the data, on any index other than the file name.
 
 - **Using plain S3 buckets with Iceberg**: This would involve using Iceberg tables without the S3 Tables feature, which would require more manual management of the table snapshots and partitions. This approach would not provide the same level of automation and ease of use as using S3 Tables. Although S3 Tables does not provide the same visbility into the underlying data as plain S3, it does allow sufficient GET object access to retrieve all the data in a table directly if required, avoiding concerns about vendor lock-in.
