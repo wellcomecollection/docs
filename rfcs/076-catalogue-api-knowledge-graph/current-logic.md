@@ -12,7 +12,7 @@ There have been [a few different tickets](https://github.com/wellcomecollection/
 - [Current queries](#current-queries)
     - [Subject related queries](#subject-related-queries)
     - [Date range](#date-range)
-    - [Types/techniques](#typestechniques)
+  - [Genres](#genres)
 - [Query changes](#query-changes)
 - [Interesting works to consider](#interesting-works-to-consider)
     - [Date range vs date-related subject label](#date-range-vs-date-related-subject-label)
@@ -27,7 +27,7 @@ The base of all queries lies with the subject labels. If a work does not have an
 The queries are split in three categories:
 - Subject related
 - From the same century (date range) with similar subjects
-- Types/Techniques related, with similar subjects
+- Genres related, with similar subjects
 
 For each query we fetch 4 works, because we want to display 3 and the work being viewed is likely to be returned as a result. We filter it out afterwards.
 
@@ -67,12 +67,12 @@ If the string is valid, we then use it to [get the century range](https://github
 - `production.dates.from: First day of the century`
 - `production.dates.to: Last day of the century`
 
+### Genres
 
-### Types/techniques
-Maximum of 2 queries/tabs, but only because we wanted to reduce the amount of total queries. 
-The original request was for up to 3 tabs for types and techniques.
+Maximum of 2 genres/tabs, but only because we wanted to reduce the amount of total queries.
+The original request was for up to 3 tabs for genres.
 
-We get the first two types/techniques (genres) in the response array:
+We get the first two genres in the response array:
 `genres?.map(genre => genre.label).slice(0, 2)`
 
 So up to two queries are done, by looping through the above's results:
