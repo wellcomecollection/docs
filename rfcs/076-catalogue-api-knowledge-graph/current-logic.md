@@ -31,7 +31,7 @@ The queries are split in three categories:
 
 For each query we fetch 4 works, because we want to display 3 and the work being viewed is likely to be returned as a result. We filter it out afterwards.
 
-There can therefore be up of six queries made on each work page.
+We query a maximum of three individual subjects, a date range if it can be determined and up to two genres. There can therefore be up of six queries made on each work page.
 
 ### Subject related queries
 Up to three queries/tabs.
