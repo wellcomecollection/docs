@@ -83,9 +83,6 @@ So up to two queries are done, by looping through the above's results:
 - `subjects.label: the first three subject labels of the work`
 - `genres.label: The genre label`
 
-## Query changes
-(For Gareth) We used to pass the subject, date or genre label as a keyword search, but removing it seemed to change nothing, so I did. Was that a decision that I shouldn't have touched?
-
 ## Interesting works to consider
 Throughout our work, we found some works whose related works results made it clear more work would be required on the logic.
 
