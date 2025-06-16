@@ -111,4 +111,4 @@ It's strange when one of the subject label is date related, because we then also
 
 https://wellcomecollection.org/works/a22xvp3c
 
-Many works will display the same results for most of their tabs. An answer would be to fetch more works and compare/filternthem, but we chose not to do that at this stage.
+Many works will display the same results for most of their tabs. An answer would be to fetch more works and compare/filter them, but we chose not to do that at this stage.
