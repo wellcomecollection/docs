@@ -39,8 +39,8 @@ Uses the first three subjects from the response array.
 
 #### Query
 - `pageSize: 4`
-- `includes: [production, contributor]`
-- `subjects.label: the first three subject labels of the work`
+- `includes: [production, contributor]` - required for the display data we need for cards
+- `subjects.label: one of the first three subject labels of the work`
 
 ### Date range
 One query/tab
