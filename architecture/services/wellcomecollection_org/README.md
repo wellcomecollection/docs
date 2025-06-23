@@ -67,6 +67,12 @@ C4Container
     Rel(identity_frontend, requesting_api, "Requests data from")
 ```
 
+See the following repositories for more details on the services described above:
+
+- [wellcomecollection/wellcomecollection.org](https://github.com/wellcomecollection/wellcomecollection.org)
+- [wellcomecollection/catalogue-api](https://github.com/wellcomecollection/catalogue-api)
+- [wellcomecollection/identity](https://github.com/wellcomecollection/identity)
+
 ## account.wellcomecollection.org
 
 This service handles user account management, including registration, and login and is managed by Auth0. It integrates with the Sierra library management system for user authentication. Successful logins redirect to the main website, and will set a cookie to indicate the user is logged in.
@@ -87,6 +93,11 @@ C4Container
     Rel(universal_login, sierra, "Authenticates users against", "Custom Database Integration")
 ```
 
+See the following repositories for more details on the services described above:
+
+- [wellcomecollection/wellcomecollection.org](https://github.com/wellcomecollection/wellcomecollection.org)
+- [wellcomecollection/identity](https://github.com/wellcomecollection/identity)
+
 ## dash.wellcomecollection.org
 
 This service provides a dashboard for staff and developers, built with Next.js. It includes the toggles dashboard that drops cookies to indicate which features are enabled for the user.
@@ -106,6 +117,10 @@ C4Container
     Rel(cloudfront, s3, "Pulls content from")
 ```
 
+See the following repositories for more details on the services described above:
+
+- [wellcomecollection/wellcomecollection.org](https://github.com/wellcomecollection/wellcomecollection.org)
+
 ## cardigan.wellcomecollection.org
 
 This service is the Storybook component library for the design system, built with Next.js.
@@ -124,6 +139,10 @@ C4Container
     Rel(user, cloudfront, "Accesses cardigan.wellcomecollection.org", "HTTPS")
     Rel(cloudfront, s3, "Pulls content from")
 ```
+
+See the following repositories for more details on the services described above:
+
+- [wellcomecollection/wellcomecollection.org](https://github.com/wellcomecollection/wellcomecollection.org)
 
 ## rss_feed
 
@@ -148,6 +167,10 @@ C4Container
     Rel(alb, content_frontend, "Forwards requests to")
     Rel(content_frontend, prismic, "Pulls data for feed from")
 ```
+
+See the following repositories for more details on the services described above:
+
+- [wellcomecollection/wellcomecollection.org](https://github.com/wellcomecollection/wellcomecollection.org)
 
 ## toggles.wellcomecollection.org
 
@@ -174,3 +197,7 @@ C4Container
     Rel(content_frontend, toggles_cloudfront, "4. Fetches toggles.json", "HTTPS (Server-Side)")
     Rel(toggles_cloudfront, toggles_s3, "5. Pulls file from")
 ```
+
+See the following repositories for more details on the services described above:
+
+- [wellcomecollection/wellcomecollection.org](https://github.com/wellcomecollection/wellcomecollection.org)
