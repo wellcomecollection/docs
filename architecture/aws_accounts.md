@@ -9,15 +9,15 @@ This document describes the structure and purpose of the AWS accounts used by We
 
 ### Services 
 
-- `catalogue_pipeline`: Manages the ingestion and processing of catalogue data to prepare it for the APIs. Contains many subsystems and component services involved in the data processing pipeline.
-- `calm_adapter`: Adapts data from the Calm system for use in the catalogue.
-- `sierra_adapter`: Adapts data from the Sierra system for use in the catalogue.
-- `mets_adapter`: Adapts data from the METS system for use in the catalogue.
-- `tei_adapter`: Adapts data from the TEI system for use in the catalogue.
-- `ebsco_adapter`: Adapts data from the EBSCO system for use in the catalogue.
-- `reindexer`: Manages the reindexing of catalogue data when we make changes to data model in the catalogue pipeline.
-- `buildkite_stack`: Contains the Buildkite stack for the Wellcome Collection, which is used for CI/CD pipelines.
-- `wellcomelibrary_redirects`: Manages redirects for the legacy Wellcome Library website.
+- [`catalogue_pipeline`](./services/catalogue_pipeline/README.md#catalogue_pipeline): Manages the ingestion and processing of catalogue data to prepare it for the APIs. Contains many subsystems and component services involved in the data processing pipeline.
+- [`calm_adapter`](./services/catalogue_pipeline/README.md#calm_adapter): Adapts data from the Calm system for use in the catalogue.
+- [`sierra_adapter`](./services/catalogue_pipeline/README.md#sierra_adapter): Adapts data from the Sierra system for use in the catalogue.
+- [`mets_adapter`](./services/catalogue_pipeline/README.md#mets_adapter): Adapts data from the METS system for use in the catalogue.
+- [`tei_adapter`](./services/catalogue_pipeline/README.md#tei_adapter): Adapts data from the TEI system for use in the catalogue.
+- [`ebsco_adapter`](./services/catalogue_pipeline/README.md#ebsco_adapter): Adapts data from the EBSCO system for use in the catalogue.
+- [`reindexer`](./services/catalogue_pipeline/README.md#reindexer): Manages the reindexing of catalogue data when we make changes to data model in the catalogue pipeline.
+- [`buildkite_stack`](./services/developer/README.md#buildkite_stack): Contains the Buildkite stack for the Wellcome Collection, which is used for CI/CD pipelines.
+- [`wellcomelibrary_redirects`](./services/legacy/README.md#wellcomelibrary_redirects): Manages redirects for the legacy Wellcome Library website.
 
 ### Cloudfront Distributions
 
@@ -34,11 +34,11 @@ This document describes the structure and purpose of the AWS accounts used by We
 
 ### Services 
 
-- `data_api`: Allows access to static snapshots of the Wellcome Collection catalogue data.
-- `search_api`: Provides search functionality across the catalogue, including works, and images.
-- `content_api`: Provides access to the Wellcome Collection content API, which includes editorial content from Prismic.
-- `concepts_api`: Provides access to the Wellcome Collection concepts API.
-- `items_api`: Provides access to the Wellcome Collection items API.
+- [`data_api`](./services/apis/README.md#data_api): Allows access to static snapshots of the Wellcome Collection catalogue data.
+- [`search_api`](./services/apis/README.md#search_api): Provides search functionality across the catalogue, including works, and images.
+- [`content_api`](./services/apis/README.md#content_api): Provides access to the Wellcome Collection content API, which includes editorial content from Prismic.
+- [`concepts_api`](./services/apis/README.md#concepts_api): Provides access to the Wellcome Collection concepts API.
+- [`items_api`](./services/apis/README.md#items_api): Provides access to the Wellcome Collection items API.
 
 ### Cloudfront Distributions
 
@@ -56,11 +56,11 @@ This document describes the structure and purpose of the AWS accounts used by We
 
 ### Services 
 
-- `content_frontend`: The main website frontend, built with Next.js including editorial content and catalogue search.
-- `identity_frontend`: The frontend for user authentication and authorisation, built with Next.js.
-- `rss_feed`: Provides RSS feeds for the Wellcome Collection.
-- `toggles`: Manages toggles and a/b testing for the Wellcome Collection website.
-- `wellcomeimages_redirection`: Redirects for the legacy Wellcome Images website.
+- [`content_frontend`](./services/wellcomecollection_org/README.md#content_frontend--identity_frontend): The main website frontend, built with Next.js including editorial content and catalogue search.
+- [`identity_frontend`](./services/wellcomecollection_org/README.md#content_frontend--identity_frontend): The frontend for user authentication and authorisation, built with Next.js.
+- [`rss_feed`](./services/wellcomecollection_org/README.md#rss_feed): Provides RSS feeds for the Wellcome Collection.
+- [`toggles`](./services/wellcomecollection_org/README.md#toggleswellcomecollectionorg): Manages toggles and a/b testing for the Wellcome Collection website.
+- [`wellcomeimages_redirects`](./services/legacy/README.md#wellcomeimages_redirects): Redirects for the legacy Wellcome Images website.
 
 ### Cloudfront Distributions
 
@@ -83,8 +83,8 @@ This document describes the structure and purpose of the AWS accounts used by We
 
 ### Services 
 
-- `identity_api`: Provides the identity API for user authentication and authorisation.
-- `requesting_api`: Provides the requesting API for managing user requests to view items.
+- [`identity_api`](./services/apis/README.md#identity_api): Provides the identity API for user authentication and authorisation.
+- [`requesting_api`](./services/apis/README.md#requesting_api): Provides the requesting API for managing user requests to view items.
 
 ### Associated Domains
 
@@ -98,8 +98,8 @@ This document describes the structure and purpose of the AWS accounts used by We
 
 ### Services
 
-- `storage_service`: Manages the ingestion, storage and retrieval of digital archival assets. Contains many subsystems and component services involved in the storage of digital assets.
-- `ingest_inspector`: Provides a web interface for inspecting the data being ingested into the catalogue.
+- [`storage_service`](./services/workflow/README.md#storage_service): Manages the ingestion, storage and retrieval of digital archival assets. Contains many subsystems and component services involved in the storage of digital assets.
+- [`ingest_inspector`](./services/workflow/README.md#ingest_inspector): Provides a web interface for inspecting the data being ingested into the catalogue.
 
 ### Cloudfront Distributions
 
@@ -116,8 +116,8 @@ This document describes the structure and purpose of the AWS accounts used by We
 
 ### Services
 
-- `archivematica`: A digital preservation & workflow system that manages the ingest, storage, and access of digital assets. Specifically dealing with "born-digital" assets. This service is managed by [Artefactual Systems](https://www.artefactual.com/), running on our AWS infrastructure. It has a number of subsystems and component services involved in the digital preservation workflow.
-- `workflow`: An instance of rdigitisation preservation & workflow management system [Goobi](https://www.intranda.com/en/digiverso/goobi/goobi-overview/) that manages artefacts of digitisation workflows, including the management of metadata and digital assets. A 3rd party service provided and managed by Intranda, running on our AWS infrastructure. It has a number of subsystems and component services involved in the digitisation workflow.
+- [`archivematica`](./services/workflow/README.md#archivematica): A digital preservation & workflow system that manages the ingest, storage, and access of digital assets. Specifically dealing with "born-digital" assets. This service is managed by [Artefactual Systems](https://www.artefactual.com/), running on our AWS infrastructure. It has a number of subsystems and component services involved in the digital preservation workflow.
+- [`workflow`](./services/workflow/README.md#workflow-goobi): An instance of rdigitisation preservation & workflow management system [Goobi](https://www.intranda.com/en/digiverso/goobi/goobi-overview/) that manages artefacts of digitisation workflows, including the management of metadata and digital assets. A 3rd party service provided and managed by Intranda, running on our AWS infrastructure. It has a number of subsystems and component services involved in the digitisation workflow.
 
 ### Associated Domains
 
@@ -136,8 +136,8 @@ This document describes the structure and purpose of the AWS accounts used by We
 
 ### Services
 
-- `dlcs_iiif`: A collection of subsystems and component services that provide [IIIF](https://iiif.io/) image services for the Wellcome Collection, including the services routed to by the IIIF APIs. 
-- `moh`: Medical Officer of Health reports (MoH) webapp, a legacy service providing access to [Medical Officer of Health reports.](https://wellcomelibrary.org/moh/about-the-reports/about-the-medical-officer-of-health-reports/).
+- [`dlcs_iiif`](./services/workflow/README.md#dlcs_iiif): A collection of subsystems and component services that provide [IIIF](https://iiif.io/) image services for the Wellcome Collection, including the services routed to by the IIIF APIs. 
+- [`moh`](./services/legacy/README.md#moh-medical-officer-of-health-reports): Medical Officer of Health reports (MoH) webapp, a legacy service providing access to [Medical Officer of Health reports.](https://wellcomelibrary.org/moh/about-the-reports/about-the-medical-officer-of-health-reports/).
 
 
 ## Legacy accounts
