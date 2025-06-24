@@ -255,3 +255,36 @@ C4Container
 See the following repositories for more details on the services described above:
 
 - [wellcomecollection/identity](https://github.com/wellcomecollection/identity)
+
+## requesting_api
+
+The Requesting API is responsible for managing user requests to view items in the Wellcome Collection. It provides endpoints for submitting and tracking requests, and is authorized by the Identity API.
+
+```mermaid
+C4Container
+    title Container Diagram for the Requesting API
+
+    System(client_app, "Client Application", "e.g.,content_frontend, making item requests.")
+
+    System_Boundary(aws_identity, "Identity Account (AWS)") {
+        Container(api_gateway, "API Gateway", "AWS API Gateway", "Custom domain: v1-api.account.wellcomecollection.org")
+        Container(authorizer_lambda, "API Authorizer", "AWS Lambda", "Authorizes requests against Auth0.")
+        Container(requesting_api, "Requesting API", "ECS Service", "Handles user item requesting logic.")
+    }
+
+    System_Boundary(public_internet, "Public Internet") {
+        System_Ext(sierra, "Sierra", "3rd Party Cloud-Hosted Library Management System", "The system of record for library members.")
+    }
+
+    Rel(client_app, api_gateway, "Makes API request with token", "HTTPS")
+    Rel(api_gateway, authorizer_lambda, "Uses authorizer to validate token")
+    Rel(authorizer_lambda, requesting_api, "Forwards authorized request to")
+    Rel(requesting_api, sierra, "Performs user item requesting actions")
+
+    UpdateLayoutConfig($c4ShapeInRow="2", $c4BoundaryInRow="2")
+```
+
+See the following repositories for more details on the services described above:
+
+- [wellcomecollection/identity](https://github.com/wellcomecollection/identity) 
+- [wellcomecollection/catalogue-api](https://github.com/wellcomecollection/catalogue-api)
