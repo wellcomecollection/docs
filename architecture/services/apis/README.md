@@ -211,7 +211,6 @@ C4Container
     Rel(search_api, elastic_cloud_catalogue, "Queries index via", "AWS PrivateLink")
     Rel(items_api, sierra, "Queries Sierra API to update item records")
 
-
     UpdateLayoutConfig($c4ShapeInRow="2", $c4BoundaryInRow="2")
 ```
 
