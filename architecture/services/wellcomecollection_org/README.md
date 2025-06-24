@@ -2,16 +2,17 @@
 
 Services that are directly related to the Wellcome Collection website and its user-facing features.
 
-- [content_frontend / identity_frontend](#content_frontend-identity_frontend)
+- [content_frontend](#content_frontend)
+- [identity_frontend](#identity_frontend)
 - [account.wellcomecollection.org](#accountwellcomecollectionorg)
 - [dash.wellcomecollection.org](#dashwellcomecollectionorg)
 - [cardigan.wellcomecollection.org](#cardiganwellcomecollectionorg)
 - [rss_feed](#rss_feed)
 - [toggles.wellcomecollection.org](#toggleswellcomecollectionorg)
 
-## content_frontend / identity_frontend
+## content_frontend
 
-These services are built with Next.js and provide the main website content and user account management features.
+This service is built with Next.js and provide the main website content and catalogue search functionality.
 
 ```mermaid
 C4Container
@@ -25,7 +26,6 @@ C4Container
         Container(alb, "Application Load Balancer", "AWS ALB", "Routes application traffic to the correct frontend service.")
 
         Container(content_frontend, "Content Frontend", "ECS Service", "Renders the main website content.")
-        Container(identity_frontend, "Identity Frontend", "ECS Service", "Renders the '/account' pages.")
     }
 
     System_Boundary(catalogue_account, "Catalogue AWS Account") {
@@ -34,11 +34,6 @@ C4Container
         Container(search_api, "Search API", "ECS Service")
         Container(concepts_api, "Concepts API", "ECS Service")
         Container(items_api, "Items API", "ECS Service")
-    }
-
-    System_Boundary(identity_account, "Identity AWS Account") {
-        Container(requesting_api, "Requesting API", "ECS Service")
-        Container(identity_api, "Identity API", "ECS Service", "v1-api.account.wellcomecollection.org")
     }
 
     System_Boundary(public_internet, "Public Internet") {
@@ -55,7 +50,6 @@ C4Container
     Rel(cloudfront, alb, "Routes all other requests to")
 
     Rel(alb, content_frontend, "Routes requests to", "Default traffic")
-    Rel(alb, identity_frontend, "Routes '/account/*' requests to")
 
     Rel(content_frontend, prismic, "Requests data from")
     Rel(content_frontend, content_api, "Requests data from")
@@ -64,12 +58,42 @@ C4Container
     Rel(content_frontend, concepts_api, "Requests data from")
     Rel(content_frontend, items_api, "Requests data from")
     Rel(content_frontend, iiif_api, "Requests images from")
-
-    Rel(identity_frontend, identity_api, "Requests data from")
-    Rel(identity_frontend, requesting_api, "Requests data from")
 ```
 
 See the following repositories for more details on the services described above:
+
+- [wellcomecollection/wellcomecollection.org](https://github.com/wellcomecollection/wellcomecollection.org)
+- [wellcomecollection/catalogue-api](https://github.com/wellcomecollection/catalogue-api)
+
+## identity_frontend
+
+This service is built with Next.js and provides some user account management features.
+
+```mermaid
+C4Container
+    title Container Diagram for identity_frontend on wellcomecollection.org
+
+    Person(user, "Website User", "A visitor to wellcomecollection.org")
+
+    System_Boundary(experience_account, "Experience AWS Account") {
+        Container(cloudfront, "CloudFront", "AWS CDN", "Receives all user traffic and routes based on URL path.")
+        Container(alb, "Application Load Balancer", "AWS ALB", "Routes application traffic to the correct frontend service.")
+        Container(identity_frontend, "Identity Frontend", "ECS Service", "Renders the '/account' pages.")
+    }
+
+    System_Boundary(identity_account, "Identity AWS Account") {
+        Container(requesting_api, "Requesting API", "ECS Service")
+        Container(identity_api, "Identity API", "AWS Lambda", "v1-api.account.wellcomecollection.org")
+    }
+
+    Rel(user, cloudfront, "Visits wellcomecollection.org", "HTTPS")
+    Rel(cloudfront, alb, "Routes all other requests to")
+    Rel(alb, identity_frontend, "Routes '/account/*' requests to")
+    Rel(identity_frontend, identity_api, "Requests data from")
+    Rel(identity_frontend, requesting_api, "Requests data from")
+
+    UpdateLayoutConfig($c4ShapeInRow="2", $c4BoundaryInRow="2")
+```
 
 - [wellcomecollection/wellcomecollection.org](https://github.com/wellcomecollection/wellcomecollection.org)
 - [wellcomecollection/catalogue-api](https://github.com/wellcomecollection/catalogue-api)
@@ -77,7 +101,7 @@ See the following repositories for more details on the services described above:
 
 ## account.wellcomecollection.org
 
-This service handles user account management, including registration, and login and is managed by Auth0. It integrates with the Sierra library management system for user authentication. Successful logins redirect to the main website, and will set a cookie to indicate the user is logged in.
+This service handles user registration and login and is managed by Auth0. It integrates with the Sierra library management system for user authentication. Successful logins redirect to the main website, and will set a cookie to indicate the user is logged in.
 
 ```mermaid
 C4Container

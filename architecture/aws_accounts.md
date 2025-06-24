@@ -70,8 +70,8 @@ See https://github.com/wellcomecollection/aws-account-infrastructure for the Inf
 
 ### Services 
 
-- [`content_frontend`](./services/wellcomecollection_org/README.md#content_frontend--identity_frontend): The main website frontend, built with Next.js including editorial content and catalogue search.
-- [`identity_frontend`](./services/wellcomecollection_org/README.md#content_frontend--identity_frontend): The frontend for user authentication and authorisation, built with Next.js.
+- [`content_frontend`](./services/wellcomecollection_org/README.md#content_frontend): The main website frontend, built with Next.js including editorial content and catalogue search.
+- [`identity_frontend`](./services/wellcomecollection_org/README.md#identity_frontend): The frontend for user authentication and authorisation, built with Next.js.
 - [`rss_feed`](./services/wellcomecollection_org/README.md#rss_feed): Provides RSS feeds for the Wellcome Collection.
 - [`toggles`](./services/wellcomecollection_org/README.md#toggleswellcomecollectionorg): Manages toggles and a/b testing for the Wellcome Collection website.
 - [`wellcomeimages_redirects`](./services/legacy/README.md#wellcomeimages_redirects): Redirects for the legacy Wellcome Images website.
