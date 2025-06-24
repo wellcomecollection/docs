@@ -175,7 +175,7 @@ C4Container
     Rel(alb, content_frontend, "Forwards requests to")
     Rel(content_frontend, prismic, "Pulls data for feed from")
 
-    UpdateLayoutConfig($c4BoundaryInRow="1")
+    UpdateLayoutConfig($c4ShapeInRow="3", $c4BoundaryInRow="1")
 ```
 
 See the following repositories for more details on the services described above:
