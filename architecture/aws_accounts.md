@@ -23,15 +23,15 @@ See https://github.com/wellcomecollection/aws-account-infrastructure for the Inf
 
 ### Services 
 
-- [`catalogue_pipeline`](./services/catalogue_pipeline/README.md#catalogue_pipeline): Manages the ingestion and processing of catalogue data to prepare it for the APIs. Contains many subsystems and component services involved in the data processing pipeline.
-- [`calm_adapter`](./services/catalogue_pipeline/README.md#calm_adapter): Adapts data from the Calm system for use in the catalogue.
-- [`sierra_adapter`](./services/catalogue_pipeline/README.md#sierra_adapter): Adapts data from the Sierra system for use in the catalogue.
-- [`mets_adapter`](./services/catalogue_pipeline/README.md#mets_adapter): Adapts data from the METS system for use in the catalogue.
-- [`tei_adapter`](./services/catalogue_pipeline/README.md#tei_adapter): Adapts data from the TEI system for use in the catalogue.
-- [`ebsco_adapter`](./services/catalogue_pipeline/README.md#ebsco_adapter): Adapts data from the EBSCO system for use in the catalogue.
-- [`reindexer`](./services/catalogue_pipeline/README.md#reindexer): Manages the reindexing of catalogue data when we make changes to data model in the catalogue pipeline.
-- [`buildkite_stack`](./services/developer/README.md#buildkite_stack): Contains the Buildkite stack for the Wellcome Collection, which is used for CI/CD pipelines.
-- [`wellcomelibrary_redirects`](./services/legacy/README.md#wellcomelibrary_redirects): Manages redirects for the legacy Wellcome Library website.
+- [`catalogue_pipeline`](./services/catalogue_pipeline/catalogue_pipeline.md): Manages the ingestion and processing of catalogue data to prepare it for the APIs. Contains many subsystems and component services involved in the data processing pipeline.
+- [`calm_adapter`](./services/catalogue_pipeline/calm_adapter.md): Adapts data from the Calm system for use in the catalogue.
+- [`sierra_adapter`](./services/catalogue_pipeline/sierra_adapter.md): Adapts data from the Sierra system for use in the catalogue.
+- [`mets_adapter`](./services/catalogue_pipeline/mets_adapter.md): Adapts data from the METS system for use in the catalogue.
+- [`tei_adapter`](./services/catalogue_pipeline/tei_adapter.md): Adapts data from the TEI system for use in the catalogue.
+- [`ebsco_adapter`](./services/catalogue_pipeline/ebsco_adapter.md): Adapts data from the EBSCO system for use in the catalogue.
+- [`reindexer`](./services/catalogue_pipeline/reindexer.md): Manages the reindexing of catalogue data when we make changes to data model in the catalogue pipeline.
+- [`buildkite_stack`](./services/developer/buildkite_stack.md): Contains the Buildkite stack for the Wellcome Collection, which is used for CI/CD pipelines.
+- [`wellcomelibrary_redirects`](./services/legacy/wellcomelibrary_redirects.md): Manages redirects for the legacy Wellcome Library website.
 
 ### Cloudfront Distributions
 
@@ -48,11 +48,11 @@ See https://github.com/wellcomecollection/aws-account-infrastructure for the Inf
 
 ### Services 
 
-- [`data_api`](./services/apis/README.md#data_api): Allows access to static snapshots of the Wellcome Collection catalogue data.
-- [`search_api`](./services/apis/README.md#search_api): Provides search functionality across the catalogue, including works, and images.
-- [`content_api`](./services/apis/README.md#content_api): Provides access to the Wellcome Collection content API, which includes editorial content from Prismic.
-- [`concepts_api`](./services/apis/README.md#concepts_api): Provides access to the Wellcome Collection concepts API.
-- [`items_api`](./services/apis/README.md#items_api): Provides access to the Wellcome Collection items API.
+- [`data_api`](./services/apis/data_api.md): Allows access to static snapshots of the Wellcome Collection catalogue data.
+- [`search_api`](./services/apis/search_api.md): Provides search functionality across the catalogue, including works, and images.
+- [`content_api`](./services/apis/content_api.md): Provides access to the Wellcome Collection content API, which includes editorial content from Prismic.
+- [`concepts_api`](./services/apis/concepts_api.md): Provides access to the Wellcome Collection concepts API.
+- [`items_api`](./services/apis/items_api.md): Provides access to the Wellcome Collection items API.
 
 ### Cloudfront Distributions
 
@@ -70,11 +70,11 @@ See https://github.com/wellcomecollection/aws-account-infrastructure for the Inf
 
 ### Services 
 
-- [`content_frontend`](./services/wellcomecollection_org/README.md#content_frontend): The main website frontend, built with Next.js including editorial content and catalogue search.
-- [`identity_frontend`](./services/wellcomecollection_org/README.md#identity_frontend): The frontend for user authentication and authorisation, built with Next.js.
-- [`rss_feed`](./services/wellcomecollection_org/README.md#rss_feed): Provides RSS feeds for the Wellcome Collection.
-- [`toggles`](./services/wellcomecollection_org/README.md#toggleswellcomecollectionorg): Manages toggles and a/b testing for the Wellcome Collection website.
-- [`wellcomeimages_redirects`](./services/legacy/README.md#wellcomeimages_redirects): Redirects for the legacy Wellcome Images website.
+- [`content_frontend`](./services/frontend/content_frontend.md): The main website frontend, built with Next.js including editorial content and catalogue search.
+- [`identity_frontend`](./services/frontend/identity_frontend.md): The frontend for user authentication and authorisation, built with Next.js.
+- [`rss_feed`](./services/frontend/rss_feed.md): Provides RSS feeds for the Wellcome Collection.
+- [`toggles.wellcomecollection.org`](./services/frontend/toggles.wellcomecollection.org.md): Manages toggles and a/b testing for the Wellcome Collection website.
+- [`wellcomeimages_redirects`](./services/legacy/wellcomeimages_redirects.md): Redirects for the legacy Wellcome Images website.
 
 ### Cloudfront Distributions
 
@@ -97,68 +97,69 @@ See https://github.com/wellcomecollection/aws-account-infrastructure for the Inf
 
 ### Services 
 
-- [`identity_api`](./services/apis/README.md#identity_api): Provides the identity API for user authentication and authorisation.
-- [`requesting_api`](./services/apis/README.md#requesting_api): Provides the requesting API for managing user requests to view items.
+- [`identity_api`](./services/apis/identity_api.md): Provides the identity API for user authentication and authorisation.
+- [`requesting_api`](./services/apis/requesting_api.md): Provides the requesting API for the Wellcome Collection.
+- [`account.wellcomecollection.org`](./services/frontend/account.wellcomecollection.org.md): The user account and login pages.
 
 ### Associated Domains
 
-- `v1-api.account.wellcomecollection.org`: API Gateway custom domain, routes to the identity API for user authentication and authorisation.
-- `account.wellcomecollection.org`: Auth0 custom domain, routes to Auth0 tenant for login and user management.
+- `identity.api-prod.wellcomecollection.org`: API Gateway custom domain, routes to the identity API for the Wellcome Collection.
 
 ## `storage`
 
-**Number**: 975596993436  
-**Description**: Hosts the Wellcome Collection digital archival storage services, including S3 buckets for long term storage of digital assets and data. 
+**Number**: 299497370133
+**Description**: Contains the storage service and other long-term storage for the Wellcome Collection.
 
 ### Services
 
-- [`storage_service`](./services/workflow/README.md#storage_service): Manages the ingestion, storage and retrieval of digital archival assets. Contains many subsystems and component services involved in the storage of digital assets.
-- [`ingest_inspector`](./services/workflow/README.md#ingest_inspector): Provides a web interface for inspecting the data being ingested into the catalogue.
-
-### Cloudfront Distributions
-
-- `ingest-inspector.wellcomecollection.org`: Routes to the Ingest Inspector service.
+- [`storage_service`](./services/workflow/storage_service.md): The service for storing and retrieving digital objects.
+- [`ingest_inspector`](./services/workflow/ingest_inspector.md): A tool for inspecting data being ingested into the storage service.
 
 ### Associated Domains
 
-- `storage.api.wellcomecollection.org`: API Gateway custom domain, routes to the storage service for managing digital archival assets.
+- `storage.api-prod.wellcomecollection.org`: API Gateway custom domain, routes to the storage service for the Wellcome Collection.
 
-## workflow
+## `workflow`
 
-**Number**: 299497370133  
-**Description**: Hosts the services for managing the digital production workflows at Wellcome Collection. This includes the management of digital assets, and adding of metadata before they are stored in our archival storage.
+**Number**: 365125299635
+**Description**: Contains the workflow management systems for the Wellcome Collection.
 
 ### Services
 
-- [`archivematica`](./services/workflow/README.md#archivematica): A digital preservation & workflow system that manages the ingest, storage, and access of digital assets. Specifically dealing with "born-digital" assets. This service is managed by [Artefactual Systems](https://www.artefactual.com/), running on our AWS infrastructure. It has a number of subsystems and component services involved in the digital preservation workflow.
-- [`workflow`](./services/workflow/README.md#workflow-goobi): An instance of rdigitisation preservation & workflow management system [Goobi](https://www.intranda.com/en/digiverso/goobi/goobi-overview/) that manages artefacts of digitisation workflows, including the management of metadata and digital assets. A 3rd party service provided and managed by Intranda, running on our AWS infrastructure. It has a number of subsystems and component services involved in the digitisation workflow.
-
-### Associated Domains
-
-- `workflow.wellcomecollection.org`: Routes to the Goobi workflow service for managing digital production workflows.
-- `archivematica.wellcomecollection.org`: Routes to the Archivematica service for managing digital preservation workflows.
+- [`archivematica`](./services/workflow/archivematica.md): The Archivematica digital preservation system.
+- [`workflow (Goobi)`](./services/workflow/goobi.md): The Goobi workflow management system for digitisation.
 
 ## `digitisation`
 
-**Number**: 404315009621  
-**Description**: Contains object storage for digitisation workflows. This is intended to manage the storage of digital assets before they enter the digital production workflows, and before they are stored in our archival storage. Access to object storage (S3) is provided to the digital production teams for managing upload of digital assets.
-
-## `digirati`
-
-**Number**: 653428163053  
-**Description**: Account for the Digirati-managed services, including the IIIF image services.  
+**Number**: 964279954909
+**Description**: Contains the infrastructure for the digitisation workflow.
 
 ### Services
 
-- [`dlcs_iiif`](./services/workflow/README.md#dlcs_iiif): A collection of subsystems and component services that provide [IIIF](https://iiif.io/) image services for the Wellcome Collection, including the services routed to by the IIIF APIs. 
-- [`moh`](./services/legacy/README.md#moh-medical-officer-of-health-reports): Medical Officer of Health reports (MoH) webapp, a legacy service providing access to [Medical Officer of Health reports.](https://wellcomelibrary.org/moh/about-the-reports/about-the-medical-officer-of-health-reports/).
+- [`dlcs_iiif`](./services/workflow/dlcs_iiif.md): The Digital Library Cloud Service for serving IIIF images.
 
+## `digirati`
+
+**Number**: 048926554549
+**Description**: Contains the infrastructure for the Digirati-managed services.
+
+### Services
+
+- [`iiif.wellcomecollection.org`](./services/apis/iiif.wellcomecollection.org.md): The IIIF Image and Presentation API endpoints.
 
 ## Legacy accounts
 
-For reference only, these accounts are no longer in use and should be considered deprecated.
+### `born-digital-accessions`
 
-- **systems_strategy**: 269807742353  
-- **microsites**: 782179017633
-- **data**: 964279923020
-- **reporting**: 269807742353
+**Number**: 094622098392
+**Description**: Contains the infrastructure for the born-digital accessions service. This is a legacy account and is no longer used.
+
+### `catalogue-api-prismic`
+
+**Number**: 418439632722
+**Description**: Contains the infrastructure for the Prismic content API. This is a legacy account and is no longer used.
+
+### `wc-platform-infra`
+
+**Number**: 312583357253
+**Description**: Contains the infrastructure for the Wellcome Collection platform. This is a legacy account and is no longer used.
