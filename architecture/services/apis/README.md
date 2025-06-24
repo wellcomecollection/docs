@@ -288,3 +288,35 @@ See the following repositories for more details on the services described above:
 
 - [wellcomecollection/identity](https://github.com/wellcomecollection/identity) 
 - [wellcomecollection/catalogue-api](https://github.com/wellcomecollection/catalogue-api)
+
+## iiif.wellcomecollection.org
+
+The IIIF APIs serve metadata and images for Wellcome Collection digital assets ingested via the digital preservation workflow.
+
+```mermaid
+C4Container
+    title Container Diagram for the IIIF APIs
+
+    Person(user, "Website User", "A visitor to wellcomecollection.org")
+    System(client_app, "Client Application", "e.g., content_frontend, requesting IIIF data.")
+
+    System_Boundary(platform_account, "Platform AWS Account") {
+        Container(iiif_api_cloudfront, "CloudFront (iiif.wellcomecollection.org)", "AWS CDN", "Routes requests to DLCS hosted IIIF APIs.")
+    }
+
+   System_Boundary(digirati_account, "Digirati AWS Account") {
+        Container(dlcs_composite, "DLCS / Digirati Service", "Digirati maintaned DLCS service")
+    }
+
+    Rel(user, client_app, "Makes requests for work or image data", "HTTPS")
+    Rel(client_app, iiif_api_cloudfront, "Makes requests for work or image data", "HTTPS")
+    Rel(user, iiif_api_cloudfront, "Requests IIIF Image data", "HTTPS")
+    Rel(iiif_api_cloudfront, dlcs_composite, "Requests IIIF Image data", "HTTPS")
+```
+
+DLCS services contain a number of complex subsystems, not described here. Further detail is available in the DLCS repository linked below.
+
+See the following repositories for more details on the services described above:
+
+- [wellcomecollection/platform-infrastructure](https://github.com/wellcomecollection/platform-infrastructure)
+- [dlcs/protagonist](https://github.com/dlcs/protagonist)
