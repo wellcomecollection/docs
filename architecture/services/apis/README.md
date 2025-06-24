@@ -219,3 +219,39 @@ See the following repositories for more details on the services described above:
 
 - [wellcomecollection/catalogue-api](https://github.com/wellcomecollection/catalogue-api)
 - [wellcomecollection/catalogue-pipeline](https://github.com/wellcomecollection/catalogue-pipeline)
+
+## identity_api
+
+The Identity API is responsible for managing user identity and authentication. It provides endpoints for user registration, and profile management.
+
+```mermaid
+C4Container
+    title Container Diagram for the Identity API
+
+    System(client_app, "Client Application", "e.g., identity_frontend, making user management requests.")
+
+    System_Boundary(aws_identity, "Identity Account (AWS)") {
+        Container(api_gateway, "API Gateway", "AWS API Gateway", "Custom domain: v1-api.account.wellcomecollection.org")
+        Container(authorizer_lambda, "API Authorizer", "AWS Lambda", "Authorizes requests against Auth0.")
+        Container(identity_api_lambda, "Identity API", "AWS Lambda", "Handles user management logic.")
+    }
+
+    System_Boundary(public_internet, "Public Internet") {
+        System_Boundary(auth0_tenant, "Auth0 tenant") {
+            System_Ext(auth0, "Auth0 APIs", "SaaS", "Manages user authentication and tokens.")
+        }
+        System_Ext(sierra, "Sierra", "3rd Party Cloud-Hosted Library Management System", "The system of record for library members.")
+    }
+
+    Rel(client_app, api_gateway, "Makes API request with token", "HTTPS")
+    Rel(api_gateway, authorizer_lambda, "Uses authorizer to validate token")
+    Rel(authorizer_lambda, identity_api_lambda, "Forwards authorized request to")
+    Rel(identity_api_lambda, auth0, "Performs user management actions with")
+    Rel(identity_api_lambda, sierra, "Performs user management actions with")
+
+    UpdateLayoutConfig($c4ShapeInRow="2", $c4BoundaryInRow="2")
+```
+
+See the following repositories for more details on the services described above:
+
+- [wellcomecollection/identity](https://github.com/wellcomecollection/identity)

@@ -2,6 +2,20 @@
 
 This document describes the structure and purpose of the AWS accounts used by Wellcome Collection. We partition our AWS resources into different accounts to manage access, security, and billing effectively. 
 
+## Table of Contents
+
+- [`platform`](#platform)
+- [`experience`](#experience)
+- [`catalogue`](#catalogue)
+- [`identity`](#identity)
+- [`storage`](#storage)
+- [`workflow`](#workflow)
+- [`digitisation`](#digitisation)
+- [`digirati`](#digirati)
+- [Legacy accounts](#legacy-accounts)
+
+See https://github.com/wellcomecollection/aws-account-infrastructure for the Infrastructure as Code (IaC) that manages these accounts.
+
 ## `platform`
 
 **Number**: 760097843905  

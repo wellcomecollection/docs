@@ -9,6 +9,10 @@ This document lists the domain names used by the Wellcome Collection, and their 
 - [Collection Staff facing domains](#collection-staff-facing-domains)
 - [Internal routing domains](#internal-routing-domains)
 
+The following domains manage DNS for wellcomecollection.org:
+- [wellcometrust/wellcome-dns-infra](https://github.com/wellcometrust/wellcome-dns-infra): Top level DNS management including hosted zone delegation.
+- [wellcomecollection/platform-infrastructure](https://github.com/wellcomecollection/platform-infrastructure/tree/main/cloudfront/wellcomecollection.org): DNS management for the wellcomecollection.org domain.
+
 ### Collection user facing domains
 
 | Domain Name | Description | Served By | AWS Account | Example URL |
