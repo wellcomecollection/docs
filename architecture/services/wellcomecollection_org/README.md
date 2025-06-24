@@ -19,8 +19,6 @@ C4Container
 
     Person(user, "Website User", "A visitor to wellcomecollection.org")
 
-    System_Ext(prismic, "Prismic APIs", "External Headless CMS")
-
     System_Boundary(experience_account, "Experience AWS Account") {
         Container(cloudfront, "CloudFront", "AWS CDN", "Receives all user traffic and routes based on URL path.")
         ContainerDb(s3, "S3 Bucket", "AWS S3", "Serves static assets for the website.")
@@ -41,6 +39,10 @@ C4Container
     System_Boundary(identity_account, "Identity AWS Account") {
         Container(requesting_api, "Requesting API", "ECS Service")
         Container(identity_api, "Identity API", "ECS Service", "v1-api.account.wellcomecollection.org")
+    }
+
+    System_Boundary(public_internet, "Public Internet") {
+        System_Ext(prismic, "Prismic APIs", "External Headless CMS")
     }
 
     System_Boundary(digirati_account, "Digirati AWS Account") {
@@ -86,11 +88,15 @@ C4Container
     System_Boundary(auth0_platform, "Auth0 Platform") {
         Container(universal_login, "Universal Login Page", "Auth0 Hosted", "Handles login, sign-up, and forgot password flows.")
     }
-
-    System_Ext(sierra, "Sierra", "3rd Party Cloud-Hosted Library Management System", "The system of record for library members.")
+    
+    System_Boundary(public_internet, "Public Internet") {
+        System_Ext(sierra, "Sierra", "3rd Party Cloud-Hosted Library Management System", "The system of record for library members.")
+    }
 
     Rel(user, universal_login, "Uses", "HTTPS")
     Rel(universal_login, sierra, "Authenticates users against", "Custom Database Integration")
+    
+    UpdateLayoutConfig($c4ShapeInRow="1", $c4BoundaryInRow="1")
 ```
 
 See the following repositories for more details on the services described above:
