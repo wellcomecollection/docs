@@ -6,8 +6,9 @@ This document provides a high-level overview of the technical architecture of th
 
 - [AWS Accounts](./aws_accounts.md): Describes the structure and purpose of our AWS accounts, including the services hosted within each account.
 - [Domain Names](./domain_names.md): A comprehensive list of domain names used by Wellcome Collection, detailing their purpose and the services they are associated with.
-- [Partners, Collaborators and Third-Party Services](./partners.md): An overview of the external partners, collaborators, and third-party services that we integrate with.
-- [Services](./services/README.md): A detailed index of the services that constitute our digital platform, categorized by their function. We follow the C4 model for service documentation, as described in our [ADR for service documentation](../adr/c4_model_for_services.md).
+- [Services](./services/README.md): A detailed index of the services that constitute our digital platform, categorized by their function.
+- [Partners and Third-Party Services](./partners.md): An overview of the external partners, and third-party services that we integrate with.
+
 
 ## Architectural Decision Records (ADRs)
 
