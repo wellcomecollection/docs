@@ -10,11 +10,16 @@ C4Container
 
     System(client_app, "Client Application", "e.g., content_frontend, requesting IIIF manifests and images.")
 
+    System_Boundary(platform_account, "Platform AWS Account") {
+        Container(api_cloudfront, "CloudFront (iiif.wellcomecollection.org)", "AWS CDN", "Entry point for IIIF APIs.")
+    }
+
     System_Boundary(digirati_account, "Digirati AWS Account") {
         Container(dlcs, "Digital Library Cloud Services (DLCS)", "ECS Service", "Serves IIIF Presentation and Image APIs.")
     }
 
-    Rel(client_app, dlcs, "Requests manifests and images from", "HTTPS")
+    Rel(client_app, api_cloudfront, "Requests manifests and images from", "HTTPS")
+    Rel(api_cloudfront, dlcs, "Routes requests to", "HTTPS")
 ```
 
 DLCS services contain a number of complex subsystems, not described here. Further detail is available in the DLCS repository linked below.
