@@ -11,7 +11,7 @@ C4Container
     Person(user, "Website User", "A visitor to wellcomecollection.org")
 
     System_Boundary(experience_account, "Experience AWS Account") {
-        Container(cloudfront, "CloudFront", "AWS CDN", "Receives all user traffic and routes based on URL path.")
+        Container(cloudfront, "CloudFront (wellcomecollection.org)", "AWS CDN", "Receives all user traffic and routes based on URL path.")
         Container(alb, "Application Load Balancer", "AWS ALB", "Routes application traffic to the correct frontend service.")
         Container(identity_frontend, "Identity Frontend", "ECS Service", "Renders the '/account' pages.")
     }

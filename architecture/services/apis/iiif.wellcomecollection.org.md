@@ -22,7 +22,9 @@ C4Container
     Rel(api_cloudfront, dlcs, "Routes requests to", "HTTPS")
 ```
 
-DLCS services contain a number of complex subsystems, not described here. Further detail is available in the DLCS repository linked below.
+DLCS services contain a number of complex subsystems, not described here. 
+
+Further detail is available in the DLCS repository linked below.
 
 ## Accounts
 
