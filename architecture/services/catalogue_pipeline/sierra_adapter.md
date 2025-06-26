@@ -13,7 +13,7 @@ C4Container
     }
 
     System_Boundary(platform_account, "Platform AWS Account") {
-        Container(sierra_adapter, "sierra_adapter", "ECS Service", "Fetches data from Sierra and writes to the catalogue pipeline's Elasticsearch cluster.")
+        Container(sierra_adapter, "sierra_adapter", "ECS Service", "Fetches data from Sierra and writes to the Sierra VHS.")
         ContainerDb(sierra_vhs, "Sierra VHS", "DynamoDB/S3", "Stores Sierra data.")
         Container(sierra_indexer, "sierra_indexer", "AWS Lambda", "Indexes Sierra data into the reporting Elasticsearch cluster.")
         Container(catalogue_pipeline, "Catalogue Pipeline", "ECS Service(s)", "Updates to the catalogue pipeline.")

@@ -13,7 +13,7 @@ C4Container
     }
 
     System_Boundary(platform_account, "Platform AWS Account") {
-        Container(calm_adapter, "calm_adapter", "ECS Service", "Fetches data from Calm and writes to the catalogue pipeline's Elasticsearch cluster.")
+        Container(calm_adapter, "calm_adapter", "ECS Service", "Fetches data from Calm and writes to the Calm VHS.")
         ContainerDb(calm_vhs, "Calm VHS", "DynamoDB/S3", "Stores Calm data.")
         Container(calm_indexer, "calm_indexer", "AWS Lambda", "Indexes Calm data into the reporting Elasticsearch cluster.")
         Container(catalogue_pipeline, "Catalogue Pipeline", "ECS Service(s)", "Updates to the catalogue pipeline.")
