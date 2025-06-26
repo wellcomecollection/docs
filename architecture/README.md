@@ -8,6 +8,7 @@ This document provides a high-level overview of the technical architecture of th
 - [Domain Names](./domain_names.md): A comprehensive list of domain names used by Wellcome Collection, detailing their purpose and the services they are associated with.
 - [Services](./services/README.md): A detailed index of the services that constitute our digital platform, categorized by their function.
 - [Partners and Third-Party Services](./partners.md): An overview of the external partners, and third-party services that we integrate with.
+- [System Context Diagram](./system_context.md): A high-level system context diagram that illustrates the relationships between our systems and external entities.
 
 
 ## Architectural Decision Records (ADRs)

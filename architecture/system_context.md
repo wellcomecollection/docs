@@ -1,0 +1,113 @@
+# System Context
+
+This document provides an overview of the system context for Wellcome Collection's digital services, including the main components, their interactions, and the accounts they reside in.
+
+```plantuml
+@startuml
+!include https://raw.githubusercontent.com/plantuml-stdlib/C4-PlantUML/master/C4_Context.puml
+LAYOUT_WITH_LEGEND()
+
+' People
+' Person(staff_user, "Wellcome Collection Staff", "Accesses digital services and manages workflows.")
+' Person(external_contributor, "External Contributor")
+
+' Knowledge Graph
+Boundary(backend, "Backend") {
+    System_Boundary(catalogue_graph, "Knowledge Graph") {
+        System_Boundary(external_ontologies, "External Ontologies") {
+            System_Ext(loc_ontology, "Library of Congress", "External API", "Provides access to the Library of Congress ontology.")
+            System_Ext(mesh_ontology, "MeSH Ontology", "External API", "Provides access to the MeSH ontology.")
+            System_Ext(wikidata_ontology, "Wikidata Ontology", "External API", "Provides access to the Wikidata ontology.")
+        }
+        System_Boundary(catalogue_graph_data, "Catalogue Graph Data") {
+            SystemDb(catalogue_graph_db, "Catalogue Graph Database", "Graph Database", "Stores the catalogue knowledge graph data.")
+            System(catalogue_graph_pipeline, "Catalogue Graph Pipeline", "Data Pipeline", "Provides access to the catalogue knowledge graph.")
+        }
+    }
+
+    Rel(loc_ontology, catalogue_graph_pipeline, "Provides ontology data to")
+    Rel(mesh_ontology, catalogue_graph_pipeline, "Provides ontology data to")
+    Rel(wikidata_ontology, catalogue_graph_pipeline, "Provides ontology data to")
+    Rel(catalogue_graph_pipeline, catalogue_graph_db, "Reads/writes graph data to")
+
+    ' Catalogue Pipeline
+    System_Boundary(catalogue_pipeline, "Catalogue Pipeline") {
+        System_Boundary(catalogue_pipeline_sources, "Metadata Sources") {
+            System_Ext(calm, "Calm", "External API", "Provides access to Calm data.")
+            System_Ext(sierra, "Sierra", "External API", "Provides access to Sierra data.")
+            System_Ext(tei, "TEI", "External API", "Provides access to TEI data.")
+            System_Ext(mets, "METS", "External API", "Provides access to METS data.")
+            System_Ext(ebsco, "EBSCO", "External API", "Provides access to EBSCO data.")
+        }
+        System_Boundary(catalogue_pipeline_processes, "Data Pipeline") {
+            SystemDb(catalogue_search, "Catalogue Search", "Search Index", "Processes and prepares data for search indexing.")
+            System(catalogue_pipeline_sys, "Catalogue Pipeline", "Data Pipeline", "Ingests, processes, and links catalogue data from various sources.")
+        }
+    }
+
+    Rel(calm, catalogue_pipeline_sys, "Ingests data from")
+    Rel(sierra, catalogue_pipeline_sys, "Ingests data from")
+    Rel(tei, catalogue_pipeline_sys, "Ingests data from")
+    Rel(mets, catalogue_pipeline_sys, "Ingests data from")
+    Rel(ebsco, catalogue_pipeline_sys, "Ingests data from")
+    Rel(catalogue_pipeline_sys, catalogue_search, "Processes data for search indexing")
+
+    ' Digital Workflow
+    System_Boundary(digital_workflow, "Digital Workflow") {
+        System(goobi, "Goobi Workflow", "Workflow Management System", "Manages the digitisation workflow.")
+        System(archivematica, "Archivematica", "Digital Preservation System", "Handles digital preservation and archiving.")
+        System(storage_service, "Storage Service", "Digital Object Storage", "Stores and retrieves digital objects.")
+        System(dlcs, "Digital Library Cloud Services (DLCS)", "IIIF Image Service", "Serves IIIF images and manifests.")
+    }
+
+    Rel(goobi, storage_service, "Manages digitisation workflow with")
+    Rel(archivematica, storage_service, "Preserves and archives digital objects")
+    Rel(storage_service, dlcs, "Generates IIIF Manifests from images")
+
+    ' Content Pipeline
+    System_Boundary(editorial_content, "Editorial Content Pipeline") {
+        System_Ext(prismic, "Prismic", "Headless CMS", "Provides editorial staff with a content management system.")
+        SystemDb(content_search, "Content Search", "Search Index", "Indexes content for search.")
+        System(content_pipeline, "Content Pipeline", "Data Pipeline", "Delivers editorial content to the website and APIs.")
+    }
+
+    Rel(prismic, content_pipeline, "Provides editorial content to")
+    Rel(content_pipeline, content_search, "Indexes content for search")
+}
+Boundary(frontend, "Frontend") {
+    ' Collection APIs
+    System_Boundary(collection_apis, "Collection APIs") {
+        System_Boundary(catalogue_apis, "Catalogue APIs") {
+            System(catalogue_search_api, "Catalogue Search API", "REST API", "Provides access to catalogue search functionality.")
+            System(catalogue_items_api, "Catalogue Items API", "REST API", "Provides access to individual items in the catalogue.")
+            System(catalogue_data_api, "Catalogue Data API", "REST API", "Provides access to bulk data snapshots of the catalogue.")
+            System(catalogue_requesting_api, "Requesting API", "REST API", "Handles requests for physical items.")
+            System(data_api, "Data API", "REST API", "Provides access to static snapshots of the catalogue data.")
+        }
+        System(iiif_api, "IIIF Image API", "REST API", "Provides access to IIIF image resources.")
+        System(catalogue_content_api, "Catalogue Content API", "REST API", "Provides access to editorial content and catalogue data.")
+        System(catalogue_concepts_api, "Catalogue Concepts API", "REST API", "Provides access to concepts and subjects in the catalogue.")
+        System(identity_api, "Identity API", "REST API", "Provides access to user identity and authentication.")
+    }
+
+    Rel_U(iiif_api, dlcs, "Serves IIIF images from")
+    Rel_U(catalogue_search_api, catalogue_search, "Provides search functionality for")
+    Rel_U(catalogue_content_api, content_search, "Provides editorial content and catalogue data to")
+    Rel_U(catalogue_concepts_api, catalogue_search, "Provides concepts and subjects to")
+    Rel_U(catalogue_items_api, sierra, "Handles requests for items in the catalogue")
+    Rel_U(catalogue_items_api, catalogue_search_api, "Handles requests for items in the catalogue")
+    Rel_U(catalogue_requesting_api, sierra, "Handles requests for physical items")
+    Rel_U(catalogue_requesting_api, catalogue_search_api, "Handles requests for physical items")
+    Rel_U(data_api, catalogue_pipeline_sys, "Provides bulk data snapshots of the catalogue")
+
+    System_Boundary(identity_frontend, "Identity Frontend") {
+        System_Ext(account_frontend, "Account Frontend", "Web Application", "Provides user account management and login pages.")
+    }
+}
+
+Person(public_user, "Public User", "Accesses digital content and services.")
+
+Lay_L(backend, frontend)
+
+@enduml
+```

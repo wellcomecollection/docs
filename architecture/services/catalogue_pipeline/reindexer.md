@@ -20,7 +20,7 @@ C4Container
 
     Rel(reindex_worker, source_vhs, "Reads records to be reindexed", "HTTP/Download")
     Rel(reindex_worker, transformer, "Informs transformer of records to be reindexed", "HTTP/Download")
-    Rel(transformer, source_vhs  "Retrieves and transforms source data", "HTTP/Download")
+    Rel(transformer, source_vhs,  "Retrieves and transforms source data", "HTTP/Download")
 
     UpdateLayoutConfig($c4ShapeInRow="2", $c4BoundaryInRow="5")
 ```

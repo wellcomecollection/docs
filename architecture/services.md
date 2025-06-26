@@ -2,6 +2,8 @@
 
 Our services can be grouped into several categories based on their functionality and purpose. Below is a list of the main services we maintain, along with their primary functions:
 
+See also the [system context diagram](./system_context.md) for a high-level overview of how these services interact with each other and external systems.
+
 ## Frontend Services
 
 Services that are directly related to the Wellcome Collection website and its user-facing features.
