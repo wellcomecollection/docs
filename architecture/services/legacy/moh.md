@@ -32,12 +32,12 @@ C4Container
     UpdateLayoutConfig($c4ShapeInRow="2", $c4BoundaryInRow="1")
 ```
 
-## Accounts
-
-- [digirati](../../aws_accounts.md#digirati)
-
 ## Repositories
 
 See the following repositories for more details on the services described above:
 
 - [wellcomecollection/londons-pulse](https://github.com/wellcomecollection/londons-pulse)
+
+## Accounts
+
+- [digirati](../../aws_accounts.md#digirati)

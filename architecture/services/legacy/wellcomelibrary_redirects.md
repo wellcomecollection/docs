@@ -31,6 +31,8 @@ C4Container
 
 ## Repositories
 
+See the following repositories for more details on the services described above:
+
 - [wellcomecollection/wellcomelibrary.org](https://github.com/wellcomecollection/wellcomelibrary.org)
 
 ## Accounts
