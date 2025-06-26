@@ -3,17 +3,24 @@
 LAYOUT_WITH_LEGEND()
 
 ' People
-' Person(staff_user, "Wellcome Collection Staff", "Accesses digital services and manages workflows.")
-' Person(external_contributor, "External Contributor")
+Person(staff_user, "Wellcome Collection Staff", "Accesses digital services and manages workflows.")
+Person(external_contributor, "External Contributor")
+Person(public_user, "Public User", "Accesses digital content and services.")
 
-' Knowledge Graph
+' Backend services, including data processing and storage
 Boundary(backend, "Backend") {
+    ' Knowledge Graph
     System_Boundary(catalogue_graph, "Knowledge Graph") {
         System_Boundary(external_ontologies, "External Ontologies") {
             System_Ext(loc_ontology, "Library of Congress", "External API", "Provides access to the Library of Congress ontology.")
             System_Ext(mesh_ontology, "MeSH Ontology", "External API", "Provides access to the MeSH ontology.")
             System_Ext(wikidata_ontology, "Wikidata Ontology", "External API", "Provides access to the Wikidata ontology.")
         }
+
+        Rel(external_contributor, loc_ontology, "Contributes to the Library of Congress ontology.")
+        Rel(external_contributor, mesh_ontology, "Contributes to the MeSH ontology.")
+        Rel(external_contributor, wikidata_ontology, "Contributes to the Wikidata ontology.")
+
         System_Boundary(catalogue_graph_data, "Catalogue Graph Data") {
             SystemDb(catalogue_graph_db, "Catalogue Graph Database", "Graph Database", "Stores the catalogue knowledge graph data.")
             System(catalogue_graph_pipeline, "Catalogue Graph Pipeline", "Data Pipeline", "Provides access to the catalogue knowledge graph.")
@@ -34,11 +41,20 @@ Boundary(backend, "Backend") {
             System_Ext(mets, "METS", "External API", "Provides access to METS data.")
             System_Ext(ebsco, "EBSCO", "External API", "Provides access to EBSCO data.")
         }
+
+        Rel(staff_user, calm, "Manages Calm data.")
+        Rel(staff_user, sierra, "Manages Sierra data.")
+        Rel(staff_user, tei, "Manages TEI data.")
+        Rel(staff_user, ebsco, "Manages EBSCO data.")
+
         System_Boundary(catalogue_pipeline_processes, "Data Pipeline") {
             SystemDb(catalogue_search, "Catalogue Search", "Search Index", "Processes and prepares data for search indexing.")
             System(catalogue_pipeline_sys, "Catalogue Pipeline", "Data Pipeline", "Ingests, processes, and links catalogue data from various sources.")
         }
     }
+
+    Rel(catalogue_graph_pipeline, catalogue_pipeline_sys, "Provides graph data to")
+    Rel(catalogue_pipeline_sys, catalogue_graph_db, "Reads/writes processed data to")
 
     Rel(calm, catalogue_pipeline_sys, "Ingests data from")
     Rel(sierra, catalogue_pipeline_sys, "Ingests data from")
@@ -59,6 +75,9 @@ Boundary(backend, "Backend") {
     Rel(archivematica, storage_service, "Preserves and archives digital objects")
     Rel(storage_service, dlcs, "Generates IIIF Manifests from images")
 
+    Rel(staff_user, goobi, "Manages digitisation workflow")
+    Rel(staff_user, archivematica, "Manages digital preservation and archiving")
+
     ' Content Pipeline
     System_Boundary(editorial_content, "Editorial Content Pipeline") {
         System_Ext(prismic, "Prismic", "Headless CMS", "Provides editorial staff with a content management system.")
@@ -68,8 +87,17 @@ Boundary(backend, "Backend") {
 
     Rel(prismic, content_pipeline, "Provides editorial content to")
     Rel(content_pipeline, content_search, "Indexes content for search")
+
+    Rel(staff_user, prismic, "Manages editorial content")
 }
+
+System_Ext(auth0, "Auth0", "Authentication Service", "Provides user authentication and identity management.")
+
+Rel_L(auth0, sierra, "Proxies user authentication for")
+
+' Frontend services, including APIs and user interfaces
 Boundary(frontend, "Frontend") {
+
     ' Collection APIs
     System_Boundary(collection_apis, "Collection APIs") {
         System_Boundary(catalogue_apis, "Catalogue APIs") {
@@ -85,6 +113,8 @@ Boundary(frontend, "Frontend") {
         System(identity_api, "Identity API", "REST API", "Provides access to user identity and authentication.")
     }
 
+    Rel_U(auth0, identity_api, "Provides user authentication and identity management")
+
     Rel_U(iiif_api, dlcs, "Serves IIIF images from")
     Rel_U(catalogue_search_api, catalogue_search, "Provides search functionality for")
     Rel_U(catalogue_content_api, content_search, "Provides editorial content and catalogue data to")
@@ -95,12 +125,24 @@ Boundary(frontend, "Frontend") {
     Rel_U(catalogue_requesting_api, catalogue_search_api, "Handles requests for physical items")
     Rel_U(data_api, catalogue_pipeline_sys, "Provides bulk data snapshots of the catalogue")
 
-    System_Boundary(identity_frontend, "Identity Frontend") {
-        System_Ext(account_frontend, "Account Frontend", "Web Application", "Provides user account management and login pages.")
+    System_Boundary(wellcomecollection_org, "wellcomecollection.org") {
+        System(identity_frontend, "Identity Frontend", "Web Application", "Provides user account management and login pages.")
+        System(content_frontend, "Content Frontend", "Web Application", "Provides user-facing content and search functionality.")
     }
-}
 
-Person(public_user, "Public User", "Accesses digital content and services.")
+    Rel_U(identity_frontend, identity_api, "Provides user account management and login pages")
+    Rel_U(content_frontend, catalogue_search_api, "Provides user-facing content and search functionality")
+    Rel_U(content_frontend, catalogue_content_api, "Provides editorial content and catalogue data to")
+    Rel_U(content_frontend, catalogue_concepts_api, "Provides concepts and subjects to")
+    Rel_U(content_frontend, catalogue_items_api, "Handles requests for items in the catalogue")
+    Rel_U(content_frontend, catalogue_requesting_api, "Handles requests for physical items")
+    Rel_U(content_frontend, prismic, "Provides editorial content to")
+
+    ' Public User Interactions
+    Rel_U(public_user, iiif_api, "Accesses IIIF images and manifests through the website")
+    Rel_U(public_user, content_frontend, "Accesses digital content and services through the website")
+    Rel_U(public_user, identity_frontend, "Manages user accounts and authentication through the website")
+}
 
 Lay_L(backend, frontend)
 
