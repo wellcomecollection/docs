@@ -4,6 +4,8 @@ Our services can be grouped into several categories based on their functionality
 
 Use the [service template](./template.md) to add a new service.
 
+See also the [system context diagram](../system_context.md) for a high-level overview of how these services interact with each other and external systems.
+
 ## Front-end Services (wellcomecollection.org)
 
 Services that are directly related to the Wellcome Collection website and its user-facing features.
