@@ -14,7 +14,7 @@ C4Container
 
     System_Boundary(storage_account, "Storage AWS Account") {
         Container_Ext(storage_s3, "Storage S3 Bucket", "S3", "Stores digital assets for ingest.")
-        Container_Ext(storage_service, "Storage Service API", "API Gateway", "Notifies DLCS of new assets.")
+        Container_Ext(storage_service, "Storage Service", "ECS Service", "Notifies DLCS of new assets.")
     }
 
 
