@@ -15,7 +15,7 @@ C4Container
     }
 
     System_Boundary(platform_account, "Platform AWS Account") {
-        Container(mets_adapter, "mets_adapter", "ECS Service", "Fetches data from the Storage service and writes to the METS VHS.")
+        Container(mets_adapter, "METS Adapter", "ECS Service", "Fetches data from the Storage service and writes to the METS VHS.")
         ContainerDb(mets_vhs, "METS VHS", "DynamoDB/S3", "Stores METS data.")
         Container(catalogue_pipeline, "Catalogue Pipeline", "ECS Service(s)", "Updates to the catalogue pipeline.")
     }

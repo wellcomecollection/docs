@@ -2,7 +2,9 @@
 
 ## Architecture
 
-Adapter for ingesting data from the Sierra library management system.
+Adapter for ingesting data from the Sierra library management system. It fetches data from Sierra, writes it to the Sierra VHS, and indexes it into the reporting Elasticsearch cluster.
+
+It has many constituent subsystems required to assemble the data into a form suitable for indexing, described in more detail in the repository link below.
 
 ```mermaid
 C4Container

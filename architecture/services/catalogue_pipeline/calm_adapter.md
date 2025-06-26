@@ -2,7 +2,7 @@
 
 ## Architecture
 
-Adapter for ingesting data from the Calm archive management system.
+Adapter for ingesting data from the Calm archive management system. It fetches data from Calm, writes it to the Calm VHS, and indexes it into the reporting Elasticsearch cluster.
 
 ```mermaid
 C4Container

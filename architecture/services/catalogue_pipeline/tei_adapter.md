@@ -2,7 +2,9 @@
 
 ## Architecture
 
-Adapter for ingesting TEI XML data.
+Adapter for ingesting Text Encoding Initiative (TEI) XML data. It fetches data from the TEI GitHub repository, writes it to the TEI Adapter Store, and indexes it into the reporting Elasticsearch cluster.
+
+[TEI](https://tei-c.org/) attempts to provide consistent cataloguing descriptions that are responsive to the range of languages, layouts and scribal practices on display in these manuscript materials.
 
 ```mermaid
 C4Container
