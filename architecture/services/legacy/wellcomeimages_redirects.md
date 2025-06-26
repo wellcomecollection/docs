@@ -11,12 +11,11 @@ C4Container
     Person(user, "Website User", "A visitor to https://wellcomeimages.org")
 
     System_Boundary(experience_account, "Experience AWS Account") {
-                Container(wellcomecollection_cloudfront, "CloudFront (wellcomecollection.org)", "AWS CDN", "Receives all user traffic and routes based on URL path.")
+        Container(wellcomecollection_cloudfront, "CloudFront (wellcomecollection.org)", "AWS CDN", "Receives all user traffic and routes based on URL path.")
 
         System_Boundary(cloudfront, "Wellcome Images CloudFront") {
-
-        Container(wellcomeimages_cloudfront, "CloudFront (wellcomeimages.org)", "AWS CDN", "Routes API requests.")
-        Container(wellcomeimages_cloudfront_functions, "Redirect Lambda", "Lambda@Edge", "Generates request redirects.")
+            Container(wellcomeimages_cloudfront, "CloudFront (wellcomeimages.org)", "AWS CDN", "Routes API requests.")
+            Container(wellcomeimages_cloudfront_functions, "Redirect Lambda", "Lambda@Edge", "Generates request redirects.")
         }
     }
 
