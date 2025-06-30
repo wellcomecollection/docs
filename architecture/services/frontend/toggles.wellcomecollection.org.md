@@ -13,6 +13,8 @@ C4Container
     System_Boundary(experience_account, "Experience AWS Account") {
         Container(main_cloudfront, "CloudFront (wellcomecollection.org)", "AWS CDN", "Main entry point for the website.")
         Container(alb, "Application Load Balancer", "AWS ALB", "Routes application traffic.")
+        Container(content_frontend, "Content Frontend", "Node.js App", "Serves website content and fetches toggles.")
+        Container(toggles_cloudfront, "CloudFront (toggles)", "AWS CDN", "Distributes toggle files.")
         ContainerDb(toggles_s3, "S3 Bucket (toggles)", "AWS S3", "Hosts the static JSON file of toggles.")
     }
 
