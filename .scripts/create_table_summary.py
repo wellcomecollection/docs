@@ -122,7 +122,7 @@ def print_rfc_table(rfcs, rfcs_directory):
         summary = rfc["summary"]
         next_line = rfc["next_line"]
         last_modified = rfc["last_modified"]
-        readme_link = f"[{rfc_id}]({os.path.join(rfcs_directory, rfc_id, 'README.md')})"
+        readme_link = f"[{rfc_id}]({os.path.join(rfc_id, 'README.md')})"
         print(f"| {readme_link} | {summary} | {next_line} | {last_modified} |")
 
 def main():
