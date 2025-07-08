@@ -20,8 +20,8 @@ The main focus for this work to date has been Stories, but other content types c
 We need to:
 
 - Account for all the possible Addressable Prismic content types
-- Retrieve the data to display the previews with as few requests as possible
-- Retrieve only the data necessary to display the previews
+- Retrieve the data to display the Work previews with as few requests as possible
+- Retrieve only the data necessary to display the Work previews
 - Keep using Prismic's preview functionality, so we will still render the main content of the page using Prismic's API
 
 We already have all the [Addressable content types in an Elasticsearch index, which we use for the 'all' search](https://github.com/wellcomecollection/docs/blob/main/rfcs/062-content-api-all-search/README.md).
@@ -149,7 +149,7 @@ Its response will return:
 
 ## Integration with the front-end
 
-The Work previews on the content pages are considered an enhancement and shouldn't prevent the main page content from rendering. A call to the new endpoint for the preview data will be made client-side. This will occur on page load if the page includes the Works 'recap' component; otherwise, it will be triggered on the first hover of a Works link. The data will then be available for all previews.
+The Work previews on the content pages are considered an enhancement and shouldn't prevent the main page content from rendering. A call to the new endpoint for the Work preview data will be made client-side. This will occur on page load if the page includes the Works 'recap' component; otherwise, it will be triggered on the first hover of a Works link. The data will then be available for all Work previews.
 
 ## Alternatives
 
