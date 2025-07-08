@@ -35,7 +35,7 @@ We already have all the [Addressable content types in an Elasticsearch index, wh
 
 ### Proposed model for Work data
 
-We would add a `works` property to the `display` property of each of the indexed Addressables. The `works` property would contain an array of Works. Each Work would have the following properties taken from the Catalogue API response for the Work:
+We would add a `linkedWorks` property to the `display` property of each of the indexed Addressables. The `linkedWorks` property would contain an array of Works. Each Work would have the following properties taken from the Catalogue API response for the Work:
 
 - `id`: `work.id`
 - `title`: `work.title`
@@ -68,7 +68,7 @@ Its response will return:
   "id": "Z-FyfxEAACIAwNl_",
   "uid": "waking-the-dead",
   "title": "Waking the dead",
-  "works": [
+  "linkedWorks": [
     {
       "id": "a2239muq",
       "title": "Ueber den Krebs der Nasenhöhle ... / vorgelegt von Hermann Wolter.",
@@ -77,7 +77,7 @@ Its response will return:
       "date": "1900",
       "mainContributor": "Wolter, Hermann (Wilhelm Victor Hermann), 1868-",
       "workType": "Books",
-      "isOnline": "true",
+      "isOnline": "true"
     }
   ]
 }
