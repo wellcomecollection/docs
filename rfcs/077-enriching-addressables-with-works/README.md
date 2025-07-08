@@ -26,7 +26,7 @@ We need to:
 
 We already have all the [Addressable content types in an Elasticsearch index, which we use for the 'all' search](https://github.com/wellcomecollection/docs/blob/main/rfcs/062-content-api-all-search/README.md).
 
-- We have an `https://api.wellcomecollection.org/content/v0/all/` endpoint which returns an ordered list of Addressable content types.
+- We have an `https://api.wellcomecollection.org/content/v0/all/` endpoint which returns a list of Addressable content types.
 
 ## Proposal
 
