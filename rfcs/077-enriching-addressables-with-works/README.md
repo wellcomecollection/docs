@@ -30,7 +30,7 @@ We already have all the [Addressable content types in an Elasticsearch index, wh
 
 ## Proposal
 
-- Augment the Addressable content types with data from any Works they reference
+- Augment the Addressable content types in the elastic search index with data from any Works they reference
 - Create a new endpoint for retrieving individual Addressable items
 
 ### Proposed model for Work data
