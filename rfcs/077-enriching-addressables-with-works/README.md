@@ -48,6 +48,14 @@ We would add a `works` property to the `display` property of each of the indexed
 
 These are sufficient to render the desired Works previews.
 
+#### Featured in article card:
+
+<img src="./assets/featured-in-article-card.png" alt="Design for featured in article card" />
+
+#### Popup preview card:
+
+<img src="./assets/popup-preview-card.png" alt="Design for popup preview card" />
+
 ### New endpoint
 
 The new endpoint will be `https://api.wellcomecollection.org/content/v0/all/{id}`
