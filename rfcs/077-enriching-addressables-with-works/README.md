@@ -35,16 +35,16 @@ We already have all the [Addressable content types in an Elasticsearch index, wh
 
 ### Proposed model for Work data
 
-We would add a `works` property to the `display` property of each of the indexed Addressables. The `works` property would contain an array of Works. Each Work would have the following data taken directly from the Catalogue API response for a Work:
+We would add a `works` property to the `display` property of each of the indexed Addressables. The `works` property would contain an array of Works. Each Work would have the following properties taken from the Catalogue API response for the Work:
 
-- `id`
-- `title`
-- `type`
-- `thumbnail`
-- `production`
-- `contributors`
-- `workType`
-- `availabilities`
+- `id`: `work.id`
+- `title`: `work.title`
+- `type`: `work.type`
+- `thumbnailUrl`: `work.thumbnail.url`
+- `date`: `work.production.flatMap(productionEvent => productionEvent.dates.map(date => date.label))[0]`
+- `mainContributor`: `work.contributors.find(contributor => contributor.primary)?.agent.label`
+- `workType`: `work.workType.label`
+- `isOnline`: `(work.availabilities ?? []).some(({ id }) => id === 'online')`
 
 These are sufficient to render the desired Works previews.
 
@@ -73,83 +73,11 @@ Its response will return:
       "id": "a2239muq",
       "title": "Ueber den Krebs der Nasenhöhle ... / vorgelegt von Hermann Wolter.",
       "type": "Work",
-      "thumbnail": {
-        "url": "https://iiif.wellcomecollection.org/thumbs/b30598977_0001.jp2/full/!200,200/0/default.jpg",
-        "license": {
-          "id": "inc",
-          "label": "In copyright",
-          "url": "http://rightsstatements.org/vocab/InC/1.0/",
-          "type": "License"
-        }
-      },
-      "production": [
-        {
-          "label": "Leipzig : Bruno Georgi, 1900.",
-          "agents": [
-            {
-              "label": "Bruno Georgi",
-              "type": "Agent"
-            }
-          ],
-          "dates": [
-            {
-              "label": "1900",
-              "type": "Period"
-            }
-          ],
-          "type": "ProductionEvent",
-          "places": [
-            {
-              "label": "Leipzig",
-              "type": "Place"
-            }
-          ]
-        }
-      ],
-      "contributors": [
-        {
-          "agent": {
-            "id": "eq9qvtwy",
-            "identifiers": [
-              {
-                "identifierType": {
-                  "id": "label-derived",
-                  "label": "Identifier derived from the label of the referent",
-                  "type": "IdentifierType"
-                },
-                "value": "wolter, hermann (wilhelm victor hermann), 1868-",
-                "type": "Identifier"
-              }
-            ],
-            "label": "Wolter, Hermann (Wilhelm Victor Hermann), 1868-",
-            "type": "Person"
-          },
-          "roles": [],
-          "primary": true,
-          "type": "Contributor"
-        },
-        {
-          "agent": {
-            "id": "un9788h3",
-            "identifiers": [
-              {
-                "identifierType": {
-                  "id": "lc-names",
-                  "label": "Library of Congress Name authority records",
-                  "type": "IdentifierType"
-                },
-                "value": "n85086716",
-                "type": "Identifier"
-              }
-            ],
-            "label": "Universität Leipzig (1409-1953)",
-            "type": "Organisation"
-          },
-          "roles": [],
-          "primary": false,
-          "type": "Contributor"
-        }
-      ]
+      "thumbnailUrl": "https://iiif.wellcomecollection.org/thumbs/b30598977_0001.jp2/full/!200,200/0/default.jpg",
+      "date": "1900",
+      "mainContributor": "Wolter, Hermann (Wilhelm Victor Hermann), 1868-",
+      "workType": "Books",
+      "isOnline": "true",
     }
   ]
 }
