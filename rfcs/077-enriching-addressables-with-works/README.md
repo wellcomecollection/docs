@@ -33,8 +33,45 @@ We already have all the [Addressable content types in an Elasticsearch index, wh
 - Augment the Addressable content types in the elastic search index with data from any Works they reference
 - Create a new endpoint for retrieving individual Addressable items
 
-### Proposed model for Work data
+```mermaid
+graph TD
+    subgraph "Index Time"
+        A["Prismic API<br/><small>Addressable content<br/><small>e.g. article, event, page</small></small>"] --> B[Content pipeline<br /><small>Addressables Indexer</small>]
+        C["Catalogue API<br/><small>Works data for each linked Work<br />including contributors and production<br/><small>api.wellcomecollection.org/catalogue/v2/works/{workId}?include=contributors,production</small></small>"] --> B
+        B --> D["Elasticsearch<br/><small>Enriched addressable content<br/>with Work preview data in linkedWorks array</small>"]
+    end
 
+    subgraph "Retrieval Time"
+        E["Content API<br/><small><small>api.wellcomecollection.org/content/v0/all/{prismicId}</small></small>"] --> D
+        E --> F["Response<br/><small>Addressable<br/>with linkedWorks array</small>"]
+        F --> G["Frontend<br/><small>Render Works previews</small>"]
+    end
+
+    style A fill:#e1f5fe
+    style C fill:#fff3e0
+    style D fill:#f3e5f5
+    style E fill:#fff3e0
+    style F fill:#e8f5e8
+    style G fill:#e8f5e8
+```
+
+### Data Flow Summary
+
+#### Index Time
+
+1. **Prismic Content** → Extract Work links from Addressable content types
+2. **Catalogue API** → Fetch Works data for each linked Work ID
+3. **Data Transformation** → Transform addressable and convert Works data to preview format (linkedWorks)
+4. **Elasticsearch** → Store transformed Addressable document enriched with Works previews data
+
+#### Retrieval Time
+
+1. **Frontend** → Request specific Addressable content via `/content/v0/all/{id}` clientside
+2. **Content API** → Query Elasticsearch for enriched document
+3. **Response** → Return Addressable with Works preview data in single call
+4. **Frontend Rendering** → Display Works previews
+
+### Proposed model for Work data
 We would add a `linkedWorks` property to the `display` property of each of the indexed Addressables. The `linkedWorks` property would contain an array of Works. Each Work would have the following properties populated from the Catalogue API response for the Work:
 
 - `id`: `work.id`
