@@ -35,7 +35,7 @@ We already have all the [Addressable content types in an Elasticsearch index, wh
 
 ### Proposed model for Work data
 
-We would add a `linkedWorks` property to the `display` property of each of the indexed Addressables. The `linkedWorks` property would contain an array of Works. Each Work would have the following properties taken from the Catalogue API response for the Work:
+We would add a `linkedWorks` property to the `display` property of each of the indexed Addressables. The `linkedWorks` property would contain an array of Works. Each Work would have the following properties populated from the Catalogue API response for the Work:
 
 - `id`: `work.id`
 - `title`: `work.title`
@@ -55,6 +55,19 @@ These are sufficient to render the desired Works previews.
 #### Popup preview card:
 
 <img src="./assets/popup-preview-card.png" alt="Design for popup preview card" />
+
+#### Query object
+
+We would add an array of the worksIds to the query object to make it possible to look up which Prismic content references a Work.
+
+This will help us with updating the content should a work change and allow us to link from works to Prismic content should we wish to in the future.
+
+```
+ query {
+  ...
+  linkedWorks?: string[]
+ }
+```
 
 ### New endpoint
 
