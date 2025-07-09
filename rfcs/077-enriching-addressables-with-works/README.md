@@ -36,15 +36,15 @@ We already have all the [Addressable content types in an Elasticsearch index, wh
 ```mermaid
 graph TD
     subgraph "Index Time"
-        A["Prismic API<br/><small>Addressable content<br/><small>e.g. article, event, page</small></small>"] --> B[Content pipeline<br /><small>Addressables Indexer</small>]
-        C["Catalogue API<br/><small>Works data for each linked Work<br />including contributors and production<br/><small>api.wellcomecollection.org/catalogue/v2/works/{workId}?include=contributors,production</small></small>"] --> B
-        B --> D["Elasticsearch<br/><small>Enriched addressable content<br/>with Work preview data in linkedWorks array</small>"]
+        A["Prismic API<br/>Addressable content"] --> B["Content pipeline<br/>Addressables Indexer"]
+        C["Catalogue API<br/>Works data with<br/>contributors & production"] --> B
+        B --> D["Elasticsearch<br/>Enriched addressables<br/>with linkedWorks"]
     end
 
     subgraph "Retrieval Time"
-        E["Content API<br/><small><small>api.wellcomecollection.org/content/v0/all/{prismicId}</small></small>"] --> D
-        E --> F["Response<br/><small>Addressable<br/>with linkedWorks array</small>"]
-        F --> G["Frontend<br/><small>Render Works previews</small>"]
+        E["Content API<br/>/content/v0/all/{id}"] --> D
+        E --> F["Response<br/>Addressable<br/>with linkedWorks array"]
+        F --> G["Frontend<br/>Render Works previews"]
     end
 
     style A fill:#e1f5fe
@@ -72,6 +72,7 @@ graph TD
 4. **Frontend Rendering** → Display Works previews
 
 ### Proposed model for Work data
+
 We would add a `linkedWorks` property to the `display` property of each of the indexed Addressables. The `linkedWorks` property would contain an array of Works. Each Work would have the following properties populated from the Catalogue API response for the Work:
 
 - `id`: `work.id`
