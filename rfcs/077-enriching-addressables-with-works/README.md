@@ -96,9 +96,7 @@ These are sufficient to render the desired Works previews.
 
 #### Query object
 
-We would add an array of the worksIds to the query object to make it possible to look up which Prismic content references a Work.
-
-This will help us with updating the content should a work change and allow us to link from works to Prismic content should we wish to in the future.
+We would add an array of the worksIds to the query object to make it possible to look up which Addressable content references a Work. This would allow us to determine if any are impacted by a catalogue Work change and would need need updating.
 
 ```
  query {
