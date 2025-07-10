@@ -33,31 +33,20 @@ We already have all the [Addressable content types in an Elasticsearch index, wh
 - Augment the Addressable content types in the elastic search index with data from any Works they reference
 - Create a new endpoint for retrieving individual Addressable items
 
+### Data Flow Summary
+
+#### Index Time
+
 ```mermaid
 graph TD
-    subgraph "Index Time"
-        A["Prismic API<br/>Addressable content"] --> B["Content pipeline<br/>Addressables Indexer"]
-        C["Catalogue API<br/>Works data with<br/>contributors & production"] --> B
-        B --> D["Elasticsearch<br/>Enriched addressables<br/>with linkedWorks"]
-    end
-
-    subgraph "Retrieval Time"
-        E["Content API<br/>/content/v0/all/{id}"] --> D
-        E --> F["Response<br/>Addressable<br/>with linkedWorks array"]
-        F --> G["Frontend<br/>Render Works previews"]
-    end
+    A["Prismic API<br/>Addressable content"] --> B["Content pipeline<br/>Addressables Indexer"]
+    C["Catalogue API<br/>Works data with<br/>contributors & production"] --> B
+    B --> D[("Elasticsearch<br/>Enriched addressables<br/>with linkedWorks")]
 
     style A fill:#e1f5fe
     style C fill:#fff3e0
     style D fill:#f3e5f5
-    style E fill:#fff3e0
-    style F fill:#e8f5e8
-    style G fill:#e8f5e8
 ```
-
-### Data Flow Summary
-
-#### Index Time
 
 1. **Prismic Content** → Extract Work links from Addressable content types
 2. **Catalogue API** → Fetch Works data for each linked Work ID
@@ -65,6 +54,18 @@ graph TD
 4. **Elasticsearch** → Store transformed Addressable document enriched with Works previews data
 
 #### Retrieval Time
+
+```mermaid
+graph TD
+    E["Content API<br/>/content/v0/all/{id}"] --> D[("Elasticsearch<br/>Enriched addressables<br/>with linkedWorks")]
+    E --> F["Response<br/>Addressable<br/>with linkedWorks array"]
+    F --> G["Frontend<br/>Render Works previews"]
+
+    style D fill:#f3e5f5
+    style E fill:#fff3e0
+    style F fill:#e8f5e8
+    style G fill:#e8f5e8
+```
 
 1. **Frontend** → Request specific Addressable content via `/content/v0/all/{id}` clientside
 2. **Content API** → Query Elasticsearch for enriched document
@@ -75,14 +76,16 @@ graph TD
 
 We would add a `linkedWorks` property to the `display` property of each of the indexed Addressables. The `linkedWorks` property would contain an array of Works. Each Work would have the following properties populated from the Catalogue API response for the Work:
 
-- `id`: `work.id`
-- `title`: `work.title`
-- `type`: `work.type`
-- `thumbnailUrl`: `work.thumbnail.url`
-- `date`: `work.production.flatMap(productionEvent => productionEvent.dates.map(date => date.label))[0]`
-- `mainContributor`: `work.contributors.find(contributor => contributor.primary)?.agent.label`
-- `workType`: `work.workType.label`
-- `isOnline`: `(work.availabilities ?? []).some(({ id }) => id === 'online')`
+| Linked work | Work |
+|-------------|------|
+| `id` | `work.id` |
+| `title` | `work.title` |
+| `type` | `work.type` |
+| `thumbnailUrl` | `work.thumbnail.url` |
+| `date` | `work.production.flatMap(productionEvent => productionEvent.dates.map(date => date.label))[0]` |
+| `mainContributor` | `work.contributors.find(contributor => contributor.primary)?.agent.label` |
+| `workType` | `work.workType.label` |
+| `isOnline` | `(work.availabilities ?? []).some(({ id }) => id === 'online')` |
 
 These are sufficient to render the desired Works previews.
 
