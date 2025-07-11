@@ -113,6 +113,7 @@ To support the `linkedWorks` functionality, we need to update the [current addre
 #### Current mapping structure
 
 The current addressables index has the following structure:
+
 - `display`: object with `enabled: false` (stored but not searchable) - this will contain the enriched Works data for the response
 - `query`: object with searchable fields like `type`, `title`, `contributors`, `description`, `body`
 
@@ -133,6 +134,7 @@ query: {
 ```
 
 This change will:
+
 1. **Enable efficient queries** to find all addressables that reference a specific Work ID
 2. **Support the update mechanism** described in the "Handling changes to Works" section
 3. **Allow reverse linking** for future features like "articles related to this work"
@@ -174,15 +176,15 @@ How we decide where the 'recap' component lives is tbc. We know we want it on al
 
 ## Handling changes to Works
 
-We will need a mechanism to update the Work data whenever a work is amended or deleted. This will require the following changes:
+**We will reindex all addressables on a daily basis (if this proves to be performant), which means the Work data would get updated on the same schedule.**
+
+Should this create performance issues in the future, we would replace this with a mechanism to update the Work data whenever a work is amended or deleted. This would require the following changes:
 
 - The catalogue pipeline to provide a way to publish changed work identifiers (probably SNS) so that this can be listened to by a service that will update the relevant addressables.
 
 - A new service that, when given a changed work identifier, will look up which addressables need updating and perform that update, i.e. re-indexing the addressable document which includes re-fetching and transforming the work data.
 
 It will be possible to look up which addressables are impacted by a catalogue work change because we will be adding the work IDs to query object of the addressables in the index.
-
-
 
 ### Work Update Flow
 
