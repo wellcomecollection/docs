@@ -108,6 +108,39 @@ We would add an array of the worksIds to the query object to make it possible to
  }
 ```
 
+### Index mapping changes
+
+To support the `linkedWorks` functionality, we need to update the [current addressables index mapping](https://github.com/wellcomecollection/content-api/blob/main/pipeline/src/indices/addressables.ts) to include a new `linkedWorks` field in the `query` object.
+
+#### Current mapping structure
+
+The current addressables index has the following structure:
+- `display`: object with `enabled: false` (stored but not searchable) - this will contain the enriched Works data for the response
+- `query`: object with searchable fields like `type`, `title`, `contributors`, `description`, `body`
+
+#### Proposed mapping update
+
+We need to add a `linkedWorks` field to the `query` properties to enable efficient lookup of addressables that reference specific Works:
+
+```typescript
+// Addition to the existing query.properties in addressables.ts
+query: {
+  properties: {
+    // ...existing fields (type, title, contributors, description, body)
+    linkedWorks: {
+      type: 'keyword',
+    },
+  },
+},
+```
+
+This change will:
+1. **Enable efficient queries** to find all addressables that reference a specific Work ID
+2. **Support the update mechanism** described in the "Handling changes to Works" section
+3. **Allow reverse linking** for future features like "articles related to this work"
+
+The `linkedWorks` field will contain an array of Work IDs extracted from the Prismic content during indexing. When a Work is updated in the catalogue, we can query this field to find all affected addressables that need re-indexing.
+
 ### New endpoint
 
 The new endpoint will be `https://api.wellcomecollection.org/content/v0/all/{id}`
@@ -143,13 +176,42 @@ How we decide where the 'recap' component lives is tbc. We know we want it on al
 
 ## Handling changes to Works
 
-We will need a mechanism to update the Work data whenever a work is amended or deleted. This will need its own RFC, bit broadly speaking:
+We will need a mechanism to update the Work data whenever a work is amended or deleted. This will require the following changes:
 
-- We will require the catalogue pipeline to provide a way to publish changed work identifiers (probably SNS) so that this can be listened to by a service that will update the relevant addressables.
+- The catalogue pipeline to provide a way to publish changed work identifiers (probably SNS) so that this can be listened to by a service that will update the relevant addressables.
 
-- We will need a service that, when given a changed work identifier, will look up which addressables need updating and perform that update, i.e. re-indexing the addressable document which includes re-fetching and transforming the work data.
+- A new service that, when given a changed work identifier, will look up which addressables need updating and perform that update, i.e. re-indexing the addressable document which includes re-fetching and transforming the work data.
 
-- It will be possible to look up which addressables are impacted by a catalogue work change because we will be adding the work IDs to query object of the addressables in the index.
+It will be possible to look up which addressables are impacted by a catalogue work change because we will be adding the work IDs to query object of the addressables in the index.
+
+
+
+### Work Update Flow
+
+```mermaid
+graph LR
+    A["Catalogue Pipeline<br/>Work updated"] --> B["SNS Topic<br/>Work IDs"]
+    B --> C["Content Update<br/>Lambda"]
+    C --> D[("ES Query<br/>Find affected")]
+    D --> E["Re-fetch<br/>Work data"]
+    E --> F["Re-index<br/>Addressables"]
+    F --> G[("Elasticsearch<br/>Updated")]
+
+    style A fill:#fff3e0
+    style B fill:#e3f2fd
+    style C fill:#fff3e0
+    style D fill:#f3e5f5
+    style E fill:#fff3e0
+    style F fill:#fff3e0
+    style G fill:#f3e5f5
+```
+
+1. **Catalogue Pipeline** → Publishes changed Work IDs to SNS topic when Works are updated/deleted
+2. **SNS Topic** → Triggers Lambda function with Work ID
+3. **Lambda Function** → Queries Elasticsearch to find all Addressables that reference the changed Work
+4. **Data Refresh** → Re-fetches updated Work data from Catalogue API
+5. **Re-indexing** → Transforms and re-indexes affected Addressable documents with fresh Work data
+6. **Elasticsearch** → Contains updated Addressables with current Work information
 
 ## Other Benefits
 
