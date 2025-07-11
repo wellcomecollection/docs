@@ -89,13 +89,11 @@ We would add a `linkedWorks` property to the `display` property of each of the i
 
 These are sufficient to render the desired Works previews.
 
-#### Featured in article card:
+#### Preview card designs
 
-<img src="./assets/featured-in-article-card.png" alt="Design for featured in article card" />
-
-#### Popup preview card:
-
-<img src="./assets/popup-preview-card.png" alt="Design for popup preview card" />
+| Featured in article card | Popup preview card |
+|---|---|
+| <img src="./assets/featured-in-article-card.png" alt="Design for featured in article card" width="300" /> | <img src="./assets/popup-preview-card.png" alt="Design for popup preview card" width="300" /> |
 
 #### Query object
 
