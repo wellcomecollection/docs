@@ -76,16 +76,16 @@ graph TD
 
 We would add a `linkedWorks` property to the `display` property of each of the indexed Addressables. The `linkedWorks` property would contain an array of Works. Each Work would have the following properties populated from the Catalogue API response for the Work:
 
-| Linked work | Work |
-|-------------|------|
-| `id` | `work.id` |
-| `title` | `work.title` |
-| `type` | `work.type` |
-| `thumbnailUrl` | `work.thumbnail.url` |
-| `date` | `work.production.flatMap(productionEvent => productionEvent.dates.map(date => date.label))[0]` |
-| `mainContributor` | `work.contributors.find(contributor => contributor.primary)?.agent.label` |
-| `workType` | `work.workType.label` |
-| `isOnline` | `(work.availabilities ?? []).some(({ id }) => id === 'online')` |
+| Linked work       | Work                                                                                           |
+| ----------------- | ---------------------------------------------------------------------------------------------- |
+| `id`              | `work.id`                                                                                      |
+| `title`           | `work.title`                                                                                   |
+| `type`            | `work.type`                                                                                    |
+| `thumbnailUrl`    | `work.thumbnail.url`                                                                           |
+| `date`            | `work.production.flatMap(productionEvent => productionEvent.dates.map(date => date.label))[0]` |
+| `mainContributor` | `work.contributors.find(contributor => contributor.primary)?.agent.label`                      |
+| `workType`        | `work.workType.label`                                                                          |
+| `isOnline`        | `(work.availabilities ?? []).some(({ id }) => id === 'online')`                                |
 
 These are sufficient to render the desired Works previews.
 
@@ -140,6 +140,16 @@ Its response will return:
 The Work previews on the content pages are considered an enhancement and shouldn't prevent the main page content from rendering. A call to the new endpoint for the Work preview data will be made client-side. This will occur on page load if the page includes the Works 'recap' component; otherwise, it will be triggered on the first hover of a Works link. The data will then be available for all Work previews.
 
 How we decide where the 'recap' component lives is tbc. We know we want it on all stories except those with an 'In pictures' format. We need to confirm whether or not we want it on other content types. We'll then need a way on the front end of determining if the page contains links to Works items.
+
+## Handling changes to Works
+
+We will need a mechanism to update the Work data whenever a work is amended or deleted. This will need its own RFC, bit broadly speaking:
+
+- We will require the catalogue pipeline to provide a way to publish changed work identifiers (probably SNS) so that this can be listened to by a service that will update the relevant addressables.
+
+- We will need a service that, when given a changed work identifier, will look up which addressables need updating and perform that update, i.e. re-indexing the addressable document which includes re-fetching and transforming the work data.
+
+- It will be possible to look up which addressables are impacted by a catalogue work change because we will be adding the work IDs to query object of the addressables in the index.
 
 ## Alternatives
 
