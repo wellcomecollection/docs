@@ -155,11 +155,43 @@ We will need a mechanism to update the Work data whenever a work is amended or d
 
 Once this work is done it will be possible to look up which Prismic content references a Work. This would enable us to create links in the other direction, i.e. "articles related to this work" from a Work page.
 
-## Alternatives
+## Variations
 
-For completeness, consideration has also been given to:
+Consideration has also been given to variation to the above approach:
 
 1. Amending/creating indexes for each of the addressable types and adding the works data into them. This would then be available at `/events/{id}`, `/seasons/{id}`, `/guides/{id}`, etc. (we already have `/events`, for example)
 2. Creating an index just for the works data attached to a Prismic ID, which would be available at `/{something}/{id}`
 
-The preferred solution proposed here, i.e. making use of the existing addressables index, seemed the most appropriate extension, without the need to create multiple new indexes and endpoints.
+The preferred solution proposed here, i.e. making use of the existing addressables index, seemed the most appropriate extension, without the need to create multiple new indexes and endpoints. Also 2) would make it less efficient to implement a preview of the Prismic content from a Work (should we wish to do that), since we would need to fetch the content separately.
+
+## Further alternatives
+
+1. **Client-side fetching**: Make requests to the Catalogue API for each Work separately as needed.
+
+   **Pros:**
+
+   - No update mechanism required since Work data isn't stored
+
+   **Cons:**
+
+   - Multiple API calls required for the recap component (slower user experience)
+   - Higher client data usage and processing overhead
+   - No reverse linking capability (can't show "articles related to this work" on Work pages)
+   - Increased load on the Catalogue API, since we would be requesting the Works on every page load
+
+2. **Server-side fetching on request**: Fetch Works data when the Content API is called and return it in the same response.
+
+   **Pros:**
+
+   - No update mechanism required since Work data isn't stored
+   - Single API call from the browser
+   - Server-to-server communication reduces latency compared to client-side requests
+
+   **Cons:**
+
+   - Slower Content API response times (must wait for all Catalogue API calls to complete)
+   - No reverse linking capability (can't show "articles related to this work" on Work pages)
+   - Increased coupling between Content API and Catalogue API
+   - Increased load on the Catalogue API, since we would be requesting the Works on every page load
+
+The proposed solution's pre-indexing approach enables faster responses, reverse linking capabilities, and better separation of concerns, but with the added complexity of maintaining data consistency.
