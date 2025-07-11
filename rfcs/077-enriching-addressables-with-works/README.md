@@ -151,6 +151,10 @@ We will need a mechanism to update the Work data whenever a work is amended or d
 
 - It will be possible to look up which addressables are impacted by a catalogue work change because we will be adding the work IDs to query object of the addressables in the index.
 
+## Other Benefits
+
+Once this work is done it will be possible to look up which Prismic content references a Work. This would enable us to create links in the other direction, i.e. "articles related to this work" from a Work page.
+
 ## Alternatives
 
 For completeness, consideration has also been given to:
