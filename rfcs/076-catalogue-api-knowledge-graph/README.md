@@ -158,28 +158,30 @@ processed entities will almost always be small.
 
 While the catalogue graph already stores works, each node includes only the information necessary for populating the
 concepts index. To populate the works index and replace the relation embedder with graph relationships, the structure of
-the graph will need to be modified. This RFC proposes the following changes:
+the graph will need to be modified. This RFC proposes that source identifiers (e.g. Sierra identifiers) will be
+extracted from works and stored as separate nodes. Parent/child relationships between identifiers and associations
+between works and identifiers will be captured as edges (see Figure 3). This is necessary to replicate the functionality
+of the relation embedder.
 
-* The graph will store _all_ data about each work, becoming a single source of truth for all downstream services. This
-  will enable the works ingestor to extract all required data from the graph, as opposed to piecing together data from
-  multiple sources.
-* Source identifiers (e.g. Sierra identifiers) will be stored as separate nodes. Parent/child relationships between
-  identifiers and associations between works and identifiers will be captured as edges (see Figure 3). This is necessary
-  to replicate the functionality of the relation embedder.
-* All other work data will be stored as properties of work nodes. Nested properties will be stored in stringified JSON
-  format.
+The catalogue graph will not store all data about each work, only capturing fields necessary for running graph
+queries. All other data will continue to be stored in the denormalised Elasticsearch index.
 
 <img src="graph-model.png" width="600" alt="Graph model" /> 
 
 *Figure 3: Hierarchical relationships between works will be captured via dedicated _Identifier_ nodes.*
 
-### Why not break out all nested fields into separate nodes?
+### How will final work documents be constructed?
 
-Neptune does not support storing nested fields as properties, which means we only have two options when it comes to
-storing such fields — we can either store them as stringified JSON properties, or we can extract them into separate
-nodes. While the latter option allows for more powerful queries, it comes with performance costs and adds complexity
-to the graph pipeline. Therefore, this RFC proposes that all nested fields are stored as stringified properties until
-being able to query on them becomes a requirement.
+At the moment, final works index documents are constructed by the Scala ingestor service, utilising the denormalised
+index its only data source. The new Python-based ingestor will need to utilise both the catalogue graph (extracting
+concepts and work hierarchies) and the denormalised index (extracting remaining work data).
+
+When creating final documents during a full reindex, the works ingestor can either utilise the graph as its 'primary'
+data source (mirroring the existing concepts ingestor) and make secondary queries against the denormalised index, or
+the other way around (using the denormalised index as a primary source and supplementing it with catalogue graph data).
+Some preliminary testing has shown that the performance of both approaches is acceptable. However, this RFC suggests 
+implementing the latter as it is simpler (avoiding the need to insert deleted and redirected works into
+the catalogue graph).
 
 ### How do these changes affect performance?
 
@@ -211,7 +213,7 @@ on performance.
 The modifications suggested in this RFC can be implemented in three steps:
 
 1. Modify the graph pipeline to start extracting data from the denormalised index and to populate the graph with
-   complete information about each work (including dedicated _Identifier_ nodes).
+   dedicated _Identifier_ nodes to replace the relation embedder.
 2. Rewrite the works ingestor in Python, following the same architecture as the existing concepts ingestor.
 3. Add incremental mode support to the graph pipeline and to the works and concepts ingestors.
 
