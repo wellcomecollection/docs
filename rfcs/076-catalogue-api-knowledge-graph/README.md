@@ -52,8 +52,11 @@ with shared hierarchies for optimisation purposes before passing the resulting g
 _relation embedder_, which uses the collection paths to enrich each work document with information about siblings,
 parents, and children. A single 'flat' Elasticsearch index is utilised for persistent storage.
 
-Moving this functionality into the catalogue graph would allow for a significantly simpler implementation, consisting of
-two steps:
+The denormalised nature of the Elasticsearch index leads to complexity in the Scala services. For example, whenever
+a new work is added to an existing hierarchy, many works belonging to the same hierarchy need to be reprocessed
+(including the parent of the new work and all of its siblings and descendants), recalculating ancestor/descendant
+paths for each work and embedding data from the new work into each respective document. Moving this functionality
+into the catalogue graph would allow for a significantly simpler implementation, consisting of two steps:
 
 1. In the catalogue graph, an edge would be created between each source identifier and its parent (if a parent exists).
    Performing this step for all works would lead to the creation of complete work hierarchies, replicating the
