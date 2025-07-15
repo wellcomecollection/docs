@@ -61,6 +61,16 @@ two steps:
 2. In the works ingestor, work hierarchies would be retrieved from the graph at query time and denormalised into final
    work documents, replicating the functionality of the relation embedder service.
 
+### How will the catalogue graph allow us to enrich the final works index?
+
+The recently implemented 'More works' section on work pages shows similar works based on shared metadata, such
+as subjects or periods. At the moment, this section is populated at page load time by making several API calls
+from the frontend.
+
+Populating the works index with the help of the catalogue graph will allow us to add related works to each document
+at index time, removing the need for the additional API calls. Furthermore, the graph will allow for more customisable
+queries, utilising connections between works, concepts, and external concepts.
+
 ### Why not move the graph before matcher/merger?
 
 Like the relation embedder, the matcher/merger subsystem utilises graph operations which could be offloaded on to
@@ -97,22 +107,49 @@ file streaming and bulk graph queries to process large numbers of concepts at on
 reindex mode but unsuitable for incremental mode.
 
 This RFC proposes that all affected services (i.e. all services following the _denormalised index_) add incremental mode
-support in addition to the current bulk processing architecture. Bulk processing (orchestrated by AWS Step Functions)
-will continue to be used during a full reindex, and incremental mode will be utilised during normal operation.
+support in addition to the current bulk processing architecture. Bulk processing will continue to be used during
+a full reindex, and incremental mode will be utilised during normal operation.
 
-Incremental mode could either be implemented using _time windows_ or by utilising _SQS messages_. An approach utilising
-time windows would be easier to implement as it would build on top of the Step Function architecture, adding
-a _modified time_ filter when querying for documents from the denormalised index or from the catalogue graph.
+### Full reindex mode
 
-Additional implementation considerations include the following:
+Full reindex operations will be orchestrated by AWS Step Functions, using a single _works pipeline_ state machine. This
+state machine will be structured in the same way as existing catalogue pipeline state machines, consisting of three
+steps:
 
-* A full reindex will involve creating a clone of the catalogue graph to keep different versions of the pipeline fully
-  isolated.
-* During a full reindex, execution of pipeline services downstream of the denormalised index will not be able to start
-  until the index is fully populated.
-* When operating in incremental mode, graph ingestors will insert transformed nodes and edges directly into the graph
-  (instead of utilising the Neptune bulk loader). This will be more efficient as the number of processed entities will
-  almost always be small.
+1. An _extractor_ will be employed to retrieve work documents from the denormalised index, transform each document into
+   nodes and edges to be stored in the graph, and stream the results into Neptune bulk load files.
+2. A set of _bulk loaders_ will be triggered to load all nodes and edges into the catalogue graph. As part of this step,
+   a [clone](https://docs.aws.amazon.com/neptune/latest/userguide/manage-console-cloning.html) of the catalogue graph
+   will be created to keep different versions of the pipeline fully isolated.
+3. An _ingestor_ will be used to extract all works from the catalogue graph in chunks, transform them into final work
+   documents, and index them into Elasticsearch, with parquet files utilised for intermediate storage.
+
+All _catalogue pipeline_ services preceding the denormalised index will keep their current SQS-based architecture for
+now. When running a full reindex, the _works pipeline_ state machine will only be started once the denormalised index
+has been fully populated.
+
+### Incremental mode
+
+Incremental mode can be implemented using _time windows_ (pull approach) or by utilising _SQS messages_ (push approach).
+
+A _time window_ approach could utilise the _works pipeline_ step function described in the previous section, scheduled
+to run at regular intervals (e.g. every 15 minutes). Each run of the state machine would only
+process works which were modified since the previous run (e.g. within the previous 15-minute window), utilising
+a _modified time_ filter when querying for works from the denormalised index or from the catalogue graph.
+
+An _SQS-based_ approach could mirror the communication system of existing Scala services, sending SQS messages
+corresponding to individual modified works. Messages would be sent from the matcher/merger to the extractor, and from
+the extractor to the ingestor.
+
+This RFC suggests using the time window approach due to being easier to implement, sharing the same architecture
+as the full reindex mode. The only drawback of this approach is that it is likely to be slower due to a pause in
+processing while modified works are waiting for the next scheduled run. However, this pause is relatively short
+(7.5 minutes on average if using 15-minute windows), and so the approach still meets the requirement of processing
+each work within tens of minutes.
+
+Finally, when operating in incremental mode, the extractor does not need to populate Neptune bulk load files and can
+instead insert transformed nodes and edges directly into the graph. This is more efficient as the number of
+processed entities will almost always be small.
 
 ## Catalogue graph changes
 
