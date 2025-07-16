@@ -91,10 +91,23 @@ services.
 
 ### How will this address the label vs ID-based filtering issue?
 
-This issue arises from the fact that some concepts which are considered to be synonymous on theme pages are not
-considered synonymous on search pages due to having different labels. Populating the works index based on data from
-the catalogue graph will allow us to use a single consistent label across all synonymous concepts, removing this
-issue without having to switch to ID-based filtering on search pages.
+At the moment, theme pages and search pages are populated using different sets of queries. Search pages utilise  
+label-based filtering, whereby works are filtered based on the labels of the concepts they reference. For example,
+filtering for all works referencing 'Florence Nightingale' as a subject does not return any works referencing 
+'Nightingale, Florence', even if the two labels are associated with the same Library of Congress ID. On the other hand,
+theme pages utilise an ID-based approach, which filters works based on Wellcome IDs of referenced concepts, regardless
+of how they are labelled.
+
+The end result of this disparity is that theme pages do not always reliably link to search pages, preventing users
+from viewing all works associated with a given concept. In addition, inconsistencies between tag labels on work pages
+and titles of corresponding theme pages can be confusing for users. (Using the above example, a tag labelled
+'Nightingale, Florence' might link to a theme page titled 'Florence Nightingale'.)
+
+Having the catalogue graph available when populating the works index will resolve both issues, allowing us to replace
+tag labels with a single standard label consistent across all works, so that all tags linking to the
+'Florence Nightingale' theme page would always be labelled 'Florence Nightingale'. Adopting this approach will also
+allow us to keep using label-based filtering on search pages while guaranteeing consistency between theme pages
+and corresponding search pages.
 
 ## Incremental mode and full reindex mode
 
