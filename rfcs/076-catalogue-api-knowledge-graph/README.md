@@ -93,7 +93,7 @@ services.
 
 At the moment, theme pages and search pages are populated using different sets of queries. Search pages utilise  
 label-based filtering, whereby works are filtered based on the labels of the concepts they reference. For example,
-filtering for all works referencing 'Florence Nightingale' as a subject does not return any works referencing 
+filtering for all works referencing 'Florence Nightingale' as a subject does not return any works referencing
 'Nightingale, Florence', even if the two labels are associated with the same Library of Congress ID. On the other hand,
 theme pages utilise an ID-based approach, which filters works based on Wellcome IDs of referenced concepts, regardless
 of how they are labelled.
@@ -108,6 +108,18 @@ tag labels with a single standard label consistent across all works, so that all
 'Florence Nightingale' theme page would always be labelled 'Florence Nightingale'. Adopting this approach will also
 allow us to keep using label-based filtering on search pages while guaranteeing consistency between theme pages
 and corresponding search pages.
+
+### Why not keep the existing Scala ingestor service?
+
+Keeping the existing Scala ingestor would mean integrating it with the catalogue graph to extract concepts
+and hierarchical relationships when constructing final work documents. This would involve implementing a set of
+Scala classes for querying the Neptune cluster, which would be time-consuming and duplicate existing Python code.
+It would also involve modifying the ingestor to integrate into the step function architecture outlined below
+(see [Full reindex mode](#full-reindex-mode) section).
+
+On the other hand, reimplementing the ingestor in Python would allow us to reuse code from the existing concept
+ingestor, outweighing any time costs associated with moving the logic for creating final work documents from Scala to
+Python.
 
 ## Incremental mode and full reindex mode
 
@@ -192,7 +204,7 @@ concepts and work hierarchies) and the denormalised index (extracting remaining 
 When creating final documents during a full reindex, the works ingestor can either utilise the graph as its 'primary'
 data source (mirroring the existing concepts ingestor) and make secondary queries against the denormalised index, or
 the other way around (using the denormalised index as a primary source and supplementing it with catalogue graph data).
-Some preliminary testing has shown that the performance of both approaches is acceptable. However, this RFC suggests 
+Some preliminary testing has shown that the performance of both approaches is acceptable. However, this RFC suggests
 implementing the latter as it is simpler (avoiding the need to insert deleted and redirected works into
 the catalogue graph).
 
