@@ -1,5 +1,28 @@
 # RFC 076: Integrating the catalogue graph into the works pipeline
 
+This RFC proposes integrating the catalogue graph deeper into the catalogue pipeline to enable enrichment of the production works index with additional metadata and hierarchical relationships. The changes would replace the relation embedder subsystem with graph-based operations and create a new Python-based works ingestor, allowing for enhanced work pages and improved consistency between theme pages and search results.
+
+**Last modified:** 2025-06-21T09:00:00Z
+
+## Table of contents
+
+- [Introduction](#introduction)
+- [Current catalogue pipeline architecture](#current-catalogue-pipeline-architecture)
+- [Proposed catalogue pipeline architecture](#proposed-catalogue-pipeline-architecture)
+  - [What are the benefits of removing the relation embedder?](#what-are-the-benefits-of-removing-the-relation-embedder)
+  - [How will the catalogue graph allow us to enrich the final works index?](#how-will-the-catalogue-graph-allow-us-to-enrich-the-final-works-index)
+  - [Why not move the graph before matcher/merger?](#why-not-move-the-graph-before-matchermerger)
+  - [What will happen to the final _images_ index?](#what-will-happen-to-the-final-images-index)
+  - [How will this address the label vs ID-based filtering issue?](#how-will-this-address-the-label-vs-id-based-filtering-issue)
+  - [Why not keep the existing Scala ingestor service?](#why-not-keep-the-existing-scala-ingestor-service)
+- [Incremental mode and full reindex mode](#incremental-mode-and-full-reindex-mode)
+  - [Full reindex mode](#full-reindex-mode)
+  - [Incremental mode](#incremental-mode)
+- [Catalogue graph changes](#catalogue-graph-changes)
+  - [How will final work documents be constructed?](#how-will-final-work-documents-be-constructed)
+  - [How do these changes affect performance?](#how-do-these-changes-affect-performance)
+- [Next steps](#next-steps)
+
 ## Introduction
 
 The _catalogue graph_ has become an integral part of the catalogue pipeline, allowing us to enrich the production
