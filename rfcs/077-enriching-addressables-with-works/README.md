@@ -84,10 +84,7 @@ We would add a `linkedWorks` property to the `display` property of each of the i
 | `thumbnailUrl`    | `work.thumbnail.url`                                                                           |
 | `date`            | `work.production.flatMap(productionEvent => productionEvent.dates.map(date => date.label))[0]` |
 | `mainContributor` | `work.contributors.find(contributor => contributor.primary)?.agent.label`                      |
-| `workType`        | `work.workType.label`                                                                          |
-| `isOnline`        | `(work.availabilities ?? []).some(({ id }) => id === 'online')`                                |
-
-These are sufficient to render the desired Works previews.
+| `labels`        | `((work.availabilities ?? []).some(({ id }) => id === 'online') ? [work.workType?.label, 'Online'] : [work.workType?.label]).filter((label): label is string => label !== undefined)`
 
 #### Preview card designs
 
