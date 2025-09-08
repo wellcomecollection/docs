@@ -1,10 +1,82 @@
 # RFC 078: Name Reconciliation Service (NARESE)
 
-Entity proliferation and inconsistent naming across Works metadata (e.g. `John Smith`, `J. Smith`, `Smith, John (1870-1932)`) reduce search relevance, hamper aggregation, and complicate downstream enrichment. Existing deduplication focuses on record-level duplicate detection but does not reconcile variant surface forms of the same underlying Person/Agent entity at scale. We need a lightweight, incrementally runnable pipeline to propose reconciled clusters of person names with explainable provenance, leveraging recent improvements in embedding retrieval + LLM reasoning, while minimising manual curation load.
+Last modified: 2025-09-08T00:00:00Z
 
-Last modified: 2025-09-04T16:00:00Z
+---
 
-## Proposal
+## Executive Summary
+
+We have many slightly different textual versions of the same person / agent name in our Works metadata (e.g. `John Smith`, `J. Smith`, `Smith, John (1870-1932)`). This fragmentation:
+
+* Lowers search relevance (relevant works are split across variants).
+* Makes aggregation, analytics, and future enrichment harder.
+* Increases manual effort for curators who need to judge if two labels refer to the same underlying individual.
+
+Existing duplicate detection handles whole-record duplicates, not *name surface form reconciliation*.
+
+### Why It Matters
+
+Better reconciliation improves: user search experience (grouping all works by the same person), data quality (cleaner, more consistent metadata), and downstream enrichment (e.g. linking to authority files, building richer entity graphs). It also lays groundwork for reconciling other entity types later (organisations, places, subjects) using a repeatable pattern.
+
+### Goals
+
+* Produce machine-generated clusters of person/agent name variants with traceable reasoning (provenance + confidence tier).
+* Optimise for **precision first** so we avoid incorrect merges that damage trust.
+* Be lightweight & incrementally runnable: can resume, can process new data snapshots without redoing validated work.
+* Provide a clear outward-facing API contract for future integration once promoted from PoC.
+
+### Non-Goals (Initial Phase)
+
+* Full canonical Person entity graph with persistent new IDs (that is a later, longer-term step).
+* Real-time interactive service from day one (initial PoC is batch oriented).
+* Reconciliation beyond Person / Agent types (other entity classes are future roadmap).
+* Perfect recall; we prefer to miss some hard matches early rather than introduce false merges.
+
+### Proposed Approach
+
+1. For each name label we create an embedding: a numeric representation capturing semantic similarity.
+2. We retrieve the top similar candidate labels using a fast local index (FAISS) and apply a simple similarity threshold.
+3. A constrained Large Language Model (LLM) is given just those candidates plus concise rules and returns which ones really refer to the same person (or nothing if unsure).
+4. We save a small JSON file per processed label containing the decision, candidates, and evidence elements (similarity scores).
+5. Later, these JSON outputs are aggregated into clusters and exposed via an API with confidence tiers.
+
+### Option Trade-offs
+
+| Option | Why Not Selected (Primary) | Trade-off Accepted |
+|--------|----------------------------|--------------------|
+| Train & tune traditional fuzzy / rule system only | Struggles with initials, dates, transliteration nuance; brittle scaling | Slightly higher infra (embeddings + LLM) complexity |
+| Cluster *all* names in one global pass (e.g. HDBSCAN) | Hard to tune thresholds globally; no contextual reasoning | Per-label LLM calls add cost but raise precision |
+| Larger / hosted embedding model | Higher cost with marginal quality gain for short strings | Smaller model keeps latency & cost low |
+
+### Value Realisation & Success Signals
+
+* Early manual evaluation (“eyeball” review) shows high precision on the non-trivial reconciliation opportunities.
+* Reduction in duplicate person facets / improved aggregation in search experiments.
+* Stable or improving precision after iterative prompt / threshold changes (monitored with a reproducible sampled set).
+
+### Risks & Mitigations (Plain Language)
+
+| Risk | Impact | Mitigation |
+|------|--------|------------|
+| Incorrect merges (false positives) | Damaged trust; harder rollback | Precision-first rules, conservative threshold, manual sampled QA |
+| Cost creep from many LLM calls | Budget pressure | Cache identical candidate sets, threshold pruning, potential lightweight heuristic pre-filter |
+| Lack of ground truth delays quantitative metrics | Slower optimisation | Introduce authority file (VIAF) subset + curator-reviewed gold set |
+
+### Glossary (Quick Read)
+
+* Embedding: Numeric vector capturing similarity of text strings.
+* FAISS: A fast library for approximate nearest neighbour search over embeddings.
+* LLM: Large Language Model; here used in a tightly scoped, deterministic (temperature 0) judgement role.
+* Reconciliation: Deciding multiple text labels refer to the same real-world entity (person/agent).
+* Candidate Set: The shortlist of potentially matching names retrieved by similarity search before LLM filtering.
+
+---
+
+## Technical Details
+
+Existing deduplication focuses on record-level duplicate detection but does not reconcile variant surface forms of the same underlying Person/Agent entity at scale. We need a lightweight, incrementally runnable pipeline to propose reconciled clusters of person names with explainable provenance, leveraging recent improvements in embedding retrieval + LLM reasoning, while minimising manual curation load.
+
+### Proposal
 
 Implement a batch-oriented NAme REconciliation SErvice (NARESE) that produces JSON reconciliation artifacts for candidate Person/Agent labels using an enchanced vector search and LLM workflow to make reconcilation judgements (adjudication).
 
@@ -13,12 +85,12 @@ Implement a batch-oriented NAme REconciliation SErvice (NARESE) that produces JS
 1. Load label dataset derived from a snapshot of the Works Denormalised Index (`dn_labels_dedup_data.csv`).
 2. Filter to `type in {Person, Agent}`.
 3. For each target label:
-   - Embed the label with instruction-tuned embedding model (`Qwen/Qwen3-Embedding-0.6B`) using a fixed prompt to stabilise retrieval semantics.
-   - Perform vector similarity search (FAISS index `name_rec_faiss.index`, k=100).
-   - Compute dynamic cutoff: `cutoff = max(sim0, 0.8) * 0.7`; rows above cutoff form the context set; all k results form the candidate set.
-   - Construct a compact CSV (label,idx) passed to an LLM (`ChatBedrock` model `openai.gpt-oss-120b-1:0`) with a system instruction that encodes reconciliation rules.
-   - Parse returned JSON list of reconciled indices, map back to labels.
-   - Persist result to `data/name_rec/name_rec_<id>_<idx>.json` if not already present (idempotent incremental run behaviour).
+   * Embed the label with instruction-tuned embedding model (`Qwen/Qwen3-Embedding-0.6B`) using a fixed prompt to stabilise retrieval semantics.
+   * Perform vector similarity search (FAISS index `name_rec_faiss.index`, k=100).
+   * Compute dynamic cutoff: `cutoff = max(sim0, 0.8) * 0.7`; rows above cutoff form the context set; all k results form the candidate set.
+   * Construct a compact CSV (label,idx) passed to an LLM (`ChatBedrock` model `openai.gpt-oss-120b-1:0`) with a system instruction that encodes reconciliation rules.
+   * Parse returned JSON list of reconciled indices, map back to labels.
+   * Persist result to `data/name_rec/name_rec_<id>_<idx>.json` if not already present (idempotent incremental run behaviour).
 
 #### NARESE Architecture Diagram
 
@@ -26,11 +98,11 @@ Implement a batch-oriented NAme REconciliation SErvice (NARESE) that produces JS
 
 ### Components
 
-- Orchestrator: `name_rec_run.py` (batch driver / resumable loop).
-- Embedding Model: SentenceTransformer wrapper (local inference, minimal latency, deterministic prompt).
-- Vector Store: FAISS flat index file (pre-built separately; future: pipeline to rebuild on new data ingest).
-- LLM Adjudicator: ChatSession abstraction over Bedrock ChatBedrock client (temperature=0) with LangGraph memory (currently unused beyond session scoping).
-- Output Artifacts: Per-target JSON containing:
+* Orchestrator: `name_rec_run.py` (batch driver / resumable loop).
+* Embedding Model: SentenceTransformer wrapper (local inference, minimal latency, deterministic prompt).
+* Vector Store: FAISS flat index file (pre-built separately; future: pipeline to rebuild on new data ingest).
+* LLM Adjudicator: ChatSession abstraction over Bedrock ChatBedrock client (temperature=0) with LangGraph memory (currently unused beyond session scoping).
+* Output Artifacts: Per-target JSON containing:
 
   ```json
   {
@@ -45,7 +117,7 @@ Implement a batch-oriented NAme REconciliation SErvice (NARESE) that produces JS
 
 ![narese_sequence.png](narese_sequence.png)
 
-- Architecture Diagrams: `docs/name_rec_architecture.puml` (component & data), `docs/name_rec_sequence.puml` (per-record sequence).
+* Architecture Diagrams: `docs/name_rec_architecture.puml` (component & data), `docs/name_rec_sequence.puml` (per-record sequence).
 
 ### Current PoC vs Target Production
 
@@ -65,10 +137,12 @@ The current PoC validates technical feasibility (semantic retrieval + LLM filter
 
 System prompt enforces:
 
-- Require medium disambiguation level: full name match OR initials + supporting date.
-- Initial-based matches without date are low certainty and excluded unless promoted by additional context.
-- Ambiguity => return empty list (preference for precision over recall initially).
-- Output strict JSON list of `id_idx` strings.
+* Require medium disambiguation level: full name match OR initials + supporting date.
+* Initial-based matches without date are low certainty and excluded unless promoted by additional context.
+* Ambiguity => return empty list (preference for precision over recall initially).
+* Output strict JSON list of `id_idx` strings.
+
+* Output strict JSON list of `id_idx` strings.
 
 ### File / Data Contracts
 
@@ -83,10 +157,11 @@ System prompt enforces:
 
 Initial evaluation via:
 
-- Manual spot check of sampled outputs (precision focus).
-- Cluster cohesion metric: average intra-cluster cosine similarity vs random baseline.
-- False positive guard: monitor proportion of empty reconciliation outputs (too high => overly strict threshold; too low => likely drift).
-- Future: Introduce ground truth subset from authority files (VIAF / LC) for sampled F1 (accuracy).
+* Manual spot check of sampled outputs (precision focus).
+* Cluster cohesion metric: average intra-cluster cosine similarity vs random baseline.
+* False positive guard: monitor proportion of empty reconciliation outputs (too high => overly strict threshold; too low => likely drift).
+
+* Future: Introduce ground truth subset from authority files (VIAF / LC) for sampled F1 (accuracy).
 
 #### Human Eyeball Evaluation Rationale
 
@@ -94,16 +169,18 @@ The PoC and subsequent tuning phases use an *eyeball evaluation* via an Evaluati
 
 Approximately 3,000 Person/Agent rows (drawn uniformly at random, seeded for reproducibility) before promoting material logic changes. This size is chosen to achieve an acceptable margin of error for estimating key performance proportions (e.g. proportion of correctly reconciled non-trivial cases) under the following assumptions:
 
-- We treat the evaluation as estimating a binomial proportion (success = reconciliation judged correct & non-trivial, i.e. not an obvious full-text identical variant).
-- A preliminary pilot (3000-row inspection) observed roughly 1000 non-trivial reconciliation opportunities (≈36%).
-- We target a **95% confidence level** and an absolute **margin of error of ±3 percentage points** for the *non-trivial correctness rate* after filtering obvious cases.
+* We treat the evaluation as estimating a binomial proportion (success = reconciliation judged correct & non-trivial, i.e. not an obvious full-text identical variant).
+* A preliminary pilot (3000-row inspection) observed roughly 1000 non-trivial reconciliation opportunities (≈36%).
+
+* We target a **95% confidence level** and an absolute **margin of error of ±3 percentage points** for the *non-trivial correctness rate* after filtering obvious cases.
 
 Operational policy:
 
-- Production (full run) is unsampled; sampling is *only* for manual QA / regression inspection.
-- Any significant algorithmic change (embedding model swap, similarity cutoff adjustment, LLM prompt revision, introduction of heuristic pre-filters) triggers a fresh 3,000-row eyeball pass before acceptance.
-- If observed precision in the *non-trivial* subset remains ≥ the prior accepted baseline within the target margin of error, the change is approved; otherwise iterate.
-- A re-sample may also be initiated if monitoring shows drift (e.g. sharp change in proportion of empty reconciliations or candidate distribution shift).
+* Production (full run) is unsampled; sampling is *only* for manual QA / regression inspection.
+* Any significant algorithmic change (embedding model swap, similarity cutoff adjustment, LLM prompt revision, introduction of heuristic pre-filters) triggers a fresh 3,000-row eyeball pass before acceptance.
+* If observed precision in the *non-trivial* subset remains ≥ the prior accepted baseline within the target margin of error, the change is approved; otherwise iterate.
+
+* A re-sample may also be initiated if monitoring shows drift (e.g. sharp change in proportion of empty reconciliations or candidate distribution shift).
 
 We deliberately avoid larger ad‑hoc samples to reduce evaluator/curator fatigue; future automation (Improved Evaluation/Curator App + partial ground truth) will allow reducing or eliminating manual eyeball passes.
 
@@ -121,31 +198,35 @@ We deliberately avoid larger ad‑hoc samples to reduce evaluator/curator fatigu
 
 ### Operational Characteristics
 
-- Pure batch; no service yet. Re-runnable; safe to interrupt (idempotent file emission).
-- Deterministic sampling for reproducibility in reviews.
-- No PII retention beyond transient in-memory embedding.
-- Fails fast if FAISS index absent.
-- Bedrock dependency isolated (one model id reference); swappable.
+* Pure batch; no service yet. Re-runnable; safe to interrupt (idempotent file emission).
+* Deterministic sampling for reproducibility in reviews.
+* No PII retention beyond transient in-memory embedding.
+* Fails fast if FAISS index absent.
+
+* Bedrock dependency isolated (one model id reference); swappable.
 
 ### Extensibility Roadmap
 
 Short-term:
 
-- Add full dataset (non-sampled) execution mode.
-- Persist reconciliation confidence tiers (low/medium) instead of binary include/exclude.
-- Add optional fuzzy lexical features (edit distance, Jaro-Winkler) pre-LLM to prune trivially unrelated candidates.
+* Add full dataset (non-sampled) execution mode.
+* Persist reconciliation confidence tiers (low/medium) instead of binary include/exclude.
+
+* Add optional fuzzy lexical features (edit distance, Jaro-Winkler) pre-LLM to prune trivially unrelated candidates.
 
 Mid-term:
 
-- Build incremental indexer (append-only vector index update pipeline).
-- Introduce authority file alignment (VIAF ingest) to seed / validate clusters.
-- Provide REST/GraphQL endpoint for on-demand reconciliation resolution.
+* Build incremental indexer (append-only vector index update pipeline).
+* Introduce authority file alignment (VIAF ingest) to seed / validate clusters.
+
+* Provide REST/GraphQL endpoint for on-demand reconciliation resolution.
 
 Long-term:
 
-- Feedback loop with curator validation UI producing reinforcement signals.
-- Transition reconciled groups into canonical Person entity graph (new ID space) powering search facet normalisation.
-- Multi-lingual expansion (add language-aware transliteration heuristics).
+* Feedback loop with curator validation UI producing reinforcement signals.
+* Transition reconciled groups into canonical Person entity graph (new ID space) powering search facet normalisation.
+
+* Multi-lingual expansion (add language-aware transliteration heuristics).
 
 ### Production API Specification
 
@@ -153,23 +234,28 @@ This section specifies the external contract to be implemented once the PoC is a
 
 #### Guiding Principles
 
-- Deterministic, idempotent responses for identical requests (modulo data version).
-- Precision-first: service returns only medium+ confidence matches by default.
-- Transparent confidence & provenance metadata.
-- Backwards compatible evolution via versioned path: `/v1/`.
+* Deterministic, idempotent responses for identical requests (modulo data version).
+* Precision-first: service returns only medium+ confidence matches by default.
+* Transparent confidence & provenance metadata.
+
+* Backwards compatible evolution via versioned path: `/v1/`.
 
 #### Endpoints
 
 1. `GET /v1/health`
-   - Returns `{ status: "ok", indexVersion: "2025-07-<hash>", model: "Qwen/Qwen3-Embedding-0.6B", dataDate: "2025-07-xx" }`.
 
-2. `GET /v1/reconcile`
-   - Query params:
-     - `q` (required): raw name string.
-     - `type` (optional, default `Person`): enum `[Person, Agent]`.
-     - `limit` (optional, default 10, max 50): max reconciled labels.
-     - `include` (optional): comma list of extra blocks `[candidates,context,debug]`.
-   - Response (200):
+* Returns `{ status: "ok", indexVersion: "2025-07-<hash>", model: "Qwen/Qwen3-Embedding-0.6B", dataDate: "2025-07-xx" }`.
+
+1. `GET /v1/reconcile`
+
+* Query params:
+
+  * `q` (required): raw name string.
+  * `type` (optional, default `Person`): enum `[Person, Agent]`.
+  * `limit` (optional, default 10, max 50): max reconciled labels.
+  * `include` (optional): comma list of extra blocks `[candidates,context,debug]`.
+
+* Response (200):
 
 ```json
 {
@@ -186,21 +272,24 @@ This section specifies the external contract to be implemented once the PoC is a
 }
 ```
 
-- Errors:
-  **Errors**  
-  400: missing `q` / invalid param  
-  429: rate limit  
-  503: index loading / degraded mode
+* Errors:
+
+  * 400: missing `q` / invalid param
+  * 429: rate limit
+  * 503: index loading / degraded mode
 
 1. `POST /v1/reconcile/batch`
-   - Each item mirrors single response shape plus `position` field.
+
+* Each item mirrors single response shape plus `position` field.
 
 1. `GET /v1/cluster/{idx}`
-   - Returns the full reconciled cluster (all members & metadata) anchored at a canonical representative.
-   - Response adds: `canonicalLabel`, `members`, `evidence` (list citing similarity scores & LLM rationale if stored).
+
+* Returns the full reconciled cluster (all members & metadata) anchored at a canonical representative.
+* Response adds: `canonicalLabel`, `members`, `evidence` (list citing similarity scores & LLM rationale if stored).
 
 1. `GET /v1/meta/index`
-   - Operational metadata: `{ "dimension": 1536, "size": 1200341, "builtAt": "2025-07-29T12:00:00Z", "buildId": "abc123" }`.
+
+* Operational metadata: `{ "dimension": 1536, "size": 1200341, "builtAt": "2025-07-29T12:00:00Z", "buildId": "abc123" }`.
 
 #### Data Model (Production)
 
@@ -216,45 +305,45 @@ This section specifies the external contract to be implemented once the PoC is a
 
 #### Confidence Derivation (Future)
 
-- Start with rule mapping (e.g. medium if full name match OR initials+date, high if multiple orthographic & date matches, low otherwise but not returned unless explicitly requested via `include=low`).
-- Potential addition of logistic calibration model trained on curated pairs.
+* Start with rule mapping (e.g. medium if full name match OR initials+date, high if multiple orthographic & date matches, low otherwise but not returned unless explicitly requested via `include=low`).
+* Potential addition of logistic calibration model trained on curated pairs.
 
 #### Performance Targets (Initial SLOs)
 
-- P50 < 100ms, P95 < 350ms for `/v1/reconcile` (excluding cold start) with index resident in memory.
-- Availability target 99.5% (business hours) Phase 1.
-- Error budget tracked on 5xx + malformed 4xx ratio.
+* P50 < 100ms, P95 < 350ms for `/v1/reconcile` (excluding cold start) with index resident in memory.
+* Availability target 99.5% (business hours) Phase 1.
+* Error budget tracked on 5xx + malformed 4xx ratio.
 
 #### Rate Limiting & Quotas
 
-- Token bucket per API key (default 10 QPS burst 30).
-- Batch endpoint counts each query individually toward quota.
+* Token bucket per API key (default 10 QPS burst 30).
+* Batch endpoint counts each query individually toward quota.
 
 #### Versioning Strategy
 
-- Breaking changes -> new major path `/v2/`.
-- Additive fields allowed silently; clients advised to ignore unknown keys.
+* Breaking changes -> new major path `/v2/`.
+* Additive fields allowed silently; clients advised to ignore unknown keys.
 
 #### Authentication / Authorization
 
-- Phase 1: API key header `X-API-Key` validated against secrets store.
-- Phase 2: Move to OAuth2 client credentials for internal services.
+* Phase 1: API key header `X-API-Key` validated against secrets store.
+* Phase 2: Move to OAuth2 client credentials for internal services.
 
 #### Observability
 
-- Structured log per request: requestId, latency, candidateCount, reconciledCount, emptyResult flag, indexVersion.
-- Metrics: histogram (latency), counter (errors by code), gauge (index size), ratio (empty / total).
-- Trace spans: encode, search, llm_call, assemble_response.
+* Structured log per request: requestId, latency, candidateCount, reconciledCount, emptyResult flag, indexVersion.
+* Metrics: histogram (latency), counter (errors by code), gauge (index size), ratio (empty / total).
+* Trace spans: encode, search, llm_call, assemble_response.
 
 #### Caching
 
-- Memory LRU for recent queries (normalized label) keyed by `(q,type,indexVersion,include)`.
-- CDN-friendly `Cache-Control: public, max-age=60` for non-empty responses without debug blocks.
+* Memory LRU for recent queries (normalized label) keyed by `(q,type,indexVersion,include)`.
+* CDN-friendly `Cache-Control: public, max-age=60` for non-empty responses without debug blocks.
 
 #### Failure Modes
 
-- LLM timeout: 503 with `retryAfter`.
-- Index not loaded: 503 with `retryAfter`.
+* LLM timeout: 503 with `retryAfter`.
+* Index not loaded: 503 with `retryAfter`.
 
 #### OpenAPI (Excerpt)
 
@@ -301,23 +390,29 @@ paths:
 
 Benefits:
 
-- Improves aggregation & relevance for person-based queries.
-- Establishes a pattern for hybrid ANN retrieval + LLM constrained reconciliation.
-- Produces auditable, human-readable artifacts for review.
-- Provides cross-domain opportunity - requires little prompt engineering to reconcile other types of entities (e.g. Organisations, Places and Subjects/Concepts).
+* Improves aggregation & relevance for person-based queries.
+* Establishes a pattern for hybrid ANN retrieval + LLM constrained reconciliation.
+* Produces auditable, human-readable artifacts for review.
+* Provides cross-domain opportunity - requires little prompt engineering to reconcile other types of entities (e.g. Organisations, Places and Subjects/Concepts).
+* Produces auditable, human-readable artifacts for review.
+* Provides cross-domain opportunity - requires little prompt engineering to reconcile other types of entities (e.g. Organisations, Places and Subjects/Concepts).
 
 Risks / Challenges:
 
-- LLM hallucination risk (mitigated by narrow prompt + deterministic temp=0).
-- Cutoff heuristic may under-cluster rare names; may need adaptive logic.
-- Cost growth if scaled to full corpus frequently (LLM invocation per label).
-- Absence of evaluation ground truth initially delays quantitative assurance.
+* LLM hallucination risk (mitigated by narrow prompt + deterministic temp=0).
+* Cutoff heuristic may under-cluster rare names; may need adaptive logic.
+* Cost growth if scaled to full corpus frequently (LLM invocation per label).
+* Absence of evaluation ground truth initially delays quantitative assurance.
+* Cost growth if scaled to full corpus frequently (LLM invocation per label).
+* Absence of evaluation ground truth initially delays quantitative assurance.
 
 Mitigations:
 
-- Tight JSON parsing (reject non-list outputs and retry with higher Temperature setting on the LLM).
-- Add logging of similarity distributions for dynamic tuning.
-- Introduce caching for unchanged candidate sets across runs.
+* Tight JSON parsing (reject non-list outputs and retry with higher Temperature setting on the LLM).
+* Add logging of similarity distributions for dynamic tuning.
+* Introduce caching for unchanged candidate sets across runs.
+* Add logging of similarity distributions for dynamic tuning.
+* Introduce caching for unchanged candidate sets across runs.
 
 ## Next steps
 

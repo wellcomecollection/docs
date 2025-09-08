@@ -1,0 +1,158 @@
+@startuml narese_architecture
+' Title & Legend
+Title Name Reconciliation Service (NARESE) - High Level Architecture
+
+legend left
+  Based on: src/wc_simd/name_rec_run.py, dedupe_service.py, llm.py
+  Focus: Embedding-based candidate retrieval + LLM reconciliation
+  Notation:
+    [Component]  runtime component / process
+    (Data Store) persisted file/resource
+    cloud boundary = external managed service
+endlegend
+
+skinparam shadowing false
+skinparam componentStyle rectangle
+skinparam wrapWidth 240
+skinparam maxMessageSize 140
+
+' ======================================================================
+' TOP-LEVEL COMPONENT (DATA FLOW) VIEW
+' ======================================================================
+node "Offline Batch Runner\n(name_rec_run.py)" as Runner {
+  component "Sampling & Orchestration" as Sampler
+  component "Candidate Retrieval" as Retrieval
+  component "Reconciliation Logic" as ReconLogic
+}
+
+folder "Local Embedding Model" as EmbModel {
+  [SentenceTransformer\nQwen/Qwen3-Embedding-0.6B]
+}
+
+folder "Vector Index" as FaissIdx {
+  ("FAISS Index\nname_rec_faiss.index") as FaissFile
+}
+
+folder "Label Dataset" as LabelData {
+  ("Deduped Labels CSV\n dn_labels_dedup_data.csv") as DedupCSV
+}
+
+folder "Environment" as Env {
+  (".env.name_rec\nAWS / Bedrock creds & config") as DotEnv
+}
+
+cloud "AWS Bedrock" as Bedrock {
+  [ChatBedrock LLM\nModel: openai.gpt-oss-120b-1:0]
+}
+
+folder "Output" as OutputDir {
+  ("Per-record JSON\n data/name_rec/name_rec_<id>_<idx>.json") as JSONFiles
+  ("Sample CSV\n data/name_rec_sample.csv") as SampleCSV
+}
+
+' Relationships
+Runner --> DedupCSV : load (pandas)
+Runner --> FaissFile : read_index(faiss)
+Runner --> EmbModel : encode(label, prompt)
+Runner --> Bedrock : ChatSession.send(prompt+CSV)
+FaissFile <-- EmbModel : vector dim consistency
+Runner --> JSONFiles : write results (idempotent)
+Runner --> SampleCSV : write sample of 3000
+DotEnv --> Runner : dotenv.load_dotenv()
+
+' ======================================================================
+' SEQUENCE (PER RECORD) VIEW
+' ======================================================================
+note as SeqRef
+  See per-record processing sequence in file:
+  name_rec_sequence.puml
+  (separate sequence diagram to avoid mixed diagram type errors)
+end note
+SeqRef .. Runner
+
+' ======================================================================
+' DATA FORMATS
+' ======================================================================
+rectangle FormatIn [
+Input CSV Row (dn_labels_dedup_data.csv)
+--
+Columns (subset used)
+id : work / entity identifier
+idx : integer row index (unique)
+label : original name string
+type : Person | Agent | Work
+]
+
+rectangle FormatLLM [
+Candidate CSV passed to LLM
+--
+In-Memory CSV (no header)
+label,idx
+...
+Prompt expects: name,index (second column is idx)
+]
+
+rectangle FormatOut [
+Output JSON (per target)
+--
+Fields:
+label : target label
+idx : target id_idx
+reconciled_labels : [ { label, idx }, ...]
+candidates : [ { label, idx, similarity }, ...]
+]
+
+note right of FormatOut
+Example:
+{
+  "label": "John Smith",
+  "idx": "123_0",
+  "reconciled_labels": [ { "label": "J. Smith", "idx": "456_0" } ],
+  "candidates": [ { "label": "Jon Smith", "idx": "789_1", "similarity": 0.83 } ]
+}
+end note
+
+FormatIn -[dashed]-> Retrieval : source rows
+FormatLLM -[dashed]-> ReconLogic : LLM input context
+FormatOut -[dashed]-> JSONFiles
+
+' ======================================================================
+' LOGIC / DECISION NOTES
+' ======================================================================
+note right of Retrieval
+  Similarity filtering:
+    max_sim = max(first_result, 0.8)
+    cutoff = max_sim * 0.7
+  Context rows: sim >= cutoff
+  All top-k (k=100) retained as candidates
+end note
+
+note right of ReconLogic
+  LLM System Rules:
+   - Use initials & dates for disambiguation
+   - Require medium disambiguation (full name or initials+date)
+   - Ambiguous target -> return []
+  Output: JSON list of indices (strings)
+end note
+
+note bottom of JSONFiles
+  Idempotent: existing file -> skip
+  Enables incremental / resumable runs
+end note
+
+note bottom of Bedrock
+  Model temperature: 0 (deterministic) via ChatSession
+  ChatSession graph via langgraph with memory
+end note
+
+' ======================================================================
+' FUTURE EXTENSIONS (OPTIONAL)
+' ======================================================================
+frame "Future" {
+  component "REST API Layer" as APIFuture
+  component "Streaming Updates" as StreamFuture
+  APIFuture .. Runner : wrap orchestration
+  StreamFuture .. FaissFile : trigger re-index
+}
+
+@enduml

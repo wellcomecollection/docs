@@ -1,0 +1,39 @@
+@startuml narese_sequence
+Title NARESE Name Reconciliation - Per Sample Sequence
+
+participant Runner as R
+participant "Qwen3-Embedding-0.6B" as ST
+participant "FAISS Index" as FI
+participant "LLM ChatSession" as CS
+participant "openai.gpt-oss-120b" as LLM
+participant "Output JSON" as OUT
+
+R -> R: Iterate sampled rows (n=3000)
+alt Skip existing output
+  R -> R: if output file exists -> continue
+else New result
+  R -> ST: encode(label, prompt=embed_prompt)
+  ST --> R: embedding (float32[d])
+  R -> FI: search(embedding, k=100)
+  FI --> R: similarities[], indices[]
+  R -> R: max_sim = max(first_result, 0.8)
+  R -> R: cutoff = max_sim * 0.7
+  R -> R: build context set (sim >= cutoff)
+  R -> R: build candidate CSV (label,idx)
+  R -> CS: send(Person + CSV)
+  CS -> LLM: invoke(system + user)
+  LLM --> CS: JSON list of indices
+  CS --> R: ["id_idx", ...]
+  R -> R: filter empty strings
+  R -> R: map indices -> labels
+  R -> OUT: write JSON result
+end
+
+note over CS,LLM
+System instruction enforces rules:
+ - Disambiguate using full names or initials + dates
+ - If ambiguity remains, return []
+Output sanitized (remove <reasoning> tags)
+end note
+
+@enduml
