@@ -92,6 +92,8 @@ Implement a batch-oriented NAme REconciliation SErvice (NARESE) that produces JS
    * Parse returned JSON list of reconciled indices, map back to labels.
    * Persist result to `data/name_rec/name_rec_<id>_<idx>.json` if not already present (idempotent incremental run behaviour).
 
+> The cutoff multiplier of 0.8 was chosen from empirical observations during experiments to maximize recall while keeping most irrelevant names out.
+
 #### NARESE Architecture Diagram
 
 ![narese_architecture.png](narese_architecture.png)
