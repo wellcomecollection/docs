@@ -142,7 +142,7 @@ System prompt enforces:
 * Ambiguity => return empty list (preference for precision over recall initially).
 * Output strict JSON list of `id_idx` strings.
 
-* Output strict JSON list of `id_idx` strings.
+Verbatim Prompts are included in the Appendix below.
 
 ### File / Data Contracts
 
@@ -423,3 +423,33 @@ Mitigations:
 5. Build FAISS (re)indexing utility & doc (dimension/version guard).
 6. Add automated test for JSON schema of reconciliation outputs.
 7. Consider architecture decision record (ADR) referencing this RFC once accepted.
+
+## Appendix
+
+### Prompts
+
+```python
+embed_prompt = "Instruct: Given a search query that contains a person's name, retrieve relevant passages that mention the same person.\nQuery: "
+
+system_instruction = """# INSTRUCTIONS
+You will be given a target name of a person and a CSV string with the following format:
+
+name,index
+
+## Goal
+Identify all names in the CSV that can be reconciled to the target name and return their indices.
+
+## Rules
+- Take in account initials and dates to disambiguate.
+- If there is a match for a full name but no date, we take it that is is disambiguated to a medium degree.
+- If the match depends on initials it is disambiguated to a low degree unless there is a date match which makes it a medium degree.
+- If the name cannot be disambiguated to a medium degree, do not return the index.
+- If the target name is too ambiguous, do not return any indices.
+
+## Output Format
+Return a JSON list of indices with the following format:
+
+["idx1", "idx2", ...]
+}
+"""
+```
