@@ -115,8 +115,6 @@ Implement a batch-oriented NAme REconciliation SErvice (NARESE) that produces JS
   }
   ```
 
-> The FAISS vector store file for 414,721 records is 1.6 GB in size.
-
 #### NARESE Per Sample Sequence Diagram
 
 ![narese_sequence.png](narese_sequence.png)
@@ -156,6 +154,10 @@ Verbatim Prompts are included in the Appendix below.
 | `name_rec_faiss.index` | Embedding ANN search | Rebuilt on data refresh | Must align embedding dimension |
 | `data/name_rec_sample.csv` | Quality sampling / manual audit | Each run | 3000-row deterministic sample (seed=420) |
 | `data/name_rec/name_rec_*.json` | Reconciliation results | Incremental append | Skip-if-exists enables resumability |
+
+> Samples of the above CSV and JSON are found in the Appendix below.
+
+> The FAISS vector store file for 414,721 records is 1.6 GB in size.
 
 ### Quality / Evaluation Strategy
 
@@ -456,4 +458,97 @@ Return a JSON list of indices with the following format:
 ["idx1", "idx2", ...]
 }
 """
+```
+
+### Data Samples
+
+#### `dn_labels_dedup_data.csv`
+
+```csv
+idx,label,id,type,source
+9,"Nelson, Geoffrey B. (Geoffrey Brian)",a223f5a6,Person,contributor
+10,"Wolff, G.",a2249bxm,Person,contributor
+11,"Jones, John E",a224b9mp,Person,contributor
+12,"Jones, John E.",a224b9mp,Person,contributor
+13,"Hulverscheidt, Marion, 1970-",a224rx5x,Person,contributor
+14,"Zimmermann, Wilhelm.",a224tns9,Person,contributor
+```
+
+#### `name_rec_sample.csv`
+
+```csv
+idx,label,id,type,source
+179619,"Khoo, F. Y.",gdffqkj6,Person,contributor
+141893,"Reid, T. Whitehead.",f2cn9e36,Person,contributor
+639736,"Walsh, John.",zscc6auu,Person,contributor
+444212,"Pulci, Luigi",stsup32k,Person,contributor
+532593,"Swieten, Gottfried van",vyrg7p83,Person,contributor
+394589,"Crooks, Robert, 1941-",r2wdmtrk,Person,contributor
+```
+
+#### `data/name_rec/name_rec_*.json`
+
+```json
+{
+    "label": "Talbot, Marianne.",
+    "idx": "zwfqyva2_643606",
+    "reconciled_labels": [
+        {
+            "label": "Talbot, Marianne.",
+            "idx": "zwfqyva2_643606"
+        },
+        {
+            "label": "Talbot, Marianne",
+            "idx": "zwfqyva2_643605"
+        }
+    ],
+    "candidates": [
+        {
+            "label": "Talbot, Marianne.",
+            "idx": "zwfqyva2_643606",
+            "similarity": 0.8748117685317993
+        },
+        {
+            "label": "Talbot, Mary Anne.",
+            "idx": "rgz5xsey_407445",
+            "similarity": 0.7381430864334106
+        },
+        {
+            "label": "Talbot, Marianne",
+            "idx": "zwfqyva2_643605",
+            "similarity": 0.737197995185852
+        },
+        {
+            "label": "Talbot, Catherine",
+            "idx": "j9kz5ykj_231954",
+            "similarity": 0.6984497904777527
+        },
+        {
+            "label": "Talbot, T. G.",
+            "idx": "gh8cx4xe_183128",
+            "similarity": 0.691516637802124
+        },
+        {
+            "label": "Talbot, Catherine, 1721-1770",
+            "idx": "n3t6xc7s_310846",
+            "similarity": 0.6896426677703857
+        },
+        {
+            "label": "Talbot, I. T.",
+            "idx": "w79jfb5b_538649",
+            "similarity": 0.6891906261444092
+        },
+        {
+            "label": "Talbot, Emma, 1969-",
+            "idx": "ghkmv8ah_183424",
+            "similarity": 0.6868633031845093
+        },
+        {
+            "label": "Talbot, Sarah",
+            "idx": "me48quwa_292144",
+            "similarity": 0.6862633228302002
+        },
+        ...
+    ]
+}
 ```
