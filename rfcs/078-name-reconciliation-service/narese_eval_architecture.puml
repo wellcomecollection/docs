@@ -1,0 +1,195 @@
+@startuml narese_eval_architecture
+title NARESE Evaluation — Architecture Overview
+
+skinparam componentStyle rectangle
+skinparam shadowing false
+skinparam wrapWidth 200
+skinparam maxMessageSize 100
+left to right direction
+
+actor "User\n(Browser)" as user
+
+node "Developer Machine" as dev {
+  component "Next.js Dev Server\n`next dev`" as nextdev
+  component "Script: uploadNameRec.ts\n(tsx)" as seedscript
+  component "Script: tailAmplifyLogs.ts\n(tsx + AWS CLI)" as tailscript
+  database "Local Data Files\n`data/name_rec/*.json`" as localdata
+}
+
+cloud "AWS Amplify Hosting" as amplify {
+  component "Amplify Build/Deploy\n(pipeline)\n`amplify.yml`" as pipeline
+  component "Static Hosting\n(S3 + CloudFront)" as hosting
+  queue "CloudWatch Logs" as cwlogs
+
+  component "Next.js App (Prod)" as nextapp
+}
+
+cloud "Amplify Backend (Gen2)" as backend {
+  component "AppSync GraphQL API" as appsync
+  database "DynamoDB Table\n`NameReconciliation`" as ddb
+  component "Cognito User Pool\n(Auth)" as cognito
+}
+
+' User interactions (prod)
+user --> nextapp : HTTPS
+nextapp --> cognito : Auth UI (Amplify UI\nAuthenticator)
+nextapp --> appsync : Amplify Data client\n(GraphQL CRUD)
+appsync --> ddb : reads/writes
+
+' Hosting & pipeline
+pipeline --> nextapp : Build front-end
+pipeline --> backend : `ampx pipeline-deploy`\n(deploy backend)
+hosting --> user : Serve app
+
+' Management scripts
+seedscript --> localdata : Read JSON seed files
+seedscript --> appsync : Create/Delete\nNameReconciliation
+tailscript --> amplify : `aws amplify ...`\nlist/get jobs
+tailscript --> cwlogs : `aws logs tail`\n(step log streams)
+
+' Local dev flow
+dev -[hidden]-> amplify
+nextdev --> backend : Amplify sandbox\n(GraphQL API)
+user --> nextdev : Local browser
+
+' Config and notes
+note right of nextapp
+Amplify.configure(outputs)
+- `amplify_outputs.json` (local)
+- `amplify_outputs.deployment.main.json` (prod)
+Default Data auth: API Key
+end note
+
+package "UI Evaluation Layer" as uimods {
+  component "Page: Standard\napp/page.tsx" as stdpage
+  component "Page: Expert\napp/expert/page.tsx" as expertpage
+  component "Hook: useNameReconciliation\n(state, filtering, random assign, metrics)" as hook
+  component "RecordDisplay.tsx" as recorddisplay
+  component "ReconciledLabelsEvaluator.tsx\n(per-label Yes/No/Unsure + clear)" as labelEval
+  component "CandidatesViewer.tsx" as candviewer
+  component "EvaluationStatus.tsx\n(completeness gating + counts)" as evalstatus
+  component "Navigation.tsx\n(prev/next wrap, expert only)" as navigation
+  component "Header.tsx\n(mode awareness)" as headercmp
+  component "UserInfo.tsx\n(user id, sign-out)" as userinfo
+}
+
+nextapp --> stdpage : render (standard)
+nextapp --> expertpage : render (expert)
+stdpage --> hook : use*
+expertpage --> hook : use*
+expertpage --> navigation
+stdpage --> labelEval
+expertpage --> labelEval
+stdpage --> recorddisplay
+expertpage --> recorddisplay
+stdpage --> evalstatus
+expertpage --> evalstatus
+expertpage --> candviewer
+stdpage --> headercmp
+expertpage --> headercmp
+stdpage --> userinfo
+expertpage --> userinfo
+labelEval --> hook : onEvaluate()
+evalstatus --> hook : progression
+navigation --> hook : index change
+candviewer --> hook : read candidates
+hook --> appsync : observeQuery / update
+hook --> ddb : (via AppSync)
+
+note right of hook
+Responsibilities:
+- Observe + local cache of NameReconciliation
+- Random unevaluated useful selection
+- Useful record filtering (skip trivial self-only)
+- idx + evaluated status filtering (expert)
+- Per-label evaluation persistence
+- Evaluator attribution & counts
+- Metrics: unevaluated count, leading evaluator
+- Wrap-around navigation helpers
+end note
+
+note left of appsync
+Realtime Collaboration:
+- observeQuery leverages AppSync GraphQL subscriptions
+- Multi-user updates propagate within seconds
+- Filters recompute locally on each push
+- Avoids polling; keeps evaluator views convergent
+end note
+
+note bottom of uimods
+Modes:
+- Standard: auto-random useful record, minimal chrome
+- Expert: manual navigation, filters, batch submit, clear
+Shared gating: all labels decided before Next/Submit
+end note
+
+note bottom of seedscript
+Flags:
+~--file / ~--directory
+~--outputs / ~--apiKey
+~--limit / ~--dryRun
+~--clearData
+end note
+
+note bottom of tailscript
+Requires AWS CLI
+Reads env vars:
+AWS_APP_ID, AWS_BRANCH,
+AWS_REGION, AWS_PROFILE
+end note
+
+note bottom of backend
+Defined in `amplify/`:
+- `auth` (Cognito)
+- `data` (AppSync + DynamoDB)
+Authorization: Cognito User Pools (default)
+end note
+
+note right of ddb
+Stores:
+- Clusters + candidate labels
+- Evaluation decisions per label
+- Evaluator attribution metadata
+- Useful flags / sampling markers
+Future: cohesion metrics snapshot
+end note
+
+note bottom of appsync
+GraphQL supports:
+- randomUnevaluatedUseful
+- list/get clusters
+- submitLabelDecisions
+- clearEvaluation
+Future: metrics aggregation
+end note
+
+note bottom of amplify
+`amplify.yml`:
+- Install & deploy backend
+- Build Next.js front-end
+- Upload artifacts
+Logs available in CloudWatch
+end note
+
+note top of user
+Evaluation Workflow:
+1. Auth (Cognito)
+2. Standard: auto-random useful record OR Expert: select via nav/filter
+3. Review current record (RecordDisplay) & candidates (CandidatesViewer)
+4. Evaluate each reconciled label (ReconciledLabelsEvaluator)
+5. Gating + progress (EvaluationStatus) then Next / Submit
+6. Attribution + counts updated (hook derived)
+end note
+
+note as policy
+Operational Policy:
+- 3k reproducible eyeball sample gates material changes
+- Drift via empty output rate & cohesion (planned)
+- Re-sample on drift or major change
+- Target: maintain precision within baseline ± margin
+Future: authority ground-truth slice & alerts
+end note
+
+policy .. nextapp
+
+@enduml
