@@ -126,7 +126,7 @@ underresourced.
 ### Permanent Failures should be notified as early as possible
 
 It is important that failures are not simply logged and left for someone to stumble upon.
-If part of a batch is marked as a permanent failure (i.e. it has exceeded the maximum number of retries)m
+If part of a batch is marked as a permanent failure (i.e. it has exceeded the maximum number of retries)
 then a human should look at it as soon as possible.  This reduces the disconnect between an information 
 professional entering data, and that data being rejected.
 
