@@ -154,14 +154,26 @@ In that scenario, it is possible that it has aborted without writing out a list 
 
 For this reason, we cannot rely on the same process as the writing out of successful records.
 
+In order to produce the failure list, we need to compare the input and the success list.
+This may be short-circuited if the success count matches the input count, or if the application
+produces a failure list, and the sum of successes and failures matches the input.
+
 ### Failures should be recorded for replay
 
 If a failure has been caused by an application error, then there may be significant time and change
-between the failure and a fix being implemented.  
+between the failure and a fix being implemented.
+
 The actual error may be upstream of where the failure manifests (e.g. a bad transformation means that a
 later stage cannot interpret the record correctly).
 
 We need to be able to post the failure list through the pipeline after a fix has been applied.
+
+### Successes should be stored by the application
+
+We cannot rely on passing success/failure lists directly through the payload in a state machine.
+If a pipeline lambda raises an exception (e.g. timeout), it can be caught so that the pipeline can continue,
+but the lack of return value in that scenario means that any records successfully processed
+before the exception would not be known.
 
 ### Piping
 
@@ -237,20 +249,20 @@ flowchart TD
 Start((Start)) --> main["do it"] --> failures{"any failures?
 $boolean($states.input.failed)"}
 failures -- yes --> report_failures1["log failures"]
-retryq -- yes -->  alert["alert failures"] --> prep_output["extract successes"]
-failures -- no --> prep_output
+retryq -- yes -->  alert["alert failures"] --> End
+failures -- no --> End
 report_failures1 --> retryq{"retry count exceeded?"}
 retryq -- no--> wait["wait"]
 wait --> retry["recurse (failed only)"] --> collate["collate original and retried successes"]
 collate --> End
-prep_output --> End
 End(((Succeed)))
 ```
 
+A Sample AWS State Machine version of this flow:
 ![img.png](img.png)
 
 
-## Further possibilities/optimisations
+## Further considerations
 ### Fail Faster
 It may be appropriate to distinguish between failures we know 
 will never succeed (input is readable but incorrect), and others that might be ephemeral
@@ -269,3 +281,9 @@ failure to a level where there were successes.
 
 Consider whether it is appropriate to abort at the top level (tries_so_far=0) 
 if there are no successes.
+
+### Determining failures in different stages
+
+The application behind some steps will produce a different list of identifiers
+from the input list - e.g. id minter, which produces new ids, or merger, which produces
+a different number of outputs to inputs.  
