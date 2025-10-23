@@ -1,4 +1,4 @@
-# Incident retro - digital assets not available
+# Incident retro - parts of wc.org not available
 
 **Incident from:** 2025-10-20
 
