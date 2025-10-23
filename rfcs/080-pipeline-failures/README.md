@@ -1,4 +1,4 @@
-# RFC 079: Handling failures in Python Step Functions
+# RFC 080: Handling failures in Python Step Functions
 
 ## Summary
 
