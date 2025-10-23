@@ -1,19 +1,14 @@
+# RFC 079: Handling failures in Python Step Functions
 
+## Summary
 
-# RFC NNNN: Handling failures in Python Step Function adapter/transformer
+Pipeline steps may fail for certain inputs.  Those failures are caught, logged, and retried using
+a templated recursive state machine defined for each step.  The overall pipeline is thereby kept clean of 
+error handling and can simply describe the happy-path flow of data.
 
-**Status:** Draft  
-**Created:** 2025-10-10  
-**Authors:** @paul-butcher  
-**Issue:** [wellcomecollection/platform#6151](https://github.com/wellcomecollection/platform/issues/6151)  
-**Related code:**
-- [Adapter/Transformer code](https://github.com/wellcomecollection/catalogue-pipeline/tree/main/catalogue_graph/src/adapters/ebsco)
-- [Terraform infra](https://github.com/wellcomecollection/catalogue-pipeline/tree/main/catalogue_graph/infra/adapters)
-
----
 ## Scope
 
-This RFC specifically covers failures in the Adapter/Transformer section of the pipeline.  However, the approach
+This RFC was written to describe failure handling in the Adapter/Transformer section of the pipeline.  However, the approach
 determined should be considered as we expand the use of Python/Lambda/Step Functions to the remainder of the pipeline.
 
 ## Context
@@ -281,6 +276,9 @@ failure to a level where there were successes.
 
 Consider whether it is appropriate to abort at the top level (tries_so_far=0) 
 if there are no successes.
+
+The simplest option may be for a pipeline step to fail if given nothing to do, but 
+that places the apparent failure one step downstream of where it happened.
 
 ### Determining failures in different stages
 
