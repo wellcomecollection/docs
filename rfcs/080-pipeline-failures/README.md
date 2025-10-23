@@ -132,7 +132,7 @@ professional entering data, and that data being rejected.
 
 ### Failures should be isolated
 
-If one record in a batch fails, this should  not prevent the others succeeding.  If even one record in a batch is
+If one record in a batch fails, this should not prevent the others succeeding.  If even one record in a batch is
 successful, then that record should be allowed to progress through the pipeline.
 
 ### Prefer warnings over failures
