@@ -72,5 +72,9 @@ Why didn’t our safeguards catch this?
     - Caching eg display a good copy if you get a 500 from the origin https://aws.amazon.com/about-aws/whats-new/2023/05/amazon-cloudfront-stale-while-revalidate-stale-if-error-cache-control-directives/
     - Cache in the application
 
+**RC**
+- Write ticket to look into test content for what it fetches fresh from Prismic - can these be mocks? - done [#12414](https://github.com/wellcomecollection/wellcomecollection.org/issues/12414)
+
+
 **DM**
 - Diff custom types test - how to run this only when it’s useful
