@@ -11,6 +11,7 @@ error handling and can simply describe the happy-path flow of data.
 This RFC was written to describe failure handling in the Adapter/Transformer section of the pipeline.  However, the approach
 determined should be considered as we expand the use of Python/Lambda/Step Functions to the remainder of the pipeline.
 
+
 ## Context
 
 Records are processed in batches (changesets), the size of a batch is not pertinent to this RFC. It may be determined by various
@@ -138,7 +139,7 @@ successful, then that record should be allowed to progress through the pipeline.
 ### Prefer warnings over failures
 
 If one field in a record contains unexpected data, this should ideally not prevent the record succeeding.
-Such problems should be logged within the application and escalated promptly.
+Such problems should be logged within the application and escalated promptly.  
 
 This is a preference, not a rule. Errors that are necessarily fatal should still fail.
 
@@ -285,3 +286,7 @@ that places the apparent failure one step downstream of where it happened.
 The application behind some steps will produce a different list of identifiers
 from the input list - e.g. id minter, which produces new ids, or merger, which produces
 a different number of outputs to inputs.  
+
+### How to alert
+Currently, alerting is performed by a Lambda posting to Slack.  This may be an opportunity
+to change to using [Q Developer in chat](https://docs.aws.amazon.com/chatbot/latest/adminguide/slack-setup.html)
