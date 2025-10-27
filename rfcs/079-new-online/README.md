@@ -268,7 +268,7 @@ Ebsco and Miro works do not have a digitised date or version. Much like `linkTex
 Once the digitisedDate and digitisedVersion are part of the Work model and indexed in `works-indexed-pipeline-date`, we have several options for exposing the data through the catalogue's [SearchApi](https://github.com/wellcomecollection/catalogue-api/blob/main/search/src/main/scala/weco/api/search/SearchApi.scala).
 
 Essentially we want to return: 
-- documents filtered by `digitisedVersion: 1` `accessConditions.status": ["open"]`
+- documents filtered by `digitisedVersion: 1` and `accessConditions.status": ["open"]`
 - aggregated by requested `Format`, 
 - agg buckets sorted by most recent `digitisedDate`
 - `size 1`, `display` object 
@@ -298,7 +298,7 @@ ES query would need to look like this:
     "formats": {
       "terms": {
         "field": "filterableValues.format.id",
-        "include": [ "workType", "query", "params" ] 
+        "include": [ "a", "h", "l", "hdig" ] 
       },
       "aggs": {
         "top_by_date": {
@@ -319,14 +319,51 @@ ES query would need to look like this:
 ### Use existing /works endpoint
 
 The catalogue API currently use aggregations for [faceted search](https://github.com/wellcomecollection/docs/tree/main/rfcs/037-api-faceting-principles). 
+This use case would divert from 
 
 
 
-### Create a /works/new-online endpoint with static ES query
+### Create a /works/new-online route with custom ES query
 
-eg. `/works/new-online?workType=a%2Ch%2Cl%2Chdig` a=Books h=Archives and manuscripts l=Ephemera hdig=Born-digital archives
+Given that this search does not need to support faceting it might be easier to create a new route specifically for this query, to return the most recent digitised work for a list of formats/workTypes:
 
+eg. `/works/new-online?workType=a%2Ch%2Cl%2Chdig` ie. a=Books h=Archives and manuscripts l=Ephemera hdig=Born-digital archives
 
+Add to [WorksService](https://github.com/wellcomecollection/catalogue-api/blob/main/search/src/main/scala/weco/api/search/services/WorksService.scala):
+
+```
+def newOnline(
+    index: Index,
+    formatIncludes: Seq[String]
+  ): Future[Either[ElasticsearchError, Map[String, Int]]] = {
+    val searchResponse = elasticsearchService.executeSearchRequest(
+      search(index)
+        .size(0)
+        .query {
+          boolQuery().must(
+            termsQuery(
+              "filterableValues.items.locations.accessConditions.status",
+              "open"
+            )
+          )
+        }
+        .aggs {
+          termsAgg("formats", "filterableValues.format.id")
+            .include(formatIncludes)
+            .subaggs(
+              TopHitsAggregation(
+                name = "top_by_date",
+                size = Some(1),
+                sort = Seq(
+                  fieldSort("filterableValues.items.locations.digitisedDate")
+                    .desc()
+                )
+              )
+            )
+        }
+    )
+  }
+```
 
 
 
