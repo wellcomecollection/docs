@@ -10,7 +10,8 @@ See [Notion page](https://www.notion.so/wellcometrust/Showcase-recently-digitise
 
 The [New online component](https://github.com/wellcomecollection/wellcomecollection.org/issues/12303) has been built and uses hard-coded data as a first step. See [Collections landing page](https://wellcomecollection.org/collections).
 
-[`WorkItem`](https://github.com/wellcomecollection/wellcomecollection.org/blob/main/content/webapp/views/components/WorkCard/index.tsx) type expected by the component 
+[`WorkItem`](https://github.com/wellcomecollection/wellcomecollection.org/blob/main/content/webapp/views/components/WorkCard/index.tsx) type expected by the component.
+NOTE: there is some flexibility here, as this was built as a temporary/POC solution. 
 
 ```typescript
 type WorkItem = {
@@ -49,7 +50,7 @@ Colleagues required:
 Create an additional [ETL pipeline](https://github.com/wellcomecollection/content-api/blob/6e9c4ba7285c7ea1b259038a0ccb7ce9f6219da1/pipeline/src/extractTransformLoad.ts#L31) in the content pipeline, to load the new Prismic type ("`featured-work`"?) into an index in the content cluster.
 
 Potential `ElasticsearchFeaturedWork` type.  
-No aggreagations or filters required
+No aggregations or filters required
 
 ```typescript
 type ElasticsearchFeaturedWork = {
@@ -89,6 +90,7 @@ Pros:
 - doesn't require code change and deployment to update the works
 - control over the types/labels
 - control over the cover image
+- can be kept up after stage 2. to provide override capabilities
 
 Cons: 
 - manually curated content risks getting stale 
@@ -103,7 +105,7 @@ Pros:
 Cons: 
 - The digitisedDate will not always be strictly accurate: when a work is digitised again, the `CREATEDATE` is that of the latest digitisation. We can mitigate this by only returning documents where `digitisedVersion` is `v1`.
 - What do we do for work with advisory? 
-- Amending the Work model should not be done lightly 
+- Amending the Work model should not be done lightly: our API is public and documented   // more detail here
 
 ### METS file - digitised or born-digital
 
@@ -138,49 +140,38 @@ case class DigitalLocation(
   digitisedVersion: Option[Int] = None 🆕
 ) extends Location
 ``` 
-### Transformed `display.items`
+### works-source/works-denormalised `data.items`
 
 ```json
 "items": [
   {
-    "identifiers": [],
+    "id": {
+      "type": "Unidentifiable"
+    },
     "locations": [
       {
+        "url": "https://iiif.wellcomecollection.org/presentation/v2/b30601241",
         "locationType": {
-          "id": "iiif-presentation",
-          "label": "IIIF Presentation API",
-          "type": "LocationType"
+          "id": "iiif-presentation"
         },
-        "url": "https://iiif.wellcomecollection.org/presentation/v2/b30598977",
         "license": {
-          "id": "inc",
-          "label": "In copyright",
-          "url": "http://rightsstatements.org/vocab/InC/1.0/",
-          "type": "License"
-        },
-        "digitisation": {
-          "date": "2025-08-19T18:10:40.041562Z",
-          "version": 1
+          "id": "pdm"
         },
         "accessConditions": [
           {
             "method": {
-              "id": "view-online",
-              "label": "View online",
-              "type": "AccessMethod"
+              "type": "ViewOnline"
             },
             "status": {
-              "id": "open",
-              "label": "Open",
-              "type": "AccessStatus"
-            },
-            "type": "AccessCondition"
+              "type": "Open"
+            }
           }
         ],
+        "digitisedDate": "2019-09-13T14:33:15.254Z",
+        "digitisedVersion": 1,
         "type": "DigitalLocation"
       }
-    ],
-    "type": "Item"
+    ]
   }
 ]
 ```
@@ -199,35 +190,54 @@ case class DigitalLocation(
           "type": "object",
           "enabled": false
         },
-        "filterableValues": {},
-        "query": {
+        "filterableValues": {
           "properties": {
-            "alternativeTitles": {},
-            "collectionPath": {},
+            "availabilities": {},
             "contributors": {},
-            "description": {},
-            "edition": {},
-            "genres": {},
-            "id": {},
-            "identifiers": {},
-            "images": {},
-            "items": {
+            "format": {
               "properties": {
-                "id": {},
-                "identifiers": {},
-                "shelfmark": {},
-                "digitisedDate": { 
-                  "type": "date",
-                  "format": "date_time" // ISO 8601 format
-                },
-                "digitisedVersion": {
-                  "type": "integer"
+                "id": {
+                  "type": "keyword"
                 }
               }
             },
-            // other existing query properties
+            "genres": {},
+            "identifiers": {},
+            "items": {
+              "properties": {
+                "id": {
+                  "type": "keyword"
+                },
+                "identifiers": {
+                  "properties": {
+                    "value": {
+                      "type": "keyword"
+                    }
+                  }
+                },
+                "locations": {
+                  "properties": {
+                    "accessConditions": {},
+                    "license": {},
+                    "locationType": {},
+                    "digitisedDate": { 
+                      "type": "date"
+                    },
+                    "digitisedVersion": {
+                      "type": "integer"
+                    }
+                  }
+                }
+              }
+            },
+            "languages": {},
+            "partOf": {},
+            "production": {},
+            "subjects": {},
+            "workType": {}
           }
         },
+        "query": {},
         "redirectTarget": {
           "type": "object",
           "dynamic": "false"
@@ -241,6 +251,8 @@ case class DigitalLocation(
 }
 ```
 
+NOTE: the `display` object is not strictly mapped, so as to offer flexibility in what the API returns to the client. In this case it would not be necessary to extend the display object to include the `digitisedDate` and `digitisedVersion` as there is no plan for this to appear in the "New online" Work card.
+
 #### Improve digitisedDate accuracy
 
 We can mitigate the multiple versions issue (see NOTE in METS file section) by extending [`MetsLocation`](https://github.com/wellcomecollection/catalogue-pipeline/blob/53d04e063a75600236ac8ed41934b9c52b451624/pipeline/transformer/transformer_mets/src/main/scala/weco/pipeline/transformer/mets/transformer/MetsData.scala#L71) to include the version.  
@@ -253,9 +265,67 @@ Ebsco and Miro works do not have a digitised date or version. Much like `linkTex
 
 ## Catalogue-api
 
-Once the digitisedDate et digitisedVersion are part of the Work model, the catalogue-api exposes the data through a new path in the [SearchApi](https://github.com/wellcomecollection/catalogue-api/blob/main/search/src/main/scala/weco/api/search/SearchApi.scala).
+Once the digitisedDate and digitisedVersion are part of the Work model and indexed in `works-indexed-pipeline-date`, we have several options for exposing the data through the catalogue's [SearchApi](https://github.com/wellcomecollection/catalogue-api/blob/main/search/src/main/scala/weco/api/search/SearchApi.scala).
 
-The path 
+Essentially we want to return: 
+- documents filtered by `digitisedVersion: 1` `accessConditions.status": ["open"]`
+- aggregated by requested `Format`, 
+- agg buckets sorted by most recent `digitisedDate`
+- `size 1`, `display` object 
+
+ES query would need to look like this:
+
+```json
+{
+  "size": 0,
+  "query": {
+    "bool": {
+      "must": [
+        {
+          "term": {
+            "filterableValues.items.locations.digitisedVersion": 1
+          }
+        },
+        {
+          "terms": {
+            "filterableValues.items.locations.accessConditions.status": ["open"] // include "open-with-advisory"? 
+          }
+        }
+      ]
+    }
+  },
+  "aggs": {
+    "formats": {
+      "terms": {
+        "field": "filterableValues.format.id",
+        "include": [ "workType", "query", "params" ] 
+      },
+      "aggs": {
+        "top_by_date": {
+          "top_hits": {
+            "sort": [{
+              "filterableValues.items.locations.digitisedDate": "desc"
+            }],
+            "size": 1,
+            "_source": ["display"]
+          }
+        }
+      }
+    }
+  }
+}
+```
+
+### Use existing /works endpoint
+
+The catalogue API currently use aggregations for [faceted search](https://github.com/wellcomecollection/docs/tree/main/rfcs/037-api-faceting-principles). 
+
+
+
+### Create a /works/new-online endpoint with static ES query
+
+eg. `/works/new-online?workType=a%2Ch%2Cl%2Chdig` a=Books h=Archives and manuscripts l=Ephemera hdig=Born-digital archives
+
 
 
 
