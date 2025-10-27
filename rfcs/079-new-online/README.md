@@ -168,7 +168,7 @@ case class DigitalLocation(
           }
         ],
         "digitisedDate": "2019-09-13T14:33:15.254Z",
-        "digitisedVersion": 1,
+        "digitisedVersion": 1, // this is not necessary, we can instead include digitisedDate only when the version is 1
         "type": "DigitalLocation"
       }
     ]
@@ -223,7 +223,7 @@ case class DigitalLocation(
                     "digitisedDate": { 
                       "type": "date"
                     },
-                    "digitisedVersion": {
+                    "digitisedVersion": { // this can go if we include digitisedDate only when the version is 1
                       "type": "integer"
                     }
                   }
@@ -268,7 +268,7 @@ Ebsco and Miro works do not have a digitised date or version. Much like `linkTex
 Once the digitisedDate and digitisedVersion are part of the Work model and indexed in `works-indexed-pipeline-date`, we have several options for exposing the data through the catalogue's [SearchApi](https://github.com/wellcomecollection/catalogue-api/blob/main/search/src/main/scala/weco/api/search/SearchApi.scala).
 
 Essentially we want to return: 
-- documents filtered by `digitisedVersion: 1` and `accessConditions.status": ["open"]`
+- documents filtered by (`digitisedVersion: 1` and )`accessConditions.status": ["open"]`
 - aggregated by requested `Format`, 
 - agg buckets sorted by most recent `digitisedDate`
 - `size 1`, `display` object 
@@ -281,11 +281,12 @@ ES query would need to look like this:
   "query": {
     "bool": {
       "must": [
-        {
-          "term": {
-            "filterableValues.items.locations.digitisedVersion": 1
-          }
-        },
+        // {
+        //   "term": {
+        //     "filterableValues.items.locations.digitisedVersion": 1
+        //   }
+        // },
+        // not necessary if we've don't index digitisedVersion
         {
           "terms": {
             "filterableValues.items.locations.accessConditions.status": ["open"] // include "open-with-advisory"? 
@@ -319,8 +320,9 @@ ES query would need to look like this:
 ### Use existing /works endpoint
 
 The catalogue API currently use aggregations for [faceted search](https://github.com/wellcomecollection/docs/tree/main/rfcs/037-api-faceting-principles). 
-This use case would divert from 
+The "New online query" use case would divert from this pattern but it can be integrated by introducing a new sorted AggregationType
 
+We can leverage the existing [AccessStatusFilter](https://github.com/wellcomecollection/catalogue-api/blob/09b4612d6f15c604b40a432ffd98b95ca35becf5/search/src/main/scala/weco/api/search/models/DocumentFilter.scala#L72) and combine it with a new `TopHitsAggregation` [AggregationType](https://github.com/wellcomecollection/catalogue-api/blob/09b4612d6f15c604b40a432ffd98b95ca35becf5/search/src/main/scala/weco/api/search/services/AggregationsBuilder.scala#L18) that will aggregate in this case by workType/format, sorted by digitisedDate, with size: 1 
 
 
 ### Create a /works/new-online route with custom ES query
@@ -357,7 +359,9 @@ def newOnline(
                 sort = Seq(
                   fieldSort("filterableValues.items.locations.digitisedDate")
                     .desc()
+                  
                 )
+                source = Some(Seq("display"))
               )
             )
         }
