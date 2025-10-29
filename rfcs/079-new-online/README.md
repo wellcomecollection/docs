@@ -30,82 +30,19 @@ type WorkItem = {
 };
 ```
 
-This RFC aims to describe the steps that may be taken to deliver functionality quickly while developing a more robust, long-term and automated solution. 
+This RFC aims to describe how we might integrate a `digitisedDate` into the Work model, and how the catalogue-api might expose this data.
 
-The first stage is to add "Featured Work" as a content type in Prismic and content-pipeline/API.  
-Colleagues required: 
-- 1 BE developer (Experience or Platform)
-- 1 FE developer (Experience)
-- 1 editorial team staff (assuming they will create the Prismic docs)
-- 1 content provider (to curate the featured works, eg. Collection Information, Digital Production)
+## Requirements
 
-The following stage is to integrate a digital item's `digitisedDate` and `digitisedVersion` into the catalogue-pipeline and API's Work model, as part of the item's [DigitalLocation](https://github.com/wellcomecollection/catalogue-pipeline/blob/53d04e063a75600236ac8ed41934b9c52b451624/common/internal_model/src/main/scala/weco/catalogue/internal_model/locations/Location.scala#L15C12-L15C27).  
-Colleagues required:
-- 1 BE developer (Platform)
-- 1 FE developer (Experience)
+- ~~New Online is to only display works that have been digitised by the Wellcome Collection team and born-digital archives, ie. works that have a METS file. It is not meant to include other digital works such as EBSCO journals.~~
+- ~~We want to display 4 works and they can all be of the same format, eg. archives and manuscripts~~
+- a "New Online" page which lists all the recently digitised works by descending `digitisedDate` order 
+- the 4 "New Online" works on the landing page will be selected among the above, and editorialised through Prismic
 
+## Integrate the digitised date in the Work model and the catalogue pipeline.
 
-## 1. New Prismic Custom Type ingested by the content pipeline and available through the content API
-
-Create an additional [ETL pipeline](https://github.com/wellcomecollection/content-api/blob/6e9c4ba7285c7ea1b259038a0ccb7ce9f6219da1/pipeline/src/extractTransformLoad.ts#L31) in the content pipeline, to load the new Prismic type ("`featured-work`"?) into an index in the content cluster.
-
-Potential `ElasticsearchFeaturedWork` type.  
-No aggregations or filters required
-
-```typescript
-type ElasticsearchFeaturedWork = {
-  id: string; // work id 
-  display: FeaturedWork;
-  query: {
-    createdDate: string;
-    id: string
-    type: string[];
-    feature: string; // eg. "new-online", "trending"
-  };
-};
-
-type FeaturedWork = {
-  id: string; // work id 
-  url: string;  
-  title: string;
-  image: {
-    contentUrl: string;
-    width: number; // can we make this optional?
-    height: number; // can we make this optional?
-    alt?: string;
-  };
-  type: string[];
-  feature: string; // eg. "new-online", "trending"
-  meta?: string;
-}
-```
-
-On the API side the data is exposed on the `/featured/new-online` endpoint, with optional `to`, `from` and `type` query params.  
-Absent query params return `FeaturedWork[]` with the most recent of each of 4 default `types`, with feature="new-online".  
-Query params enable flexibility as to the date range and type of `ElasticsearchFeaturedWork` documents returned. 
-
-Pros: 
-- integrates into existing infrastructure
-- the Prismic Custom Type can be made to fit our needs
-- doesn't require code change and deployment to update the works
-- control over the types/labels
-- control over the cover image
-- can be kept up after stage 2. to provide override capabilities
-
-Cons: 
-- manually curated content risks getting stale 
-
-
-## 2. Integrate the digitised date and version in the Work model and the catalogue pipeline.
-
-Pros: 
-- No need for manual intervention, the New online items on the landing page will reflect what's actually been recently digitised.
-- `digitisedDate` in the Work model enables easier audit for Digital Production team.
-
-Cons: 
-- The digitisedDate will not always be strictly accurate: when a work is digitised again, the `CREATEDATE` is that of the latest digitisation. We can mitigate this by only returning documents where `digitisedVersion` is `v1`.
-- What do we do for work with advisory? 
-- Amending the Work model should not be done lightly: our API is public and documented   // more detail here
+- The digitisedDate will not always be strictly accurate: when a work is digitised again, the `CREATEDATE` is that of the latest digitisation. We can mitigate this by only extracting and loading `digitisedDate` for METS works that are on their v1.
+- What do we do for work with advisory? We can filter for `items.locations.accessConditions.status.id": ["open"]`
 
 ### METS file - digitised or born-digital
 
@@ -137,9 +74,13 @@ case class DigitalLocation(
   linkText: Option[String] = None,
   accessConditions: List[AccessCondition] = Nil,
   digitisedDate: Option[String] = None, 🆕
-  digitisedVersion: Option[Int] = None 🆕
 ) extends Location
 ``` 
+
+#### Other works with a DigitalLocation
+
+Ebsco and Miro works do not have a digitised date or version. Much like `linkText`, `digitisedDate` and `digitisedVersion` are Options and default to None if not present or applicable.
+
 ### works-source/works-denormalised `data.items`
 
 ```json
@@ -168,7 +109,6 @@ case class DigitalLocation(
           }
         ],
         "digitisedDate": "2019-09-13T14:33:15.254Z",
-        "digitisedVersion": 1, // this is not necessary, we can instead include digitisedDate only when the version is 1
         "type": "DigitalLocation"
       }
     ]
@@ -222,9 +162,6 @@ case class DigitalLocation(
                     "locationType": {},
                     "digitisedDate": { 
                       "type": "date"
-                    },
-                    "digitisedVersion": { // this can go if we include digitisedDate only when the version is 1
-                      "type": "integer"
                     }
                   }
                 }
@@ -251,154 +188,52 @@ case class DigitalLocation(
 }
 ```
 
-NOTE: the `display` object is not strictly mapped, so as to offer flexibility in what the API returns to the client. In this case it would not be necessary to extend the display object to include the `digitisedDate` and `digitisedVersion` as there is no plan for this to appear in the "New online" Work card.
-
-#### Improve digitisedDate accuracy
-
-We can mitigate the multiple versions issue (see NOTE in METS file section) by extending [`MetsLocation`](https://github.com/wellcomecollection/catalogue-pipeline/blob/53d04e063a75600236ac8ed41934b9c52b451624/pipeline/transformer/transformer_mets/src/main/scala/weco/pipeline/transformer/mets/transformer/MetsData.scala#L71) to include the version.  
-This would enable excluding any version > v1 from a "new online" query, and returning only the works that where recently digitised **for the first time**. 
-
-#### Other works with a DigitalLocation
-
-Ebsco and Miro works do not have a digitised date or version. Much like `linkText`, `digitisedDate` and `digitisedVersion` are Options and default to None if not present or applicable.
+NOTE: the `display` object is not strictly mapped, so as to offer flexibility in what the API returns to the client. In this case it would not be necessary to extend the display object to include the `digitisedDate` as there is no plan for this to appear in the "New online" Work card. 
 
 
 ## Catalogue-api
 
-Once the digitisedDate and digitisedVersion are part of the Work model and indexed in `works-indexed-pipeline-date`, we have several options for exposing the data through the catalogue's [SearchApi](https://github.com/wellcomecollection/catalogue-api/blob/main/search/src/main/scala/weco/api/search/SearchApi.scala).
+Once the digitisedDate is part of the Work model and indexed in `works-indexed-pipeline-date`, we can extend the [SearchApi](https://github.com/wellcomecollection/catalogue-api/blob/main/search/src/main/scala/weco/api/search/SearchApi.scala) to enable additional sorting.
 
 Essentially we want to return: 
-- documents filtered by (`digitisedVersion: 1` and )`accessConditions.status": ["open"]`
-- aggregated by requested `Format`, 
-- agg buckets sorted by most recent `digitisedDate`
-- `size 1`, `display` object 
+- documents filtered by `accessConditions.status": ["open"]`
+- sorted by most recent `digitisedDate`
 
 ES query would need to look like this:
 
 ```json
 {
-  "size": 0,
   "query": {
     "bool": {
       "must": [
-        // {
-        //   "term": {
-        //     "filterableValues.items.locations.digitisedVersion": 1
-        //   }
-        // },
-        // not necessary if we've don't index digitisedVersion
         {
           "terms": {
-            "filterableValues.items.locations.accessConditions.status": ["open"] // include "open-with-advisory"? 
+            "filterableValues.items.locations.accessConditions.status.id": ["open"] 
           }
         }
       ]
     }
   },
-  "aggs": {
-    "formats": {
-      "terms": {
-        "field": "filterableValues.format.id",
-        "include": [ "a", "h", "l", "hdig" ] 
-      },
-      "aggs": {
-        "top_by_date": {
-          "top_hits": {
-            "sort": [{
-              "filterableValues.items.locations.digitisedDate": "desc"
-            }],
-            "size": 1,
-            "_source": ["display"]
-          }
-        }
+    "sort": [
+    {
+      "filterableValues.items.locations.digisedDate": {
+        "order": "desc",
+        "missing": "_last" // Place documents with missing fields at the end
       }
     }
-  }
+  ]
 }
 ```
 
 ### Use existing /works endpoint
 
-The catalogue API currently use aggregations for [faceted search](https://github.com/wellcomecollection/docs/tree/main/rfcs/037-api-faceting-principles). 
-The "New online query" use case would divert from this pattern but it can be integrated by introducing a new sorted AggregationType
+We can exercise the existing [AccessStatusFilter](https://github.com/wellcomecollection/catalogue-api/blob/09b4612d6f15c604b40a432ffd98b95ca35becf5/search/src/main/scala/weco/api/search/models/DocumentFilter.scala#L72) and add a new SortRequest alongside `ProductionDateSortRequest`, eg. `DigitisedDateSortRequest`
 
-We can leverage the existing [AccessStatusFilter](https://github.com/wellcomecollection/catalogue-api/blob/09b4612d6f15c604b40a432ffd98b95ca35becf5/search/src/main/scala/weco/api/search/models/DocumentFilter.scala#L72) and combine it with a new `TopHitsAggregation` [AggregationType](https://github.com/wellcomecollection/catalogue-api/blob/09b4612d6f15c604b40a432ffd98b95ca35becf5/search/src/main/scala/weco/api/search/services/AggregationsBuilder.scala#L18) that will aggregate in this case by workType/format, sorted by digitisedDate, with size: 1 
-
-
-### Create a /works/new-online route with custom ES query
-
-Given that this search does not need to support faceting it might be easier to create a new route specifically for this query, to return the most recent digitised work for a list of formats/workTypes:
-
-eg. `/works/new-online?workType=a%2Ch%2Cl%2Chdig` ie. a=Books h=Archives and manuscripts l=Ephemera hdig=Born-digital archives
-
-Add to [WorksService](https://github.com/wellcomecollection/catalogue-api/blob/main/search/src/main/scala/weco/api/search/services/WorksService.scala):
+The `open` items sorted by most recent `digitisedDate` can be requested like so:
 
 ```
-def newOnline(
-    index: Index,
-    formatIncludes: Seq[String]
-  ): Future[Either[ElasticsearchError, Map[String, Int]]] = {
-    val searchResponse = elasticsearchService.executeSearchRequest(
-      search(index)
-        .size(0)
-        .query {
-          boolQuery().must(
-            termsQuery(
-              "filterableValues.items.locations.accessConditions.status",
-              "open"
-            )
-          )
-        }
-        .aggs {
-          termsAgg("formats", "filterableValues.format.id")
-            .include(formatIncludes)
-            .subaggs(
-              TopHitsAggregation(
-                name = "top_by_date",
-                size = Some(1),
-                sort = Seq(
-                  fieldSort("filterableValues.items.locations.digitisedDate")
-                    .desc()
-                  
-                )
-                source = Some(Seq("display"))
-              )
-            )
-        }
-    )
-  }
+search/works?items.locations.accessConditions.status=open&sortOrder=desc&sort=items.locations.digitisedDate
 ```
 
 
 
-
-## DISCARDED: Separate New digitised service
-
-Newly digitised as another content type in the content API.  
-The data is instead harvested from S3 and loaded into a data store (DDB or ES index) for the content API to then serve up in the same way as described above.
-
-<img src="./assets/newly_digitised.png" width="600" />
-
-### ❓❓❓
-Is the data that we need in the METS file?
-
-```typescript
-type WorkItem = {
-  url: string; // work url, not available
-  title: string; // yes, currently transformed in the pipeline
-  image: {
-    contentUrl: string; 
-    // could be 
-    // https://iiif.wellcomecollection.org/presentation/v2/{sourceIdentifier}
-    // https://iiif.wellcomecollection.org/image/{sourceIdentifier}_0001.jp2/full/630,1024/0/default.jpg (1st image in the presentation)
-    width: number;
-    height: number;
-    alt?: string;
-  };
-  labels: { text: string }[]; // yes, not currently transformed in the pipeline. May not match the values we want to display, eg. "monograph"
-  meta?: string;
-};
-```
-
-DISCARDED: because the work id is not available in the METS file, so the solution offers no onward journey
-In order to include the work id, a request to the catalogue api would be necessary. 
