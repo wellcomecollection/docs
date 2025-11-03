@@ -30,19 +30,25 @@ type WorkItem = {
 };
 ```
 
-This RFC aims to describe how we might integrate a `digitisedDate` into the Work model, and how the catalogue-api might expose this data.
+This RFC aims to describe how we might integrate a `createdDate` into the Work model, and how the catalogue-api might expose this data.
 
 ## Requirements
 
 - ~~New Online is to only display works that have been digitised by the Wellcome Collection team and born-digital archives, ie. works that have a METS file. It is not meant to include other digital works such as EBSCO journals.~~
 - ~~We want to display 4 works and they can all be of the same format, eg. archives and manuscripts~~
-- a "New Online" page which lists all the recently digitised works by descending `digitisedDate` order 
+- a "New Online" page which lists all the recently digitised works by descending `createdDate` order 
 - the 4 "New Online" works on the landing page will be selected among the above, and editorialised through Prismic
 
 ## Integrate the digitised date in the Work model and the catalogue pipeline.
 
-- The digitisedDate will not always be strictly accurate: when a work is digitised again, the `CREATEDATE` is that of the latest digitisation. We can mitigate this by only extracting and loading `digitisedDate` for METS works that are on their v1.
+- The createdDate will not always be strictly accurate: when a work is digitised again, the `CREATEDATE` is that of the latest digitisation. We can mitigate this by only extracting and loading `createdDate` for METS works that are on their v1.
 - What do we do for work with advisory? We can filter for `items.locations.accessConditions.status.id": ["open"]`
+- Amending the Work model and API should not be done lightly:  
+  - we must ensure that the model remains consistent and describes works in a sustainable, future-proof way,
+  - the API being public, what use could be made of the extended functionality by external users? 
+ 
+As of now, the `createdDate` would only be used for some `Items`'s `DigitlaLocation` but could be extended to describe the the accession or cataloguing date of physical items.
+
 
 ### METS file - digitised or born-digital
 
@@ -73,13 +79,13 @@ case class DigitalLocation(
   credit: Option[String] = None,
   linkText: Option[String] = None,
   accessConditions: List[AccessCondition] = Nil,
-  digitisedDate: Option[String] = None, 🆕
+  createdDate: Option[String] = None, 🆕
 ) extends Location
 ``` 
 
 #### Other works with a DigitalLocation
 
-Ebsco and Miro works do not have a digitised date or version. Much like `linkText`, `digitisedDate` and `digitisedVersion` are Options and default to None if not present or applicable.
+Ebsco and Miro works do not have a digitised date or version. Much like `linkText`, `createdDate` is an Option and defaults to None if not present or applicable.
 
 ### works-source/works-denormalised `data.items`
 
@@ -108,7 +114,7 @@ Ebsco and Miro works do not have a digitised date or version. Much like `linkTex
             }
           }
         ],
-        "digitisedDate": "2019-09-13T14:33:15.254Z",
+        "createdDate": "2019-09-13T14:33:15.254Z",
         "type": "DigitalLocation"
       }
     ]
@@ -160,7 +166,7 @@ Ebsco and Miro works do not have a digitised date or version. Much like `linkTex
                     "accessConditions": {},
                     "license": {},
                     "locationType": {},
-                    "digitisedDate": { 
+                    "createdDate": { 
                       "type": "date"
                     }
                   }
@@ -188,16 +194,16 @@ Ebsco and Miro works do not have a digitised date or version. Much like `linkTex
 }
 ```
 
-NOTE: the `display` object is not strictly mapped, so as to offer flexibility in what the API returns to the client. In this case it would not be necessary to extend the display object to include the `digitisedDate` as there is no plan for this to appear in the "New online" Work card. 
+NOTE: the `display` object is not strictly mapped, so as to offer flexibility in what the API returns to the client. In this case it would not be necessary to extend the display object to include the `createdDate` as there is no plan for this to appear in the "New online" Work card. 
 
 
 ## Catalogue-api
 
-Once the digitisedDate is part of the Work model and indexed in `works-indexed-pipeline-date`, we can extend the [SearchApi](https://github.com/wellcomecollection/catalogue-api/blob/main/search/src/main/scala/weco/api/search/SearchApi.scala) to enable additional sorting.
+Once the createdDate is part of the Work model and indexed in `works-indexed-pipeline-date`, we can extend the [SearchApi](https://github.com/wellcomecollection/catalogue-api/blob/main/search/src/main/scala/weco/api/search/SearchApi.scala) to enable additional sorting.
 
 Essentially we want to return: 
 - documents filtered by `accessConditions.status": ["open"]`
-- sorted by most recent `digitisedDate`
+- sorted by most recent `createdDate`
 
 ES query would need to look like this:
 
@@ -227,12 +233,12 @@ ES query would need to look like this:
 
 ### Use existing /works endpoint
 
-We can exercise the existing [AccessStatusFilter](https://github.com/wellcomecollection/catalogue-api/blob/09b4612d6f15c604b40a432ffd98b95ca35becf5/search/src/main/scala/weco/api/search/models/DocumentFilter.scala#L72) and add a new SortRequest alongside `ProductionDateSortRequest`, eg. `DigitisedDateSortRequest`
+We can exercise the existing [AccessStatusFilter](https://github.com/wellcomecollection/catalogue-api/blob/09b4612d6f15c604b40a432ffd98b95ca35becf5/search/src/main/scala/weco/api/search/models/DocumentFilter.scala#L72) and add a new SortRequest alongside `ProductionDateSortRequest`, eg. `createdDateSortRequest`
 
-The `open` items sorted by most recent `digitisedDate` can be requested like so:
+The `open` items sorted by most recent `createdDate` can be requested like so:
 
 ```
-search/works?items.locations.accessConditions.status=open&sortOrder=desc&sort=items.locations.digitisedDate
+search/works?items.locations.accessConditions.status=open&sortOrder=desc&sort=items.locations.createdDate
 ```
 
 
