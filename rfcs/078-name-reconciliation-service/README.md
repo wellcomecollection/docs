@@ -2,7 +2,7 @@
 
 This RFC proposes NARESE, a batch-oriented Name Reconciliation Service that uses embedding-based vector similarity search combined with constrained Large Language Model reasoning to identify and cluster variant textual forms of person and agent names in our Works metadata. The service addresses fragmentation caused by different spellings, initials, and date formats (e.g., "John Smith", "J. Smith", "Smith, John (1870-1932)") by producing machine-generated reconciliation clusters with traceable provenance and confidence tiers, prioritizing precision over recall to maintain data quality trust while improving search relevance, faceting, and downstream enrichment capabilities.
 
-**Last modified:**  2025-09-08T00:00:00Z
+**Last modified:**  2025-09-08T17:00+00:00
 
 ## Context
 
