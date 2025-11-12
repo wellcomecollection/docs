@@ -64,10 +64,10 @@ Why didn’t our safeguards catch this?
 **For sprint planning**
 
 **GE/RK**
-- Document how to bypass CI process with a local script
+- Document how to bypass CI process with a local script https://github.com/wellcomecollection/wellcomecollection.org/issues/12451
 
 **RC/RK**
-- Figure out a range of how to avoid this in future e.g.
+- Figure out a range of how to avoid this in future e.g. https://github.com/wellcomecollection/wellcomecollection.org/issues/12452
     - Static site generation
     - Caching eg display a good copy if you get a 500 from the origin https://aws.amazon.com/about-aws/whats-new/2023/05/amazon-cloudfront-stale-while-revalidate-stale-if-error-cache-control-directives/
     - Cache in the application
@@ -77,4 +77,4 @@ Why didn’t our safeguards catch this?
 
 
 **DM**
-- Diff custom types test - how to run this only when it’s useful
+- Diff custom types test - how to run this only when it’s useful https://github.com/wellcomecollection/wellcomecollection.org/issues/12453
