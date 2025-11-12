@@ -20,5 +20,6 @@ An ADR records a a particular decision and contains the key information to under
 | [GitHub Security](github_security.md) | Guidelines for securing GitHub repositories, including best practices for managing secrets and access. |
 | [Logging](logging.md) | Best practices for logging in applications, including log levels and structured logging. |
 | [Secrets](secrets.md) | Guidelines for managing secrets in applications, including best practices for storing and accessing sensitive information. |
+| [Uptime monitoring with LogicMonitor](logicmonitor.md) | Overview of our LogicMonitor-based website uptime monitoring and how to manage it. |
 | [Base AMI updates](base_ami_updates.md) | A process for updating base AMIs in Wellcome Collection AWS accounts. |
 | [Identity service for IIIF-Builder](iiif-builder-identity-service.md) | How IIIF-Builder (DDS) learns where and how digital objects are stored, given an identifier |
