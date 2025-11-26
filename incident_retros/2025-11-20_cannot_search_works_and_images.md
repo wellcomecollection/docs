@@ -88,8 +88,8 @@ Not previously possible to make new indexes w/in the same cluster
 ## Actions
 
 **Take to Platform planning**
-- Re-apply fix to make Terraform output less verbose / make the info we need more obvious
+- Re-apply fix to make Terraform output less verbose / make the info we need more obvious https://github.com/wellcomecollection/platform/issues/6225
 - Health check improvements
 
 **RK**
-Make the API resilient for API key changes - done in https://github.com/wellcomecollection/catalogue-api/pull/871 
+Make the API resilient for API key changes - done in https://github.com/wellcomecollection/catalogue-api/pull/871 / https://github.com/wellcomecollection/platform/issues/6226
