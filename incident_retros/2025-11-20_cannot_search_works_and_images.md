@@ -92,4 +92,4 @@ Not previously possible to make new indexes w/in the same cluster
 - Health check improvements
 
 **RK**
-Make the API resilient for API key changes - done in https://github.com/wellcomecollection/catalogue-api/pull/871 / https://github.com/wellcomecollection/platform/issues/6226
+- Make the API resilient for API key changes - done in https://github.com/wellcomecollection/catalogue-api/pull/871 / https://github.com/wellcomecollection/platform/issues/6226
