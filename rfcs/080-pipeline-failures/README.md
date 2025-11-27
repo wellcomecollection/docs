@@ -190,8 +190,14 @@ steps.
 * Batches are atomic - any failure is a failure of the batch
   * This does not isolate failures
 * Use built in retry - any failure and the whole batch is retried
+  * The built-in retry mechanism will allow us a degree of extra configuration, e.g. backoff.  
+    This should still be considered as part of the solution, and may be adequate in the first
+    instance. 
   * Need to track the retry count in order to succeed on the final attempt
   * If an error is caused by a timeout, or overwhelmed system, then it is likely to happen again
+  * It may be possible to invoke different behaviour with the same arguments by having the lambdas check
+    for prior successes internally and only operating on previously unsuccessful elements of the input, 
+    but this adds complexity to the code when it could be clearer handled in the environment.
 * Manual Retries only - Failures are recorded, and we push any failures back through the top
   * This may be a valid step towards an appropriate solution,
   * if failures are rare, this may be sufficient
@@ -233,6 +239,15 @@ A pipeline step takes the following input:
     - In the current pipeline, this may be a list of ids or paths. The exact nature of this input is outside the scope of this RFC  
 - The number of attempts this batch has made (optional, defaults to zero)
 
+The "do it" step should make appropriate use of Step Function built-in error handling features. For example 
+to wait and retry once.  This would cover the scenario where a remote service is briefly and temporarily 
+unavailable. However, In order to ensure that a partial failure in a batch does not cause the failure of 
+the whole, failing and successful records need to be separated.
+
+If a step 
+
+A Catcher should be defined for the "do it" step, that allows the flow to continue in the case of a failure.
+
 In the case of a partial failure, it invokes itself with the failures and an incremented "try count".
 
 Once the retry count is exceeded, the state machine alerts that some records have failed permanently.
@@ -244,6 +259,7 @@ title: Stage
 flowchart TD
 Start((Start)) --> main["do it"] --> failures{"any failures?
 $boolean($states.input.failed)"}
+main -- catch --> failures
 failures -- yes --> report_failures1["log failures"]
 retryq -- yes -->  alert["alert failures"] --> End
 failures -- no --> End
