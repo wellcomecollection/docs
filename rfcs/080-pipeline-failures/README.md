@@ -136,6 +136,19 @@ professional entering data, and that data being rejected.
 If one record in a batch fails, this should not prevent the others succeeding.  If even one record in a batch is
 successful, then that record should be allowed to progress through the pipeline.
 
+
+### Retries should be as close to the failure as possible
+
+Use retry facilities within the application code where possible.  This is for two reasons:
+1. The application is best placed to determine whether a retry is likely to succeed
+   - If a record fails within the application, then it is likely that the application can judge whether a retry has a
+      chance of succeeding.  For example, if a network request times out, then retrying may succeed.
+      If the data is malformed, then retrying is not going to succeed.
+2. Only the pertinent part of the application is retried.
+   - Given an application that retreives data, transforms it, and writes it out, if the write fails,
+     retrying the whole application means that the retrieval and transformation are repeated unnecessarily.
+     This adds load to the system, and increases the chance of further failures.
+
 ### Prefer warnings over failures
 
 If one field in a record contains unexpected data, this should ideally not prevent the record succeeding.
@@ -213,7 +226,17 @@ steps.
 * Synchronous recursion, trigger the step again, waiting for completion, and merging results.
   * This could result in delays to successful records, while retrying broken ones
   * This keeps all the eventually successful records from a batch together downstream in the pipeline.
-   
+ 
+### Initial Implementation
+
+The simplest implementation of this RFC is the built-in retry mechanism.  Using a Catcher to continue the flow
+in the case of a partial failure, logging any failures and allowing the successful records to continue downstream.
+
+The downside of this approach is that simply retrying the same operation again is likely to result in the same failure.
+However, it is not unlikely that transient failures due to other services being unavailable will be resolved on a retry.
+
+This should be the first step, and if this proves insufficient, then the recursive approach can be implemented.
+
 ### State machine for a pipeline
 
 The pipeline's state machine is only concerned with the orchestration of the pipeline stages.
