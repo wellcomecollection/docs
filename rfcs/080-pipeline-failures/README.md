@@ -1,16 +1,15 @@
 # RFC 080: Handling failures in Python Step Functions
 
-## Summary
-
 Pipeline steps may fail for certain inputs.  Those failures are caught, logged, and retried using
 a templated recursive state machine defined for each step.  The overall pipeline is thereby kept clean of 
 error handling and can simply describe the happy-path flow of data.
+
+**Last modified:** 2025-12-01T00:00:00Z
 
 ## Scope
 
 This RFC was written to describe failure handling in the Adapter/Transformer section of the pipeline.  However, the approach
 determined should be considered as we expand the use of Python/Lambda/Step Functions to the remainder of the pipeline.
-
 
 ## Context
 
