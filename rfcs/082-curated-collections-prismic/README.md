@@ -10,6 +10,7 @@ Lauren had [her own brain-dump here](https://wellcomecloud-my.sharepoint.com/:w:
 This document is created from [this file](https://wellcomecloud-my.sharepoint.com/:w:/r/personal/r_cantin_wellcome_ac_uk/Documents/Curated%20Catalogue%20results%20x%20Prismic.docx?d=w6485e321e91d4475905024dc89d391e3&csf=1&web=1&e=O70JWS) which we'll stop evolving and use this RFC instead.
 
 With the work being done on thematic browsing, we are aware that we won't be able to curate ALL theme pages, but we still need to mitigate risk (e.g. offensive images, wrong description).
+ 
 ​​
 **Here are the various issues we are aiming to solutionise:**
 1. How to curate which images are shown on a theme card?
@@ -65,7 +66,8 @@ Where do Editorial/Collections colleagues browse our themes and works to find wh
 
 
 ## 4. How and where to list selected works and concepts?
-### Works
+### Works
+
 Four recently digitised works are featured on the CLP ([New online](https://wellcomecollection.org/collections)). 
 
 We get the relevant IDs from Prismic [in a fragile and hacky way](https://github.com/wellcomecollection/wellcomecollection.org/blob/main/content/webapp/pages/collections/index.tsx#L110-L151) that depends on nothing in the Text slice changing aside from the IDs.  
