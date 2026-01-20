@@ -58,7 +58,7 @@ One solution for it would be to build a tool to facilitate those pain points and
 
 Sticking to this method (vs curating in a CMS) would mean that the Concepts API is THE source of truth for everything, including “display label”, “teaser text” and “hero images”. It would mean only IDs are provided in Prismic and everything is fetched from there. Wellcome Authority descriptions have already been added that way. 
 
-If we stick to the Concepts index being the one source of truth for all content, it makes it very easy to 1) keep FE queries to a mininum, 2) re-use concepts across the site and 3) removes the dead content in the CMS concern. It's many of us' favourite solution but the issue is manpower to get it done.
+If we stick to the Concepts index being the one source of truth for all content, it makes it very easy to 1) keep FE queries to a minimum, 2) re-use concepts across the site and 3) removes the "dead content in the CMS" concern. It's many of us' favourite solution but the issue is manpower to get it done.
 
 ## 3. How to select curated works and concepts?
 Where do Editorial/Collections colleagues browse our themes and works to find what they find interesting?
