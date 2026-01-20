@@ -6,8 +6,8 @@ As we're increasingly connecting Collections to Content management (Prismic), we
 
 I very much welcome all input, and we’ll eventually be clear on what issues need fixing and how they can best be addressed. 
 
-Lauren had [her own brain-dump here](https://wellcomecloud-my.sharepoint.com/:w:/r/personal/l_baily_wellcome_ac_uk/_layouts/15/Doc.aspx?sourcedoc=%7Bf4e37b91-233b-4df6-85b9-f8631b2e4c53%7D&action=edit&wdPid=14f53129) which is interesting context. 
-This document is created from [this file](https://wellcomecloud-my.sharepoint.com/:w:/r/personal/r_cantin_wellcome_ac_uk/Documents/Curated%20Catalogue%20results%20x%20Prismic.docx?d=w6485e321e91d4475905024dc89d391e3&csf=1&web=1&e=O70JWS) which we'll stop evolving and use this RFC instead.
+- Lauren had [her own brain-dump here](https://wellcomecloud-my.sharepoint.com/:w:/r/personal/l_baily_wellcome_ac_uk/_layouts/15/Doc.aspx?sourcedoc=%7Bf4e37b91-233b-4df6-85b9-f8631b2e4c53%7D&action=edit&wdPid=14f53129) which is interesting context. 
+- This document is created from [this file](https://wellcomecloud-my.sharepoint.com/:w:/r/personal/r_cantin_wellcome_ac_uk/Documents/Curated%20Catalogue%20results%20x%20Prismic.docx?d=w6485e321e91d4475905024dc89d391e3&csf=1&web=1&e=O70JWS) which we'll stop evolving and use this RFC instead.
 
 With the work being done on thematic browsing, we are aware that we won't be able to curate ALL theme pages, but we still need to mitigate risk (e.g. offensive images, wrong description).
  
