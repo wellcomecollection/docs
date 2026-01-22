@@ -79,21 +79,22 @@ Curated concepts ([Browse by theme](https://wellcomecollection.org/collections))
 
 This heavily depends on WHERE the curation happens. We need to answer points 1 and 2 first. If it happens in Prismic vs if the Concepts API is the source of truth, it makes this point more or less complex to answer.
 
-1. **We create a new Slice that makes this process more secure and more intuitive**
+#### 1. We create a new Slice that makes this process more secure and more intuitive
 Ideally, this slice would also serve for Themes. For now, I’m only thinking about a way to identify the Slice better in the code (an ID field?) and then a repeatable Text field that would allow for an infinite number of IDs, links or Integration fields to be provided. A select field would also be required to indicate which endpoint is to be used (concept or work) We could then use that to fetch the relevant content. This also addresses ISSUE 3 in Featured Themes.
 
-2. **We create a new Content type that can be linked to**
+#### 2. We create a new Content type that can be linked to
 Intending to use [content relationships](https://prismic.io/docs/fields/content-relationship) in Prismic, we add a Concept custom type in Prismic that can be used to augment data from the Concept API. 
 This custom type has a "Concept ID" field, "image" fields, and a "teaser description" field.In the Prismic page that references them, we have lists that can EITHER contain:
 - Linked Concept Document (through content relationships) OR 
-- A string referencing the Concept API. 
+- A string referencing the Concept API.
+
 The onus would be on Editors whether the Concept response is good enough or requires curation through Prismic. If the latter, then they create a Concept document with the required information and chose the Linked Concept document option. 
 I'm not sure we can easily represent this in the UI at the moment (the Linked document vs an ID string), so if we want to explore this option, we'll need to investigate how to do it.
 
-3. **We explore Prismic offerings to work directly with the API.**
+#### 3. We explore Prismic offerings to work directly with the API.
 [The Integration fields feature](https://prismic.io/docs/fields/integration) with the [“Pull data from an API” technique](https://prismic.io/docs/fields/integration#pull-data-from-an-api) was tested by Gareth a while ago and it didn’t prove to be up to the task. It queries the provided APIs every 30minutes and pulls its data – our indexes are way too big for this to be efficient, and we currently block queries after 10,000 results. What we should investigate next is the [“Push data to Prismic” method](https://prismic.io/docs/fields/integration#push-data-to-prismic). Costs and limits will have to be explored. 
 
-4. **Use a separate CMS that integrates with our APIs better**
+#### 4. Use a separate CMS that integrates with our APIs better
 We find a CMS that handles the Curated Catalogue results, one that integrates with our APIs better. This brings up a lot more questions but could be interesting to explore since Prismic has proven not to be up to par with our needs and we’re likely to continue doing Curated Collections features.  
 
 ## 5. How to display said lists?
