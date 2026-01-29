@@ -146,6 +146,18 @@ The ID Minter receives transformed works with source identifiers and merge candi
 
 The minter maintains a one-to-one mapping between source identifiers and catalogue identifiers in the ID Registry (Aurora database). After processing, each source identifier on the document is enriched with its corresponding catalogue identifier.
 
+The identifiers database enforces the following constraints:
+
+| Column | Description |
+|--------|-------------|
+| `CanonicalId` | The public catalogue identifier (e.g. `a2345bcd`) |
+| `OntologyType` | The type of entity (e.g. `Work`, `Image`) |
+| `SourceSystem` | The source system type (e.g. `sierra-system-number`, `calm-record-id`) |
+| `SourceId` | The identifier value within the source system (e.g. `b1161044x`) |
+
+- **Primary key on `CanonicalId`**: Each catalogue identifier is globally unique and can only appear once in the registry.
+- **Unique key on (`OntologyType`, `SourceSystem`, `SourceId`)**: Each source identifier (for a given ontology type) maps to exactly one catalogue identifier. This prevents the same source record from being assigned multiple catalogue identifiers.
+
 The ID Minter outputs:
 - The work with its **catalogue identifier** (mapped from its source identifier)
 - Merge candidates enriched with their **catalogue identifiers**
