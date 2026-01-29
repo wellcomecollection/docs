@@ -190,7 +190,7 @@ If we make no changes to the ID Minter during the migration, the following will 
 
 **Some source systems will continue to reference old identifiers.** Systems such as METS will continue to refer to old Sierra/CALM identifiers indefinitely in existing records. However, newer records in these systems will receive new identifiers from the new source systems.
 
-**Pipeline changes would still be required.** Even without modifying the ID Minter, the following changes would be necessary:
+**Pipeline changes are still required.** Even without modifying the ID Minter, the following changes would be necessary:
 
 1. **Axiell Collections & Folio transformers** would need to emit merge candidates targeting the appropriate source identifiers from Sierra & CALM. This would allow the matcher to connect the new records to their corresponding old records in the merge graph.
 
