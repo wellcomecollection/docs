@@ -11,57 +11,10 @@ This RFC discusses what will happen to public catalogue identifiers following th
 ## Table of contents
 
 - [Context](#context)
-  - [Identifier types](#identifier-types)
-    - [Adapter identifiers](#adapter-identifiers)
-    - [Source identifiers](#source-identifiers)
-    - [Public catalogue identifiers](#public-catalogue-identifiers)
-  - [Identifier usage in catalogue pipeline steps](#identifier-usage-in-catalogue-pipeline-steps)
-    - [Adapter](#adapter)
-    - [Transformer](#transformer)
-    - [ID Minter](#id-minter)
-    - [Matcher](#matcher)
-    - [Merger](#merger)
-    - [Summary of identifier usage](#summary-of-identifier-usage)
-  - [Impact of migration on public catalogue identifiers](#impact-of-migration-on-public-catalogue-identifiers)
 - [Proposed solution](#proposed-solution)
-  - [Overview](#overview)
-  - [Current service architecture](#current-service-architecture)
-  - [Database schema](#database-schema)
-    - [Current schema](#current-schema)
-    - [Proposed schema](#proposed-schema)
-    - [Discovering aliases](#discovering-aliases)
-    - [Future migrations](#future-migrations)
-    - [Schema design rationale](#schema-design-rationale)
-    - [Constraints](#constraints)
-  - [ID pre-generation](#id-pre-generation)
-    - [Pre-generation process](#pre-generation-process)
-    - [Claiming a free ID](#claiming-a-free-id)
-    - [Benefits of pre-generation](#benefits-of-pre-generation)
-  - [ID Minter logic](#id-minter-logic)
-    - [Lookup and minting flow](#lookup-and-minting-flow)
-    - [Idempotent writes](#idempotent-writes)
-    - [Returning unused IDs to the pool](#returning-unused-ids-to-the-pool)
-    - [Concurrency scenarios](#concurrency-scenarios)
-    - [Predecessor source identifiers](#predecessor-source-identifiers)
-  - [Data migration](#data-migration)
-    - [Migration steps](#migration-steps)
-  - [Service rewrite](#service-rewrite)
-    - [Architecture](#architecture)
-    - [Input/Output](#inputoutput)
-    - [Responsibilities](#responsibilities)
-    - [Hybrid operation with legacy transformers](#hybrid-operation-with-legacy-transformers)
-  - [Pipeline changes required](#pipeline-changes-required)
-    - [Transformer changes](#transformer-changes)
-    - [Merger changes](#merger-changes)
-    - [ID Minter changes](#id-minter-changes)
-  - [Benefits](#benefits)
-  - [Risks and mitigations](#risks-and-mitigations)
 - [Alternative solutions considered](#alternative-solutions-considered)
-  - [Summary of approaches](#summary-of-approaches)
-  - [Transformer ID swap](#transformer-id-swap)
-  - [Database swap](#database-swap)
-  - [Runtime ID matching in Minter](#runtime-id-matching-in-minter)
-  - [Why many-to-one was selected](#why-many-to-one-was-selected)
+- [Implementation plan](#implementation-plan)
+- [TL;DR](#tldr)
 
 ---
 
@@ -818,3 +771,85 @@ The key insight from the discussion was that **whatever approach we take, we pro
 3. The ID Minter is the correct place to manage identifier mappings, not the transformer.
 
 The many-to-one approach with predecessor relationships cleanly solves these issues while maintaining clear data provenance and supporting future migrations.
+
+---
+
+## Implementation plan
+
+This section outlines how the work can be split to enable parallel development and early release of changes before the source system migration.
+
+### Work streams
+
+The implementation can be split into independent work streams that proceed in parallel:
+
+```mermaid
+flowchart TD
+    subgraph "Parallel streams"
+        A[Stream A: Step Functions migration]
+        B[Stream B: Database schema migration]
+        C[Stream C: ID generation logic]
+        D[Stream D: ES document parsing]
+    end
+    
+    B --> E[ID pre-generation job]
+    C --> F[Integration & cutover]
+    D --> F
+    E --> F
+    A --> F
+    
+    F --> G[Transformer predecessor support]
+```
+
+#### Stream A: Step Functions migration
+
+Move the existing Scala minter from SQS-based invocation to Step Functions for all transformer → ID Minter pairs.
+
+- Establishes the Step Functions infrastructure that the new Python minter will use
+- Reduces scope of the Python rewrite (no need to support SQS directly)
+- Provides a clean rollback path — can switch back to Scala minter if issues arise with Python version
+
+#### Stream B: Database schema migration
+
+Migrate the Aurora database to the new two-table schema while maintaining compatibility with the existing Scala minter. Set up a regular dump → load process to populate a test database with production data, enabling integration testing before cutover.
+
+**Deliverable:** Database ready for new minter; ID pre-generation job running; test database with production data sync.
+
+#### Stream C: ID generation logic
+
+Implement and test the core minting logic in Python, independent of ES integration. Includes predecessor lookup, free ID claiming, fallback generation, and idempotent writes.
+
+**Deliverable:** Tested Python module for ID minting operations.
+
+#### Stream D: ES document parsing and annotation
+
+Implement and test the Elasticsearch integration — reading from transformer index, extracting source identifiers, annotating documents with canonical IDs, writing to minted index.
+
+**Deliverable:** Tested Python module for ES document handling.
+
+### Integration and cutover
+
+Once streams A-D are complete:
+
+- Integrate Streams C and D into Lambda function
+- End-to-end testing with Step Functions
+- Shadow mode: run Python minter alongside Scala, compare outputs
+- Configure EventBridge Pipes for any remaining legacy transformers (TEI, METS)
+- Gradual rollout and Scala decommission
+
+### Migration support
+
+Enable predecessor inheritance for Axiell Collections and Folio records. This work can be prepared in advance but should not be deployed until source system migration timing is confirmed.
+
+- Axiell Collections transformer: emit predecessor field for Sierra B numbers
+- Folio transformer: emit predecessor field for CALM reference numbers
+- Update merger precedence rules (Axiell > Sierra, Folio > CALM)
+
+---
+
+## TL;DR
+
+**Problem:** When we migrate records from Sierra/CALM to Axiell Collections/Folio, every record will get a new source identifier. The current ID Minter maps source identifiers to public catalogue identifiers 1:1, so every migrated record would receive a new public URL. This would break all existing links, citations, and bookmarks, require mass redirects, harm SEO, and fragment analytics.
+
+**Solution:** Modify the ID Minter to allow multiple source identifiers to share the same public catalogue identifier. When transformers emit a "predecessor" field linking new Axiell/Folio records to their old Sierra/CALM identifiers, the minter will look up the predecessor's catalogue ID and assign it to the new record. This preserves URLs, requires no redirects for migrated records, and supports future source system migrations without further schema changes.
+
+**Implementation:** The work splits into four parallel streams: (A) moving the existing Scala minter to Step Functions, (B) migrating the database schema to support many-to-one mappings with ID pre-generation, (C) implementing the new minting logic in Python, and (D) implementing Elasticsearch document parsing. Once integrated, the new Python Lambda replaces the Scala service. Transformer changes to emit predecessor fields are prepared separately and deployed when source system migration begins.
