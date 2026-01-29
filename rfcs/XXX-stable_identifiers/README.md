@@ -10,13 +10,24 @@ The catalogue pipeline currently generates public catalogue identifiers in the I
 
 ```mermaid
 flowchart LR
-    A[Adapter] -->|adapter record identifiers| T[Transformer]
-    T -->|source identifiers| M[ID Minter]
-    M -->|public catalogue identifiers| D[Downstream]
+    subgraph Adapter
+        A[Adapter]
+        ADB[("Stores:<br/><b>adapter IDs</b>")]
+    end
 
-    A --- ADB[(Adapter datastore)]
-    T --- TDB[(Transformer datastore)]
-    M --- MDB[(ID Minter datastore)]
+    subgraph Transformer
+        T[Transformer]
+        TDB[("Stores:<br/><b>source IDs</b>")]
+    end
+
+    subgraph ID Minter
+        M[ID Minter]
+        MDB[("Stores:<br/><b>source ID → catalogue ID</b>")]
+    end
+
+    A -->|"source IDs"| T
+    T -->|"source IDs<br/>+ merge candidates"| M
+    M -->|"catalogue IDs"| D[Downstream]
 ```
 
 ### Identifier types
