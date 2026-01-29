@@ -18,6 +18,7 @@ This RFC discusses what will happen to public catalogue identifiers following th
     - [Matcher](#matcher)
     - [Merger](#merger)
     - [Summary of identifier usage](#summary-of-identifier-usage)
+  - [Impact of migration on public catalogue identifiers](#impact-of-migration-on-public-catalogue-identifiers)
 
 ## Context
 
@@ -180,3 +181,31 @@ The merger outputs:
 | ID Minter | Source IDs | Catalogue IDs | Maps source → catalogue IDs (1:1) |
 | Matcher | Catalogue IDs | Graph of catalogue IDs | Builds merge graph using catalogue IDs only |
 | Merger | Catalogue IDs + source types | Single catalogue ID | Uses source types for precedence rules |
+
+### Impact of migration on public catalogue identifiers
+
+If we make no changes to the ID Minter during the migration, the following will occur:
+
+**All migrated records will receive new public catalogue identifiers.** When records are migrated from CALM/Sierra to Axiell Collections/Folio, they will be assigned new source identifiers by the new systems. Since the ID Minter maps source identifiers to catalogue identifiers on a one-to-one basis, these new source identifiers will result in new public catalogue identifiers being minted for every migrated record.
+
+**Some source systems will continue to reference old identifiers.** Systems such as METS will continue to refer to old Sierra/CALM identifiers indefinitely in existing records. However, newer records in these systems will receive new identifiers from the new source systems.
+
+**Pipeline changes would still be required.** Even without modifying the ID Minter, the following changes would be necessary:
+
+1. **Axiell Collections & Folio transformers** would need to emit merge candidates targeting the appropriate source identifiers from Sierra & CALM. This would allow the matcher to connect the new records to their corresponding old records in the merge graph.
+
+2. **Merger precedence rules** would need updating to allow the new source systems (Axiell Collections, Folio) to take precedence over the old systems (Sierra, CALM) when determining the canonical record for merged works.
+
+This approach would preserve the connection between old and new records through the merge graph, but users would see different public catalogue identifiers for what is conceptually the same record. Any existing bookmarks, citations, or external links to catalogue URLs would break unless redirects are maintained from old catalogue identifiers to new ones.
+
+**Mass redirection on the public website.** Because the new source system records would take precedence in the merger, the old catalogue identifiers (from Sierra/CALM records) would become redirect targets rather than canonical identifiers. This would result in the majority of works on the public collection website being redirected to new URLs.
+
+This is undesirable for several reasons:
+
+1. **SEO impact.** Search engines would need to reindex the entire collection under new URLs. Even with proper 301 redirects in place, there would be a period of reduced search visibility and potential loss of page authority accumulated over time.
+
+2. **Broken external references.** Academic citations, Wikipedia links, bookmarks, and partner integrations would all redirect to different URLs, creating user confusion and potentially failing in systems that don't follow redirects correctly.
+
+3. **Analytics discontinuity.** Usage analytics and reporting would be fragmented, with historical data associated with old identifiers and new data with new identifiers.
+
+4. **Redirect maintenance burden.** The redirect mappings would need to be maintained indefinitely. 
