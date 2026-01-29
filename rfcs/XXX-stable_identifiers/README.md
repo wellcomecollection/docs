@@ -4,6 +4,21 @@ This RFC discusses what will happen to public catalogue identifiers following th
 
 **Last modified:** 2026-??-??T??:00+00:00
 
+## Table of contents
+
+- [Context](#context)
+  - [Identifier types](#identifier-types)
+    - [Adapter identifiers](#adapter-identifiers)
+    - [Source identifiers](#source-identifiers)
+    - [Public catalogue identifiers](#public-catalogue-identifiers)
+  - [Identifier usage in catalogue pipeline steps](#identifier-usage-in-catalogue-pipeline-steps)
+    - [Adapter](#adapter)
+    - [Transformer](#transformer)
+    - [ID Minter](#id-minter)
+    - [Matcher](#matcher)
+    - [Merger](#merger)
+    - [Summary of identifier usage](#summary-of-identifier-usage)
+
 ## Context
 
 The catalogue pipeline currently generates public catalogue identifiers in the ID Minter step, with a one to one relationship between source identifiers retrieved by adapters and extracted by transformers (e.g. Sierra B numbers, CALM reference numbers) and public catalogue identifiers.
