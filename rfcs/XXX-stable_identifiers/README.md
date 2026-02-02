@@ -238,9 +238,9 @@ This is achieved through:
 
 ### Current service architecture
 
-The existing ID Minter is implemented as a Scala service running on ECS. It:
+The existing ID Minter is implemented as a Scala Lambda, which can be invoked via SQS or Step Functions depending on context. It:
 
-1. Consumes messages from an SQS queue containing document IDs to process
+1. Receives document IDs to process (via SQS messages or Step Functions invocation)
 2. Retrieves corresponding work documents from the transformer's Elasticsearch index
 3. Extracts source identifiers and merge candidates from the document
 4. Mints or looks up canonical IDs for each identifier in the Aurora database
@@ -249,13 +249,18 @@ The existing ID Minter is implemented as a Scala service running on ECS. It:
 
 ```mermaid
 flowchart LR
-    SQS[SQS Queue] --> ECS[ID Minter<br/>Scala/ECS]
-    ECS --> Aurora[(Aurora<br/>ID Registry)]
-    TransformerES[(Transformer<br/>ES Index)] --> ECS
-    ECS --> MinterES[(Minted Works<br/>ES Index)]
+    subgraph Invocation
+        SQS[SQS Queue]
+        SF[Step Functions]
+    end
+    SQS --> Lambda[ID Minter<br/>Scala Lambda]
+    SF --> Lambda
+    Lambda --> Aurora[(Aurora<br/>ID Registry)]
+    TransformerES[(Transformer<br/>ES Index)] --> Lambda
+    Lambda --> MinterES[(Minted Works<br/>ES Index)]
 ```
 
-This architecture will be modernised as part of the broader catalogue pipeline migration to AWS Step Functions and Python Lambdas.
+This Scala Lambda will be rewritten in Python as part of the broader catalogue pipeline modernisation.
 
 ### Database schema
 
