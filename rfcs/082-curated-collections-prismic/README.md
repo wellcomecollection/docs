@@ -94,6 +94,8 @@ I'm not sure we can easily represent this in the UI at the moment (the Linked do
 #### 3. We explore Prismic offerings to work directly with the API.
 [The Integration fields feature](https://prismic.io/docs/fields/integration) with the [“Pull data from an API” technique](https://prismic.io/docs/fields/integration#pull-data-from-an-api) was tested by Gareth a while ago and it didn’t prove to be up to the task. It queries the provided APIs every 30 minutes and pulls its data – our indexes are way too big for this to be efficient, and we currently block queries after 10,000 results. What we should investigate next is the [“Push data to Prismic” method](https://prismic.io/docs/fields/integration#push-data-to-prismic). Costs and limits will need exploring.
 
+EDIT: [See this ticket for detail](https://github.com/wellcomecollection/wellcomecollection.org/issues/12651#issuecomment-3835183825); at this stage, Prismic integrations are not an option we will pursue.
+
 #### 4. Use a separate CMS that integrates with our APIs better
 We find a CMS that handles the Curated Catalogue results, one that integrates with our APIs more effectively. This brings up a lot more questions but could be interesting to explore since Prismic has proven not to be up to scratch with our needs and we’re likely to continue doing Curated Collections features.
 
