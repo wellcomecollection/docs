@@ -87,28 +87,39 @@ class IDMinter:
         """
         cursor = self._get_cursor()
         
-        # Step 1: Check if source identifier already has a canonical ID
-        cursor.execute("""
-            SELECT CanonicalId FROM identifiers 
-            WHERE OntologyType = %s AND SourceSystem = %s AND SourceId = %s
-        """, (ontology_type, source_system, source_id))
-        
-        result = cursor.fetchone()
-        if result:
-            return result['CanonicalId']
-        
-        # Step 2: If predecessor specified, inherit its canonical ID
+        # Step 1: Query for source ID and predecessor in one round-trip
         if predecessor:
             pred_system, pred_id = predecessor
             cursor.execute("""
-                SELECT CanonicalId FROM identifiers 
-                WHERE OntologyType = %s AND SourceSystem = %s AND SourceId = %s
-            """, (ontology_type, pred_system, pred_id))
+                SELECT 
+                    CanonicalId,
+                    CASE 
+                        WHEN SourceSystem = %s AND SourceId = %s THEN 'new'
+                        ELSE 'predecessor'
+                    END AS MatchType
+                FROM identifiers
+                WHERE OntologyType = %s
+                  AND (
+                    (SourceSystem = %s AND SourceId = %s)
+                    OR 
+                    (SourceSystem = %s AND SourceId = %s)
+                  )
+            """, (source_system, source_id, ontology_type, 
+                  source_system, source_id, pred_system, pred_id))
             
-            pred_result = cursor.fetchone()
-            if pred_result:
-                canonical_id = pred_result['CanonicalId']
-                # Insert with idempotent write
+            results = cursor.fetchall()
+            
+            # Step 2: Evaluate query results
+            new_match = next((r for r in results if r['MatchType'] == 'new'), None)
+            pred_match = next((r for r in results if r['MatchType'] == 'predecessor'), None)
+            
+            # 2a: If new source ID found, return its CanonicalId
+            if new_match:
+                return new_match['CanonicalId']
+            
+            # 2b: If only predecessor found, insert new source ID with predecessor's CanonicalId
+            if pred_match:
+                canonical_id = pred_match['CanonicalId']
                 cursor.execute("""
                     INSERT INTO identifiers (OntologyType, SourceSystem, SourceId, CanonicalId)
                     VALUES (%s, %s, %s, %s)
@@ -116,8 +127,20 @@ class IDMinter:
                 """, (ontology_type, source_system, source_id, canonical_id))
                 self._commit()
                 return canonical_id
-            else:
-                raise ValueError(f"Predecessor not found: {pred_system}/{pred_id}")
+            
+            # 2c: Neither found - raise exception (predecessor should already exist)
+            raise ValueError(f"Predecessor not found: {pred_system}/{pred_id}")
+        
+        else:
+            # No predecessor - simple lookup
+            cursor.execute("""
+                SELECT CanonicalId FROM identifiers 
+                WHERE OntologyType = %s AND SourceSystem = %s AND SourceId = %s
+            """, (ontology_type, source_system, source_id))
+            
+            result = cursor.fetchone()
+            if result:
+                return result['CanonicalId']
         
         # Step 3: Claim a free ID from the pool
         cursor.execute("""

@@ -388,16 +388,19 @@ COMMIT;
 
 #### Lookup and minting flow
 
-```
-1. Query identifiers table by (OntologyType, SourceSystem, SourceId)
-   → If found: return CanonicalId
+A **source identifier** is a tuple of `(OntologyType, SourceSystem, SourceId)` — for example, `(Work, sierra-system-number, b1161044x)`.
 
-2. If work has predecessor source identifier:
-   a. Query predecessor by (OntologyType, SourceSystem, SourceId)
-   b. If found: 
-      - INSERT into identifiers with predecessor's CanonicalId (idempotent)
+```
+1. Query identifiers table for source ID (and predecessor if present):
+   - If work has predecessor: WHERE (source = new) OR (source = predecessor)
+   - Otherwise: WHERE source = new
+
+2. Evaluate query results:
+   a. If new source ID found → return CanonicalId
+   b. If only predecessor found:
+      - INSERT new source ID with predecessor's CanonicalId (idempotent)
       - Return CanonicalId
-   c. If not found:
+   c. If neither found AND has predecessor:
       - Raise exception (predecessor should already exist)
 
 3. Claim a free ID from canonical_ids:
@@ -416,6 +419,40 @@ COMMIT;
    c. Retry on collision
    d. INSERT into identifiers (idempotent)
    e. Return CanonicalId
+```
+
+#### Combined lookup query
+
+The lookup query retrieves both the new source ID and its predecessor (if specified) in a single database round-trip. Each row is tagged to indicate whether it matches the new source ID or the predecessor:
+
+```sql
+-- Query for source ID and predecessor in one round-trip
+SELECT 
+    CanonicalId,
+    CASE 
+        WHEN SourceSystem = ? AND SourceId = ? THEN 'new'
+        ELSE 'predecessor'
+    END AS MatchType
+FROM identifiers
+WHERE OntologyType = ?
+  AND (
+    (SourceSystem = ? AND SourceId = ?)  -- new source ID
+    OR 
+    (SourceSystem = ? AND SourceId = ?)  -- predecessor source ID
+  );
+```
+
+The query returns 0, 1, or 2 rows:
+- **0 rows**: Neither found — raise exception if predecessor was specified, otherwise mint new ID
+- **1 row with `MatchType = 'new'`**: New source ID already exists — return its `CanonicalId`
+- **1 row with `MatchType = 'predecessor'`**: Only predecessor found — insert new source ID with predecessor's `CanonicalId`
+- **2 rows**: Both found — return the `CanonicalId` from the new source ID row
+
+When no predecessor is specified, the query simplifies to a direct lookup:
+
+```sql
+SELECT CanonicalId FROM identifiers
+WHERE OntologyType = ? AND SourceSystem = ? AND SourceId = ?;
 ```
 
 #### Idempotent writes
@@ -458,10 +495,9 @@ UPDATE canonical_ids SET Status = 'free' WHERE CanonicalId = ?;
 
 | Step | Process A (`axiell/123`, predecessor `sierra/b1234`) | Process B (`axiell/456`, predecessor `sierra/b1234`) |
 |------|-----------|-----------|
-| 1 | Query `axiell/123` → not found | Query `axiell/456` → not found |
-| 2 | Query predecessor `sierra/b1234` → `abc123` | Query predecessor `sierra/b1234` → `abc123` |
-| 3 | INSERT `(axiell/123, abc123)` → succeeds | INSERT `(axiell/456, abc123)` → succeeds |
-| 4 | Return `abc123` | Return `abc123` |
+| 1 | Query `axiell/123` OR `sierra/b1234` → `sierra/b1234` has `abc123` | Query `axiell/456` OR `sierra/b1234` → `sierra/b1234` has `abc123` |
+| 2 | INSERT `(axiell/123, abc123)` → succeeds | INSERT `(axiell/456, abc123)` → succeeds |
+| 3 | Return `abc123` | Return `abc123` |
 
 **Outcome**: Both source identifiers correctly share the same canonical ID. No conflict.
 
@@ -469,9 +505,8 @@ UPDATE canonical_ids SET Status = 'free' WHERE CanonicalId = ?;
 
 | Step | Process B (successor `axiell/123`, predecessor `sierra/b1234`) |
 |------|-----------|
-| 1 | Query `axiell/123` → not found |
-| 2 | Query predecessor `sierra/b1234` → not found |
-| 3 | **Raise exception** |
+| 1 | Query `axiell/123` OR `sierra/b1234` → neither found |
+| 2 | **Raise exception** |
 
 **Outcome**: Process B fails with an error indicating the predecessor record was not found.
 
