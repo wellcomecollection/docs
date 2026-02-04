@@ -495,19 +495,13 @@ WHERE (OntologyType, SourceSystem, SourceId) IN (
   )
 ```
 
-This returns only the IDs that exist — missing IDs require individual minting.
+This returns only the IDs that exist — missing IDs require minting.
 
-##### Batch minting strategy
+##### Batch minting flow
 
-For IDs not found in the batch lookup:
-
-1. **Records with predecessors**: Lookup predecessor's canonical ID (predecessor may have different ontology type), then insert new mapping (inherits ID)
-2. **New records**: Claim from free pool and mint individually
-
-The `mint_ids()` method takes a list of `(source_id, predecessor_or_none)` tuples:
+The `mint_ids()` method processes source IDs in a single transaction with ~6 queries regardless of batch size:
 
 ```python
-# Each request is (source_id, predecessor) where both are full tuples
 results = minter.mint_ids([
     (('Work', 'axiell', 'AC-123'), ('Work', 'sierra', 'b1234')),  # with predecessor
     (('Image', 'mets', 'xyz'), None),  # no predecessor
@@ -515,19 +509,31 @@ results = minter.mint_ids([
 ])
 ```
 
-Individual minting ensures correct handling of:
-- Race conditions (idempotent writes with verification)
-- Predecessor validation (fail-fast on missing predecessor)
-- Pool exhaustion (clear error per record)
+The flow:
 
-##### Why not batch minting?
+1. **Batch lookup** source IDs + predecessor IDs together (single query)
+2. **Fail fast** if any predecessors are missing
+3. **Batch INSERT** for predecessor inheritance cases (inherit existing canonical ID)
+4. **Claim free IDs** from pool (`SELECT ... FOR UPDATE SKIP LOCKED` with LIMIT N)
+5. **Batch INSERT** for new records with claimed IDs (`ON DUPLICATE KEY UPDATE` for idempotency)
+6. **Verify assignments** — query back which canonical IDs were actually used (race detection)
+7. **Mark assigned** only IDs that were used, commit transaction
 
-Full batch minting would require:
-- Claiming N free IDs upfront (may waste IDs if inserts race)
-- Complex predecessor resolution across the batch
-- Harder failure handling (which records succeeded?)
+##### Race detection and ID pool management
 
-The hybrid approach (batch lookup + individual mint) optimizes the hot path (existing records) while keeping minting logic simple and debuggable.
+Between the initial lookup and INSERT, another process may have committed a mapping for a source ID we thought was new. The verification query detects this:
+
+- If our claimed ID appears in the result → we won the race, mark as 'assigned'
+- If a different ID appears → another process won, our claimed ID stays 'free'
+
+This ensures the free ID pool is not depleted by lost races. The `FOR UPDATE SKIP LOCKED` ensures concurrent transactions claim different free IDs without blocking.
+
+##### Atomicity
+
+All operations occur within a single transaction:
+- If predecessor validation fails, nothing is committed
+- If the free ID pool is exhausted, nothing is committed  
+- Successful batches commit all mappings together
 
 #### Concurrency scenarios
 
@@ -537,11 +543,12 @@ The hybrid approach (batch lookup + individual mint) optimizes the hot path (exi
 |------|-----------|-----------|
 | 1 | Query `identifiers` for `sierra/b1234` → not found | Query `identifiers` for `sierra/b1234` → not found |
 | 2 | Claim free ID `abc123` (SKIP LOCKED) | Claim free ID `xyz789` (SKIP LOCKED) |
-| 3 | INSERT (idempotent) → succeeds, COMMIT | INSERT (idempotent) → no-op (row exists) |
-| 4 | Return `abc123` | SELECT → gets `abc123`, return `xyz789` to pool, COMMIT |
-| 5 | | Return `abc123` |
+| 3 | INSERT (idempotent) → succeeds | INSERT (idempotent) → no-op (row exists) |
+| 4 | Verify → `abc123` was used, mark assigned, COMMIT | Verify → `abc123` was assigned (not `xyz789`) |
+| 5 | Return `abc123` | `xyz789` stays free (not marked assigned), COMMIT |
+| 6 | | Return `abc123` |
 
-**Outcome**: Both processes return the same canonical ID. `SKIP LOCKED` ensures no blocking. The unused ID is returned to the pool.
+**Outcome**: Both processes return the same canonical ID. `SKIP LOCKED` ensures no blocking. The verification query detects that Process B's claimed ID was not used, so it remains in the free pool.
 
 ##### Scenario 2: Different source IDs, same predecessor
 

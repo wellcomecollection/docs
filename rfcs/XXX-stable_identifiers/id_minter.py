@@ -128,10 +128,16 @@ class IDMinter:
         """
         Batch mint/lookup canonical IDs for multiple source identifiers.
         
-        This combines batch lookup with individual minting for efficiency:
-        1. Batch lookup all source IDs (single query)
-        2. For missing IDs with predecessors: lookup predecessor, inherit ID
-        3. For missing IDs without predecessors: mint new IDs individually
+        This is the optimized batch path that minimizes database round-trips:
+        1. Batch lookup all source IDs + predecessor IDs (single query)
+        2. Fail fast if any predecessors are missing
+        3. Batch INSERT for predecessor inheritance cases
+        4. Batch claim free IDs from pool (FOR UPDATE SKIP LOCKED)
+        5. Batch INSERT for new ID cases
+        6. Verify which IDs were actually assigned (race detection)
+        7. Mark only used IDs as 'assigned', commit transaction
+        
+        All operations occur within a single transaction for atomicity.
         
         Args:
             requests: List of (source_id, predecessor_or_none) tuples where:
@@ -154,29 +160,97 @@ class IDMinter:
         if not requests:
             return {}
         
-        result = {}
+        cursor = self._get_cursor()
+        result: Dict[SourceId, str] = {}
+        
+        # Build lookup sets
         source_ids = [req[0] for req in requests]
         predecessors = {req[0]: req[1] for req in requests if req[1] is not None}
+        predecessor_ids = list(predecessors.values())
         
-        # Step 1: Batch lookup all source IDs
-        found = self.lookup_ids(source_ids)
-        result.update(found)
+        # Step 1: Batch lookup all source IDs + predecessor IDs together
+        all_ids_to_lookup = list(set(source_ids + predecessor_ids))
+        found = self.lookup_ids(all_ids_to_lookup)
         
-        # Step 2: Process missing IDs individually
+        # Populate result with already-existing source IDs
+        for sid in source_ids:
+            if sid in found:
+                result[sid] = found[sid]
+        
+        # Step 2: Categorize missing source IDs
         missing = [sid for sid in source_ids if sid not in found]
+        needs_inheritance: List[Tuple[SourceId, str]] = []  # (source_id, canonical_id)
+        needs_new_id: List[SourceId] = []
         
-        for source_key in missing:
-            ontology_type, source_system, source_id = source_key
-            predecessor = predecessors.get(source_key)
+        for sid in missing:
+            pred = predecessors.get(sid)
+            if pred:
+                if pred not in found:
+                    raise ValueError(f"Predecessor not found: {pred[0]}/{pred[1]}/{pred[2]}")
+                needs_inheritance.append((sid, found[pred]))
+            else:
+                needs_new_id.append(sid)
+        
+        # Step 3: Batch INSERT for predecessor inheritance
+        if needs_inheritance:
+            for source_key, canonical_id in needs_inheritance:
+                ont, sys, sid = source_key
+                cursor.execute("""
+                    INSERT INTO identifiers (OntologyType, SourceSystem, SourceId, CanonicalId)
+                    VALUES (%s, %s, %s, %s)
+                    ON DUPLICATE KEY UPDATE CanonicalId = CanonicalId
+                """, (ont, sys, sid, canonical_id))
+                result[source_key] = canonical_id
+        
+        # Step 4: Claim free IDs from pool for new records
+        if needs_new_id:
+            num_needed = len(needs_new_id)
+            cursor.execute(f"""
+                SELECT CanonicalId FROM canonical_ids 
+                WHERE Status = 'free' 
+                LIMIT {num_needed}
+                FOR UPDATE SKIP LOCKED
+            """)
             
-            canonical_id = self.mint_id(
-                ontology_type=ontology_type,
-                source_system=source_system,
-                source_id=source_id,
-                predecessor=predecessor
-            )
-            result[source_key] = canonical_id
+            free_ids = [row['CanonicalId'] for row in cursor.fetchall()]
+            if len(free_ids) < num_needed:
+                raise RuntimeError(
+                    f"Free ID pool exhausted - needed {num_needed}, got {len(free_ids)}. "
+                    "Trigger pre-generation job and retry."
+                )
+            
+            # Step 5: Batch INSERT for new IDs
+            claimed_mapping: Dict[SourceId, str] = {}
+            for source_key, canonical_id in zip(needs_new_id, free_ids):
+                ont, sys, sid = source_key
+                cursor.execute("""
+                    INSERT INTO identifiers (OntologyType, SourceSystem, SourceId, CanonicalId)
+                    VALUES (%s, %s, %s, %s)
+                    ON DUPLICATE KEY UPDATE CanonicalId = CanonicalId
+                """, (ont, sys, sid, canonical_id))
+                claimed_mapping[source_key] = canonical_id
+            
+            # Step 6: Verify which IDs were actually assigned (race detection)
+            actual = self.lookup_ids(needs_new_id)
+            
+            # Step 7: Mark only used IDs as 'assigned'
+            used_canonical_ids = set()
+            for source_key in needs_new_id:
+                actual_canonical = actual.get(source_key)
+                if actual_canonical:
+                    result[source_key] = actual_canonical
+                    # Only mark as assigned if we won the race (our claimed ID was used)
+                    if actual_canonical == claimed_mapping.get(source_key):
+                        used_canonical_ids.add(actual_canonical)
+            
+            if used_canonical_ids:
+                placeholders = ', '.join(['%s'] * len(used_canonical_ids))
+                cursor.execute(f"""
+                    UPDATE canonical_ids SET Status = 'assigned' 
+                    WHERE CanonicalId IN ({placeholders})
+                """, list(used_canonical_ids))
         
+        self._commit()
         return result
 
     def mint_id(
