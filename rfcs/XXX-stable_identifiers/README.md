@@ -570,6 +570,20 @@ The hybrid approach (batch lookup + individual mint) optimizes the hot path (exi
 
 All of these are error conditions that should surface immediately rather than being masked by retry logic. Silent retries could hide data quality issues or configuration problems that need investigation.
 
+##### Scenario 4: Re-processing without predecessor
+
+| Step | First processing (`axiell/123`, predecessor `sierra/b1234`) | Re-processing (`axiell/123`, no predecessor) |
+|------|-----------|-----------|
+| 1 | Query `axiell/123` OR `sierra/b1234` → `sierra/b1234` has `abc123` | Query `axiell/123` → found with `abc123` |
+| 2 | INSERT `(axiell/123, abc123)` → succeeds | Return `abc123` |
+| 3 | Return `abc123` | |
+
+**Outcome**: The canonical ID is stable regardless of whether a predecessor is provided on subsequent calls.
+
+**Key property**: The predecessor relationship is only meaningful at first-mint time. Once a source ID is assigned a canonical ID, that mapping is fixed in the database. Re-processing the same source ID — whether with a different predecessor, no predecessor, or the same predecessor — always returns the existing canonical ID.
+
+This makes the ID Minter idempotent and resilient to transformer changes. If a transformer's predecessor logic is updated or removed after initial minting, existing canonical IDs remain unchanged.
+
 #### Predecessor source identifiers
 
 Transformers for Axiell Collections and Folio will emit a **predecessor source identifier** when the record contains a reference to an old Sierra/CALM identifier. This is distinct from merge candidates:
