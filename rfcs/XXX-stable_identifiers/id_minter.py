@@ -271,12 +271,7 @@ class IDMinter:
         if free_id_result:
             canonical_id = free_id_result['CanonicalId']
             
-            # Mark as assigned
-            cursor.execute("""
-                UPDATE canonical_ids SET Status = 'assigned' WHERE CanonicalId = %s
-            """, (canonical_id,))
-            
-            # Insert with idempotent write
+            # Insert with idempotent write (row is locked, defer status update)
             cursor.execute("""
                 INSERT INTO identifiers (OntologyType, SourceSystem, SourceId, CanonicalId)
                 VALUES (%s, %s, %s, %s)
@@ -292,15 +287,15 @@ class IDMinter:
             actual_result = cursor.fetchone()
             actual_id = actual_result['CanonicalId']
             
-            if actual_id != canonical_id:
-                # Another process won, return our ID to the pool
+            if actual_id == canonical_id:
+                # We won - mark our ID as assigned
                 cursor.execute("""
-                    UPDATE canonical_ids SET Status = 'free' WHERE CanonicalId = %s
+                    UPDATE canonical_ids SET Status = 'assigned' WHERE CanonicalId = %s
                 """, (canonical_id,))
-                canonical_id = actual_id
+            # If we lost, our locked row stays 'free' - released on commit
             
             self._commit()
-            return canonical_id
+            return actual_id
         
         # Step 4: No free IDs available - fail fast
         raise RuntimeError("Free ID pool exhausted - trigger pre-generation job and retry")
