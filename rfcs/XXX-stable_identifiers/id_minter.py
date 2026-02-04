@@ -1,6 +1,7 @@
 """
 ID Minter implementation supporting:
-- Lookup of existing canonical IDs
+- Batch lookup of existing canonical IDs
+- Single-record minting for new IDs
 - Predecessor inheritance for migrated records
 - Pre-generated ID pool claiming
 - Idempotent writes for concurrency
@@ -8,7 +9,10 @@ ID Minter implementation supporting:
 
 import random
 import string
-from typing import Optional, Tuple, Callable
+from typing import Optional, Tuple, Callable, Dict, List
+
+# Type alias for source identifier: (ontology_type, source_system, source_id)
+SourceId = Tuple[str, str, str]
 
 
 def generate_canonical_id() -> str:
@@ -62,12 +66,125 @@ class IDMinter:
         if self.conn:
             self.conn.commit()
     
+    def lookup_ids(
+        self,
+        source_ids: List[SourceId]
+    ) -> Dict[SourceId, str]:
+        """
+        Batch lookup of canonical IDs for multiple source identifiers.
+        
+        This is the optimized path for the common case where records already
+        exist in the database. Returns only the IDs that were found — missing
+        IDs should be processed individually via mint_id().
+        
+        Args:
+            source_ids: List of (ontology_type, source_system, source_id) tuples
+        
+        Returns:
+            Dict mapping (ontology_type, source_system, source_id) -> canonical_id
+            for all source IDs that were found. Missing IDs are not included.
+        
+        Example:
+            >>> minter.lookup_ids([
+            ...     ('Work', 'sierra-system-number', 'b1234'),
+            ...     ('Image', 'mets-image', 'xyz'),
+            ...     ('Work', 'axiell-collections-id', 'new-record')  # doesn't exist
+            ... ])
+            {
+                ('Work', 'sierra-system-number', 'b1234'): 'abc12345',
+                ('Image', 'mets-image', 'xyz'): 'def67890'
+            }
+            # ('Work', 'axiell-collections-id', 'new-record') not in result — needs minting
+        """
+        if not source_ids:
+            return {}
+        
+        cursor = self._get_cursor()
+        
+        # Build query with IN clause for batch lookup of mixed ontology types
+        # Using tuple comparison: (OntologyType, SourceSystem, SourceId) IN ((?, ?, ?), ...)
+        placeholders = ', '.join(['(%s, %s, %s)'] * len(source_ids))
+        params = []
+        for ontology_type, source_system, source_id in source_ids:
+            params.extend([ontology_type, source_system, source_id])
+        
+        cursor.execute(f"""
+            SELECT OntologyType, SourceSystem, SourceId, CanonicalId 
+            FROM identifiers 
+            WHERE (OntologyType, SourceSystem, SourceId) IN ({placeholders})
+        """, params)
+        
+        results = cursor.fetchall()
+        
+        return {
+            (row['OntologyType'], row['SourceSystem'], row['SourceId']): row['CanonicalId']
+            for row in results
+        }
+    
+    def mint_ids(
+        self,
+        requests: List[Tuple[SourceId, Optional[SourceId]]]
+    ) -> Dict[SourceId, str]:
+        """
+        Batch mint/lookup canonical IDs for multiple source identifiers.
+        
+        This combines batch lookup with individual minting for efficiency:
+        1. Batch lookup all source IDs (single query)
+        2. For missing IDs with predecessors: lookup predecessor, inherit ID
+        3. For missing IDs without predecessors: mint new IDs individually
+        
+        Args:
+            requests: List of (source_id, predecessor_or_none) tuples where:
+                     - source_id is (ontology_type, source_system, source_id)
+                     - predecessor is (ontology_type, source_system, source_id) or None
+        
+        Returns:
+            Dict mapping source_id -> canonical_id for all inputs
+        
+        Raises:
+            ValueError: If a predecessor is specified but not found
+            RuntimeError: If free ID pool is exhausted
+        
+        Example:
+            >>> minter.mint_ids([
+            ...     (('Work', 'axiell', 'AC-123'), ('Work', 'sierra', 'b1234')),  # with predecessor
+            ...     (('Image', 'mets', 'xyz'), None),  # no predecessor
+            ... ])
+        """
+        if not requests:
+            return {}
+        
+        result = {}
+        source_ids = [req[0] for req in requests]
+        predecessors = {req[0]: req[1] for req in requests if req[1] is not None}
+        
+        # Step 1: Batch lookup all source IDs
+        found = self.lookup_ids(source_ids)
+        result.update(found)
+        
+        # Step 2: Process missing IDs individually
+        missing = [sid for sid in source_ids if sid not in found]
+        
+        for source_key in missing:
+            ontology_type, source_system, source_id = source_key
+            predecessor = predecessors.get(source_key)
+            
+            canonical_id = self.mint_id(
+                ontology_type=ontology_type,
+                source_system=source_system,
+                source_id=source_id,
+                predecessor=predecessor
+            )
+            result[source_key] = canonical_id
+        
+        return result
+
     def mint_id(
         self, 
         ontology_type: str, 
         source_system: str, 
         source_id: str,
-        predecessor: Optional[Tuple[str, str]] = None
+        predecessor: Optional[SourceId] = None
     ) -> str:
         """
         Mint or lookup a canonical ID for a source identifier.
@@ -76,7 +193,7 @@ class IDMinter:
             ontology_type: e.g., 'Work', 'Image'
             source_system: e.g., 'sierra-system-number', 'axiell-collections-id'
             source_id: The identifier value in the source system
-            predecessor: Optional (source_system, source_id) to inherit canonical ID from
+            predecessor: Optional (ontology_type, source_system, source_id) to inherit canonical ID from
         
         Returns:
             The canonical ID (existing or newly minted)
@@ -89,23 +206,23 @@ class IDMinter:
         
         # Step 1: Query for source ID and predecessor in one round-trip
         if predecessor:
-            pred_system, pred_id = predecessor
+            pred_ontology, pred_system, pred_id = predecessor
             cursor.execute("""
                 SELECT 
                     CanonicalId,
                     CASE 
-                        WHEN SourceSystem = %s AND SourceId = %s THEN 'new'
+                        WHEN OntologyType = %s AND SourceSystem = %s AND SourceId = %s THEN 'new'
                         ELSE 'predecessor'
                     END AS MatchType
                 FROM identifiers
-                WHERE OntologyType = %s
-                  AND (
-                    (SourceSystem = %s AND SourceId = %s)
+                WHERE (
+                    (OntologyType = %s AND SourceSystem = %s AND SourceId = %s)
                     OR 
-                    (SourceSystem = %s AND SourceId = %s)
+                    (OntologyType = %s AND SourceSystem = %s AND SourceId = %s)
                   )
-            """, (source_system, source_id, ontology_type, 
-                  source_system, source_id, pred_system, pred_id))
+            """, (ontology_type, source_system, source_id,
+                  ontology_type, source_system, source_id, 
+                  pred_ontology, pred_system, pred_id))
             
             results = cursor.fetchall()
             
@@ -129,7 +246,7 @@ class IDMinter:
                 return canonical_id
             
             # 2c: Neither found - raise exception (predecessor should already exist)
-            raise ValueError(f"Predecessor not found: {pred_system}/{pred_id}")
+            raise ValueError(f"Predecessor not found: {pred_ontology}/{pred_system}/{pred_id}")
         
         else:
             # No predecessor - simple lookup

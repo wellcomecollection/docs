@@ -423,22 +423,21 @@ A **source identifier** is a tuple of `(OntologyType, SourceSystem, SourceId)` â
 
 #### Combined lookup query
 
-The lookup query retrieves both the new source ID and its predecessor (if specified) in a single database round-trip. Each row is tagged to indicate whether it matches the new source ID or the predecessor:
+The lookup query retrieves both the new source ID and its predecessor (if specified) in a single database round-trip. Each row is tagged to indicate whether it matches the new source ID or the predecessor. Since predecessors may have different ontology types, the query matches on the full tuple:
 
 ```sql
 -- Query for source ID and predecessor in one round-trip
 SELECT 
     CanonicalId,
     CASE 
-        WHEN SourceSystem = ? AND SourceId = ? THEN 'new'
+        WHEN OntologyType = ? AND SourceSystem = ? AND SourceId = ? THEN 'new'
         ELSE 'predecessor'
     END AS MatchType
 FROM identifiers
-WHERE OntologyType = ?
-  AND (
-    (SourceSystem = ? AND SourceId = ?)  -- new source ID
+WHERE (
+    (OntologyType = ? AND SourceSystem = ? AND SourceId = ?)  -- new source ID
     OR 
-    (SourceSystem = ? AND SourceId = ?)  -- predecessor source ID
+    (OntologyType = ? AND SourceSystem = ? AND SourceId = ?)  -- predecessor (may differ)
   );
 ```
 
@@ -476,6 +475,59 @@ When a claimed ID is not used (because another process won the race), return it 
 ```sql
 UPDATE canonical_ids SET Status = 'free' WHERE CanonicalId = ?;
 ```
+
+#### Batch operations
+
+The ID Minter processes work documents that typically contain multiple source identifiers (the work's own identifier plus merge candidates). Batch operations reduce database round-trips for the common case where most identifiers already exist.
+
+##### Batch lookup
+
+The majority of records processed by the ID Minter already have canonical IDs. A batch lookup fetches all existing mappings in a single query, supporting mixed ontology types:
+
+```sql
+SELECT OntologyType, SourceSystem, SourceId, CanonicalId 
+FROM identifiers 
+WHERE (OntologyType, SourceSystem, SourceId) IN (
+    ('Work', 'sierra-system-number', 'b1234'),
+    ('Image', 'mets-image', 'xyz'),
+    ('Work', 'axiell-collections-id', 'abc123'),
+    ...
+  )
+```
+
+This returns only the IDs that exist â€” missing IDs require individual minting.
+
+##### Batch minting strategy
+
+For IDs not found in the batch lookup:
+
+1. **Records with predecessors**: Lookup predecessor's canonical ID (predecessor may have different ontology type), then insert new mapping (inherits ID)
+2. **New records**: Claim from free pool and mint individually
+
+The `mint_ids()` method takes a list of `(source_id, predecessor_or_none)` tuples:
+
+```python
+# Each request is (source_id, predecessor) where both are full tuples
+results = minter.mint_ids([
+    (('Work', 'axiell', 'AC-123'), ('Work', 'sierra', 'b1234')),  # with predecessor
+    (('Image', 'mets', 'xyz'), None),  # no predecessor
+    (('Work', 'axiell', 'AC-456'), ('Image', 'sierra-image', 'i999')),  # cross-type predecessor
+])
+```
+
+Individual minting ensures correct handling of:
+- Race conditions (idempotent writes with verification)
+- Predecessor validation (fail-fast on missing predecessor)
+- Pool exhaustion (clear error per record)
+
+##### Why not batch minting?
+
+Full batch minting would require:
+- Claiming N free IDs upfront (may waste IDs if inserts race)
+- Complex predecessor resolution across the batch
+- Harder failure handling (which records succeeded?)
+
+The hybrid approach (batch lookup + individual mint) optimizes the hot path (existing records) while keeping minting logic simple and debuggable.
 
 #### Concurrency scenarios
 
