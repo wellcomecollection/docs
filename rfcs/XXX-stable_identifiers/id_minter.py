@@ -142,12 +142,12 @@ class IDMinter:
             if result:
                 return result['CanonicalId']
         
-        # Step 3: Claim a free ID from the pool
+        # Step 3: Claim a free ID from the pool (SKIP LOCKED for concurrency)
         cursor.execute("""
             SELECT CanonicalId FROM canonical_ids 
             WHERE Status = 'free' 
             LIMIT 1 
-            FOR UPDATE
+            FOR UPDATE SKIP LOCKED
         """)
         
         free_id_result = cursor.fetchone()
@@ -185,8 +185,8 @@ class IDMinter:
             self._commit()
             return canonical_id
         
-        # Step 4: Fallback - generate new ID (pool exhausted)
-        raise RuntimeError("Free ID pool exhausted - implement fallback generation")
+        # Step 4: No free IDs available - fail fast
+        raise RuntimeError("Free ID pool exhausted - trigger pre-generation job and retry")
     
     def close(self):
         """Close the database connection."""

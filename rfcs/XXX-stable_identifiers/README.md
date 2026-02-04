@@ -2,7 +2,7 @@
 
 This RFC discusses what will happen to public catalogue identifiers following the mass migration of records from CALM/Sierra to Axiell Collection / Folio and how we can update the catalogue pipeline to accommodate this change.
 
-**Last modified:** 2026-01-29T12:00:00+00:00
+**Last modified:** 2026-02-04T12:00:00+00:00
 
 **Related issues:**
 - [Discovery / Proposal for stable identifiers following Calm & Sierra migrations](https://github.com/wellcomecollection/platform/issues/6246)
@@ -367,7 +367,7 @@ SELECT CanonicalId
 FROM canonical_ids 
 WHERE Status = 'free' 
 LIMIT 1 
-FOR UPDATE;
+FOR UPDATE SKIP LOCKED;
 
 -- Application stores the selected ID
 
@@ -375,8 +375,11 @@ UPDATE canonical_ids
 SET Status = 'assigned' 
 WHERE CanonicalId = ?;
 
+-- INSERT into identifiers table, then COMMIT
 COMMIT;
 ```
+
+The `SKIP LOCKED` clause ensures concurrent processes each claim different free IDs without blocking. If a process crashes before commit, the transaction rolls back and the ID returns to `free` automatically.
 
 #### Benefits of pre-generation
 
@@ -403,22 +406,19 @@ A **source identifier** is a tuple of `(OntologyType, SourceSystem, SourceId)` �
    c. If neither found AND has predecessor:
       - Raise exception (predecessor should already exist)
 
-3. Claim a free ID from canonical_ids:
-   a. SELECT ... FOR UPDATE WHERE Status = 'free'
+3. Claim a free ID from canonical_ids (within transaction):
+   a. SELECT ... FOR UPDATE SKIP LOCKED WHERE Status = 'free'
    b. UPDATE Status = 'assigned'
    c. INSERT into identifiers with new CanonicalId (idempotent)
    d. If insert was a no-op (another process won):
       - SELECT actual CanonicalId from identifiers
-      - Return unused ID to pool
+      - Return our ID to pool (UPDATE Status = 'free')
       - Return the existing CanonicalId
-   e. Return CanonicalId
+   e. COMMIT and return CanonicalId
 
-4. If no free IDs available (fallback):
-   a. Generate random ID
-   b. INSERT into canonical_ids (will fail on collision)
-   c. Retry on collision
-   d. INSERT into identifiers (idempotent)
-   e. Return CanonicalId
+4. If no free IDs available:
+   - Raise exception (will trigger retry via SQS/Step Functions)
+   - Alert triggers ID pre-generation job
 ```
 
 #### Combined lookup query
@@ -471,7 +471,7 @@ WHERE OntologyType = ? AND SourceSystem = ? AND SourceId = ?;
 
 #### Returning unused IDs to the pool
 
-When a claimed ID is not used (because another process won the race), return it to the pool:
+When a claimed ID is not used (because another process won the race), return it to the pool within the same transaction:
 
 ```sql
 UPDATE canonical_ids SET Status = 'free' WHERE CanonicalId = ?;
@@ -484,12 +484,12 @@ UPDATE canonical_ids SET Status = 'free' WHERE CanonicalId = ?;
 | Step | Process A | Process B |
 |------|-----------|-----------|
 | 1 | Query `identifiers` for `sierra/b1234` → not found | Query `identifiers` for `sierra/b1234` → not found |
-| 2 | Claim free ID `abc123` | Claim free ID `xyz789` |
-| 3 | INSERT (idempotent) → succeeds | INSERT (idempotent) → no-op (row exists) |
-| 4 | Return `abc123` | SELECT → gets `abc123`, returns `xyz789` to pool |
+| 2 | Claim free ID `abc123` (SKIP LOCKED) | Claim free ID `xyz789` (SKIP LOCKED) |
+| 3 | INSERT (idempotent) → succeeds, COMMIT | INSERT (idempotent) → no-op (row exists) |
+| 4 | Return `abc123` | SELECT → gets `abc123`, return `xyz789` to pool, COMMIT |
 | 5 | | Return `abc123` |
 
-**Outcome**: Both processes return the same canonical ID. The unused ID is returned to the pool.
+**Outcome**: Both processes return the same canonical ID. `SKIP LOCKED` ensures no blocking. The unused ID is returned to the pool.
 
 ##### Scenario 2: Different source IDs, same predecessor
 
@@ -695,8 +695,8 @@ Update precedence rules to allow new source systems to take precedence:
 
 1. Update database access layer for new schema
 2. Add predecessor lookup logic
-3. Implement free ID claiming from pool
-4. Add fallback generation for empty pool
+3. Implement free ID claiming from pool with `SKIP LOCKED`
+4. Fail fast on empty pool (rely on retry mechanisms)
 
 ### Benefits
 
@@ -713,10 +713,10 @@ Update precedence rules to allow new source systems to take precedence:
 
 | Risk | Mitigation |
 |------|------------|
-| Free ID pool exhaustion | Trigger new pool generation on failure and retry; monitoring and alerts on pool size |
+| Free ID pool exhaustion | Fail fast; rely on SQS/Step Functions retry; alerts trigger pre-generation job |
 | Migration data integrity | Run migration in stages with verification; keep old table until confirmed |
 | Incorrect predecessor extraction by transformer | Validate predecessor format; log all predecessor lookups for audit; reconciliation process to detect mismatches |
-| Orphaned canonical IDs (marked free but actually assigned) | Verify ID not in `identifiers` table before returning to pool; periodic reconciliation job |
+| Orphaned canonical IDs (marked assigned but not in identifiers) | Periodic reconciliation job to detect and clean up |
 
 Note: Predecessor records (Sierra/CALM) will all be present in the database before any successor records (Axiell Collections/Folio) are processed. This is guaranteed by the source system switchover process — no new predecessor records will be created after switchover.
 
