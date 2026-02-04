@@ -398,8 +398,7 @@ COMMIT;
       - INSERT into identifiers with predecessor's CanonicalId (idempotent)
       - Return CanonicalId
    c. If not found:
-      - Retry with exponential backoff
-      - Predecessor record must be minted first
+      - Raise exception (predecessor should already exist)
 
 3. Claim a free ID from canonical_ids:
    a. SELECT ... FOR UPDATE WHERE Status = 'free'
@@ -466,18 +465,23 @@ UPDATE canonical_ids SET Status = 'free' WHERE CanonicalId = ?;
 
 **Outcome**: Both source identifiers correctly share the same canonical ID. No conflict.
 
-##### Scenario 3: Predecessor doesn't exist yet
+##### Scenario 3: Predecessor doesn't exist
 
-| Step | Process A (predecessor record `sierra/b1234`) | Process B (successor `axiell/123`, predecessor `sierra/b1234`) |
-|------|-----------|-----------|
-| 1 | Query `sierra/b1234` → not found | Query `axiell/123` → not found |
-| 2 | Claim ID, INSERT `(sierra/b1234, abc123)` | Query predecessor `sierra/b1234` → not found |
-| 3 | Return `abc123` | **Retry with backoff** |
-| 4 | | Query predecessor `sierra/b1234` → `abc123` |
-| 5 | | INSERT `(axiell/123, abc123)` → succeeds |
-| 6 | | Return `abc123` |
+| Step | Process B (successor `axiell/123`, predecessor `sierra/b1234`) |
+|------|-----------|
+| 1 | Query `axiell/123` → not found |
+| 2 | Query predecessor `sierra/b1234` → not found |
+| 3 | **Raise exception** |
 
-**Outcome**: Process B waits for the predecessor to be minted, then inherits the correct canonical ID.
+**Outcome**: Process B fails with an error indicating the predecessor record was not found.
+
+**Rationale**: If a record declares a predecessor, that predecessor should already exist in the database. The predecessor record would have been processed through the pipeline from the old source system (e.g., Sierra) before or during the migration to the new system (e.g., Axiell Collections). A missing predecessor indicates either:
+
+1. **Data integrity issue**: The migrated record references a predecessor that doesn't exist in the source system
+2. **Pipeline configuration error**: The old system's pipeline was disconnected before all records were processed
+3. **Incorrect predecessor reference**: The transformer is emitting an invalid predecessor identifier
+
+All of these are error conditions that should surface immediately rather than being masked by retry logic. Silent retries could hide data quality issues or configuration problems that need investigation.
 
 #### Predecessor source identifiers
 
