@@ -480,6 +480,8 @@ UPDATE canonical_ids SET Status = 'free' WHERE CanonicalId = ?;
 
 The ID Minter processes work documents that typically contain multiple source identifiers (the work's own identifier plus merge candidates). Batch operations reduce database round-trips for the common case where most identifiers already exist.
 
+For a detailed demonstration of batch operations, predecessor inheritance, and race condition handling, see [id_minter_demo.ipynb](id_minter_demo.ipynb).
+
 ##### Batch lookup
 
 The majority of records processed by the ID Minter already have canonical IDs. A batch lookup fetches all existing mappings in a single query, supporting mixed ontology types:
@@ -606,7 +608,7 @@ The ID Minter will look up the predecessor's catalogue ID and assign it to the n
 
 ### Data migration
 
-A runnable demonstration of the complete migration process is available in [migration_demo.ipynb](migration_demo.ipynb). The notebook walks through each step below using sample data from the current ID Minter database.
+A runnable demonstration of the complete migration process is available in [schema_migration.ipynb](schema_migration.ipynb). The notebook walks through each step below using sample data from the current ID Minter database.
 
 #### Migration steps
 

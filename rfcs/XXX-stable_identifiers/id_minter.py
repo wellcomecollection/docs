@@ -75,7 +75,7 @@ class IDMinter:
         
         This is the optimized path for the common case where records already
         exist in the database. Returns only the IDs that were found — missing
-        IDs should be processed individually via mint_id().
+        IDs should be processed via mint_ids().
         
         Args:
             source_ids: List of (ontology_type, source_system, source_id) tuples
@@ -252,127 +252,6 @@ class IDMinter:
         
         self._commit()
         return result
-
-    def mint_id(
-        self, 
-        ontology_type: str, 
-        source_system: str, 
-        source_id: str,
-        predecessor: Optional[SourceId] = None
-    ) -> str:
-        """
-        Mint or lookup a canonical ID for a source identifier.
-        
-        Args:
-            ontology_type: e.g., 'Work', 'Image'
-            source_system: e.g., 'sierra-system-number', 'axiell-collections-id'
-            source_id: The identifier value in the source system
-            predecessor: Optional (ontology_type, source_system, source_id) to inherit canonical ID from
-        
-        Returns:
-            The canonical ID (existing or newly minted)
-        
-        Raises:
-            ValueError: If predecessor is specified but not found
-            RuntimeError: If free ID pool is exhausted
-        """
-        cursor = self._get_cursor()
-        
-        # Step 1: Query for source ID and predecessor in one round-trip
-        if predecessor:
-            pred_ontology, pred_system, pred_id = predecessor
-            cursor.execute("""
-                SELECT 
-                    CanonicalId,
-                    CASE 
-                        WHEN OntologyType = %s AND SourceSystem = %s AND SourceId = %s THEN 'new'
-                        ELSE 'predecessor'
-                    END AS MatchType
-                FROM identifiers
-                WHERE (
-                    (OntologyType = %s AND SourceSystem = %s AND SourceId = %s)
-                    OR 
-                    (OntologyType = %s AND SourceSystem = %s AND SourceId = %s)
-                  )
-            """, (ontology_type, source_system, source_id,
-                  ontology_type, source_system, source_id, 
-                  pred_ontology, pred_system, pred_id))
-            
-            results = cursor.fetchall()
-            
-            # Step 2: Evaluate query results
-            new_match = next((r for r in results if r['MatchType'] == 'new'), None)
-            pred_match = next((r for r in results if r['MatchType'] == 'predecessor'), None)
-            
-            # 2a: If new source ID found, return its CanonicalId
-            if new_match:
-                return new_match['CanonicalId']
-            
-            # 2b: If only predecessor found, insert new source ID with predecessor's CanonicalId
-            if pred_match:
-                canonical_id = pred_match['CanonicalId']
-                cursor.execute("""
-                    INSERT INTO identifiers (OntologyType, SourceSystem, SourceId, CanonicalId)
-                    VALUES (%s, %s, %s, %s)
-                    ON DUPLICATE KEY UPDATE CanonicalId = CanonicalId
-                """, (ontology_type, source_system, source_id, canonical_id))
-                self._commit()
-                return canonical_id
-            
-            # 2c: Neither found - raise exception (predecessor should already exist)
-            raise ValueError(f"Predecessor not found: {pred_ontology}/{pred_system}/{pred_id}")
-        
-        else:
-            # No predecessor - simple lookup
-            cursor.execute("""
-                SELECT CanonicalId FROM identifiers 
-                WHERE OntologyType = %s AND SourceSystem = %s AND SourceId = %s
-            """, (ontology_type, source_system, source_id))
-            
-            result = cursor.fetchone()
-            if result:
-                return result['CanonicalId']
-        
-        # Step 3: Claim a free ID from the pool (SKIP LOCKED for concurrency)
-        cursor.execute("""
-            SELECT CanonicalId FROM canonical_ids 
-            WHERE Status = 'free' 
-            LIMIT 1 
-            FOR UPDATE SKIP LOCKED
-        """)
-        
-        free_id_result = cursor.fetchone()
-        if free_id_result:
-            canonical_id = free_id_result['CanonicalId']
-            
-            # Insert with idempotent write (row is locked, defer status update)
-            cursor.execute("""
-                INSERT INTO identifiers (OntologyType, SourceSystem, SourceId, CanonicalId)
-                VALUES (%s, %s, %s, %s)
-                ON DUPLICATE KEY UPDATE CanonicalId = CanonicalId
-            """, (ontology_type, source_system, source_id, canonical_id))
-            
-            # Check if we actually inserted (or another process won)
-            cursor.execute("""
-                SELECT CanonicalId FROM identifiers 
-                WHERE OntologyType = %s AND SourceSystem = %s AND SourceId = %s
-            """, (ontology_type, source_system, source_id))
-            
-            actual_result = cursor.fetchone()
-            actual_id = actual_result['CanonicalId']
-            
-            if actual_id == canonical_id:
-                # We won - mark our ID as assigned
-                cursor.execute("""
-                    UPDATE canonical_ids SET Status = 'assigned' WHERE CanonicalId = %s
-                """, (canonical_id,))
-            # If we lost, our locked row stays 'free' - released on commit
-            
-            self._commit()
-            return actual_id
-        
-        # Step 4: No free IDs available - fail fast
-        raise RuntimeError("Free ID pool exhausted - trigger pre-generation job and retry")
     
     def close(self):
         """Close the database connection."""
