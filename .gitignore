@@ -2,3 +2,6 @@
 .DS_Store
 .terraform*
 terraform.tfstate*
+.metals/
+.scala-build/
+.vscode/

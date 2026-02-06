@@ -1,0 +1,14 @@
+[project]
+name = "stable-identifiers-rfc"
+version = "0.1.0"
+description = "Demo notebooks for RFC XXX: Stable identifiers following mass record migration"
+requires-python = ">=3.10"
+dependencies = [
+    "cryptography>=46.0.4",
+    "pymysql>=1.0.0",
+]
+
+[project.optional-dependencies]
+dev = [
+    "ipykernel",
+]
