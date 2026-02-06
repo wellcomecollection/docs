@@ -157,6 +157,7 @@ class IDMinter:
             ...     (('Image', 'mets', 'xyz'), None),  # no predecessor
             ... ])
         """
+        # Early return for empty input - no work to do
         if not requests:
             return {}
         
@@ -164,20 +165,42 @@ class IDMinter:
         result: Dict[SourceId, str] = {}
         
         # Build lookup sets
+        # -------------------------------------------------------------------------
+        # Extract all source IDs from the requests (these are the IDs we want to 
+        # mint/lookup). Also build a mapping from source_id -> predecessor for 
+        # records that have a predecessor specified (used for canonical ID inheritance
+        # during migrations from one source system to another).
         source_ids = [req[0] for req in requests]
         predecessors = {req[0]: req[1] for req in requests if req[1] is not None}
         predecessor_ids = list(predecessors.values())
         
         # Step 1: Batch lookup all source IDs + predecessor IDs together
+        # -------------------------------------------------------------------------
+        # Single database query to find all existing mappings. We look up both the
+        # source IDs (to check if they already have canonical IDs) AND the predecessor
+        # IDs (to retrieve the canonical IDs that new records should inherit).
+        # Using set() to deduplicate in case any source ID is also listed as a 
+        # predecessor, avoiding redundant lookups.
         all_ids_to_lookup = list(set(source_ids + predecessor_ids))
         found = self.lookup_ids(all_ids_to_lookup)
         
         # Populate result with already-existing source IDs
+        # -------------------------------------------------------------------------
+        # For any source ID that already exists in the database, we're done - just
+        # return the existing canonical ID. This is the idempotent "lookup" path.
         for sid in source_ids:
             if sid in found:
                 result[sid] = found[sid]
         
         # Step 2: Categorize missing source IDs
+        # -------------------------------------------------------------------------
+        # For source IDs not found in the database, determine which minting strategy:
+        #   - needs_inheritance: Has a predecessor -> inherit the predecessor's 
+        #     canonical ID. This preserves stable identifiers during source system
+        #     migrations (e.g., Sierra -> Axiell). The new source ID gets the SAME
+        #     canonical ID, ensuring external URLs remain valid.
+        #   - needs_new_id: No predecessor -> claim a fresh ID from the pre-generated
+        #     pool. This is for genuinely new records with no prior identity.
         missing = [sid for sid in source_ids if sid not in found]
         needs_inheritance: List[Tuple[SourceId, str]] = []  # (source_id, canonical_id)
         needs_new_id: List[SourceId] = []
@@ -185,6 +208,10 @@ class IDMinter:
         for sid in missing:
             pred = predecessors.get(sid)
             if pred:
+                # Fail fast if predecessor doesn't exist - this is a data integrity
+                # error. The predecessor record MUST be ingested before any record
+                # that references it. This constraint ensures we never accidentally
+                # mint a new ID when we should be inheriting an existing one.
                 if pred not in found:
                     raise ValueError(f"Predecessor not found: {pred[0]}/{pred[1]}/{pred[2]}")
                 needs_inheritance.append((sid, found[pred]))
@@ -192,6 +219,15 @@ class IDMinter:
                 needs_new_id.append(sid)
         
         # Step 3: Batch INSERT for predecessor inheritance
+        # -------------------------------------------------------------------------
+        # For records inheriting from a predecessor, insert a new row in the 
+        # identifiers table mapping the new source ID to the predecessor's canonical ID.
+        # This creates multiple source IDs pointing to the same canonical ID.
+        # 
+        # ON DUPLICATE KEY UPDATE is used for idempotency - if a concurrent process
+        # already inserted this mapping, we don't fail. The "CanonicalId = CanonicalId"
+        # is a no-op that prevents the INSERT from failing on duplicates while also
+        # not changing any existing data.
         if needs_inheritance:
             for source_key, canonical_id in needs_inheritance:
                 ont, sys, sid = source_key
@@ -203,6 +239,16 @@ class IDMinter:
                 result[source_key] = canonical_id
         
         # Step 4: Claim free IDs from pool for new records
+        # -------------------------------------------------------------------------
+        # For genuinely new records, we claim pre-generated canonical IDs from the
+        # pool. Using FOR UPDATE SKIP LOCKED is critical for concurrency:
+        #   - FOR UPDATE: Locks the selected rows so no other transaction can use them
+        #   - SKIP LOCKED: If another transaction has already locked some rows, skip
+        #     them and select different free IDs instead. This prevents deadlocks and
+        #     allows multiple minters to run concurrently without blocking each other.
+        # 
+        # The IDs are only "claimed" at this point, not yet "assigned" - we haven't
+        # confirmed that our INSERTs won the race against concurrent processes.
         if needs_new_id:
             num_needed = len(needs_new_id)
             cursor.execute(f"""
@@ -213,6 +259,9 @@ class IDMinter:
             """)
             
             free_ids = [row['CanonicalId'] for row in cursor.fetchall()]
+            # Pool exhaustion is a critical error - the pre-generation job should
+            # ensure there are always enough free IDs available. If this fails,
+            # manual intervention is needed to generate more IDs.
             if len(free_ids) < num_needed:
                 raise RuntimeError(
                     f"Free ID pool exhausted - needed {num_needed}, got {len(free_ids)}. "
@@ -220,6 +269,14 @@ class IDMinter:
                 )
             
             # Step 5: Batch INSERT for new IDs
+            # ---------------------------------------------------------------------
+            # Attempt to insert mappings from each new source ID to its claimed
+            # canonical ID. Using ON DUPLICATE KEY UPDATE for idempotency - if a
+            # concurrent process already inserted a mapping for this source ID
+            # (potentially with a DIFFERENT canonical ID), we don't fail.
+            # 
+            # We track claimed_mapping to remember which canonical ID we TRIED to
+            # assign to each source ID - this is needed for race detection in Step 6.
             claimed_mapping: Dict[SourceId, str] = {}
             for source_key, canonical_id in zip(needs_new_id, free_ids):
                 ont, sys, sid = source_key
@@ -231,9 +288,24 @@ class IDMinter:
                 claimed_mapping[source_key] = canonical_id
             
             # Step 6: Verify which IDs were actually assigned (race detection)
+            # ---------------------------------------------------------------------
+            # Re-read the database to see what canonical IDs are ACTUALLY assigned.
+            # Due to ON DUPLICATE KEY UPDATE, if another process inserted first,
+            # our INSERT was a no-op and the database contains THEIR canonical ID,
+            # not ours. We need to return the actual canonical ID regardless of
+            # whether we "won" or "lost" the race.
             actual = self.lookup_ids(needs_new_id)
             
             # Step 7: Mark only used IDs as 'assigned'
+            # ---------------------------------------------------------------------
+            # Only mark canonical IDs as 'assigned' if we actually won the race
+            # (i.e., the canonical ID in the database matches what we tried to insert).
+            # 
+            # If we lost the race, the canonical ID we claimed is still 'free' and
+            # can be used by another process later - we don't want to mark it as
+            # 'assigned' since it wasn't actually used.
+            # 
+            # This ensures the free ID pool isn't depleted by failed race attempts.
             used_canonical_ids = set()
             for source_key in needs_new_id:
                 actual_canonical = actual.get(source_key)
@@ -243,6 +315,8 @@ class IDMinter:
                     if actual_canonical == claimed_mapping.get(source_key):
                         used_canonical_ids.add(actual_canonical)
             
+            # Batch UPDATE to mark all successfully used IDs as 'assigned' in a
+            # single query, rather than one UPDATE per ID.
             if used_canonical_ids:
                 placeholders = ', '.join(['%s'] * len(used_canonical_ids))
                 cursor.execute(f"""
@@ -250,6 +324,9 @@ class IDMinter:
                     WHERE CanonicalId IN ({placeholders})
                 """, list(used_canonical_ids))
         
+        # Commit the transaction - all INSERTs and UPDATEs are atomically applied.
+        # If anything fails before this point, the entire transaction is rolled back
+        # and no partial changes are persisted.
         self._commit()
         return result
     
