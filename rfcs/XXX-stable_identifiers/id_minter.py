@@ -9,10 +9,10 @@ ID Minter implementation supporting:
 
 import random
 import string
-from typing import Optional, Tuple, Callable, Dict, List
+from collections.abc import Callable
 
 # Type alias for source identifier: (ontology_type, source_system, source_id)
-SourceId = Tuple[str, str, str]
+SourceId = tuple[str, str, str]
 
 
 def generate_canonical_id() -> str:
@@ -68,8 +68,8 @@ class IDMinter:
     
     def lookup_ids(
         self,
-        source_ids: List[SourceId]
-    ) -> Dict[SourceId, str]:
+        source_ids: list[SourceId]
+    ) -> dict[SourceId, str]:
         """
         Batch lookup of canonical IDs for multiple source identifiers.
         
@@ -123,8 +123,8 @@ class IDMinter:
     
     def mint_ids(
         self,
-        requests: List[Tuple[SourceId, Optional[SourceId]]]
-    ) -> Dict[SourceId, str]:
+        requests: list[tuple[SourceId, SourceId | None]]
+    ) -> dict[SourceId, str]:
         """
         Batch mint/lookup canonical IDs for multiple source identifiers.
         
@@ -162,7 +162,7 @@ class IDMinter:
             return {}
         
         cursor = self._get_cursor()
-        result: Dict[SourceId, str] = {}
+        result: dict[SourceId, str] = {}
         
         # Build lookup sets
         # -------------------------------------------------------------------------
@@ -202,8 +202,8 @@ class IDMinter:
         #   - needs_new_id: No predecessor -> claim a fresh ID from the pre-generated
         #     pool. This is for genuinely new records with no prior identity.
         missing = [sid for sid in source_ids if sid not in found]
-        needs_inheritance: List[Tuple[SourceId, str]] = []  # (source_id, canonical_id)
-        needs_new_id: List[SourceId] = []
+        needs_inheritance: list[tuple[SourceId, str]] = []  # (source_id, canonical_id)
+        needs_new_id: list[SourceId] = []
         
         for sid in missing:
             pred = predecessors.get(sid)
@@ -277,7 +277,7 @@ class IDMinter:
             # 
             # We track claimed_mapping to remember which canonical ID we TRIED to
             # assign to each source ID - this is needed for race detection in Step 6.
-            claimed_mapping: Dict[SourceId, str] = {}
+            claimed_mapping: dict[SourceId, str] = {}
             for source_key, canonical_id in zip(needs_new_id, free_ids):
                 ont, sys, sid = source_key
                 cursor.execute("""
