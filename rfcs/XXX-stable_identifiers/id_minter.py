@@ -289,12 +289,27 @@ class IDMinter:
             
             # Step 6: Verify which IDs were actually assigned (race detection)
             # ---------------------------------------------------------------------
-            # Re-read the database to see what canonical IDs are ACTUALLY assigned.
-            # Due to ON DUPLICATE KEY UPDATE, if another process inserted first,
-            # our INSERT was a no-op and the database contains THEIR canonical ID,
-            # not ours. We need to return the actual canonical ID regardless of
-            # whether we "won" or "lost" the race.
-            actual = self.lookup_ids(needs_new_id)
+            # Re-read the rows we just tried to INSERT to find the actual canonical
+            # IDs. If a concurrent process inserted first, our ON DUPLICATE KEY
+            # UPDATE was a no-op and the database contains their ID, not ours. We
+            # use FOR SHARE (locking read) rather than a plain SELECT because
+            # MySQL's REPEATABLE READ isolation would return the transaction's
+            # snapshot, missing rows committed by other transactions since ours
+            # started.
+            placeholders = ', '.join(['(%s, %s, %s)'] * len(needs_new_id))
+            params = []
+            for ont, sys, sid in needs_new_id:
+                params.extend([ont, sys, sid])
+            cursor.execute(f"""
+                SELECT OntologyType, SourceSystem, SourceId, CanonicalId
+                FROM identifiers
+                WHERE (OntologyType, SourceSystem, SourceId) IN ({placeholders})
+                FOR SHARE
+            """, params)
+            actual = {
+                (row['OntologyType'], row['SourceSystem'], row['SourceId']): row['CanonicalId']
+                for row in cursor.fetchall()
+            }
             
             # Step 7: Mark only used IDs as 'assigned'
             # ---------------------------------------------------------------------
