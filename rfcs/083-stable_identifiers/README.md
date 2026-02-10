@@ -1,8 +1,8 @@
-# RFC XXX: Stable identifiers following mass record migration
+# RFC 083: Stable identifiers following mass record migration
 
 This RFC discusses what will happen to public catalogue identifiers following the mass migration of records from CALM/Sierra to Axiell Collection / Folio and how we can update the catalogue pipeline to accommodate this change.
 
-**Last modified:** 2026-02-04T12:00:00+00:00
+**Last modified:** 2026-02-10T12:00:00+00:00
 
 **Related issues:**
 - [Discovery / Proposal for stable identifiers following Calm & Sierra migrations](https://github.com/wellcomecollection/platform/issues/6246)
