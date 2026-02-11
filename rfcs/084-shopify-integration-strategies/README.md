@@ -260,6 +260,12 @@ I think/presume additional cookies should be added to the functional/required li
 
 I haven't looked at any Shopify-specific analytics/tracking options.
 
+## Proof of Concept
+The [shopify branch](https://github.com/wellcomecollection/wellcomecollection.org/compare/shopify) of the wc.org monorepo contains a minimal proof of concept implementation of Option 3 (Headless Commerce with Storefront API). It demonstrates fetching products and variants from Shopify and displaying them on a Next.js page, with a cart and checkout flow.
+
+<video src="https://private-user-images.githubusercontent.com/1394592/548163612-7e59faa1-d1eb-44f6-8254-25958e22e7a6.mov?jwt=eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJpc3MiOiJnaXRodWIuY29tIiwiYXVkIjoicmF3LmdpdGh1YnVzZXJjb250ZW50LmNvbSIsImtleSI6ImtleTUiLCJleHAiOjE3NzA4MDYwNjksIm5iZiI6MTc3MDgwNTc2OSwicGF0aCI6Ii8xMzk0NTkyLzU0ODE2MzYxMi03ZTU5ZmFhMS1kMWViLTQ0ZjYtODI1NC0yNTk1OGUyMmU3YTYubW92P1gtQW16LUFsZ29yaXRobT1BV1M0LUhNQUMtU0hBMjU2JlgtQW16LUNyZWRlbnRpYWw9QUtJQVZDT0RZTFNBNTNQUUs0WkElMkYyMDI2MDIxMSUyRnVzLWVhc3QtMSUyRnMzJTJGYXdzNF9yZXF1ZXN0JlgtQW16LURhdGU9MjAyNjAyMTFUMTAyOTI5WiZYLUFtei1FeHBpcmVzPTMwMCZYLUFtei1TaWduYXR1cmU9OWRiM2ZjNTJkMTI3MjlmYjg3OTlmZGMwZWU0MzZkYjE5YzM5ODkwYWRjZTlhYjA1ZGU2NTNjOGY0MzI3ZDE4MyZYLUFtei1TaWduZWRIZWFkZXJzPWhvc3QifQ.DVPpHFjkORy2nRbkSbpKRw_IMQB3ZuEPl_X2RQko-OA" data-canonical-src="https://private-user-images.githubusercontent.com/1394592/548163612-7e59faa1-d1eb-44f6-8254-25958e22e7a6.mov?jwt=eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJpc3MiOiJnaXRodWIuY29tIiwiYXVkIjoicmF3LmdpdGh1YnVzZXJjb250ZW50LmNvbSIsImtleSI6ImtleTUiLCJleHAiOjE3NzA4MDYwNjksIm5iZiI6MTc3MDgwNTc2OSwicGF0aCI6Ii8xMzk0NTkyLzU0ODE2MzYxMi03ZTU5ZmFhMS1kMWViLTQ0ZjYtODI1NC0yNTk1OGUyMmU3YTYubW92P1gtQW16LUFsZ29yaXRobT1BV1M0LUhNQUMtU0hBMjU2JlgtQW16LUNyZWRlbnRpYWw9QUtJQVZDT0RZTFNBNTNQUUs0WkElMkYyMDI2MDIxMSUyRnVzLWVhc3QtMSUyRnMzJTJGYXdzNF9yZXF1ZXN0JlgtQW16LURhdGU9MjAyNjAyMTFUMTAyOTI5WiZYLUFtei1FeHBpcmVzPTMwMCZYLUFtei1TaWduYXR1cmU9OWRiM2ZjNTJkMTI3MjlmYjg3OTlmZGMwZWU0MzZkYjE5YzM5ODkwYWRjZTlhYjA1ZGU2NTNjOGY0MzI3ZDE4MyZYLUFtei1TaWduZWRIZWFkZXJzPWhvc3QifQ.DVPpHFjkORy2nRbkSbpKRw_IMQB3ZuEPl_X2RQko-OA" controls="controls" muted="muted" class="d-block rounded-bottom-2 border-top width-fit" style="max-height:640px; min-height: 200px">
+  </video>
+
 **Sources:**
 - [GraphQL Storefront API](https://shopify.dev/docs/api/storefront/latest)
 - [GraphiQL explorer](https://shopify.dev/docs/api/usage/api-exploration/admin-graphiql-explorer)
