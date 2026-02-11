@@ -252,13 +252,10 @@ Shopify Backend (products, orders, inventory)
 
 ## Technical Implementation Notes
 
-It isn’t obvious how to redirect back to wc.org after checkout clicking the ‘Continue shopping’ page, with several unanswered questions from community boards [1](https://community.shopify.com/t/change-continue-shopping-url-on-thank-you-page-headless/403380), [2](https://community.shopify.com/t/change-continue-shopping-url-on-thank-you-page-headless/403380), [3](https://community.shopify.dev/t/headless-shopify-continue-shopping-button-redirects-to-wrong-domain-after-checkout/18950), [4](https://community.shopify.com/t/headless-redirect-after-checkout/397344/3), [5](https://www.reddit.com/r/shopify/comments/1iz2fa0/headless_redirect_after_checkout/), but I made a minimal Liquid theme that just redirects client-side and this seems to work fine.
-
-I haven’t looked much into [integration with existing Prismic content](https://prismic.io/docs/fields/integration#sync-products-from-a-shopify-store) beyond knowing that it exists.
-
-I think/presume additional cookies should be added to the functional/required list in order for cart/checkout functionality to work.
-
-I haven't looked at any Shopify-specific analytics/tracking options.
+- It isn’t obvious how to redirect back to wc.org after checkout clicking the ‘Continue shopping’ page, with several unanswered questions from community boards [1](https://community.shopify.com/t/change-continue-shopping-url-on-thank-you-page-headless/403380), [2](https://community.shopify.com/t/change-continue-shopping-url-on-thank-you-page-headless/403380), [3](https://community.shopify.dev/t/headless-shopify-continue-shopping-button-redirects-to-wrong-domain-after-checkout/18950), [4](https://community.shopify.com/t/headless-redirect-after-checkout/397344/3), [5](https://www.reddit.com/r/shopify/comments/1iz2fa0/headless_redirect_after_checkout/), but I made a minimal Liquid theme that just redirects client-side and this seems to work fine.
+- I haven’t looked much into [integration with existing Prismic content](https://prismic.io/docs/fields/integration#sync-products-from-a-shopify-store) beyond knowing that it exists.
+- I think/presume additional cookies should be added to the functional/required list in order for cart/checkout functionality to work.
+- I haven't looked at any Shopify-specific analytics/tracking options.
 
 ## Proof of Concept
 The [shopify branch](https://github.com/wellcomecollection/wellcomecollection.org/compare/shopify) of the wc.org monorepo contains a minimal proof of concept implementation of Option 3 (Headless Commerce with Storefront API). It demonstrates fetching products and variants from Shopify and displaying them on a Next.js page, with a cart and checkout flow.
