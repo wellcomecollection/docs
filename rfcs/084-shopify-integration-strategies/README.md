@@ -132,7 +132,8 @@ Shopify Backend (products, orders, inventory)
 - [Building with the Storefront API](https://shopify.dev/docs/storefronts/headless/building-with-the-storefront-api)
 - [Storefront API Reference](https://shopify.dev/docs/api/storefront/latest)
 - [Building Ecommerce Sites with Next.js and Shopify](https://vercel.com/kb/guide/building-ecommerce-sites-with-next-js-and-shopify)
-
+- [Good and Bad of Headless Commerce with Shopify](https://www.plytix.com/blog/headless-commerce-with-shopify)
+- [Headless Commerce vs Traditional Commerce](https://www.shopify.com/enterprise/blog/headless-commerce-vs-traditional-commerce)
 ---
 
 ### Option 4: Hydrogen Framework (Shopify's React/Remix Framework)
@@ -261,11 +262,7 @@ I haven't looked at any Shopify-specific analytics/tracking options.
 
 **Sources:**
 - [GraphQL Storefront API](https://shopify.dev/docs/api/storefront/latest)
+- [GraphiQL explorer](https://shopify.dev/docs/api/usage/api-exploration/admin-graphiql-explorer)
 - [Getting Started with GraphQL](https://www.shopify.com/partners/blog/getting-started-with-graphql)
 - [Working with Shopify Storefront API](https://medium.com/@sandeeppangeni17/working-with-shopify-storefront-api-graphql-javascript-e02fb89eb682)
----
-
-**Sources:**
-- [Good and Bad of Headless Commerce with Shopify](https://www.plytix.com/blog/headless-commerce-with-shopify)
-- [Headless Commerce vs Traditional Commerce](https://www.shopify.com/enterprise/blog/headless-commerce-vs-traditional-commerce)
 ---
