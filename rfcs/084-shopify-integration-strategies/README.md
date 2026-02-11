@@ -9,7 +9,7 @@ This research outlines five approaches for integrating Shopify with the Wellcome
 ## Current Technical Context
 
 The Wellcome Collection website is built as a Next.js monorepo with:
-- React-based frontend (Next.js 19+)
+- React-based frontend (Next.js)
 - Styled-components for styling
 - Prismic CMS for content management
 - Yarn workspaces architecture
