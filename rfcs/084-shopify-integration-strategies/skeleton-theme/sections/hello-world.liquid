@@ -1,0 +1,157 @@
+{% comment %}
+  Welcome to Shopify theme development!
+{% endcomment %}
+
+<h1 class="hero-heading">{{ section.settings.heading }}</h1>
+
+{% assign featured = section.settings.featured_collection | default: collections.first %}
+{% if featured %}
+  <a class="hero-card" href="{{ featured.url }}">
+    {% if featured.featured_image %}
+      <div class="hero-card__image">
+        {% render 'image',
+          image: featured.featured_image,
+          width: 1200,
+          height: 800,
+          crop: 'center'
+        %}
+      </div>
+    {% endif %}
+    <div class="hero-card__content">
+      {% if section.settings.featured_label != blank %}
+        <span class="hero-card__label">{{ section.settings.featured_label }}</span>
+      {% endif %}
+      <h2 class="hero-card__title">{{ featured.title }}</h2>
+      {% if featured.description != blank %}
+        <p>{{ featured.description | strip_html | truncatewords: 30 }}</p>
+      {% endif %}
+    </div>
+  </a>
+{% endif %}
+
+<h2 class="section-heading">Stuff in the shop</h2>
+
+<div class="highlights">
+  {% for collection in collections %}
+    {% if collection.handle == featured.handle %}
+      {% continue %}
+    {% endif %}
+    <a class="highlight" href="{{ collection.url }}">
+      {% if collection.featured_image %}
+        {% render 'image',
+          class: 'highlight__image',
+          image: collection.featured_image,
+          width: 600,
+          height: 600,
+          crop: 'center'
+        %}
+      {% endif %}
+
+      <h3>{{ collection.title }}</h3>
+
+      {% if collection.description %}
+        <p class="highlight-description">{{ collection.description | strip_html | truncatewords: 15 }}</p>
+      {% endif %}
+    </a>
+  {% endfor %}
+</div>
+
+{% stylesheet %}
+  .hero-heading {
+    font-size: clamp(2rem, 4vw, 2.5rem);
+    line-height: 1.15;
+    max-width: 30ch;
+    margin-bottom: 2rem;
+  }
+
+  .hero-card {
+    display: grid;
+    grid-template-columns: 3fr 2fr;
+    text-decoration: none;
+    color: inherit;
+
+    border-radius: 8px;
+    margin-bottom: 2rem;
+  }
+
+  @media (max-width: 768px) {
+    .hero-card {
+      grid-template-columns: 1fr;
+    }
+  }
+
+  .hero-card__image {
+    min-height: 400px;
+  }
+
+  .hero-card__image .image,
+  .hero-card__image .image img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+
+  .hero-card__content {
+    display: flex;
+    flex-direction: column;
+
+    gap: 1rem;
+    padding: 2.5rem;
+    background-color: #323232;
+    color: #fff;
+    transform: translateY(22px);
+  }
+
+  .hero-card__label {
+    display: inline-block;
+    width: fit-content;
+    padding: 0.2em 0.6em;
+    background-color: #ffce3c;
+    color: #121212;
+    font-weight: 700;
+    font-size: 0.875rem;
+    transform: translate(-40px, -62px);
+  }
+
+  .hero-card__title {
+    font-size: clamp(1.5rem, 3vw, 2rem);
+    line-height: 1.2;
+    color: #fff;
+  }
+
+  .hero-card__content p {
+    line-height: 1.5;
+    color: rgba(255, 255, 255, 0.85);
+  }
+{% endstylesheet %}
+
+{% schema %}
+{
+  "name": "Hello World",
+  "settings": [
+    {
+      "type": "text",
+      "id": "heading",
+      "label": "Heading",
+      "default": "A shop exploring health, human experience, and cuddly viruses"
+    },
+    {
+      "type": "collection",
+      "id": "featured_collection",
+      "label": "New"
+    },
+    {
+      "type": "text",
+      "id": "featured_label",
+      "label": "Featured label",
+      "default": "New"
+    }
+  ],
+  "presets": [
+    {
+      "name": "Hello World Template",
+      "category": "Demo"
+    }
+  ]
+}
+{% endschema %}
