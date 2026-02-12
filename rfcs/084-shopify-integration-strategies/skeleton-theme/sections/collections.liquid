@@ -1,0 +1,38 @@
+{% comment %}
+  This section is used in the list-collections template to render a list of
+  collections.
+
+  https://shopify.dev/docs/storefronts/themes/architecture/templates/collection
+{% endcomment %}
+
+<h1>{{ 'collections.title' | t }}</h1>
+
+<div class="highlights">
+  {% for collection in collections %}
+    <a class="highlight" href="{{ collection.url }}">
+      {% if collection.featured_image %}
+        {% render 'image',
+          class: 'highlight__image',
+          image: collection.featured_image,
+          width: 600,
+          height: 600,
+          crop: 'center'
+        %}
+      {% endif %}
+
+      <h3>{{ collection.title }}</h3>
+
+      {% if collection.description %}
+        <p class="highlight-description">{{ collection.description | strip_html | truncatewords: 15 }}</p>
+      {% endif %}
+    </a>
+  {% endfor %}
+</div>
+
+{% schema %}
+{
+  "name": "t:general.collections_grid",
+  "settings": [],
+  "presets": [{ "name": "t:general.collections_grid" }]
+}
+{% endschema %}
