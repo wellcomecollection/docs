@@ -231,9 +231,12 @@ It is still unknown if we want to allow for user accounts, or always use guest c
 ## Key Decision Criteria
 
 ### Technical Considerations
+- How easy is it to back out/hand over?
+  - Option 2 would be relatively easy to hand over, as it is a standalone Shopify implementation
+  - Option 3 would be harder to hand over, as it would be tightly integrated with our existing codebase and would require significant unpicking to hand over to a different team.
 
 **Existing Architecture:**
-- Current Next.js implementation favours headless approach
+- Current Next.js implementation/(and expertise) favours headless approach
 - Styled-components design system can extend to commerce components
 - TypeScript throughout supports type-safe API integration
 
@@ -248,8 +251,7 @@ It is still unknown if we want to allow for user accounts, or always use guest c
 - Content-to-commerce flow should be natural
 - Integration with existing site navigation and search
 
-
-### Implementation Roadmap
+### Implementation Roadmap for option 3
 
 #### Phase 1: Foundation 
 - Set up Shopify backend
