@@ -4,7 +4,7 @@
 
 ## Summary
 
-This research outlines five approaches for integrating Shopify with the Wellcome Collection website, ranging from simple embedded solutions to fully headless implementations. Based on the existing Next.js architecture, the recommended approach is **Option 3: Headless Commerce with Shopify Storefront API**, which provides a balance of brand consistency, technical flexibility, and maintainability.
+This research outlines five approaches for integrating Shopify with the Wellcome Collection website, ranging from simple embedded solutions to fully headless implementations.
 
 ## Current Technical Context
 
@@ -14,6 +14,9 @@ The Wellcome Collection website is built as a Next.js monorepo with:
 - Prismic CMS for content management
 - Yarn workspaces architecture
 - Strong emphasis on performance optimisation and accessibility
+
+## Initial Requirements
+At first the only things to be sold via the shop will be exclusive Wellcome Collection ranges (wellcome collection books, wellcome collection toys, and exhibition ranges). This may change in the future.
 
 ## Integration Approaches
 
@@ -45,6 +48,7 @@ The Wellcome Collection website is built as a Next.js monorepo with:
 **Sources:**
 - [Shopify Buy Button](https://www.shopify.com/buy-button)
 - [Buy Button FAQ](https://help.shopify.com/en/manual/online-sales-channels/buy-button/faq)
+
 ---
 
 ### Option 2: Embedded Shopify Storefront
@@ -62,10 +66,12 @@ The Wellcome Collection website is built as a Next.js monorepo with:
 - Proven reliability for e-commerce operations
 - Professional checkout experience
 - Comprehensive analytics and reporting
+- Easy to hand over management to a different team if needed
+
 
 **Disadvantages:**
-- Inconsistent user experience between main site and shop
-- Duplicate navigation/header/footer maintenance
+- Inconsistent user experience between main site and shop (although this is a common pattern in the sector and unlikely to cause significant issues)
+- Duplicate navigation/header/footer/component maintenance
 - Users perceive being taken away from main site
 - SEO considerations for separate domain/path
 - Theme customisation limited by Liquid templating
@@ -74,6 +80,10 @@ The Wellcome Collection website is built as a Next.js monorepo with:
 
 <video src="https://private-user-images.githubusercontent.com/1394592/548843585-b622ec02-e18a-4ff2-9e3e-b36f5c9482f0.mov?jwt=eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJpc3MiOiJnaXRodWIuY29tIiwiYXVkIjoicmF3LmdpdGh1YnVzZXJjb250ZW50LmNvbSIsImtleSI6ImtleTUiLCJleHAiOjE3NzA5MDM0MzAsIm5iZiI6MTc3MDkwMzEzMCwicGF0aCI6Ii8xMzk0NTkyLzU0ODg0MzU4NS1iNjIyZWMwMi1lMThhLTRmZjItOWUzZS1iMzZmNWM5NDgyZjAubW92P1gtQW16LUFsZ29yaXRobT1BV1M0LUhNQUMtU0hBMjU2JlgtQW16LUNyZWRlbnRpYWw9QUtJQVZDT0RZTFNBNTNQUUs0WkElMkYyMDI2MDIxMiUyRnVzLWVhc3QtMSUyRnMzJTJGYXdzNF9yZXF1ZXN0JlgtQW16LURhdGU9MjAyNjAyMTJUMTMzMjEwWiZYLUFtei1FeHBpcmVzPTMwMCZYLUFtei1TaWduYXR1cmU9MGE2Y2MyYWU0NmM5NmY3YjE3ZjdjZjg1NWQxMTgyNzVlNTA4NjZkZWZiOTIwYjgxMDkzNjNhMjA4NmJiZjI3ZCZYLUFtei1TaWduZWRIZWFkZXJzPWhvc3QifQ.qd8JUkaSnVhmlLQBeReZS7ON1HwGm4ywsQ4L8guWFm4" data-canonical-src="https://private-user-images.githubusercontent.com/1394592/548843585-b622ec02-e18a-4ff2-9e3e-b36f5c9482f0.mov?jwt=eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJpc3MiOiJnaXRodWIuY29tIiwiYXVkIjoicmF3LmdpdGh1YnVzZXJjb250ZW50LmNvbSIsImtleSI6ImtleTUiLCJleHAiOjE3NzA5MDM0MzAsIm5iZiI6MTc3MDkwMzEzMCwicGF0aCI6Ii8xMzk0NTkyLzU0ODg0MzU4NS1iNjIyZWMwMi1lMThhLTRmZjItOWUzZS1iMzZmNWM5NDgyZjAubW92P1gtQW16LUFsZ29yaXRobT1BV1M0LUhNQUMtU0hBMjU2JlgtQW16LUNyZWRlbnRpYWw9QUtJQVZDT0RZTFNBNTNQUUs0WkElMkYyMDI2MDIxMiUyRnVzLWVhc3QtMSUyRnMzJTJGYXdzNF9yZXF1ZXN0JlgtQW16LURhdGU9MjAyNjAyMTJUMTMzMjEwWiZYLUFtei1FeHBpcmVzPTMwMCZYLUFtei1TaWduYXR1cmU9MGE2Y2MyYWU0NmM5NmY3YjE3ZjdjZjg1NWQxMTgyNzVlNTA4NjZkZWZiOTIwYjgxMDkzNjNhMjA4NmJiZjI3ZCZYLUFtei1TaWduZWRIZWFkZXJzPWhvc3QifQ.qd8JUkaSnVhmlLQBeReZS7ON1HwGm4ywsQ4L8guWFm4" controls="controls" muted="muted" class="d-block rounded-bottom-2 border-top width-fit" style="max-height:640px; min-height: 200px">
 </video>
+
+There is a skeleton Liquid theme available [here](./skeleton-theme) showing how products and categories could be grouped and displayed, with a simple cart and checkout flow (video above). We would have to write seperate css to style a theme created in this way, but we should be able to import and use the [existing design system](https://github.com/wellcometrust/wellcome-design-system/tree/main) for spacing, typography, grid, and colour variables to help ensure consistency at least.
+
+Probably the biggest advantage of this approach is that it would be the easiest to hand over to a different team to manage in the future, as it would be a more standard standalone Shopify implementation and as such wouldn't need to be unpicked from our existing codebase.
 
 ---
 
@@ -119,6 +129,17 @@ Shopify Backend (products, orders, inventory)
 - Checkout still redirects to Shopify domain
 - More complex than out-of-box solutions
 
+Robert put forward a relatively major concern with this approach:
+
+> I'm concerned the recommended approach will add a maintenance overhead that won't be sustainable, and might cause issues in the future if we want to resource changes to the shop outside of the experience team. Adding the shop also adds a slew of product concerns that will come with requirements and requests for changes - if we couple these to our development process tightly I think we risk issues with delivery
+
+If we were to go with this approach, we should ensure:
+1. We have full control of product direction
+2. The experience team will be resourced indefinitely to take on the extra maintenance burden of the new product area
+3. We should consider whether it belongs as its own service rather than being built directly into the content app
+
+It is still unknown if we want to allow for user accounts, or always use guest checkout. Maintaining user accounts ourselves would add a significant amount of complexity and if they were required, we might want to consider using Shopify's customer accounts functionality, which might add some friction to the ux but would be a lot easier to implement and maintain than building our own.
+
 **Development Approach:**
 1. Set up Shopify Headless channel and generate API tokens
 2. Configure environment variables in Next.js
@@ -137,6 +158,7 @@ Shopify Backend (products, orders, inventory)
 - [Building Ecommerce Sites with Next.js and Shopify](https://vercel.com/kb/guide/building-ecommerce-sites-with-next-js-and-shopify)
 - [Good and Bad of Headless Commerce with Shopify](https://www.plytix.com/blog/headless-commerce-with-shopify)
 - [Headless Commerce vs Traditional Commerce](https://www.shopify.com/enterprise/blog/headless-commerce-vs-traditional-commerce)
+
 ---
 
 ### Option 4: Hydrogen Framework (Shopify's React/Remix Framework)
@@ -203,6 +225,7 @@ Shopify Backend (products, orders, inventory)
 
 **Sources:**
 - [Checkout UI Extensions](https://shopify.dev/docs/api/checkout-ui-extensions/latest)
+
 ---
 
 ## Key Decision Criteria
@@ -271,4 +294,5 @@ The [shopify branch](https://github.com/wellcomecollection/wellcomecollection.or
 - [GraphiQL explorer](https://shopify.dev/docs/api/usage/api-exploration/admin-graphiql-explorer)
 - [Getting Started with GraphQL](https://www.shopify.com/partners/blog/getting-started-with-graphql)
 - [Working with Shopify Storefront API](https://medium.com/@sandeeppangeni17/working-with-shopify-storefront-api-graphql-javascript-e02fb89eb682)
+
 ---
