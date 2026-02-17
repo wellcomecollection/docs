@@ -60,6 +60,7 @@ Blanket rate limit (2500 in 5 min window)
 **GE (/RK supporting)**
 - Add Vietnam to rate limiting rules (not the Captcha)
 - Add staging rules (UK/US/IE only) to code, to be first in the order of rules
+- both [#12767](https://github.com/wellcomecollection/wellcomecollection.org/issues/12767)
 
 
 **JC - to think about for an OKR**
