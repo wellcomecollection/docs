@@ -67,6 +67,7 @@ At first the only things to be sold via the shop will be exclusive Wellcome Coll
 - Professional checkout experience
 - Comprehensive analytics and reporting
 - Easy to hand over management to a different team if needed
+- There's only one place to search (no confusion around whether you're searching the shop or the main site)
 
 
 **Disadvantages:**
@@ -128,6 +129,7 @@ Shopify Backend (products, orders, inventory)
 - Ongoing maintenance responsibility
 - Checkout still redirects to Shopify domain
 - More complex than out-of-box solutions
+- Potentially complicates site-search and user expectations
 
 Robert put forward a relatively major concern with this approach:
 
