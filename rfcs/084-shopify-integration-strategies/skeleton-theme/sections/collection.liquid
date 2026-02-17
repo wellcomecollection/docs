@@ -1,0 +1,37 @@
+{% comment %}
+  This section is used in the collection template to render collection page
+  listing all products within a collection.
+
+  https://shopify.dev/docs/storefronts/themes/architecture/templates/collection
+{% endcomment %}
+
+<h1>{{ collection.title }}</h1>
+
+<div class="highlights">
+  {% paginate collection.products by 20 %}
+    {% for product in collection.products %}
+      <a class="highlight" href="{{ product.url }}">
+        {% if product.featured_image %}
+          {% render 'image',
+            class: 'highlight__image',
+            image: product.featured_image,
+            width: 400,
+            height: 400,
+            crop: 'center'
+          %}
+        {% endif %}
+        <h3>{{ product.title | escape }}</h3>
+        <p>{{ product.price | money }}</p>
+      </a>
+    {% endfor %}
+
+    {{ paginate | default_pagination }}
+  {% endpaginate %}
+</div>
+
+{% schema %}
+{
+  "name": "t:general.collection",
+  "settings": []
+}
+{% endschema %}
