@@ -66,4 +66,4 @@ Blanket rate limit (2500 in 5 min window)
 - Investigate rate limiting/caching by areas of the site (works/items/images)
 
 **NP**
-- Add to Experience planning doc: find a way to ask Google not to index stage without impacting SEO
+- Add to Experience planning doc: find a way to ask Google not to index stage without impacting SEO [#9891](https://github.com/wellcomecollection/wellcomecollection.org/issues/9891)
