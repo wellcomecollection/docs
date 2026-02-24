@@ -1,0 +1,53 @@
+{% comment %}
+  This section is used in the search template to render search results for
+  products, articles, and pages.
+
+  https://shopify.dev/docs/storefronts/themes/architecture/templates/search
+{% endcomment %}
+
+<h1>{{ 'search.title' | t }}</h1>
+
+<form action="{{ routes.search_url }}" method="get" role="search">
+  <input
+    type="search"
+    size="50"
+    name="q"
+    value="{{ search.terms | escape }}"
+    placeholder="{{ 'search.placeholder' | t }}"
+  >
+  <button type="submit">{{ 'search.submit' | t }}</button>
+</form>
+
+{% if search.performed %}
+  {% if search.results_count == 0 %}
+    <p>{{ 'search.no_results_html' | t: terms: search.terms }}</p>
+  {% else %}
+    <p>{{ 'search.results_for_html' | t: terms: search.terms, count: search.results_count }}</p>
+
+    <div class="highlights">
+      {% paginate search.results by 20 %}
+        {% for result in search.results %}
+          <a class="highlight" href="{{ result.url }}">
+            {% assign featured_image = result.featured_image | default: result.image %}
+            {% if featured_image %}
+              {% render 'image', class: 'highlight__image', image: featured_image, width: 400 %}
+            {% endif %}
+            <h3>{{ result.title }}</h3>
+            {% if result.price %}
+              <p>{{ result.price | money_with_currency }}</p>
+            {% endif %}
+          </a>
+        {% endfor %}
+
+        {{ paginate | default_pagination }}
+      {% endpaginate %}
+    </div>
+  {% endif %}
+{% endif %}
+
+{% schema %}
+{
+  "name": "t:general.search",
+  "settings": []
+}
+{% endschema %}
