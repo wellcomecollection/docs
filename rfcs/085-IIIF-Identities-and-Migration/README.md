@@ -1,7 +1,7 @@
 # RFC 085: Identifiers of and within IIIF resources after the migration
 
 Wellcome's published IIIF resources use a combination of system identifiers and the names of preserved files to generate URIs of resources such as Manifests and Canvases within Manifests. For digitised works, the names of stored files are themselves usually determined during digitisation workflow by the system identifier and an ascending sequence, e.g., b18035978_0037.jp2. This RFC discusses the implications of the migration to Folio and Axiell Collections: b numbers won't exist in future.
- 
+
 **Last modified:** 2026-03-02T17:00+00:00
 
 ## Context
@@ -32,7 +32,7 @@ The b number is an artefact of a specific vendor system, in this case Sierra. We
 
 The situation is different for CALM Ref Nos, which represent the archival hierarchy and are intellectually significant in their own right; they would be expected to survive migration of underlying systems. However, they are not necessarily stable; things can be moved around as they are catalogued in more detail, or revisited.
 
-### Use the work id
+### Use the Work ID
 
 Canonical URIs for _all_ IIIF Collection and Manifest resources **should use the work identifier** rather than the b number, the archival Ref No, the Folio identifier, the Axiell Collections identitifer, or any other future system-specific source identifier. The IIIF Manifest URI for _The Biocrats_ would be https://iiif.wellcomecollection.org/presentation/zjytxny8. This insulates the public persistent identity of the work from changes in source catalogue identifiers. This is only true if the work ID for _The Biocrats_ remains `zjytxny8` after the move to new systems, but this is the proposed behaviour in [RFC 083 Stable Identifiers](../083-stable_identifiers/README.md).
 
@@ -40,7 +40,7 @@ The catalogue-id-based link actually works now, and will redirect to the current
 
 ### The hard problem: Canvas IDs and other internal structure
 
-> If a URI is "dereferenceable" we mean it will return a 2xx (or sometimes 3xx) response to an HTTP request. That is, there is something hosted on the web at the other end of it. All resource identifiders in IIIF are HTTPS URIs, for namespacing and linked data purposes. Any IIIF resource `id` _may_ be dereferenceable, but most identified resources within a IIIF Manifest usually are not. Manifests and Collection URIs _MUST_ be dereferenceable (as they are the unit of distribution of IIIF). But Ranges and Canvases usually are not. See [id](https://iiif.io/api/presentation/3.0/#id) in the IIIF Presentation Specification.
+> If a URI is "dereferenceable" we mean it will return a 2xx (or sometimes 3xx) response to an HTTP request. That is, there is something hosted on the web at the other end of it. All resource identifiers in IIIF are HTTPS URIs, for namespacing and linked data purposes. Any IIIF resource `id` _may_ be dereferenceable, but most identified resources within a IIIF Manifest usually are not. Manifests and Collection URIs _MUST_ be dereferenceable (as they are the unit of distribution of IIIF). But Ranges and Canvases usually are not. See [id](https://iiif.io/api/presentation/3.0/#id) in the IIIF Presentation Specification.
 
 If we are just dealing with discrete HTTP-level resources, then the redirect semantics of HTTP **301 Moved Permanently** handles the change of IDs in the new system as intended. But for IIIF Presentation resources, the situation is much more complicated. Manifests contain many, many child HTTPS URIs: the `id` values of resources like [Ranges](https://iiif.io/api/presentation/3.0/#54-range) and most importantly, of [Canvases](https://iiif.io/api/presentation/3.0/#53-canvas). These are not necessarily dereferenceable (and at Wellcome, you cannot load a Canvas on its own from its HTTPS URI `id`). Whether or not they are dereferenceable (and therefore redirectable) in any given implementation is irrelevant, however, because a IIIF Client application (a viewer or annotation tool) will use the identifiers in the JSON body of the resource: it _expects_ Manifests to contain their Canvases in their entirety. Even though they have https URIs, they are not references to _external_ resources (in IIIF terms).
 
@@ -62,7 +62,7 @@ While any IIIF resource might be the `target` of an [Annotation](https://iiif.io
 }
 ```
 
-If this annotation is linked from the Manifest then the short form of the `target` is sufficent, because the client application already has the Canvas loaded, in scope; it is aware of the manifest in which the Canvas target lives. If this annotation were published standalone, an expanded form is needed, so the client can find the Manifest that the Canvas lives in:
+If this annotation is linked from the Manifest then the short form of the `target` is sufficient, because the client application already has the Canvas loaded, in scope; it is aware of the manifest in which the Canvas target lives. If this annotation were published standalone, an expanded form is needed, so the client can find the Manifest that the Canvas lives in:
 
 ```jsonc
     // ...rest of annotation as above
@@ -86,7 +86,7 @@ The sources of these Canvas `id` values are ultimately filenames in METS:
 </mets:file>
 ```
 
-Simplifying somewhat, iiif-builder (aka the DDS) generates a `StorageIdentifier` from the `xlink:href` attribute; this is a path-element safe version of the file path after `objects/` (in this case it's the same as that path, but isn't always). This `xlink:href` attribute also gives us the relative locaton of the file in the storage service, so we can load it into the DLCS from there. That is, given the location of the stored METS file in S3, we can then find a particular file. The `id` of the image asset in the DDS is derived from its storage location filename. In the IIIF, we generate a Canvas `id` by joining the METS manifestation identifier (a single work may have multiple manifestations) with this storage identifier. Here's a full, **single** Canvas from the Manifest, with added comments showing all the places such IDs form part of identifiers, both dereferenceable and non-dereferenceable.
+Simplifying somewhat, iiif-builder (aka the DDS) generates a `StorageIdentifier` from the `xlink:href` attribute; this is a path-element safe version of the file path after `objects/` (in this case it's the same as that path, but isn't always). This `xlink:href` attribute also gives us the relative location of the file in the storage service, so we can load it into the DLCS from there. That is, given the location of the stored METS file in S3, we can then find a particular file. The `id` of the image asset in the DDS is derived from its storage location filename. In the IIIF, we generate a Canvas `id` by joining the METS manifestation identifier (a single work may have multiple manifestations) with this storage identifier. Here's a full, **single** Canvas from the Manifest, with added comments showing all the places such IDs form part of identifiers, both dereferenceable and non-dereferenceable.
 
 ```jsonc
 {
@@ -270,8 +270,8 @@ This is a definite flaw in the current approach. But it is rare - most images ar
 A desirable outcome is that:
 
  - IIIF Manifests and Collections adopt a work-id-based URI as the canonical URI
- - Any existing published IIIF Manifest or Collection requested on a B-number or CALM recordID-based path will redirect to the work ID
- - Anything already published that uses b-number identifiers for Canvases will continue to use those identifiers, even if a differently-formed filename for the image appears in METS
+ - Any existing published IIIF Manifest or Collection requested on a B-number or CALM recordID-based path will **redirect** to the work ID
+ - Anything already published that uses b-number identifiers for Canvases will **continue to use those identifiers**, even if a differently-formed filename for the image appears in METS
  - Anything wholly new after some date to be decided, once the new source systems are up and running, can use a different strategy for minting Canvas IDs (discussed below)
  - IIIF Image IDs should still be based on the filename, because they are surfacing an actual stored file. While it's true that someone may have bookmarked a particular image service endpoint, the Canvas identity is much more important; there is no obligation for a publisher to maintain the same _images_ or IIIF Image Services for a Canvas (they might upgrade them to better quality versions, or might increase the number of formats available).
 
@@ -312,31 +312,52 @@ A desirable outcome is that:
 However, we don't know yet what will happen to JP2 filenames for a re-processed digitised object coming through Goobi (see _Unknowns_ below).
 
  - For this to work we need to know, when updating a Manifest, that the image with digest d1 was at the third index position in the sequence, but is now at the fourth
- - The DDS need to start maintaining a map of canvas IDs to digests, so it can maintain the right canvas ID for the right image even if the image's filename changes.
+ - The DDS needs to start maintaining a map of canvas IDs to digests, so it can maintain the right canvas ID for the right image even if the image's filename changes.
  - The DDS can (perhaps) use the version history of the preserved package. Here is a rare example of an item whose files are made up of more than one version: [https://iiif.wellcomecollection.org/dash/StorageMap/b32843987](https://iiif.wellcomecollection.org/dash/StorageMap/b32843987).
- - The DLCS needs to record one or more digests (checksums, hashes) of every asset. By default it will calculate and store a SHA-256 hash, but will generate hashes by other algorithms on demand (some Wellcome METS files use SHA-1). This allows the DDS to know if b30000476_0004.jp2 is the same file as it was before.
+ - The DLCS needs to start recording one or more digests (checksums, hashes) of every asset. By default it should calculate and store a SHA-256 hash, but will generate hashes by other algorithms on demand (some older Wellcome METS files use SHA-1). This allows the DDS to know if b30000476_0004.jp2 is the same file as it was before, or match files that have moved Canvases.
 
 When editing a Manifest:
 
-- Query for all the images in the DLCS that it already has for that Manifest (based on the string1 metadata value of an asset)
+- Query for all the images in the DLCS that it already has for that Manifest (based on the [string1](https://dlcs.github.io/public-docs/api-doc/asset/#string1) metadata value of an asset)
 - Match them by digest to the files in the METS file
 - If the METS file uses a hashing algorithm that the stored asset does not have, ask the DLCS to generate those values (this is time-consuming but presumably rare)
 - Use the stored map of canvas IDs to hashes (or the inverse map) to allocate existing images in the DLCS to canvases
 
-This will likely need a fairly extensive rewrite of the manifest generation code.
+This will likely need a fairly extensive rewrite of the manifest generation code in the DDS, and the addition of the origin hash feature to the DLCS.
 
+## Other generated files
 
-Other dereferenceable resources linked from Manifests:
+IIIF Manifests and Collections are not the only dereferenceable resources the DDS generates. It also generates the following, linked from IIIF Manifests on similarly identifer-based URLs. All of them have internal IDs and also reference the Canvas IDs of the Manifests they are linked from:
 
- - ALTO files per Canvas
- - Line level annotations per Canvas
- - Full text per Manifest
- - Single Annotation Page identifying images, figures and tables, per Manifest
+ _(all from [b19880212](https://iiif.wellcomecollection.org/presentation/b19880212))_
+
+Per Canvas:
+
+ - ALTO files per Canvas: [https://api.wellcomecollection.org/text/alto/b19880212/b19880212_0089.jp2](https://api.wellcomecollection.org/text/alto/b19880212/b19880212_0089.jp2)
+ - Line level annotations per Canvas: [https://iiif.wellcomecollection.org/annotations/v3/b19880212/b19880212_0089.jp2/line](https://iiif.wellcomecollection.org/annotations/v3/b19880212/b19880212_0089.jp2/line)
+
+Per Manifest:
+
+ - Single Annotation Page identifying images, figures and tables, per Manifest: [https://iiif.wellcomecollection.org/annotations/v3/b19880212/images](https://iiif.wellcomecollection.org/annotations/v3/b19880212/images)
+ - IIIF Search Service which returns hits targeting Canvases: [https://iiif.wellcomecollection.org/search/v1/b19880212?q=three%20kennels](https://iiif.wellcomecollection.org/search/v1/b19880212?q=three%20kennels)
  
+Rendering properties (these have no _internal_ references to worry about, just their URLs)
+
+ - Full text per Manifest: [https://api.wellcomecollection.org/text/v1/b19880212](https://api.wellcomecollection.org/text/v1/b19880212)
+ - PDF of Manifest: [https://iiif.wellcomecollection.org/pdf/b19880212](https://iiif.wellcomecollection.org/pdf/b19880212)
 
 ## The new strategy for minting Canvas IDs
 
-Digest or filename?
+This should still use the filename as before.
+Where the Canvas has _already been published_ it needs to continue using the same Canvas.
+
+This means we need to populate all the hashes of existing assets - which is a good thing anyway. We don't need to calculate the SHA-256 hashes of the origin because the storage service already has this information.
+
+We should write something that can run on spot price instances to churn through the population of this data in the DLCS. 
+
+This gives us a baseline.
+
+However, the strategy is dependent on what a METS file looks like after the change so remains to be decided.
 
 ## Wellcome identity service
 
@@ -348,11 +369,11 @@ It is this that currently enables the redirect from WorkId to B Number; it store
 
 It also (from [RFC 081](../081-identifiers-in-iiif-builder/README.md)) now has a [DdsIdentity](https://github.com/wellcomecollection/iiif-builder/blob/identity-service-with-db/src/Wellcome.Dds/Wellcome.Dds.Common/DdsIdentity.cs) table which removes assumptions about METS formats and storage locations based on the identifier format.
 
-Neither are these are quite sufficient, especially for work IDs, because this database is **not authoritative** - it keeps track of what it sees but is only populated "in passing".
+Neither of these are quite sufficient, especially for work IDs, because this database is **not authoritative** - it keeps track of what it sees but is only populated "in passing".
 
 If WorkIds are to be minted earlier in the process than they are now, _so that they can be used by Goobi and Archivematica_ in place of b numbers, or folio identifiers, then DDS may need them earlier too.
 
-This identity service can only really be at the WorkID level, because although we mint IDs for IIIF Manifests within Multiple Manifestations, the DDS is creating these from Goobi identifiers. There are identifiers unknown to the identity service for _parts of works_ - internal structure, manifestations (volumes), individual files (pages, documents). The identity service is about the identity of semantic information about works - catalogue records - whereas Goobi/Archivematica/DDS need to identify the constituent parts of these digitised or born digital items, below the level of the catalgue record.
+This identity service can only really be at the WorkID level, because although we mint IDs for IIIF Manifests within Multiple Manifestations, the DDS is creating these from Goobi identifiers. There are identifiers unknown to the identity service for _parts of works_ - internal structure, manifestations (volumes), individual files (pages, documents). The identity service is about the identity of semantic information about works - catalogue records - whereas Goobi/Archivematica/DDS need to identify the constituent parts of these digitised or born digital items, below the level of the catalogue record.
 
 The Identity Service can be queried such that given a string identity, it will return all known current and previous identifiers that match that identity.
 
@@ -449,27 +470,137 @@ For items whose authoritative description is currently CALM, the response would 
 
 ## Unknowns
 
-What will the names of preserved files look like in Goobi-produced METS files? `<mets:file xlink:href="objects/???"></mets:file>`
+ - What will the names of preserved files look like in Goobi-produced METS files? `<mets:file xlink:href="objects/???"></mets:file>`
+   1. for revisited existing workflows where no new files are introduced
+   2. for revisited existing workflows where at least one new file is introduced
+   3. for new workflows (e.g., a book digitised for the first time after the new systems are in place)
 
-- for revisited existing workflows
-- for new items
+ - What will a Goobi METS file look like _in general_ for a completely new work that never had a b number?
+ - What will a Goobi METS file look like _in general_ when a workflow is re-run (i.e., an existing METS file is updated)?
+ - What do Goobi multiple Manifestations look like? Names of Anchor files and Manifestation files
+ - What happens to existing b-number-named files in the storage service when a workflow is re-run?
+ - What will Archivematica do?
+ - What form of message will be sent by both Goobi and Archivematica to notify the DDS?
 
-What will a Goobi METS file look like _in general_ for a completely new work that never had a b number?
+This is currently broadcast via SNS and looks like this:
 
-What will a Goobi METS file look like _in general_ when a workflow is re-run (i.e., an existing METS file is updated)?
+[WorkflowMessage.cs](https://github.com/wellcomecollection/iiif-builder/blob/main/src/Wellcome.Dds/Wellcome.Dds.Common/WorkflowMessage.cs)
 
-What happens to existing files in the storage service when a workflow is re-run?
+```json
+{
+    "identifier": "b18035978",
+    "space": "digitised",
+    "origin": "Goobi",
+    "timeSent": "2026-03-02T10:26:33.817Z"
+}
+```
 
-What will Archivematica do?
+In future `identifier` should probably be the Canonical Work ID, and both Archivematica and Goobi should use it - but do they know it at this point? They would conceivably have to acquire it a lot earlier in their workflows. It would in fact be useful if they recorded it in the METS file, e.g.,
+
+```xml
+<mods:recordInfo>
+
+    <!-- currently present in Goobi METS -->
+    <mods:recordIdentifier source="gbv-ppn">b22011328</mods:recordIdentifier> 
+
+    <!-- new -->
+    <mods:recordIdentifier source="wellcome-canonical">n5vbrxpd</mods:recordIdentifier> 
+
+    <!-- others? -->
+</mods:recordInfo>
+```
+
+The answers to these questions determine some of the approach we take.
+
+Having the DDS build a map per manifest of canvas ID to the hash of the file on that canvas gives a baseline after which Canvas identity is preserved even if file names change. This is useful even without the move to new systems, although were that move not happening it probably wouldn't be worth doing. With the move, it becomes more important, and in fact becomes crucial if the filenames of **existing** images change to use Folio identifiers. This depends on what Goobi does.
+
+For example if today we have:
+
+```xml
+<mets:file ID="FILE_0145_OBJECTS" MIMETYPE="image/jp2">
+    <mets:FLocat LOCTYPE="URL" xlink:href="objects/b21286437_0145.jp2" />
+</mets:file>
+```
+
+and tomorrow this becomes:
+
+```xml
+<mets:file ID="FILE_0145_OBJECTS" MIMETYPE="image/jp2">
+    <mets:FLocat LOCTYPE="URL" xlink:href="objects/x1234abcd9876_0145.jp2" />
+</mets:file>
+```
+
+...but they are in fact the same file, then we know what the old canvas was. It would be useful to know what the answers to the three questions at the head of this section are.
 
 
-_A detailed description of the proposed solution, including any relevant technical details, diagrams, or examples._
+## Things we can do without answers
+
+(i.e., without examples of future METS files)
+
+ - Start using a Wellcome Identity Service as the source of truth for identifier relationships
+ - Make work ID the canonical form of dereferenceable IIIF resources and have b-number and CALM Ref No forms redirect to canonical (depends on Wellcome Identity Service)
+ - Add digest capabilities to DLCS - store multiple digests for assets in an agreed set of hashing algorithms; design the API for CRUD operations
+ - Add a "populate on demand" capability to the DDS - if we see that a DLCS asset does not have a digest recorded, then
+   - populate the DLCS SHA-256 from the information in the storage service (implies that caller can supply a digest in a special "trust me" mode)
+   - Additionally populate alternate digests from METS if the METS does not use SHA-256
+ - Add canvas.id => file digest map capability to IIIF-Builder. We would store these in S3 as JSON objects.
+ - A new version of Manifest Builder that will preserve the `id` of a Canvas for as long as its corresponding file hash doesn't change
+ - Implement a configurable "stability period" - we don't attempt to preserve Canvas identity if the Manifest is less than x days old.
+ - Implement a flow initiated by Work ID in the message from Goobi or Archivematica (depends on identity service to find existing resource)
+ - Wite integration tests that verify CanvasIds are the same for pre-cutoff manifests as they were before, even if the manifest id is now the Work ID
+
+It's possible that there doesn't need to be a cutoff date after which a new Canvas `id` minting strategy is adopted, and it can be entirely driven by filenames and digests, and it will "just work" when the file names in METS start appearing with Folio identifiers. But we really need to agree on what METS will look like so we know what we will be dealing with.
+
+What might throw a spanner in this is if the Goobi flow renames all the files to use the new ID form, but the image file doesn't change (desirable, we have 60m of them) - but the hash changes because of a minor tag or EXIF metadata change in the JP2.
+
+## Risks
+
+Problem scenario - for the same physical book page:
+
+ - State 1: File is b12345678_0003.jp2, canvas is ...b12345678_0003.jp2
+ - Notice a page is missing
+ - State 2: File is b12345678_0004.jp2, canvas is ...b12345678_0003.jp2 (because PIDs)
+ - Move to Folio
+ - Notice another page is missing for which we have no Canvas
+ - State 3: File is f987_0004.jp2, canvas is ...f987_0004.jp2 (because file name convention)
+ - We end up with b12345678_0004.jp2 and f987_0004.jp2 (i.e., two 0004's)
+
+This is not necessarily a problem but we should do more work on identifying all the things that could happen here, once we know what the METS will look like for the mentioned scenarios, to see if there are any possible Canvas ID collisions, or images ending up on the wrong Canvas. What if a Canvas `id` is not is use in one iteration of a Manifest but is then reintroduced?
+
+What happens when it's not an insertion or deletion but a re-shoot? E.g., b12345678_0001.jp2 was upside down and has been rotated to fix it, but is still b12345678_0001.jp2. This is a different SHA256 hash but it is the same file name, and the same `canvas.id`. 
+
+Are there combinations of insertions, deletions and renamings that lead us into a situation where it's impossible to have the right image (by digest) on the right canvas?
+
 
 ## Alternatives considered
 
-Allow Canvas IDs to change over time
+### Allow Canvas IDs to change over time
 
-A discussion of any alternative solutions that were considered, and why they were not chosen.
+ - no, want to retain persistent identifiers
+
+### Adopt digest-based naming for Canvases going forwards:
+
+E.g., instead of:
+
+```json
+{
+    "id": "https://iiif.wellcomecollection.org/presentation/b21286437/canvases/b21286437_0145.jp2",
+    "type": "Canvas"
+}
+```
+
+We have something like:
+
+```json
+{
+    "id": "https://iiif.wellcomecollection.org/presentation/b21286437/canvases/cb884abeff409fc33fa1c19ebf18453859be129e1adc50bef0b8263c8c8062ad",
+    "type": "Canvas"
+}
+```
+
+- no, would lose clear association with source file - but also tie the canvas identity too closely to the source file.
+
+_A discussion of any alternative solutions that were considered, and why they were not chosen._
 
 ## Impact
 
@@ -480,54 +611,3 @@ A description of the impact of the proposed solution, including any potential ri
 A list of next steps for implementing the proposed solution, including any dependencies or prerequisites.
 
 
-
-Description
-
-See https://digirati.slack.com/archives/CBT40CMKQ/p1764251298635379Connect your Slack account  for a starting point.
-
-What will the DDS be doing with new works in the future when the sources of truth are Folio and Axiell Collections?
-
-What will it be doing with reprocessed works that exist today?
-
-What does a canonical IIIF resource URI look like in future?
-
-What redirects happen?
-
-How will Canvas IDs and other resources internal to a manifest be persistent?
-
-What might we need from a Wellcome identity service?
-
-What will METS files look like from Goobi and Archivematica in the new world?
-
-how are files named in the storage service?
-
- 
-
-From Jonathan:
-
- 
-
-We agreed that the Work ID becomes the canonical ID in IIIF manifests, this is for all works whether they are bibliographic or archival records.
-
-There will be an identity service (essentially an extension of the ID minter database)  with an API so that the existing manifests (anywhere which use B Numbers) will continue to work
-
-When something was created before the Sierra/Folio cut-over (i.e. if it is likely to have a manifest with a b number) the ID service will be needed to use the previous identity if it is being reprocessed for whatever reason
-
-Tom/Digirati to write an RFC on the above [which I will assume will inform the basis of a work package]
-We will write an RFC on the approach to the identity service i.e. what we need to do to expose that DB so that it can be consumed by DLCS
-
-----
-
-
-Redirect "problem" for IIIF resources.
-
-
----
-
-* Integration tests that verify CanvasIds are the same for pre-cutoff manifests as they were before, even if the manifest id is now the workid
-
-* workid becomes canonical form for all IIIF (loses the hierarchical CALM version although will still work)
-
-* Is it a cutoff date or is it something learned from the id service - whether to use workid or bnumber in canvas generation
-
-(only use legacy canvas ids for b nums and not calm refs)
