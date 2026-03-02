@@ -1,12 +1,12 @@
 # RFC 085: Identifiers of and within IIIF resources after the migration
 
-Wellcome's published IIIF resources use a combination of system identifiers and the names of preserved files to generate URIs of resources such as Manifests and Canvases within Manifests. For digitised works, the names of stored files are themselves usually determined by the system identifier and an ascending sequence, e.g., b18035978_0037.jp2. This RFC discusses the implications of the migration to Folio and Axiell Collections: b numbers won't exist in future.
+Wellcome's published IIIF resources use a combination of system identifiers and the names of preserved files to generate URIs of resources such as Manifests and Canvases within Manifests. For digitised works, the names of stored files are themselves usually determined during digitisation workflow by the system identifier and an ascending sequence, e.g., b18035978_0037.jp2. This RFC discusses the implications of the migration to Folio and Axiell Collections: b numbers won't exist in future.
  
-**Last modified:** 2026-02-27T17:00+00:00
+**Last modified:** 2026-03-02T17:00+00:00
 
 ## Context
 
-Wellcome has until now published IIIF resources at URIs that use b numbers and CALM record IDs to form persistent identifiers for Manifests and Collections. Within Manifests, nested IIIF resources such as Canvases derive their URIs from elements in METS files which in turn derive their identities from filenames. These filenames are typically those of captured JP2s for digitised works, and original file names for born digital items. JP2 filenames until now use b numbers, e.g., the fourth page of a book is b12345678_0004.jp2. This RFC discusses how IIIF resources are handled when b numbers are no longer the bibliographic source identifier. We need to consider what happens to existing IIIF resources as well as new ones introduced after the change.
+Wellcome has until now published IIIF resources at URIs that use b numbers and CALM record IDs to form persistent identifiers for Manifests and Collections. Within Manifests, nested IIIF resources such as Canvases derive their URIs from elements in METS files which in turn derive their identities from filenames. These filenames are typically those of captured JP2s for digitised works, and original file names for born digital items. IIIF-Builder (aka the DDS) first encounters asset filenames when it reads METS files produced by Goobi and Archivematica, and it learns about those METS files by receiving messages that include either a Sierra B Number or a CALM Ref No - the _source_ system identifier of a work. JP2 filenames produced during digitisation until now use b numbers, e.g., the fourth page of a book is b12345678_0004.jp2. This RFC discusses how IIIF resources are handled when b numbers are no longer the source identifier. We need to consider what happens to existing IIIF resources as well as new ones created for the first time after the change.
 
 Related: [RFC 083 Stable Identifiers](../083-stable_identifiers/README.md) discusses the relationship between Wellcome canonical IDs (Work ID or Catalogue ID) and how this will work with new _canonical_ source systems.
 
@@ -22,34 +22,35 @@ Example canonical IIIF Manifest and Collection URIs:
 
 Consider _The Biocrats:_
 
-[https://wellcomecollection.org/works/zjytxny8](https://wellcomecollection.org/works/zjytxny8)
-
+- The work page is [https://wellcomecollection.org/works/zjytxny8](https://wellcomecollection.org/works/zjytxny8)
 - The catalogue API for this is [https://api.wellcomecollection.org/catalogue/v2/works/zjytxny8](https://api.wellcomecollection.org/catalogue/v2/works/zjytxny8).
 - The IIIF Manifest for this is [https://iiif.wellcomecollection.org/presentation/b18035978](https://iiif.wellcomecollection.org/presentation/b18035978)
 
 > _This work was one of the very first test resources the DDS processed, in prototypes all the way back to 2011. It has had a b-number-based URI since then and a b-number-based iiif.wellcomecollection.org URI for nearly a decade._ 
 
-The b number is an artefact of a specific vendor system, in this case Sierra. Wellcome already abstracts away this underlying identifier in the Catalogue API, giving everything a Work ID independent of any underlying system and therefore insulating the identity of works from their particular system of record at any one time. The IIIF implementation pre-dates the Work ID. This migration is a chance to align IIIF identity with Work identity.
+The b number is an artefact of a specific vendor system, in this case Sierra. Wellcome already abstracts away this underlying identifier in the Catalogue API, giving everything a Work ID independent of any underlying system and therefore insulating the identity of works from their particular system of record at any one time. The IIIF implementation pre-dates the Work ID. **This move to new systems is a chance to align IIIF identity with Work identity.**
 
 The situation is different for CALM Ref Nos, which represent the archival hierarchy and are intellectually significant in their own right; they would be expected to survive migration of underlying systems. However, they are not necessarily stable; things can be moved around as they are catalogued in more detail, or revisited.
 
----
-Canonical URIs for _all_ IIIF Collection and Manifest resources **should use the work identifier** rather than the b number, the archival Ref No, or any other underlying system-specific identifier. The IIIF Manifest URI for The Biocrats would be https://iiif.wellcomecollection.org/presentation/zjytxny8. This insulates the public persistent identity of the work from changes in source catalogue identifiers.
----
+### Use the work id
 
-The catalogue-id-based link actually works now, and will redirect to the currently-canonical b number. We can flip this around, so that in the new system the redirect is the other way - a link to [https://iiif.wellcomecollection.org/presentation/b18035978](https://iiif.wellcomecollection.org/presentation/b18035978) would now redirect to [https://api.wellcomecollection.org/catalogue/v2/works/zjytxny8](https://api.wellcomecollection.org/catalogue/v2/works/zjytxny8). We swap which one we consider canonical.
+Canonical URIs for _all_ IIIF Collection and Manifest resources **should use the work identifier** rather than the b number, the archival Ref No, the Folio identifier, the Axiell Collections identitifer, or any other future system-specific source identifier. The IIIF Manifest URI for _The Biocrats_ would be https://iiif.wellcomecollection.org/presentation/zjytxny8. This insulates the public persistent identity of the work from changes in source catalogue identifiers. This is only true if the work ID for _The Biocrats_ remains `zjytxny8` after the move to new systems, but this is the proposed behaviour in [RFC 083 Stable Identifiers](../083-stable_identifiers/README.md).
 
-### The hard problem - sub-structure
+The catalogue-id-based link actually works now, and will redirect to the currently-canonical b number. We will flip this around, so that in the new system the redirect is the other way - a link to [https://iiif.wellcomecollection.org/presentation/b18035978](https://iiif.wellcomecollection.org/presentation/b18035978) would now redirect to [https://iiif.wellcomecollection.org/presentation/zjytxny8](https://iiif.wellcomecollection.org/presentation/zjytxny8). We swap which one we consider canonical.
 
-> If a URI is "dereferenceable" we mean it will return a 2xx (or sometimes 3xx) response to an HTTP request. That is, there is something hosted on the web at the other end of it. All resource identifiders in IIIF are HTTPS URIs, for namespacing and linked data purposes. Any IIIF resource `id` _may_ be dereferenceable, but most identified resources within a IIIF Manifest are usually not. Manifests and Collections _MUST_ be (as they are the unit of distribution of IIIF). But Ranges and Canvases usually are not. See [id](https://iiif.io/api/presentation/3.0/#id) in the IIIF Presentation Specification.
+### The hard problem: Canvas IDs and other internal structure
 
-If we are just dealing with discrete HTTP-level resources, then the redirect semantics of HTTP **301 Moved Permanently** handles the change of IDs in the new system as intended. But for IIIF Presentation resources, the situation is much more complicated. Manifests contain many, many child HTTPS URIs: the `id` values of resources like [Ranges](https://iiif.io/api/presentation/3.0/#54-range) and most importantly, of [Canvases](https://iiif.io/api/presentation/3.0/#53-canvas). These are not necessarily dereferenceable (and at Wellcome, you cannot load a Canvas on its own from its HTTPS URI `id`). Whether or not they are dereferenceable (and therefore redirectable) in any given implementation is irrelevant, however, because a IIIF Client application (a viewer or annotation tool) will use the identifiers in the JSON body of the resource: it _expects_ Manifests to contain their Canvases in their entirety. Even though they have https URIs, they are not _external_ resources (in IIIF terms).
+> If a URI is "dereferenceable" we mean it will return a 2xx (or sometimes 3xx) response to an HTTP request. That is, there is something hosted on the web at the other end of it. All resource identifiders in IIIF are HTTPS URIs, for namespacing and linked data purposes. Any IIIF resource `id` _may_ be dereferenceable, but most identified resources within a IIIF Manifest usually are not. Manifests and Collection URIs _MUST_ be dereferenceable (as they are the unit of distribution of IIIF). But Ranges and Canvases usually are not. See [id](https://iiif.io/api/presentation/3.0/#id) in the IIIF Presentation Specification.
 
-While any IIIF resource might be the `target` of an Annotation, they usually point at Canvases. If someone has transcribed or commented or otherwise made any annotation, in any system, for whatever purpose, where the target is a Canvas within a Wellcome Manifest, that annotation's `target` property uses the published `id` of the Canvas within the Manifest. An example:
+If we are just dealing with discrete HTTP-level resources, then the redirect semantics of HTTP **301 Moved Permanently** handles the change of IDs in the new system as intended. But for IIIF Presentation resources, the situation is much more complicated. Manifests contain many, many child HTTPS URIs: the `id` values of resources like [Ranges](https://iiif.io/api/presentation/3.0/#54-range) and most importantly, of [Canvases](https://iiif.io/api/presentation/3.0/#53-canvas). These are not necessarily dereferenceable (and at Wellcome, you cannot load a Canvas on its own from its HTTPS URI `id`). Whether or not they are dereferenceable (and therefore redirectable) in any given implementation is irrelevant, however, because a IIIF Client application (a viewer or annotation tool) will use the identifiers in the JSON body of the resource: it _expects_ Manifests to contain their Canvases in their entirety. Even though they have https URIs, they are not references to _external_ resources (in IIIF terms).
+
+### Annotation targets 
+
+While any IIIF resource might be the `target` of an [Annotation](https://iiif.io/api/presentation/3.0/#56-annotation), they usually point at Canvases. If someone has transcribed or commented or otherwise made any annotation, in any system, for whatever purpose, where the target is a Canvas within a Wellcome Manifest, that annotation's `target` property uses the published `id` of the Canvas within the Manifest. An example:
 
 ```json
 {
-    "id": "https://example.org/annotations/1234",
+    "id": "https://example.org/some-other-server/annotations/1234",
     "type": "Annotation",
     "motivation": ["commenting"],
     "body": {
@@ -61,10 +62,10 @@ While any IIIF resource might be the `target` of an Annotation, they usually poi
 }
 ```
 
-If this annotation is linked from the Manifest then the short form of the `target` is sufficent, because the client application already has the Canvas loaded. If this annotation were published standalone, an expanded form would be needed, so the client can find the Manifest that the Canvas lives in:
+If this annotation is linked from the Manifest then the short form of the `target` is sufficent, because the client application already has the Canvas loaded, in scope; it is aware of the manifest in which the Canvas target lives. If this annotation were published standalone, an expanded form is needed, so the client can find the Manifest that the Canvas lives in:
 
 ```jsonc
-    // ...rest of annotation
+    // ...rest of annotation as above
     "target": {
         "id": "https://iiif.wellcomecollection.org/presentation/b21286437/canvases/b21286437_0145.jp2#xywh=156,1336,1728,1430",
         "type": "Canvas",
@@ -75,9 +76,9 @@ If this annotation is linked from the Manifest then the short form of the `targe
     }
 ```
 
-This chunk of JSON may be held external to Wellcome, out of our control. It targets part of Wellcome's published IIIF linked data. Given the expanded form, a client could load the Manifest and be redirected to the new Manifest URI, but it would still look for a Canvas with `"id": "https://iiif.wellcomecollection.org/presentation/b21286437/canvases/b21286437_0145.jp2"` within the received JSON payload. There's no opportunity for the server to intervene and "redirect" to a new Canvas identity. Although they are URIs, a client is just looking for a matching `id` string; there are no HTTP operations happening.
+This chunk of JSON may be held external to Wellcome, out of our control. It targets part of Wellcome's published IIIF linked data. Given the expanded form, a client could load the Manifest and be redirected to the new Manifest URI, but it would still look for a Canvas with `"id": "https://iiif.wellcomecollection.org/presentation/b21286437/canvases/b21286437_0145.jp2"` within the received JSON payload. There's no opportunity for the server (the DDS) to intervene and "redirect" to a new Canvas identity. Although they are URIs, a client is just looking for a matching `id` string; there are no HTTP operations happening in the client's traversal of the Manifest.
 
-The sources of these Canvas identities are filenames in METS:
+The sources of these Canvas `id` values are ultimately filenames in METS:
 
 ```xml
 <mets:file ID="FILE_0145_OBJECTS" MIMETYPE="image/jp2">
@@ -85,13 +86,13 @@ The sources of these Canvas identities are filenames in METS:
 </mets:file>
 ```
 
-Simplifying somewhat, iiif-builder (aka the DDS) generates a `StorageIdentifier` from the `xlink:href` attribute; this is a path-element safe version of the file path after `objects/` (in this case it's the same as that path, but isn't always). This `xlink:href` attribute also gives us the relative locaton of the file in the storage service, so we can load it into the DLCS from there. That is, given the location of the stored METS file in S3, we can then find a particular file. The `id` of the image asset in the DDS is derived from its storage location filename. In the IIIF, we generate a Canvas `id` by joining the METS manifestation identifier (a single work may have multiple manifestations) with this storage identifier. Here's the full Canvas from the Manifest, with added comments showing all the places such IDs form part of identifiers, both dereferenceable and non-dereferenceable.
+Simplifying somewhat, iiif-builder (aka the DDS) generates a `StorageIdentifier` from the `xlink:href` attribute; this is a path-element safe version of the file path after `objects/` (in this case it's the same as that path, but isn't always). This `xlink:href` attribute also gives us the relative locaton of the file in the storage service, so we can load it into the DLCS from there. That is, given the location of the stored METS file in S3, we can then find a particular file. The `id` of the image asset in the DDS is derived from its storage location filename. In the IIIF, we generate a Canvas `id` by joining the METS manifestation identifier (a single work may have multiple manifestations) with this storage identifier. Here's a full, **single** Canvas from the Manifest, with added comments showing all the places such IDs form part of identifiers, both dereferenceable and non-dereferenceable.
 
 ```jsonc
 {
     "id": "https://iiif.wellcomecollection.org/presentation/b21286437/canvases/b21286437_0145.jp2",
     "type": "Canvas", // Canvas id (not deref'able)         ^^^^^^^^^          ^^^^^^^^^^^^^^
-    "label": { "none": ["127"] },
+    "label": { "none": ["127"] },                       //  METS-level           file-level            
     "width": 2234,
     "height": 3410,
     "thumbnail": [
@@ -172,6 +173,8 @@ Simplifying somewhat, iiif-builder (aka the DDS) generates a `StorageIdentifier`
     ]
 }
 ```
+
+### Range IDs are OK
 
 Canvases aren't the only IIIF resources to be identified with URIs derived from METS. Given a METS Logical structMap:
 
