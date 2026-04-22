@@ -36,7 +36,7 @@ The RFC **should** include the following sections:
 
 ## RFC Listing
 
-_This is generated from the RFCs in this directory using `.script/create_table_summary.py`._
+_This is generated from the RFCs in this directory using `.scripts/create_table_summary.py`._
 
 | RFC ID | Summary | Next Line | Last Modified |
 |--------|---------|-----------|---------------|
