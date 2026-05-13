@@ -16,8 +16,8 @@ Lauren has created Notion pages with more information about these experiences, I
 - HotJar survey to be added conditionally to Kiosk mode
 
 ## Exhibition-specific curated content
-[Notion documentation: kick-off](https://www.notion.so/wellcometrust/T-R-in-exhibition-digital-engagement-kick-off-3576687658a1807b9fb2c88f221bb6be)
-[Notion documentation](https://www.notion.so/wellcometrust/Digital-engagement-in-Tenderness-Rage-35e6687658a18097aa32dae82b7508f0)
+- [Notion documentation: kick-off](https://www.notion.so/wellcometrust/T-R-in-exhibition-digital-engagement-kick-off-3576687658a1807b9fb2c88f221bb6be)
+- [Notion documentation](https://www.notion.so/wellcometrust/Digital-engagement-in-Tenderness-Rage-35e6687658a18097aa32dae82b7508f0)
 
 ### Dev work considerations
 - Create new page in Prismic and in the code. Is it part of an "Exhibition hub"? For example, in Exhibition guides alongside BSL and Audio guides ([see here](https://wellcomecollection.org/guides/exhibitions/in-plain-sight))? 
