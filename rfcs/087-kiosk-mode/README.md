@@ -4,6 +4,8 @@ We will be offering two experiences in the museum via iPads. We want to use the 
 
 Lauren has created Notion pages with more information about these experiences, I won't re-explain them here, so have a read through. The links are underneath the relevant headings. I then only talk about technical work and requirements.
 
+[Here's the analytics plan](https://www.notion.so/wellcometrust/Analytics-plan-for-iPads-in-venue-35e6687658a180a7ad13cecfe10f436c)
+
 ## Reading room stories
 [Notion documentation](https://www.notion.so/wellcometrust/Digital-stories-in-the-Reading-Room-2646687658a1804384e9fbf5db6bdd86()
 
