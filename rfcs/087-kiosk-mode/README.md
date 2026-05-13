@@ -7,7 +7,7 @@ Lauren has created Notion pages with more information about these experiences, I
 [Here's the analytics plan](https://www.notion.so/wellcometrust/Analytics-plan-for-iPads-in-venue-35e6687658a180a7ad13cecfe10f436c)
 
 ## Reading room stories
-[Notion documentation](https://www.notion.so/wellcometrust/Digital-stories-in-the-Reading-Room-2646687658a1804384e9fbf5db6bdd86()
+[Notion documentation](https://www.notion.so/wellcometrust/Digital-stories-in-the-Reading-Room-2646687658a1804384e9fbf5db6bdd86)
 
 ### Dev work considerations
 - New Curated listing page (in Prismic and in code)
