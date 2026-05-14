@@ -1,0 +1,10 @@
+version: 2
+updates:
+  - package-ecosystem: "pip"
+    directories:
+      - "/rfcs/**"
+    schedule:
+      interval: "weekly"
+    ignore:
+      - dependency-name: "*"
+    open-pull-requests-limit: 0
