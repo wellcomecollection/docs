@@ -406,7 +406,9 @@ def main():
     if args.write_readme:
         # Regenerate the table in rfcs/README.md in place.
         updated = update_rfc_readme_table(args.readme_path, table_lines)
-        if not updated:
+        if updated:
+            print(f"✓ Updated RFC table in {args.readme_path} ({len(valid_rfcs)} RFCs)")
+        else:
             errors.append(f"Failed to update README table at {args.readme_path}")
     elif args.check_readme:
         # Used by CI: fail if the committed table doesn't match what would be generated.

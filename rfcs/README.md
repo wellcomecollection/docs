@@ -66,7 +66,7 @@ The RFC listing table in this file is also automated:
 	- `.scripts/validate_rfc.py`
 	- `.scripts/create_table_summary.py --write-readme`
 
-`Last modified` is now intentionally non-automatic. Update it manually when making a meaningful RFC change, then run validation.
+`Last modified` is non-automatic. Update it manually when making a meaningful RFC change, then run validation.
 
 ## RFC Listing
 
