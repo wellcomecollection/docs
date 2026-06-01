@@ -63,8 +63,8 @@ The RFC listing table in this file is also automated:
 
 - In PRs, GitHub Actions checks that the table is in sync with `.scripts/create_table_summary.py`.
 - Locally, pre-commit runs these hooks (in order) when RFC files change:
-	- `.scripts/validate_rfc.py`
-	- `.scripts/create_table_summary.py --write-readme`
+  - `.scripts/validate_rfc.py`
+  - `.scripts/create_table_summary.py --write-readme`
 
 `Last modified` is non-automatic. Update it manually when making a meaningful RFC change, then run validation.
 

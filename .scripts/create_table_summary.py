@@ -108,6 +108,10 @@ def extract_section_summary(lines, heading_index, section_names):
         candidate = lines[idx]
         stripped = candidate.strip()
 
+        # Stop when we reach the next H2 section (prevents leaking into other sections).
+        if stripped.startswith('## '):
+            break
+
         # A blank line ends the paragraph once we've started collecting.
         if not stripped:
             if in_summary:
@@ -275,7 +279,7 @@ def build_rfc_table_lines(rfcs):
             formatted_date = 'MISSING'
         last_modified = escape_cell(formatted_date)
         
-        readme_link = f"[{rfc_id}]({os.path.join(rfc['id'], 'README.md')})"
+        readme_link = f"[{rfc_id}]({rfc['id']}/README.md)"
         lines.append(
             f"| {readme_link} | {summary} | {next_line} | {last_modified} |"
         )

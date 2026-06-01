@@ -1,13 +1,12 @@
 # RFC 084: Shopify Integration Approaches for Wellcome Collection
 
 ## Purpose
+
+This research outlines five approaches for integrating Shopify with the Wellcome Collection website, ranging from simple embedded solutions to fully headless implementations.
+
 **Research Focus:** Evaluating different approaches for integrating Shopify with wellcomecollection.org
 
 **Last modified:** 2026-02-16T12:46:00+00:00
-
-## Summary
-
-This research outlines five approaches for integrating Shopify with the Wellcome Collection website, ranging from simple embedded solutions to fully headless implementations.
 
 ## Current Technical Context
 
