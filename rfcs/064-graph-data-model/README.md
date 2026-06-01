@@ -1,5 +1,6 @@
 # RFC 064: Graph data model
 
+## Purpose
 An update to the previous [RFC #62](../062-knowledge-graph/README.md) on the knowledge graph, focusing on a new graph data model for concept enrichment and linking to external ontologies.
 
 **Last modified:** 2024-12-05T16:31:45+00:00

@@ -1,5 +1,6 @@
 # RFC 031: Relation Batcher
 
+## Purpose
 This RFC describes a proposal for how to batch works in the relation embedder, to improve performance and reduce duplicate work.
 
 **Last modified:** 2020-11-10T11:02:09+00:00

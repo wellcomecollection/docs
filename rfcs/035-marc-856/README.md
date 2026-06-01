@@ -1,5 +1,6 @@
 # RFC 035: Modelling MARC 856 "web linking entry"
 
+## Purpose
 This RFC describes how we will model MARC 856 "web linking entry" in the Catalogue API.
 
 **Last modified:** 2021-02-24T14:15:02+00:00

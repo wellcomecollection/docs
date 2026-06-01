@@ -1,5 +1,6 @@
 # RFC 077: Content API: Enriching addressable content types with Works data
 
+## Purpose
 We'd like to enrich the content pages of our website, i.e. those whose data is retrieved from Prismic, with previews of Works that are linked to within them. This RFC proposes augmenting the [Addressable content types](https://github.com/wellcomecollection/docs/tree/main/rfcs/062-content-api-all-search#addressable-content-types) with Works data and creating a new endpoint for retrieving individual Addressable items, so that we can create the desired UI with a single API call.
 
 **Last modified:** 2025-07-07T15:15:00+00:00

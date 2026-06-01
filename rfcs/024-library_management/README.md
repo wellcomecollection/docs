@@ -1,8 +1,9 @@
 # RFC 024: Library management
 
+## Purpose
 This RFC describes a proposal for how we manage our libraries, so we can ensure they work together and are easy to discover.
 
-**Last modified:** 2020-05-01T09:57:05+01:00
+**Last modified:** 2020-05-01T08:57:05+00:00
 
 ## Background
 

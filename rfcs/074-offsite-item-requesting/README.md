@@ -1,8 +1,9 @@
 # RFC 074: Offsite requesting
 
+## Purpose
 This RFC outlines the plan for enabling online requesting of items that are held offsite, with a phased approach to accommodate both onsite and offsite viewing.
 
-**Last modified:** 2024-04-23T11:57:13+01:00
+**Last modified:** 2024-04-23T10:57:13+00:00
 
 ## Context
 
@@ -12,7 +13,7 @@ While we already have an online requesting process, this currently assumes that 
 
 A requesting process for offsite requesting must include affordances for (a) an availability schedule based on the item location and (b) information for the patron regarding items that are to be viewed offsite. These can form two sequential work phases: the first enabling offsite requesting for items that will be viewed onsite, and the second for those that will be viewed offsite.
 
-#### API Model
+### API Model
 
 Currently, works have items with locations. Items that are currently requestable online have locations that look like this:
 

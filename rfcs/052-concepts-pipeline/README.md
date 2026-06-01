@@ -1,8 +1,9 @@
 # RFC 052: The Concepts Pipeline - phase one
 
+## Purpose
 This RFC describes the first phase of the Concepts Pipeline, which will be used to ingest and aggregate concepts.
 
-**Last modified:** 2022-07-07T12:03:29+01:00
+**Last modified:** 2022-07-07T11:03:29+00:00
 
 ## Context
 

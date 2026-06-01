@@ -1,8 +1,9 @@
 # RFC 075: Using Apache Iceberg tables in Catalogue Pipeline adapters
 
+## Purpose
 Discussing a replacement architecture for the catalogue pipeline adapters, moving away from the Versioned Hybrid Store (VHS) using Apache Iceberg as the underlying storage format.
 
-**Last modified:** 2025-06-02T14:01:45Z
+**Last modified:** 2025-06-02T14:01:45+00:00
 
 ## Table of contents
 

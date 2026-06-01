@@ -1,5 +1,6 @@
 # RFC 033: Api internal model versioning
 
+## Purpose
 This RFC describes a proposal for how to version the internal model used by the catalogue API, to allow for independent deployment of the API and the catalogue pipeline.
 
 **Last modified:** 2021-02-01T09:17:45+00:00

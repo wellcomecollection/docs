@@ -1,5 +1,6 @@
 # RFC 055: Genres as Concepts
 
+## Purpose
 This RFC proposes to treat Genres as Concepts, in the same manner as Subjects.
 
 **Last modified:** 2023-03-06T15:49:16+00:00

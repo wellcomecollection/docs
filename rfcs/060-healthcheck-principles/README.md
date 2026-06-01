@@ -1,5 +1,6 @@
 # RFC 060: Service health-check principles
 
+## Purpose
 This RFC explores how we should implement health-checks in our services, specifically around services that have HTTP interactions / are serviced by load-balancers that implement health-checking.
 
 **Last modified:** 2024-02-07T15:40:51+00:00

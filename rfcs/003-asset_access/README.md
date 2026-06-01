@@ -1,5 +1,6 @@
 # RFC 003: Asset Access
 
+## Purpose
 This RFC proposes a solution for restricting access to digital assets based on their access provisions and the authentication status of the viewer, while allowing these assets to be served via a CDN.
 
 **Last modified:** 2018-11-02T16:46:57+00:00

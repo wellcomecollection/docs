@@ -1,5 +1,6 @@
 # RFC 056: Prismic to Elasticsearch ETL pipeline
 
+## Purpose
 This RFC proposes a mechanism for extracting data from Prismic, transforming it, and loading it into Elasticsearch to make our editorial content more discoverable via an API.
 
 **Last modified:** 2023-03-02T11:39:12+00:00
@@ -9,12 +10,12 @@ In order to make our editorial content - including stories, comics, exhibitions 
 
 While Prismic does provide some search functionality of its own (which we have been using for initial versions of unified search), we want more control and fewer limitations. To achieve this we want to use Elasticsearch, as we do for our other search services. As such, we need to get data from Prismic into Elasticsearch: this RFC will propose the mechanism by which we achieve that.
 
-#### Desiderata
+### Desiderata
 - Changes (including additions and edits but possibly not deletions - see [questions](#questions-and-potential-issues)) in Prismic are reflected promptly in the Elasticsearch index
 - Full reindexes are easy, quick and cheap to perform
 - Changes to the data mapping (and the index mapping) can be made easily by any developer
 
-#### Prior art
+### Prior art
 Both the catalogue pipeline and the concepts pipeline extract data from external sources, transform it, and load it into elasticsearch. They have similar architectures:
 
 ![Existing pipeline architecture](https://user-images.githubusercontent.com/4429247/220949681-b0c765d0-46a2-446a-a236-91553edc7263.png)
@@ -78,7 +79,7 @@ Then we can build a pipeline that works as follows:
 
 For complete reindexes, it would be straightforward to trigger the Prismic ETL lambda from a local script, with a payload that covers all documents. In this case, it would also be an easy optimisation to disable steps (ii) and (iii), as all documents would be being fetched regardless.
 
-#### Technical implementation points
+### Technical implementation points
 - The intention is that the Prismic ETL Lambda will be written in TypeScript for maintainability, but one disadvantage of this is that we lose some of the patterns/tools that Scala gives us for reactive streaming data pipelines. Suggest we try [RxJS](https://rxjs.dev/) for this purpose.
 
 

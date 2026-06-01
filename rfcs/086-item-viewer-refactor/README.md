@@ -1,12 +1,10 @@
-# IIIF Viewer Context Refactoring
+# RFC 086: IIIF Viewer Context Refactoring
 
 **Status:** Not started  
-**Created:** 1 April 2026  
 **Estimated effort:** 14-17 hours  
-**Priority:** Medium  
+**Last modified:** 2026-04-14T13:30:00+00:00
 
-## Quick Start
-
+## Purpose
 This folder contains a comprehensive plan to refactor the IIIF Viewer context to eliminate code duplication and centralise derived state calculations.
 
 **Key principle:** Write automated tests BEFORE refactoring (test-first approach), then use manual testing for extra confidence.

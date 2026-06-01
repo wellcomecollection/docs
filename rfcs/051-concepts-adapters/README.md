@@ -1,10 +1,11 @@
 # RFC 051: Ingesting Library of Congress concepts
 
+## Purpose
 This RFC outlines the design for the first phase of the concepts pipeline, specifically focusing on ingesting concepts from the Library of Congress (LoC) and preparing them for use in the Wellcome Collection catalogue.
 
-**Last modified:** 2022-07-08T10:08:48+01:00
+**Last modified:** 2022-07-08T09:08:48+00:00
 
-# Context
+## Context
 
 As per the high-level design of [RFC 052](https://github.com/wellcomecollection/docs/pull/83), one of the key areas of the concepts pipeline topology is an ingest section. This RFC outlines how this will be implemented for the first work phase (attaching only LoC concepts to works).
 

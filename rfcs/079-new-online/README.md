@@ -1,8 +1,9 @@
-# Showcase recently digitised works on the Collections landing page
+# RFC 079: Showcase recently digitised works on the Collections landing page
 
+## Purpose
 This RFC proposes adding a digitisation `createdDate` to catalogue Works and exposing it via the catalogue-api so we can surface “New Online” works, including a dedicated page and an editorialised selection on the Collections landing page. It outlines how the date is extracted from METS, indexed, and made available for filtering and sorting.
 
-**Last modified:** 2025-10-15T10:50:00Z
+**Last modified:** 2025-10-15T10:50:00+00:00
 
 ## Context
 
