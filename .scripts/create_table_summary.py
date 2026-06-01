@@ -267,9 +267,14 @@ def build_rfc_table_lines(rfcs):
         rfc_id = escape_cell(rfc['id'])
         summary = escape_cell(rfc['summary'])
         next_line = escape_cell(rfc['next_line'])
-        last_modified = escape_cell(
-            f"**Last modified:** {rfc['last_modified_value'] or 'MISSING'}"
-        )
+        
+        # Format date as human-readable (e.g., "13 May 2026")
+        if rfc['last_modified_dt']:
+            formatted_date = rfc['last_modified_dt'].strftime('%d %b %Y')
+        else:
+            formatted_date = 'MISSING'
+        last_modified = escape_cell(formatted_date)
+        
         readme_link = f"[{rfc_id}]({os.path.join(rfc['id'], 'README.md')})"
         lines.append(
             f"| {readme_link} | {summary} | {next_line} | {last_modified} |"
