@@ -1,8 +1,9 @@
 # RFC 040: TEI Adapter
 
+## Purpose
 This RFC proposes an adapter to harvest TEI files from GitHub and store them in a VersionedStore.
 
-**Last modified:** 2021-06-24T17:11:32+01:00
+**Last modified:** 2021-06-24T16:11:32+00:00
 
 ## What is TEI
 

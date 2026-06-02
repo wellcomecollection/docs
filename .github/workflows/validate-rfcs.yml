@@ -1,0 +1,51 @@
+name: Validate RFCs
+
+on:
+  pull_request:
+    paths:
+      - "rfcs/*/README.md"
+      - "rfcs/README.md"
+      - ".scripts/validate_rfc.py"
+      - ".scripts/create_table_summary.py"
+      - ".github/workflows/validate-rfcs.yml"
+
+jobs:
+  validate-rfcs:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.x"
+
+      - name: Collect changed RFC README files
+        id: changed_files
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          base_sha="${{ github.event.pull_request.base.sha }}"
+          head_sha="${{ github.sha }}"
+
+          changed_files=$(git diff --name-only "$base_sha" "$head_sha" -- 'rfcs/*/README.md' | tr '\n' ' ')
+
+          echo "changed_files=$changed_files" >> "$GITHUB_OUTPUT"
+
+      - name: Validate changed RFC files
+        if: steps.changed_files.outputs.changed_files != ''
+        run: |
+          python3 .scripts/validate_rfc.py ${{ steps.changed_files.outputs.changed_files }}
+
+      - name: No RFC changes
+        if: steps.changed_files.outputs.changed_files == ''
+        run: echo "No RFC README files changed."
+
+      - name: Check RFC listing table is up to date
+        run: |
+          python3 .scripts/create_table_summary.py --check-readme

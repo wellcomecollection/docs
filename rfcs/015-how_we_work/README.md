@@ -1,8 +1,9 @@
 # RFC 015: How we work
 
+## Purpose
 This RFC outlines a set of principles for how we work together as a team, including our approach to collaboration, communication, and decision-making.
 
-**Last modified:** 2019-09-09T12:39:36+01:00
+**Last modified:** 2019-09-09T11:39:36+00:00
 
 ## Background
 

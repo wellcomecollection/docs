@@ -1,8 +1,9 @@
 # RFC 022: Logging
 
+## Purpose
 This RFC describes a proposal for how we log from our services, and how we collect and search those logs.
 
-**Last modified:** 2020-06-29T18:14:44+01:00
+**Last modified:** 2020-06-29T17:14:44+00:00
 
 ```
 2020-03-13 17:55:23.372 [apm-remote-config-poller] ERROR co.elastic.apm.agent.report.HttpUtils - Exception when closing input stream of HttpURLConnection.

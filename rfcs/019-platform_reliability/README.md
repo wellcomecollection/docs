@@ -1,5 +1,6 @@
 # RFC 019: Platform Reliability
 
+## Purpose
 This RFC proposes a set of actions to improve the reliability of the Wellcome Collection platform, based on a review of current issues and discussions with the team.
 
 **Last modified:** 2020-03-20T15:57:38+00:00

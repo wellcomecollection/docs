@@ -1,8 +1,9 @@
-# RFC 027: Pipeline Intermediate Storage
+# RFC 028: Pipeline Intermediate Storage
 
+## Purpose
 This RFC describes a proposal for how to store intermediate works in the catalogue pipeline, to allow for more efficient and cost-effective processing of works.
 
-**Last modified:** 2020-09-07T10:21:33+01:00
+**Last modified:** 2020-09-07T09:21:33+00:00
 
 ## Background
 

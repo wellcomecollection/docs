@@ -1,8 +1,9 @@
 # RFC 081: Identifiers in iiif-builder: beyond the B number
 
+## Purpose
 IIIF-Builder (aka DDS) understands various identifier forms (BNumbers, CALM Reference Numbers and Work IDs), and makes processing decisions based on the form of the identifier. For example, if asked to process a b number, it knows the item _must_ have been processed by Goobi, and it _must_ be in the `digitised` storage service space. These _musts_ will soon no longer be true, and soon there will not even be b numbers. 
  
-**Last modified:** 2025-08-15T17:00+00:00
+**Last modified:** 2025-08-15T17:00:00+00:00
 
 ## Context
 

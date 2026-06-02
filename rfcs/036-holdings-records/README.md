@@ -1,5 +1,6 @@
 # RFC 036: Modelling holdings records
 
+## Purpose
 This RFC describes how we will model holdings records in the Catalogue API.
 
 **Last modified:** 2021-03-03T13:24:57+00:00

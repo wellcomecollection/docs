@@ -1,5 +1,6 @@
 # RFC 062: Content API: All search and indexing of addressable content types
 
+## Purpose
 Searching for content on wellcomecollection.org is currently split into separate, statically-ordered grids for Stories, Works, Images and Events. This RFC proposes a new "All" search endpoint that will return all Addressable content types in a single, ordered list, improving efficiency and relevance.
 
 **Last modified:** 2024-11-18T10:11:11+00:00

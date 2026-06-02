@@ -1,8 +1,9 @@
 # RFC 041: Tracking changes to the Miro data
 
+## Purpose
 This RFC describes a proposal for tracking changes to the Miro data, which is used to populate the Catalogue API.
 
-**Last modified:** 2021-05-19T09:17:59+01:00
+**Last modified:** 2021-05-19T08:17:59+00:00
 
 ## Context
 

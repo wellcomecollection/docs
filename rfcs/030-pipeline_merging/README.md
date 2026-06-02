@@ -1,8 +1,9 @@
 # RFC 030: Pipeline merging
 
+## Purpose
 This RFC describes a proposal for how to merge works in the catalogue pipeline, to avoid issues with works becoming "stuck" in the pipeline.
 
-**Last modified:** 2020-10-09T12:12:13+01:00
+**Last modified:** 2020-10-09T11:12:13+00:00
 
 ## Context
 
@@ -78,7 +79,7 @@ This means that
 - a work for the same `transformerVersion` and more sources gets ingested if there 
 are already works with the same `transformerVersion` but less sources
 
-##### Previous behaviour
+#### Previous behaviour
 The ingestor used to calculate the version as `transformerVersion * 10 + (merged?1:0)`
 This meant that 
 - a new `transformerVersion` always got ingested

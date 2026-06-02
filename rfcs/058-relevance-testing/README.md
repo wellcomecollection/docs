@@ -1,8 +1,9 @@
 # RFC 058: Relevance testing
 
+## Purpose
 This RFC describes how and why we might write a new version of _rank_, our relevance testing tool.
 
-**Last modified:** 2023-06-20T14:04:56+01:00
+**Last modified:** 2023-06-20T13:04:56+00:00
 
 ## Context
 

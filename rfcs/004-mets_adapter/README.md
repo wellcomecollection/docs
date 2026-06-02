@@ -1,5 +1,6 @@
 # RFC 004: METS Adapter
 
+## Purpose
 This RFC proposes a solution for ingesting METS files from the digitisation workflow software Goobi, converting them to JSON, and integrating them into the Wellcome Collection digital catalogue.
 
 **Last modified:** 2018-11-02T16:46:57+00:00

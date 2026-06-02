@@ -1,5 +1,6 @@
 # RFC 053: Logging in Lambdas
 
+## Purpose
 This RFC proposes a solution for logging in AWS Lambdas, aiming to provide a consistent and efficient way to capture and stream logs from Lambda functions to an Elasticsearch cluster.
 
 **Last modified:** 2022-11-30T15:57:23+00:00

@@ -1,5 +1,6 @@
 # RFC 017: URL Design
 
+## Purpose
 This RFC proposes a set of principles for designing URLs on wellcomecollection.org, ensuring they are persistent, user-friendly, and globally unique.
 
 **Last modified:** 2022-12-09T15:25:52+00:00

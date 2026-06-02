@@ -1,5 +1,6 @@
 # RFC 006: Reindexer architecture
 
+## Purpose
 This RFC proposes a new architecture for the reindexer, which is responsible for updating records in DynamoDB to trigger events for downstream applications.
 
 **Last modified:** 2019-01-09T14:56:11+00:00

@@ -1,5 +1,6 @@
 # RFC 034: Modelling Locations in the Catalogue API
 
+## Purpose
 This RFC describes how we will model locations in the Catalogue API, and how we will return them in the API.
 
 **Last modified:** 2021-02-08T09:24:19+00:00

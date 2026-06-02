@@ -1,8 +1,9 @@
 # RFC 038: Matcher versioning
 
+## Purpose
 This RFC describes a proposal for how to version works in the matcher/merger pipeline, to avoid issues with works becoming "stuck" in the pipeline.
 
-**Last modified:** 2021-04-19T12:40:41+01:00
+**Last modified:** 2021-04-19T11:40:41+00:00
 
 ## The problem
 

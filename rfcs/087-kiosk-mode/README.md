@@ -1,6 +1,11 @@
 # RFC 087: wellcomecollection.org in kiosk mode
 
+## Purpose
+This RFC serves to outline how we propose to offer in-venue experiences using our current website, while optimising it for a different experience than usual.
+
 We will be offering two experiences in the museum via iPads. We want to use the website for those as it means content stays up-to-date and our styles and components can be used, removing the need to build something new and having to maintain it. This iPad experience will display the website in what we'll call "Kiosk mode".
+
+**Last modified:** 2026-05-13T13:57:00+00:00
 
 Lauren has created Notion pages with more information about these experiences, I won't re-explain them here, so have a read through. The links are underneath the relevant headings. I then only talk about technical work and requirements.
 
