@@ -77,14 +77,14 @@ Emails don’t work locally, don’t have a dev tenant.
 
 ## Actions
 
-**GE (/RK supporting)**
-- Add Vietnam to rate limiting rules (not the Captcha)
-- Add staging rules (UK/US/IE only) to code, to be first in the order of rules
-- both [#12767](https://github.com/wellcomecollection/wellcomecollection.org/issues/12767)
+**AG - for planning**
+- Verify that errors are in 3rd party code, not our code
+- For noisy alerts, choose which Auth0 errors to be alerted on
+
+**RK - for planning**
+- Document what to do when testing, including testing that emails are sent
 
 
-**JC - to think about for an OKR**
-- Investigate rate limiting/caching by areas of the site (works/items/images)
+Folio changes:
 
-**NP**
-- Add to Experience planning doc: find a way to ask Google not to index stage without impacting SEO [#9891](https://github.com/wellcomecollection/wellcomecollection.org/issues/9891)
+- Dev tenant with same set up to work with locally running version of the site? / Add automated e2e tests
