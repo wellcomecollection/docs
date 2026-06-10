@@ -9,14 +9,11 @@ The second is the increasing challenge of bot traffic - automated, high volume r
 To some extent, we hope that generic anti-bot technologies sitting in front of our systems will kick in and protect our services - e.g., Web Application Firewall 
 on AWS. But IIIF Image API traffic may not fit the patterns they are looking for. We may need our own additional custom heuristics as well. The same metrics store can, we hope, drive both use cases.
 
-https://docs.google.com/document/d/1bRmGMMo4gM2JiUW5Zx-MRlHLi6ZVNg-HWfxQi5Hi9tw/edit?tab=t.0
-
-
 **Last modified:**  2026-06-01T17:00+00:00
 
 ## Context
 
-What DLCS does now
+What does DLCS do now? 
 
 Outline our strategies
 
@@ -62,67 +59,92 @@ If requests get through WAF, and Orchestrator (or some monitor of the metrics da
 
 ![DLCS Metrics Diagram](images/dlcs-metrics.png)
 
+### Gather usage stats from CloudFront
+
+All requests to Protagonist are via CloudFront. We already log access requests to S3, which we can query using Athena. CloudFront is already tracking usage requests - can we hook into this to get access requests? These would be stored to the Metrics Database
+
+#### How can we get stats from CloudFront?
+
+Lambda at edge? If we use origin response we will be able to determine how the image was served via x-proxy-destination header, and x-asset-id header for AssetId (do these 2 headers mean this is the preferred method?). Would/could this slow requests down as we are already using origin request lambda?
+
+Orchestrator can add any additional headers to the response that will be useful in populating the hypothetical table below. This means that entries arrive at the metrics store some time after the request has completed, but also that Orchestrator has no metric-recording overheads of its own. We should be carfeul not to invent new headers for Orchestrator to emit that actually cost it significant overhead to determine.
+
+Redirect logs? To where? Firehose? Lambda? Would this go directly to postgres, or aggregate?
+
+What are the cost / implementation effort involved?
+
+
 ### Metrics store
 
-What is is? Postgres?
-How long does stuff stay in it? Forever?
-How long do we need stuff to stay in it?
-Do we archive it?
-
-What do we want to capture?
+* What is is? Postgres?
+* How long does stuff stay in it? Forever?
+* How long do we need stuff to stay in it?
+* Do we archive it?
+* What do we want to capture?
 
 Scope to image requests only
 
-timestamp
+Provisional schema
 
+| Field        | Description and type                                               |
+|--------------|--------------------------------------------------------------------|
+| timestamp    |                                                                    |
+| asset_id     | e.g., 2/5/b12345678_0037.jp2                                       |
+| raw_path     | e.g., 2/5/b12345678_0037.jp2/256,256,256,256/256,256/0/default.jpg |
+| region       | e.g., "full" or "256,256,256,256".                Store as string? |
+| region_type  | (full / calculated tile / OSD sub-tile / other)    char f, t, s, o |
+| size         | e.g., "max" or "256," or "256,256"                Store as string? |
+| size_type    | (max / tile / OSD sub tile / other)                char m, t, s, o |
+| rotation     | Store null for 0?, otherwise, numeric, float                       |
+| quality      | (default / bitonal / grayscale ... )             char d, b, g, etc |
+| format       | (jpg / png / ...)                                 char j, p, w etc |
+| user_agent   | string                                                             |
+| ip_address   | string                                                             |
+| orchestrated | Did *this* request trigger orchestration?                          |
+| destination  | CF / thumb / resize / specialserver / img server          char ... |
 
-asset id
+#### Notes
 
-raw path
-
-region
-
-region type:
-full | calculated tile | OSD sub-tile | other
-char f, t, s, o
-Algorithm for computing this
- - simple: Is it square, power of two or from edge if not square?
- - informed: Is it a valid tile from the image's info.json?
-
-Store info.json in image table?
-Does OSD still do this
-
-size
-
-size type:
-max | tile | OSD sub tile | other
-char m, t, s, o
-
-rotation (store null for 0?)
-
-quality
-char d, b, g, etc
-
-format
-char j, p, w etc
-
-(and/or quality.format?)
-
-User agent
-
-ip address
-
-Did *this* request trigger orchestration?
-
-How served
-CF cache / thumb / resize thumb / specialserver / orchestrated img server
-(is this gathered from CF)
-
+1. Region type, algorithm for computing this... simple: Is it square, power of two or from edge if not square? Better: Is it a valid tile from the image's info.json?
+2. OSD sub tile. OSD makes (or at least used to make) a burst of requests smaller than the specified tile size, which just waste the server's time.
+3. Destination - how did we service this request? Did it even reach orchestrator? Where did orchestrator route it to? (is this coming from Cloudfront?)
+4. Do we want to query on quality.format (store a specific value for default.jpg, for example?) Or is that overoptimisation?
+5. The incoming metrics aggregator could obtain and cache (in memory) the info.json which is needed to compute some of the above.
 
 Join to Images table for
  - size
  - location(s) (nas?)
  - open/not open (affects cloudfront cache)
+
+### Gather orchestration stats
+
+How do we gather stats on what has been orchestrated, and when?
+
+Orchestrator could raise events? We need to guarantee delivery, a little late is likely fine.
+
+ - Write direct to postgres?
+ - Raise an SNS message?
+ - Raise CloudWatch metric?
+ - Header added by Orchestrator - “this request triggered orch”
+ - Or could we hook into something like CloudWatch Logs (we use log insights at Wellcome to determine when images has been orchestrated and its size).
+
+What other changes would be required for Orchestrator? 
+Write to ImageLocation.nas location (allows multi diff locations)
+No need to touch files - mtime doesn’t need to be accurate as scavenger service will track itself.
+
+### Scavenger / Optimiser
+
+New service, responsible for looking at data entered into above PG db and making a decision on what should go.
+
+What is this? (dotnet/python). Is it part of Protagonist or separate? How does it make decisions - is it the aggregator of data, or does something else aggregate and this just acts on those? Does it use LRU/LFU or some combination of both?
+
+This needs to feed deleted events back into the PG database. Does it go in raw? Or does something manage io? Is this the master of the metrics db? (ie manages schema etc).
+
+### Lustre Alternative
+
+Should we consider EBS multi-attach volume? What are the pros/cons? 
+
+Multiple volumes. The optimizer can move between (logic TBC - e.g. big artworks in one and smaller/easier churn in another). Above re: ImageLocation.s3 refers to this behaviour.
 
 
 ## bots
@@ -171,3 +193,11 @@ Conversely a very small jp2 that won't free up much space and is occasionally vi
 ## Next Steps
 
 A list of next steps for implementing the proposed solution, including any dependencies or prerequisites.
+
+
+Links 
+
+https://docs.google.com/document/d/1bRmGMMo4gM2JiUW5Zx-MRlHLi6ZVNg-HWfxQi5Hi9tw/edit?tab=t.0
+
+
+https://github.com/dlcs/protagonist/issues/272
