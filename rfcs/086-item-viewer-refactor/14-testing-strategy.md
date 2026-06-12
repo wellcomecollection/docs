@@ -430,7 +430,7 @@ For each work type listed above:
 
 ## Test Work IDs
 
-See the **User Scenarios Matrix** and **Specific Test Works** sections above for a comprehensive list of test works covering all combinations of work types, authentication states, and access restrictions.
+See the **User Scenarios Matrix** and **Specific Test Works** sections above for a comprehensive list of test works covering the scenarios listed in this document.
 
 All test scenarios now have example work IDs:
 - ✅ Multi-canvas images: `a55dcp3h`
