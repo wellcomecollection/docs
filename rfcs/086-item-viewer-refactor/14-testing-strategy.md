@@ -187,7 +187,7 @@ Test with these specific work types:
   - [ ] Restricted content shows after auth
   - [ ] Download disabled for restricted canvas
   
-- [ ] **Works with video/audio** 
+- [ ] **Works with video/audio**
   - [ ] Video player appears in viewer
   - [ ] Audio player appears in viewer
   - [ ] Download options include video/audio
