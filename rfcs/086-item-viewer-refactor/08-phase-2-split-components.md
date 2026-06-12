@@ -191,7 +191,7 @@ Run existing E2E tests to ensure behavior hasn't changed:
 ## Testing Checklist
 
 - [ ] VirtualizedImageViewer renders image-only works correctly
-- [ ] PaginatedItemViewer renders mixed content/archives correctly
+- [ ] PaginatedItemViewer renders all non-image-only content correctly (video, audio, PDF, archives)
 - [ ] MainViewer routes to correct implementation based on `hasOnlyRenderableImages`
 - [ ] All E2E tests pass
 - [ ] No visual regressions
