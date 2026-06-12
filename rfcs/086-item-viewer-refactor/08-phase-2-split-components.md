@@ -49,14 +49,14 @@ This violates the Single Responsibility Principle and makes the code harder to m
 ```
 MainViewer
   ├── if (hasOnlyRenderableImages) { FixedSizeList logic }
-  └── else { IIIFItem rendering }
+  └── else { IIIFItem rendering (video, audio, PDF, archives) }
 ```
 
 **After:**
 ```
 MainViewer (router component)
   ├── VirtualizedImageViewer (for image-only works)
-  └── PaginatedItemViewer (for mixed content/archives)
+  └── PaginatedItemViewer (for all non-image-only content: video, audio, PDF, archives)
 ```
 
 **Benefits:**
@@ -107,12 +107,12 @@ export default VirtualizedImageViewer;
 
 ### 2.2 Create PaginatedItemViewer.tsx
 
-Extract the mixed content and archive rendering logic into its own component.
+Extract the non-image-only rendering logic into its own component. This component handles all non-image-only content: video, audio, PDF, and archives.
 
 **New file:** `content/webapp/views/pages/works/work/IIIFViewer/PaginatedItemViewer.tsx`
 
 ```typescript
-// Only handles mixed content and archives
+// Handles all non-image-only content: video, audio, PDF, and archives
 import { FunctionComponent } from 'react';
 import { useItemViewerContext } from '@weco/content/contexts/ItemViewerContext';
 import IIIFItem from './IIIFItem';
@@ -191,7 +191,7 @@ Run existing E2E tests to ensure behavior hasn't changed:
 ## Testing Checklist
 
 - [ ] VirtualizedImageViewer renders image-only works correctly
-- [ ] PaginatedItemViewer renders archive/mixed content correctly
+- [ ] PaginatedItemViewer renders mixed content/archives correctly
 - [ ] MainViewer routes to correct implementation based on `hasOnlyRenderableImages`
 - [ ] All E2E tests pass
 - [ ] No visual regressions
