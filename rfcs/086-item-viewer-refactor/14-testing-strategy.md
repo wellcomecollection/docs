@@ -199,7 +199,7 @@ Test with these specific work types:
 
 ### User Scenarios Matrix
 
-The table below shows all possible combinations of work types, authentication states, and access restrictions. Test coverage should span these scenarios to ensure the viewer handles all cases correctly.
+The table below lists key combinations of work types, authentication states, and access restrictions. Test coverage should span these scenarios to ensure the viewer handles all cases correctly.
 
 **Authentication States:**
 - **Logged out** - no authentication
