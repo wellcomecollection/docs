@@ -77,7 +77,7 @@ def properties_table(schema):
     for name, prop in props.items():
         req = "yes" if name in required else "no"
         lines.append(
-            f"| `{name}` | {type_str(prop) or '—'} | {req} | {clean(prop.get('description'))} |"
+            f"| `{name}` | {type_str(prop) or 'n/a'} | {req} | {clean(prop.get('description'))} |"
         )
     return lines
 
@@ -122,7 +122,7 @@ def render_operation(method, path, op, path_params, spec):
             req = "yes" if p.get("required") else "no"
             lines.append(
                 f"| `{p['name']}` | {p.get('in', '')} | {req} | "
-                f"{type_str(p.get('schema', {})) or '—'} | {clean(p.get('description'))} |"
+                f"{type_str(p.get('schema', {})) or 'n/a'} | {clean(p.get('description'))} |"
             )
         lines.append("")
 
@@ -148,7 +148,7 @@ def render_operation(method, path, op, path_params, spec):
     for status, resp in op.get("responses", {}).items():
         schema = resp.get("content", {}).get("application/json", {}).get("schema", {})
         lines.append(
-            f"| `{status}` | {type_str(schema) or '—'} | {clean(resp.get('description'))} |"
+            f"| `{status}` | {type_str(schema) or 'n/a'} | {clean(resp.get('description'))} |"
         )
     lines.append("")
     return lines
@@ -159,8 +159,8 @@ def render(spec):
     lines = [
         f"# {info.get('title', 'API')}",
         "",
-        "> Generated from [`openapi.yaml`](openapi.yaml) by `render_docs.py` — "
-        "do not edit by hand.",
+        "> Generated from [`openapi.yaml`](openapi.yaml) by `render_docs.py`. "
+        "Do not edit by hand.",
         "> Regenerate with `uv run python render_docs.py`.",
         "",
         f"**Version:** `{info.get('version', '')}`",
@@ -172,7 +172,7 @@ def render(spec):
     if spec.get("servers"):
         lines += ["## Servers", ""]
         for server in spec["servers"]:
-            desc = f" — {server['description']}" if server.get("description") else ""
+            desc = f": {server['description']}" if server.get("description") else ""
             lines.append(f"- `{server['url']}`{desc}")
         lines.append("")
 

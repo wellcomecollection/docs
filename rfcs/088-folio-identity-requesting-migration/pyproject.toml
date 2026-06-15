@@ -13,7 +13,7 @@ dev = [
 ]
 
 [tool.uv]
-# Not a distributable package — just a home for the docs tooling.
+# Not a distributable package, just a home for the docs tooling.
 package = false
 
 # Regenerate the human-readable docs after editing openapi.yaml:

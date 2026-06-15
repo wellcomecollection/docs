@@ -1,11 +1,11 @@
 # Wellcome Collection Identity API (v2)
 
-> Generated from [`openapi.yaml`](openapi.yaml) by `render_docs.py` — do not edit by hand.
+> Generated from [`openapi.yaml`](openapi.yaml) by `render_docs.py`. Do not edit by hand.
 > Regenerate with `uv run python render_docs.py`.
 
 **Version:** `2.0.0-alpha`
 
-Contract for the **v2 identity API** — the FOLIO-backed successor to the
+Contract for the **v2 identity API**, the FOLIO-backed successor to the
 Sierra-backed v1 identity API (served from the wellcomecollection/identity
 repo at `v1-api.account.wellcomecollection.org`). It is named v2 because
 its predecessor is v1; that this matches the catalogue API's current
@@ -19,12 +19,12 @@ they are to be replaced by the v1-compat successors above before cutover.)
 
 The spec is organised in three tag groups:
 
-- **users** — the v1-compatible surface the website consumes today,
+- **users:** the v1-compatible surface the website consumes today,
   reproduced faithfully from the v1 implementation. v2 must serve this
   contract before the website can switch over behind a toggle.
-- **m2m** — v2-native machine endpoints called by the Auth0 actions
+- **m2m:** v2-native machine endpoints called by the Auth0 actions
   (folio-register / folio-sync).
-- **items** — v2-native catalogue availability lookup.
+- **items:** v2-native catalogue availability lookup.
 
 Authentication is layered: every route requires the gateway API key
 (`x-api-key`); most also require an Auth0-issued JWT (end-user or
@@ -32,8 +32,8 @@ machine-to-machine), validated by a Lambda authorizer at the gateway.
 
 ## Servers
 
-- `https://v2-api.stage.account.wellcomecollection.org` — Stage (planned)
-- `https://v2-api.account.wellcomecollection.org` — Production (planned)
+- `https://v2-api.stage.account.wellcomecollection.org`: Stage (planned)
+- `https://v2-api.account.wellcomecollection.org`: Production (planned)
 
 ## Operations
 
@@ -57,7 +57,7 @@ v1-compatible end-user surface
 
 _Get a user's profile_
 
-Faithful to v1 `GET /users/{userId}` (except the `userId` field type —
+Faithful to v1 `GET /users/{userId}` (except the `userId` field type,
 see the User schema). Requires scope `read:user`; access rule `isSelf`:
 the path segment must equal the caller's bare sub (or be `me`); a
 machine token may read any user.
@@ -75,10 +75,10 @@ machine token may read any user.
 | Status | Body | Description |
 |---|---|---|
 | `200` | [`User`](#user) | The user. |
-| `401` | — |  |
-| `403` | — |  |
-| `404` | — |  |
-| `500` | — |  |
+| `401` | n/a |  |
+| `403` | n/a |  |
+| `404` | n/a |  |
+| `500` | n/a |  |
 
 #### `PUT /users/{userId}`
 
@@ -106,13 +106,13 @@ Requires scope `update:email`; `isSelf`.
 | Status | Body | Description |
 |---|---|---|
 | `200` | [`User`](#user) | Email updated; returns the updated user. |
-| `304` | — | No change needed (email missing or identical to current). |
-| `400` | — |  |
-| `401` | — |  |
-| `403` | — |  |
-| `404` | — |  |
+| `304` | n/a | No change needed (email missing or identical to current). |
+| `400` | n/a |  |
+| `401` | n/a |  |
+| `403` | n/a |  |
+| `404` | n/a |  |
 | `409` | [`IdentityError`](#identityerror) | The email address is already in use by another user. |
-| `500` | — |  |
+| `500` | n/a |  |
 
 #### `PUT /users/{userId}/password`
 
@@ -138,13 +138,13 @@ Requires scope `update:password`; `isSelf`.
 
 | Status | Body | Description |
 |---|---|---|
-| `200` | — | Password updated (no body). |
-| `400` | — |  |
-| `401` | — |  |
-| `403` | — |  |
-| `404` | — |  |
+| `200` | n/a | Password updated (no body). |
+| `400` | n/a |  |
+| `401` | n/a |  |
+| `403` | n/a |  |
+| `404` | n/a |  |
 | `422` | [`IdentityError`](#identityerror) | The new password does not meet the password policy. |
-| `500` | — |  |
+| `500` | n/a |  |
 
 #### `POST /users/{userId}/validate`
 
@@ -172,12 +172,12 @@ with no body**. No scope required; `isSelf`.
 
 | Status | Body | Description |
 |---|---|---|
-| `200` | — | Password is valid (no body). |
-| `400` | — |  |
-| `401` | — |  |
-| `403` | — |  |
-| `404` | — |  |
-| `500` | — |  |
+| `200` | n/a | Password is valid (no body). |
+| `400` | n/a |  |
+| `401` | n/a |  |
+| `403` | n/a |  |
+| `404` | n/a |  |
+| `500` | n/a |  |
 
 #### `PUT /users/{userId}/deletion-request`
 
@@ -185,7 +185,7 @@ _Request account deletion_
 
 Faithful to v1 `PUT /users/{userId}/deletion-request`, extended for
 v2: re-validates the password, emails the admin inbox and the user
-(notifications are sent *before* recording, per v1 — an email failure
+(notifications are sent *before* recording, per v1; an email failure
 is a 500 with nothing recorded), **deactivates the FOLIO patron and
 tags the record `delete-requested`** (the tag distinguishes pending
 deletion from other inactive states and is filterable in the FOLIO
@@ -211,13 +211,13 @@ request is already pending. Requires scope `delete:patron`; `isSelf`.
 
 | Status | Body | Description |
 |---|---|---|
-| `200` | — | Deletion request recorded (no body). |
-| `304` | — | A deletion request is already pending for this user. |
-| `400` | — |  |
-| `401` | — |  |
-| `403` | — |  |
-| `404` | — |  |
-| `500` | — |  |
+| `200` | n/a | Deletion request recorded (no body). |
+| `304` | n/a | A deletion request is already pending for this user. |
+| `400` | n/a |  |
+| `401` | n/a |  |
+| `403` | n/a |  |
+| `404` | n/a |  |
+| `500` | n/a |  |
 
 #### `POST /users/{userId}/send-verification-email`
 
@@ -238,11 +238,11 @@ scope `send:verification-emails`; `isSelf`.
 
 | Status | Body | Description |
 |---|---|---|
-| `204` | — | Verification email queued. |
-| `401` | — |  |
-| `403` | — |  |
-| `404` | — |  |
-| `500` | — |  |
+| `204` | n/a | Verification email queued. |
+| `401` | n/a |  |
+| `403` | n/a |  |
+| `404` | n/a |  |
+| `500` | n/a |  |
 
 #### `PUT /users/{userId}/registration`
 
@@ -278,12 +278,12 @@ caller's session can refresh without re-login.
 
 | Status | Body | Description |
 |---|---|---|
-| `204` | — | Name set (or already correct). |
-| `400` | — |  |
-| `401` | — |  |
-| `404` | — |  |
+| `204` | n/a | Name set (or already correct). |
+| `400` | n/a |  |
+| `401` | n/a |  |
+| `404` | n/a |  |
 | `409` | [`IdentityError`](#identityerror) | The user is already registered with a different name. |
-| `500` | — |  |
+| `500` | n/a |  |
 
 #### `GET /users/{userId}/item-requests`
 
@@ -310,8 +310,8 @@ identity `{message}` shape. Requires scope `read:requests`; `isSelf`.
 | Status | Body | Description |
 |---|---|---|
 | `200` | [`RequestsList`](#requestslist) | The user's current requests. |
-| `401` | — |  |
-| `403` | — |  |
+| `401` | n/a |  |
+| `403` | n/a |  |
 | `500` | [`WellcomeApiError`](#wellcomeapierror) | Upstream failure. |
 
 #### `POST /users/{userId}/item-requests`
@@ -322,7 +322,7 @@ Part of the v1-consumed surface. Request body is what the website sends
 today. The `itemId` is the canonical catalogue id and is translated to
 the Folio item UUID (see Open questions). Success is **202 Accepted**
 (the website treats any 2xx as success and refetches the list). Errors
-use the catalogue-style `WellcomeApiError` shape — the website displays
+use the catalogue-style `WellcomeApiError` shape; the website displays
 its `description` field. Requires scope `create:requests`; `isSelf`.
 
 **Security:** `ApiKey` + `Auth0UserToken` (create:requests)
@@ -341,10 +341,10 @@ its `description` field. Requires scope `create:requests`; `isSelf`.
 
 | Status | Body | Description |
 |---|---|---|
-| `202` | — | Request accepted. |
+| `202` | n/a | Request accepted. |
 | `400` | [`WellcomeApiError`](#wellcomeapierror) | Invalid request (e.g. bad pickup date). |
-| `401` | — |  |
-| `403` | — |  |
+| `401` | n/a |  |
+| `403` | n/a |  |
 | `409` | [`WellcomeApiError`](#wellcomeapierror) | A request already exists for this item, or the user is at their hold limit. |
 | `500` | [`WellcomeApiError`](#wellcomeapierror) | Upstream failure. |
 
@@ -362,7 +362,7 @@ Machine-to-machine endpoints for the Auth0 actions
 _Create a Folio patron for a new Auth0 signup_
 
 Called by the **folio-register** pre-user-registration Auth0 action,
-before the Auth0 account is committed — if this fails, the Auth0 user is
+before the Auth0 account is committed; if this fails, the Auth0 user is
 never created. The patron is created inactive with `username` and
 `externalSystemId` set to the email (the Auth0 user_id does not exist
 yet; `/m2m/enrich` backfills it on first login). A blank `given_name` /
@@ -386,9 +386,9 @@ until registration completes. Requires an M2M token with scope
 | Status | Body | Description |
 |---|---|---|
 | `201` | object | Folio patron created. |
-| `400` | — |  |
+| `400` | n/a |  |
 | `409` | [`IdentityError`](#identityerror) | A Folio account already exists for this email. |
-| `500` | — |  |
+| `500` | n/a |  |
 
 #### `POST /m2m/enrich`
 
@@ -461,7 +461,7 @@ Folio's allowed-service-points via a `/users/{userId}` route.
 
 ### User
 
-Faithful to v1 `models/user.ts` — sourced from the Auth0 profile (and in v2, Folio) — except `userId`, which is a **string** in v2: the bare Auth0 user_id (`p{digits}` for migrated patrons, Auth0-generated hex for newer signups). This is a deliberate divergence from v1 (which returned the numeric patron number): the website derives its own userId from the session sub and never reads this field, so the change is unconsumed-on-the-wire.
+Faithful to v1 `models/user.ts`, sourced from the Auth0 profile (and in v2, Folio), except `userId`, which is a **string** in v2: the bare Auth0 user_id (`p{digits}` for migrated patrons, Auth0-generated hex for newer signups). This is a deliberate divergence from v1 (which returned the numeric patron number): the website derives its own userId from the session sub and never reads this field, so the change is unconsumed-on-the-wire.
 
 **Required:** `userId`, `email`, `emailValidated`, `locked`, `creationDate`, `updatedDate`
 

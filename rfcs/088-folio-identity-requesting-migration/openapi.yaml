@@ -4,7 +4,7 @@ info:
   title: Wellcome Collection Identity API (v2)
   version: 2.0.0-alpha
   description: |
-    Contract for the **v2 identity API** — the FOLIO-backed successor to the
+    Contract for the **v2 identity API**, the FOLIO-backed successor to the
     Sierra-backed v1 identity API (served from the wellcomecollection/identity
     repo at `v1-api.account.wellcomecollection.org`). It is named v2 because
     its predecessor is v1; that this matches the catalogue API's current
@@ -18,12 +18,12 @@ info:
 
     The spec is organised in three tag groups:
 
-    - **users** — the v1-compatible surface the website consumes today,
+    - **users:** the v1-compatible surface the website consumes today,
       reproduced faithfully from the v1 implementation. v2 must serve this
       contract before the website can switch over behind a toggle.
-    - **m2m** — v2-native machine endpoints called by the Auth0 actions
+    - **m2m:** v2-native machine endpoints called by the Auth0 actions
       (folio-register / folio-sync).
-    - **items** — v2-native catalogue availability lookup.
+    - **items:** v2-native catalogue availability lookup.
 
     Authentication is layered: every route requires the gateway API key
     (`x-api-key`); most also require an Auth0-issued JWT (end-user or
@@ -54,7 +54,7 @@ paths:
       operationId: getUser
       summary: Get a user's profile
       description: |
-        Faithful to v1 `GET /users/{userId}` (except the `userId` field type —
+        Faithful to v1 `GET /users/{userId}` (except the `userId` field type,
         see the User schema). Requires scope `read:user`; access rule `isSelf`:
         the path segment must equal the caller's bare sub (or be `me`); a
         machine token may read any user.
@@ -189,7 +189,7 @@ paths:
       description: |
         Faithful to v1 `PUT /users/{userId}/deletion-request`, extended for
         v2: re-validates the password, emails the admin inbox and the user
-        (notifications are sent *before* recording, per v1 — an email failure
+        (notifications are sent *before* recording, per v1; an email failure
         is a 500 with nothing recorded), **deactivates the FOLIO patron and
         tags the record `delete-requested`** (the tag distinguishes pending
         deletion from other inactive states and is filterable in the FOLIO
@@ -341,7 +341,7 @@ paths:
         today. The `itemId` is the canonical catalogue id and is translated to
         the Folio item UUID (see Open questions). Success is **202 Accepted**
         (the website treats any 2xx as success and refetches the list). Errors
-        use the catalogue-style `WellcomeApiError` shape — the website displays
+        use the catalogue-style `WellcomeApiError` shape; the website displays
         its `description` field. Requires scope `create:requests`; `isSelf`.
       security:
         - ApiKey: []
@@ -385,7 +385,7 @@ paths:
       summary: Create a Folio patron for a new Auth0 signup
       description: |
         Called by the **folio-register** pre-user-registration Auth0 action,
-        before the Auth0 account is committed — if this fails, the Auth0 user is
+        before the Auth0 account is committed; if this fails, the Auth0 user is
         never created. The patron is created inactive with `username` and
         `externalSystemId` set to the email (the Auth0 user_id does not exist
         yet; `/m2m/enrich` backfills it on first login). A blank `given_name` /
@@ -588,8 +588,8 @@ components:
     User:
       type: object
       description: >
-        Faithful to v1 `models/user.ts` — sourced from the Auth0 profile (and
-        in v2, Folio) — except `userId`, which is a **string** in v2: the bare
+        Faithful to v1 `models/user.ts`, sourced from the Auth0 profile (and
+        in v2, Folio), except `userId`, which is a **string** in v2: the bare
         Auth0 user_id (`p{digits}` for migrated patrons, Auth0-generated hex
         for newer signups). This is a deliberate divergence from v1 (which
         returned the numeric patron number): the website derives its own

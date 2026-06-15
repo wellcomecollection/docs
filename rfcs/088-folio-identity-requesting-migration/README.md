@@ -9,26 +9,26 @@ identity API fronted by Auth0), the embedded API contract, the migration plan (a
 website toggle plus lazy patron migration, culminating in a single coordinated cutover), and the
 questions still open before cutover.
 
-**Last modified:** 2026-06-15T12:10:00+00:00
+**Last modified:** 2026-06-15T12:30:00+00:00
 
 **Related RFCs:**
 
 - [RFC 039: Requesting API design](../039-requesting-api-design/README.md) and
-  [RFC 042: Requesting model](../042-requesting-model/README.md) — the v1 requesting contract this
+  [RFC 042: Requesting model](../042-requesting-model/README.md): the v1 requesting contract this
   work must preserve.
-- [RFC 044: Tracking Patron Deletions](../044-patron-deletions/README.md) — the Sierra-based
+- [RFC 044: Tracking Patron Deletions](../044-patron-deletions/README.md): the Sierra-based
   deletion tracker whose successor is an open question here.
-- [RFC 074: Offsite requesting](../074-offsite-item-requesting/README.md) — requesting behaviours
+- [RFC 074: Offsite requesting](../074-offsite-item-requesting/README.md): requesting behaviours
   layered on top of the API.
-- [RFC 083: Stable identifiers following mass record migration](../083-stable_identifiers/README.md)
-  — the wider CALM/Sierra → Axiell/FOLIO migration of which this is the identity & requesting part.
+- [RFC 083: Stable identifiers following mass record migration](../083-stable_identifiers/README.md):
+  the wider CALM/Sierra to Axiell/FOLIO migration, of which this is the identity and requesting part.
 
 > **A note on sources.** A substantial body of planning and prototyping has been done in an
 > internal discovery repository: a working v2 identity API (Auth0 ↔ FOLIO) that implements the
 > complete v1-compatible surface, is contract-tested against the OpenAPI specification reproduced
-> below, and is deployed to a development environment. This RFC is written to stand on its own —
-> the architecture, contract, migration plan and open questions are reproduced here in full so
-> that the plan is openly accessible without depending on that closed repository.
+> below, and is deployed to a development environment. This RFC is written to stand on its own: the
+> architecture, contract, migration plan and open questions are reproduced here in full so that the
+> plan is openly accessible without depending on that closed repository.
 
 ## Table of contents
 
@@ -49,13 +49,13 @@ questions still open before cutover.
 Wellcome Collection is replacing Sierra with FOLIO as its LMS. Three platform capabilities are
 currently Sierra-backed and must move:
 
-- **Identity** — the v1 identity API (`v1-api.account.wellcomecollection.org`, the
+- **Identity:** the v1 identity API (`v1-api.account.wellcomecollection.org`, the
   `wellcomecollection/identity` repo) sits in front of Auth0 and Sierra patron records. It serves
   account profile, email change, password change, registration and account-deletion requests.
-- **Requesting** — placing and listing holds. In v1 this is served by a separate requests service
+- **Requesting:** placing and listing holds. In v1 this is served by a separate requests service
   (in the catalogue-api repo) that resolves catalogue item ids to Sierra item numbers and places
   Sierra holds.
-- **Item availability** — whether an item can be requested, derived from item status.
+- **Item availability:** whether an item can be requested, derived from item status.
 
 The successor is named **v2** because the predecessor is v1 (`v2-api.account.wellcomecollection.org`).
 That it happens to match the catalogue API's current version is coincidental.
@@ -76,8 +76,8 @@ established the facts that shape the design:
   already-issued token, so v2 accepts the v1 audience: the same tenant and resource server, with
   additional scopes defined on it.
 - **The identity webapp stays separate.** Its separation from the content webapp is an intentional
-  security boundary. One webapp with two API clients, selected by the toggle, preserves that —
-  a parallel webapp would force the old/new split up to path-based routing, which cannot switch per
+  security boundary. One webapp with two API clients, selected by the toggle, preserves that. A
+  parallel webapp would force the old/new split up to path-based routing, which cannot switch per
   user.
 
 The guiding principle throughout is to **change one variable at a time**: the *implementation*
@@ -138,11 +138,11 @@ graph LR
 Authorization happens **at the gateway** before any backend runs. Most calls carry three
 credentials; the exception is the `/items` catalogue route, which is API-key only.
 
-1. **API key** (`x-api-key`) — enforced at API Gateway on every route. Outer gate and rate-limit.
-2. **Auth0 JWT** (`Authorization: Bearer`) — RS256, validated against the tenant JWKS by the
+1. **API key** (`x-api-key`): enforced at API Gateway on every route. Outer gate and rate-limit.
+2. **Auth0 JWT** (`Authorization: Bearer`): RS256, validated against the tenant JWKS by the
    authorizer attached to the route. Proves the request originated from our Auth0 tenant; an
    invalid/expired/wrong-issuer token is rejected `401` at the gateway.
-3. **Per-route authorization** —
+3. **Per-route authorization:**
    - `/m2m/*` is guarded by the **m2m authorizer**: the JWT must be a machine token (`sub` ends
      `@clients`) carrying `register:write` or `enrich:read`, granted in Auth0 only to the Actions'
      M2M app.
@@ -245,7 +245,7 @@ sequenceDiagram
     F-->>L: 200 user record
     L-->>POST: 200 { app_metadata }
     POST->>A0: setAppMetadata(...) + setCustomClaim(app_metadata)
-    A0-->>U: Logged in — app reads app_metadata claim
+    A0-->>U: Logged in, app reads app_metadata claim
   else not found
     L-->>POST: 404 folio user not found
     POST-->>A0: api.access.deny(...)
@@ -277,24 +277,24 @@ sequenceDiagram
   participant L as m2m backend
   participant F as Folio OKAPI
 
-  Note over U,A0: Auth0 lazy (custom-DB) migration on — first login<br/>user_id carries the legacy patron id, e.g. auth0|p11215550
+  Note over U,A0: Auth0 lazy (custom-DB) migration on, first login<br/>user_id carries the legacy patron id, e.g. auth0|p11215550
   U->>A0: Log in (migrated patron, no folio_user_id yet)
   A0->>POST: onExecutePostLogin
   POST->>GW: POST /m2m/enrich (Bearer JWT + x-api-key)<br/>{ auth0_user_id: "auth0|p11215550", email, email_verified, no folio_user_id }
   GW->>L: invoke
   L->>L: extract patron id from sub: "p11215550"
   L->>F: GET /users?query=externalSystemId=="p11215550"
-  F-->>L: 200 — Folio record found
+  F-->>L: 200, Folio record found
   L->>L: cross-check personal.email == request email
   alt email mismatch
     L-->>POST: 404 (no link made)
     POST-->>A0: api.access.deny(...)
   else email confirmed
-    L->>F: PUT /users/{id} — set username="auth0|p11215550",<br/>externalSystemId=email (normalise)
+    L->>F: PUT /users/{id}: set username="auth0|p11215550",<br/>externalSystemId=email (normalise)
     F-->>L: 204
     L-->>POST: 200 { app_metadata: { folio_user_id, migrated: true, … }, profile }
     POST->>A0: setUserMetadata("folio_user_id", …) + setAppMetadata(...)
-    A0-->>U: Logged in — subsequent logins use the folio_user_id fast path
+    A0-->>U: Logged in, subsequent logins use the folio_user_id fast path
   end
 ```
 
@@ -322,7 +322,7 @@ sequenceDiagram
   participant US as folio-api-user
   participant F as Folio OKAPI
 
-  Note over U,F: 1) Browse — catalogue pre-filter (API-key only, no user token)
+  Note over U,F: 1) Browse: catalogue pre-filter (API-key only, no user token)
   U->>BFF: GET /api/items?instanceHrid=…
   BFF->>GW: GET /items (x-api-key only)
   GW->>IT: invoke (no authorizer)
@@ -331,7 +331,7 @@ sequenceDiagram
   IT-->>BFF: items[] + catalogue `requestable`
   BFF-->>U: items list
 
-  Note over U,F: 2) Enrich — confirm per-patron requestability (batched)
+  Note over U,F: 2) Enrich: confirm per-patron requestability (batched)
   U->>BFF: GET allowed-service-points for itemIds=a,b,c
   BFF->>GW: GET /users/{id}/... (Bearer user token + x-api-key)
   GW->>US: user_authorizer validates token → invoke
@@ -360,30 +360,30 @@ they are not yet in the contract above.
 v2 serves the v1 contract verbatim, including its quirks (304 responses, the `me` alias, the
 catalogue error shape on item-requests). Each v1 operation has one of these dispositions:
 
-- **keep-compat** — serve the v1 shape verbatim;
-- **reimplement-on-FOLIO** — same contract, FOLIO-backed implementation;
-- **Auth0-backed** — v2 talks to the Auth0 Management API, as v1 does;
-- **new-in-v2** — no v1 equivalent.
+- **keep-compat:** serve the v1 shape verbatim;
+- **reimplement-on-FOLIO:** same contract, FOLIO-backed implementation;
+- **Auth0-backed:** v2 talks to the Auth0 Management API, as v1 does;
+- **new-in-v2:** no v1 equivalent.
 
 | v1 operation | Disposition | Notes |
 |---|---|---|
-| `GET /users/{userId}` | keep-compat (Auth0 + FOLIO hybrid) | Assembles the v1 `User` from the Auth0 profile (email, validation, lock, dates, logins) plus FOLIO (name, barcode). `userId` becomes a **string** — a deliberate, unconsumed divergence from v1's number (the website derives its own userId from the session sub and never reads this field). |
+| `GET /users/{userId}` | keep-compat (Auth0 + FOLIO hybrid) | Assembles the v1 `User` from the Auth0 profile (email, validation, lock, dates, logins) plus FOLIO (name, barcode). `userId` becomes a **string**: a deliberate, unconsumed divergence from v1's number (the website derives its own userId from the session sub and never reads this field). |
 | `PUT /users/{userId}` (email change) | keep-compat (Auth0 + FOLIO) | Re-validates the current password, updates Auth0 email + FOLIO, deactivates the patron until the new address is verified, then re-sends verification. 304 when unchanged; 409 when the email is already in use. |
 | `PUT /users/{userId}/password` | keep-compat (Auth0-backed) | Validate old password, set new via Auth0 Management. No FOLIO involvement. |
 | `POST /users/{userId}/validate` | keep-compat (Auth0-backed) | Standalone credential check. Kept for v1 parity even though the website has no current call site (parity-first). |
 | `PUT /users/{userId}/deletion-request` | keep-compat (Auth0-backed + email), extended | Re-validates password, emails admin + user (before recording, per v1), **deactivates the FOLIO patron and tags it `delete-requested`** (a v2 extension so the library-side record reflects the pending deletion immediately), then blocks the Auth0 account. Actual account removal is [open question 3](#open-questions). |
 | `POST /users/{userId}/send-verification-email` | keep-compat (Auth0-backed) | Moved into v2 so the website BFF calls one API and the Management-API credential stays server-side in one place. |
 | `PUT /users/{userId}/registration` (M2M) | keep-compat (reimplement-on-FOLIO) | Writes the name to FOLIO, guarded by v1's placeholder-name semantics: new signups carry the `Auth0_Registration_temp*` names until this route replaces them; the name may only be completed, never changed. |
-| `GET /users/{userId}/item-requests` | keep-compat (reimplement-on-FOLIO) | Translates mod-patron holds into the website's `RequestsList`. Requires reverse identifier translation (FOLIO item UUIDs → canonical item ids, `workId`, `workTitle`) — see [open question 1](#open-questions). |
+| `GET /users/{userId}/item-requests` | keep-compat (reimplement-on-FOLIO) | Translates mod-patron holds into the website's `RequestsList`. Requires reverse identifier translation (FOLIO item UUIDs → canonical item ids, `workId`, `workTitle`); see [open question 1](#open-questions). |
 | `POST /users/{userId}/item-requests` | keep-compat (reimplement-on-FOLIO) | Accepts `{workId, itemId, pickupDate, type}` where `itemId` is the canonical catalogue id; forward-translates to the FOLIO item UUID, places the hold, returns 202, maps FOLIO errors to `WellcomeApiError`. Business rules: see [open question 2](#open-questions). |
 
 **New in v2 (not website-facing, or new capability):**
 
 | Route | Disposition | Notes |
 |---|---|---|
-| `POST /m2m/register`, `POST /m2m/enrich` | new-in-v2 | Called by the Auth0 actions; the heart of registration and lazy migration. |
-| `GET /items` | new-in-v2 | Catalogue availability; API-key only. Overlaps the existing v2 catalogue API items endpoint — how the two run in parallel is [open question 5](#open-questions). |
-| Per-patron requestability (allowed-service-points) and hold cancellation | new-in-v2 (planned) | No v1 analogue — v1 never shipped cancel, and per-patron requestability is new. Both will be added to the `/users/{userId}` surface before cutover (cancellation as `DELETE /users/{userId}/item-requests/{requestId}`); not yet in the contract above. |
+| `POST /m2m/register`, `POST /m2m/enrich` | new-in-v2 | Called by the Auth0 actions; central to registration and lazy migration. |
+| `GET /items` | new-in-v2 | Catalogue availability; API-key only. Overlaps the existing v2 catalogue API items endpoint; how the two run in parallel is [open question 5](#open-questions). |
+| Per-patron requestability (allowed-service-points) and hold cancellation | new-in-v2 (planned) | No v1 analogue: v1 never shipped cancel, and per-patron requestability is new. Both will be added to the `/users/{userId}` surface before cutover (cancellation as `DELETE /users/{userId}/item-requests/{requestId}`); not yet in the contract above. |
 
 ### Sierra → FOLIO mapping (reference)
 
@@ -403,7 +403,7 @@ The implementation maps each Sierra REST call to a FOLIO module/endpoint:
 | **mod-patron** / **edge-patron** | Patron-facing account operations (holds) | Sierra patron API |
 | **mod-inventory** | Item/holdings/instance management | Sierra item lookup |
 | **mod-circulation** | Loans, requests, check-in/out | Sierra holds system (used indirectly, for the open-requests check) |
-| **mod-patron-blocks** | Patron block checking | Sierra patron blocks (not yet adopted — see [open question 2](#open-questions)) |
+| **mod-patron-blocks** | Patron block checking | Sierra patron blocks (not yet adopted; see [open question 2](#open-questions)) |
 
 Authentication changes from Sierra's OAuth client-credentials + `X-Wellcome-Caller-ID` to OKAPI's
 tenant + token headers; this is handled entirely inside the v2 backends via the service-account
@@ -417,10 +417,10 @@ pair), so the website never sees FOLIO error shapes.
 
 The intended v2 contract lives alongside this RFC as a machine-readable spec:
 
-- **[`openapi.yaml`](openapi.yaml)** — the OpenAPI 3.1 specification (the source of truth).
-- **[`openapi.md`](openapi.md)** — a human-readable rendering of the same spec, generated from it.
+- **[`openapi.yaml`](openapi.yaml):** the OpenAPI 3.1 specification (the source of truth).
+- **[`openapi.md`](openapi.md):** a human-readable rendering of the same spec, generated from it.
 
-It reproduces the prototype's OpenAPI specification restricted to the **intended** routes — the
+It reproduces the prototype's OpenAPI specification restricted to the **intended** routes: the
 v1-compatible `users` surface, the v2-native `m2m` machine endpoints, and the `items` availability
 lookup. The prototype's transitional `/user/{user_id}/*` holds routes are omitted: they are
 scaffolding to be replaced by the v1-compat successors noted above before cutover.
@@ -460,13 +460,13 @@ together with the test patrons.
 |---|---|---|
 | 1 | Resolve the Auth0 `import_mode` lazy-migration blocker | ✓ verified by spike |
 | 2 | Build v2: OpenAPI contract as source of truth; the complete v1-compatible surface plus `/m2m/*` and `/items`; contract tests; a prototype webapp exercising every flow; both Auth0 action gates implemented | ✓ deployed to a development environment |
-| 3 | Stage parity: v2 at `v2-api.stage.account…`, accepting the v1 audience; port the v1 smoke tests; rehearse the `import_mode` flip on the stage tenant | — |
+| 3 | Stage parity: v2 at `v2-api.stage.account…`, accepting the v1 audience; port the v1 smoke tests; rehearse the `import_mode` flip on the stage tenant | pending |
 | 4 | Deploy both Auth0 actions, **gated off**, to stage and production. Test users opt in and begin testing the full v2 lifecycle in production | gates implemented in the prototype |
-| 5a | Website prerequisite: upgrade the production identity webapp's Auth0 SDK (a substantial, separate, earlier change — the auth routes move to middleware) | in review |
-| 5b | Website wiring: the `identityApiV2` toggle; a request-scoped dual client in the BFF proxy and the registration route; the v2 path guarded by the session carrying `folio_user_id`, otherwise v1; the first authenticated end-to-end tests | — |
-| 6 | Production testing via the toggle: test users opt in by cookie and exercise the full v2 lifecycle. Authenticated end-to-end tests pass | — |
-| 7 | **The cutover window**: one coordinated change, wrapped in `disableRequesting`. Toggle `defaultValue=on`, sync/register defaults `on`, `import_mode=true`, together with the LMS operational cutover (reading-room workflows move to FOLIO; open Sierra holds are migrated). v2 then serves everyone and the credential-capture window begins | — |
-| 8 | Decommission: the v1 API, the Sierra custom-database scripts, then Sierra itself, once the capture window has run its course and at least the maximum session lifetime has passed since the cutover | — |
+| 5a | Website prerequisite: upgrade the production identity webapp's Auth0 SDK (a substantial, separate, earlier change: the auth routes move to middleware) | in review |
+| 5b | Website wiring: the `identityApiV2` toggle; a request-scoped dual client in the BFF proxy and the registration route; the v2 path guarded by the session carrying `folio_user_id`, otherwise v1; the first authenticated end-to-end tests | pending |
+| 6 | Production testing via the toggle: test users opt in by cookie and exercise the full v2 lifecycle. Authenticated end-to-end tests pass | pending |
+| 7 | **The cutover window**: one coordinated change, wrapped in `disableRequesting`. Toggle `defaultValue=on`, sync/register defaults `on`, `import_mode=true`, together with the LMS operational cutover (reading-room workflows move to FOLIO; open Sierra holds are migrated). v2 then serves everyone and the credential-capture window begins | pending |
+| 8 | Decommission: the v1 API, the Sierra custom-database scripts, then Sierra itself, once the capture window has run its course and at least the maximum session lifetime has passed since the cutover | pending |
 
 ### Rollout controls
 
@@ -474,9 +474,9 @@ Every stage is driven by configuration; no code is deployed after phase 5.
 
 | Control | Location | Testing → cutover | Purpose |
 |---|---|---|---|
-| `identityApiV2` toggle | website toggles + `toggle_*` cookie | test-user cookie opt-in → `defaultValue` flip at cutover | Selects which API serves a request. Includes a safety condition: v2 is used only when the session carries `folio_user_id`, otherwise v1 — protecting sessions issued before the cutover |
+| `identityApiV2` toggle | website toggles + `toggle_*` cookie | test-user cookie opt-in → `defaultValue` flip at cutover | Selects which API serves a request. Includes a safety condition: v2 is used only when the session carries `folio_user_id`, otherwise v1, which protects sessions issued before the cutover |
 | `app_metadata.folio_sync` | Auth0 user record | `on` for test users; `off` is a per-user opt-out | Per-user sync override |
-| `FOLIO_SYNC_DEFAULT` | folio-sync action secret | `off` → `on` (cutover) | Sync for users with no flag. While `off`, unsynced logins return early — no enrichment call, no added risk |
+| `FOLIO_SYNC_DEFAULT` | folio-sync action secret | `off` → `on` (cutover) | Sync for users with no flag. While `off`, unsynced logins return early: no enrichment call, no added risk |
 | `FOLIO_REGISTER_EMAIL_PATTERN` | folio-register action secret | staff domain + test plus-addressing | Signup opt-in for the test cohort (a rollout control, not a security boundary) |
 | `FOLIO_REGISTER_DEFAULT` | folio-register action secret | `off` → `on` (cutover) | Registration for non-matching signups. A FOLIO failure denies the signup, which can be retried |
 | `disableRequesting` | website toggle (runbook) | wraps the cutover window | Turns requesting off site-wide while open holds move from Sierra to FOLIO and operations switch |
@@ -489,7 +489,7 @@ signup runs the connection's `create` script and the patron is created in Sierra
 Defaulting registration on while still in proxy mode would dual-create every new patron (duplicates
 for the bulk Sierra→FOLIO migration); flipping without registration on would create patrons with no
 LMS record. So both flip together, alongside the toggle default, inside one `disableRequesting`
-window. No code is deployed in the window — everything running has already been exercised in
+window. No code is deployed in the window: everything running has already been exercised in
 production under the gates and the test toggle.
 
 Sessions issued before the cutover (up to the maximum session lifetime) fall back to v1 via the
@@ -499,22 +499,22 @@ toggle's `folio_user_id` guard until those users next log in, which links them.
 
 ## Risks
 
-1. **The `import_mode` flip** — resolved by a spike that proved the in-place flip and subsequent
+1. **The `import_mode` flip.** Resolved by a spike that proved the in-place flip and subsequent
    lazy capture; it should be rehearsed on stage before production.
-2. **The custom-database login scripts** — these are the entry point for every login during the
+2. **The custom-database login scripts.** These are the entry point for every login during the
    capture window; the Sierra-backed `login` and `change_password` scripts must keep working until
    decommission.
-3. **The cutover window concentrates risk** — several configuration flips plus the LMS operational
+3. **The cutover window concentrates risk.** Several configuration flips plus the LMS operational
    move (the least reversible element) inside one `disableRequesting` window. Mitigation: a full
    rehearsal on the stage tenant and stack, and a runbook with a rollback step for each change. The
    identity configuration flips can each be reverted individually while Sierra is still available.
-4. **No authenticated end-to-end coverage in `wellcomecollection.org` today** — built in phase 5b
+4. **No authenticated end-to-end coverage in `wellcomecollection.org` today.** Built in phase 5b
    and must pass before the cutover.
-5. **Capture-window length** — credential capture runs from the public cutover to Sierra
+5. **Capture-window length.** Credential capture runs from the public cutover to Sierra
    decommission; patrons who never log in during the window are issued password-reset tickets. If
    the decommission date is fixed and the testing phase runs long, the window shrinks; prefer moving
    the decommission date to rushing the cutover.
-6. **Consumer audit** — the effective production consumer is the webapp BFF alone (it holds the only
+6. **Consumer audit.** The effective production consumer is the webapp BFF alone (it holds the only
    production API key), but a pre-cutover audit of the production Auth0 tenant's clients and grants
    for the identity API audience should confirm no dashboard-created consumers exist, and account
    for the CI smoke-test client.
@@ -550,7 +550,7 @@ integration point.
 3. **Auth0 account removal after a FOLIO-side deletion.** A deletion request only flags and blocks
    the Auth0 account (and, in v2, deactivates and tags the FOLIO patron); the account is actually
    removed in v1 by a patron-deletion tracker that polls Sierra's deleted-records feed nightly (see
-   [RFC 044](../044-patron-deletions/README.md)). FOLIO has no analogue — there is no deleted-records
+   [RFC 044](../044-patron-deletions/README.md)). FOLIO has no analogue: there is no deleted-records
    endpoint or tombstone, and patron-deletion events are platform-internal on the hosted tenant. The
    candidate direction is Auth0-side existence reconciliation, designed to fail towards doing
    nothing. *Open:* confirm event-integration options with the LMS vendor, and decide the mechanism
@@ -574,7 +574,7 @@ integration point.
    separate from the identity toggle). A concrete candidate direction is to stand up a **v3 catalogue
    API** that serves only the new FOLIO-backed items endpoint, leaving the existing v2 catalogue API
    in place and cutting over in step with the rest of the migration. This also bears on where the new
-   items API ultimately *lives* — in this project's API surface (as specified today) or under a v3
+   items API ultimately *lives*: in this project's API surface (as specified today) or under a v3
    catalogue API. *Open:* decide the home for the new items API and the parallel-run/cutover mechanism
    with the catalogue-API workstream before cutover. (Related: identifier translation in open question
    1, which already depends on catalogue/identifier data, and the RTAC note under
@@ -592,7 +592,7 @@ integration point.
   switch (the back-end bulk patron migration is a separate LMS-workstream activity that this plan
   links to via lazy migration).
 - **No merging of the identity and content webapps, and no parallel webapp.**
-- **Staff item-location / movement flows** (e.g. updating an item's location in FOLIO) — these are
+- **Staff item-location / movement flows** (e.g. updating an item's location in FOLIO): these are
   staff-side LMS operations, not part of the website-facing identity/requesting/items APIs.
 - **Real-time availability at scale (RTAC).** The `/items` route uses per-instance inventory lookups,
   not FOLIO's RTAC modules; revisit if availability needs to scale beyond per-instance lookups.
@@ -605,10 +605,10 @@ integration point.
    tests, and rehearse the `import_mode` flip on the stage tenant.
 2. **Gated action deploy** (phase 4): deploy folio-sync and folio-register to stage and production,
    gated off, and begin the production test-cohort lifecycle.
-3. **Website wiring** (phases 5a–5b): land the identity webapp SDK upgrade, then add the
+3. **Website wiring** (phases 5a to 5b): land the identity webapp SDK upgrade, then add the
    `identityApiV2` toggle, the request-scoped dual client, the `folio_user_id` guard, and
    authenticated end-to-end tests.
-4. **Resolve the open questions** above with the relevant workstreams — in particular identifier
+4. **Resolve the open questions** above with the relevant workstreams, in particular identifier
    translation (for requesting to work end to end) and the FOLIO circulation-rule configuration.
 5. **Cutover** (phase 7): rehearse and run the single coordinated window behind `disableRequesting`,
    with a per-change rollback runbook.
