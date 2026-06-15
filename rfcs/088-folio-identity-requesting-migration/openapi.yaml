@@ -1,0 +1,874 @@
+openapi: 3.1.0
+
+info:
+  title: Wellcome Collection Identity API (v2)
+  version: 2.0.0-alpha
+  description: |
+    Contract for the **v2 identity API** — the FOLIO-backed successor to the
+    Sierra-backed v1 identity API (served from the wellcomecollection/identity
+    repo at `v1-api.account.wellcomecollection.org`). It is named v2 because
+    its predecessor is v1; that this matches the catalogue API's current
+    version is coincidental.
+
+    This is the **intended** contract: the v1-compatible end-user surface the
+    website consumes, plus the v2-native machine (`/m2m/*`) and catalogue
+    availability (`/items`) routes. (The prototype additionally exposes some
+    transitional `/user/{user_id}/*` holds routes; those are omitted here, as
+    they are to be replaced by the v1-compat successors above before cutover.)
+
+    The spec is organised in three tag groups:
+
+    - **users** — the v1-compatible surface the website consumes today,
+      reproduced faithfully from the v1 implementation. v2 must serve this
+      contract before the website can switch over behind a toggle.
+    - **m2m** — v2-native machine endpoints called by the Auth0 actions
+      (folio-register / folio-sync).
+    - **items** — v2-native catalogue availability lookup.
+
+    Authentication is layered: every route requires the gateway API key
+    (`x-api-key`); most also require an Auth0-issued JWT (end-user or
+    machine-to-machine), validated by a Lambda authorizer at the gateway.
+
+servers:
+  - url: https://v2-api.stage.account.wellcomecollection.org
+    description: Stage (planned)
+  - url: https://v2-api.account.wellcomecollection.org
+    description: Production (planned)
+
+tags:
+  - name: users
+    description: v1-compatible end-user surface
+  - name: m2m
+    description: Machine-to-machine endpoints for the Auth0 actions
+  - name: items
+    description: Catalogue availability (API-key only; no user data)
+
+paths:
+  # ---------------------------------------------------------------- users (v1-compat)
+
+  /users/{userId}:
+    parameters:
+      - $ref: '#/components/parameters/UserId'
+    get:
+      tags: [users]
+      operationId: getUser
+      summary: Get a user's profile
+      description: |
+        Faithful to v1 `GET /users/{userId}` (except the `userId` field type —
+        see the User schema). Requires scope `read:user`; access rule `isSelf`:
+        the path segment must equal the caller's bare sub (or be `me`); a
+        machine token may read any user.
+      security:
+        - ApiKey: []
+          Auth0UserToken: [read:user]
+      responses:
+        '200':
+          description: The user.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/User'
+        '401': { $ref: '#/components/responses/Unauthorised' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/UserNotFound' }
+        '500': { $ref: '#/components/responses/InternalError' }
+    put:
+      tags: [users]
+      operationId: updateUserEmail
+      summary: Update a user's email address
+      description: |
+        Faithful to v1 `PUT /users/{userId}`. The current password must be
+        supplied and is re-validated before the email is changed. Returns
+        **304** when the new email is missing/empty or equals the current email.
+        Requires scope `update:email`; `isSelf`.
+      security:
+        - ApiKey: []
+          Auth0UserToken: [update:email]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateUserRequest'
+      responses:
+        '200':
+          description: Email updated; returns the updated user.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/User'
+        '304':
+          description: No change needed (email missing or identical to current).
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '401': { $ref: '#/components/responses/Unauthorised' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/UserNotFound' }
+        '409':
+          description: The email address is already in use by another user.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/IdentityError'
+        '500': { $ref: '#/components/responses/InternalError' }
+
+  /users/{userId}/password:
+    parameters:
+      - $ref: '#/components/parameters/UserId'
+    put:
+      tags: [users]
+      operationId: updatePassword
+      summary: Change a user's password
+      description: |
+        Faithful to v1 `PUT /users/{userId}/password`. The current password is
+        validated before the new one is set. Success is **200 with no body**.
+        Requires scope `update:password`; `isSelf`.
+      security:
+        - ApiKey: []
+          Auth0UserToken: [update:password]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdatePasswordRequest'
+      responses:
+        '200':
+          description: Password updated (no body).
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '401': { $ref: '#/components/responses/Unauthorised' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/UserNotFound' }
+        '422':
+          description: The new password does not meet the password policy.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/IdentityError'
+        '500': { $ref: '#/components/responses/InternalError' }
+
+  /users/{userId}/validate:
+    parameters:
+      - $ref: '#/components/parameters/UserId'
+    post:
+      tags: [users]
+      operationId: validatePassword
+      summary: Validate the user's current password
+      description: |
+        Faithful to v1 `POST /users/{userId}/validate`. Standalone credential
+        check (used by the webapp before sensitive actions). Success is **200
+        with no body**. No scope required; `isSelf`.
+      security:
+        - ApiKey: []
+          Auth0UserToken: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [password]
+              properties:
+                password:
+                  type: string
+      responses:
+        '200':
+          description: Password is valid (no body).
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '401': { $ref: '#/components/responses/Unauthorised' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/UserNotFound' }
+        '500': { $ref: '#/components/responses/InternalError' }
+
+  /users/{userId}/deletion-request:
+    parameters:
+      - $ref: '#/components/parameters/UserId'
+    put:
+      tags: [users]
+      operationId: requestDeletion
+      summary: Request account deletion
+      description: |
+        Faithful to v1 `PUT /users/{userId}/deletion-request`, extended for
+        v2: re-validates the password, emails the admin inbox and the user
+        (notifications are sent *before* recording, per v1 — an email failure
+        is a 500 with nothing recorded), **deactivates the FOLIO patron and
+        tags the record `delete-requested`** (the tag distinguishes pending
+        deletion from other inactive states and is filterable in the FOLIO
+        Users app), then records `deleteRequested` and blocks the Auth0
+        account. Success is **200 with no body**; **304** when a deletion
+        request is already pending. Requires scope `delete:patron`; `isSelf`.
+      security:
+        - ApiKey: []
+          Auth0UserToken: [delete:patron]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [password]
+              properties:
+                password:
+                  type: string
+      responses:
+        '200':
+          description: Deletion request recorded (no body).
+        '304':
+          description: A deletion request is already pending for this user.
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '401': { $ref: '#/components/responses/Unauthorised' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/UserNotFound' }
+        '500': { $ref: '#/components/responses/InternalError' }
+
+  /users/{userId}/send-verification-email:
+    parameters:
+      - $ref: '#/components/parameters/UserId'
+    post:
+      tags: [users]
+      operationId: sendVerificationEmail
+      summary: Re-send the email verification message
+      description: |
+        Faithful to v1 `POST /users/{userId}/send-verification-email`. Requires
+        scope `send:verification-emails`; `isSelf`.
+      security:
+        - ApiKey: []
+          Auth0UserToken: [send:verification-emails]
+      responses:
+        '204':
+          description: Verification email queued.
+        '401': { $ref: '#/components/responses/Unauthorised' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/UserNotFound' }
+        '500': { $ref: '#/components/responses/InternalError' }
+
+  /users/{userId}/registration:
+    parameters:
+      - name: userId
+        in: path
+        required: true
+        description: >
+          The bare Auth0 user_id (`p{digits}` for migrated patrons,
+          Auth0-generated hex for newer signups). Unlike the other user routes,
+          `me` is not meaningful here: this route is machine-to-machine only
+          (the webapp's BFF calls it with a client-credentials token during
+          registration).
+        schema:
+          type: string
+          pattern: '^(p\d+|[a-f0-9]{24})$'
+    put:
+      tags: [users]
+      operationId: completeRegistration
+      summary: Complete registration by setting the user's name (M2M only)
+      description: |
+        Faithful to v1 `PUT /users/{userId}/registration`. Restricted to
+        machine-to-machine tokens (`sub` ending `@clients`, scope
+        `register:write`, via the m2m authorizer). Guarded by v1's
+        placeholder-name check: new signups carry the
+        `Auth0_Registration_temp*` names in Folio until this route replaces
+        them, so the name may only be completed, never changed (409 when
+        already registered with a real name; idempotent 204 when it matches;
+        blank-name records predating the placeholder convention may also be
+        completed). The Auth0 root profile is mirrored immediately so the
+        caller's session can refresh without re-login.
+      security:
+        - ApiKey: []
+          Auth0M2MToken: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [firstName, lastName]
+              properties:
+                firstName:
+                  type: string
+                lastName:
+                  type: string
+      responses:
+        '204':
+          description: Name set (or already correct).
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '401': { $ref: '#/components/responses/Unauthorised' }
+        '404': { $ref: '#/components/responses/UserNotFound' }
+        '409':
+          description: The user is already registered with a different name.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/IdentityError'
+        '500': { $ref: '#/components/responses/InternalError' }
+
+  /users/{userId}/item-requests:
+    parameters:
+      - $ref: '#/components/parameters/UserId'
+    get:
+      tags: [users]
+      operationId: getItemRequests
+      summary: List the user's item requests (holds)
+      description: |
+        Part of the v1-consumed surface (in v1 this is proxied at the gateway to
+        the requests service from the catalogue-api repo; in v2 it is served
+        from Folio holds). Response shape is the website's `RequestsList`;
+        `pickupDate` carries the Folio request expiration date, and `workId` is
+        resolved via identifier translation (see Open questions). NB: this route
+        group uses the catalogue-style `WellcomeApiError` error shape, not the
+        identity `{message}` shape. Requires scope `read:requests`; `isSelf`.
+      security:
+        - ApiKey: []
+          Auth0UserToken: [read:requests]
+      responses:
+        '200':
+          description: The user's current requests.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RequestsList'
+        '401': { $ref: '#/components/responses/Unauthorised' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '500':
+          description: Upstream failure.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WellcomeApiError'
+    post:
+      tags: [users]
+      operationId: createItemRequest
+      summary: Place an item request (hold)
+      description: |
+        Part of the v1-consumed surface. Request body is what the website sends
+        today. The `itemId` is the canonical catalogue id and is translated to
+        the Folio item UUID (see Open questions). Success is **202 Accepted**
+        (the website treats any 2xx as success and refetches the list). Errors
+        use the catalogue-style `WellcomeApiError` shape — the website displays
+        its `description` field. Requires scope `create:requests`; `isSelf`.
+      security:
+        - ApiKey: []
+          Auth0UserToken: [create:requests]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ItemRequest'
+      responses:
+        '202':
+          description: Request accepted.
+        '400':
+          description: Invalid request (e.g. bad pickup date).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WellcomeApiError'
+        '401': { $ref: '#/components/responses/Unauthorised' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '409':
+          description: A request already exists for this item, or the user is at their hold limit.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WellcomeApiError'
+        '500':
+          description: Upstream failure.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WellcomeApiError'
+
+  # ---------------------------------------------------------------- m2m
+
+  /m2m/register:
+    post:
+      tags: [m2m]
+      operationId: m2mRegister
+      summary: Create a Folio patron for a new Auth0 signup
+      description: |
+        Called by the **folio-register** pre-user-registration Auth0 action,
+        before the Auth0 account is committed — if this fails, the Auth0 user is
+        never created. The patron is created inactive with `username` and
+        `externalSystemId` set to the email (the Auth0 user_id does not exist
+        yet; `/m2m/enrich` backfills it on first login). A blank `given_name` /
+        `family_name` is stored as the v1 placeholder
+        (`Auth0_Registration_tempFirstName` / `Auth0_Registration_tempLastName`)
+        until registration completes. Requires an M2M token with scope
+        `register:write`.
+      security:
+        - ApiKey: []
+          Auth0M2MToken: [register:write]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [email]
+              properties:
+                email:
+                  type: string
+                given_name:
+                  type: string
+                  default: ''
+                family_name:
+                  type: string
+                  default: ''
+      responses:
+        '201':
+          description: Folio patron created.
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [folio_user_id]
+                properties:
+                  folio_user_id:
+                    type: string
+                    format: uuid
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '409':
+          description: A Folio account already exists for this email.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/IdentityError'
+        '500': { $ref: '#/components/responses/InternalError' }
+
+  /m2m/enrich:
+    post:
+      tags: [m2m]
+      operationId: m2mEnrich
+      summary: Login-time enrichment and reconciliation
+      description: |
+        Called by the **folio-sync** post-login Auth0 action on every login.
+        Resolves the Folio user (fast path: `folio_user_id`; migration path: a
+        legacy patron id parsed from `auth0_user_id`, cross-checked against the
+        email), mirrors the Auth0 identity onto the Folio record, activates the
+        patron once name-complete and email-verified, and returns the
+        `app_metadata` for the action to persist into Auth0. Requires an M2M
+        token with scope `enrich:read`.
+      security:
+        - ApiKey: []
+          Auth0M2MToken: [enrich:read]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                folio_user_id:
+                  type: [string, 'null']
+                  format: uuid
+                  description: Fast path; absent on a patron's first login.
+                auth0_user_id:
+                  type: [string, 'null']
+                  description: The Auth0 user_id (sub), e.g. `auth0|p11215550`.
+                email:
+                  type: string
+                given_name:
+                  type: [string, 'null']
+                family_name:
+                  type: [string, 'null']
+                email_verified:
+                  type: boolean
+      responses:
+        '200':
+          description: Enrichment payload for the Auth0 action.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EnrichResponse'
+        '404':
+          description: No Folio user could be resolved.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/IdentityError'
+
+  # ---------------------------------------------------------------- items
+
+  /items:
+    get:
+      tags: [items]
+      operationId: getItems
+      summary: Items and availability for a catalogue instance
+      description: |
+        Catalogue/availability data only (no user data), so the route is
+        API-key gated with no Auth0 authorizer. `requestable` here is a
+        catalogue pre-filter (no open request, not suppressed, circulating
+        status); per-patron requestability is confirmed separately against
+        Folio's allowed-service-points via a `/users/{userId}` route.
+      security:
+        - ApiKey: []
+      parameters:
+        - name: instanceHrid
+          in: query
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: The instance and its items.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ItemsResponse'
+        '400':
+          description: Missing instanceHrid.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/IdentityError'
+        '404':
+          description: Instance not found.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/IdentityError'
+        '502':
+          description: Folio unreachable.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/IdentityError'
+
+components:
+  parameters:
+    UserId:
+      name: userId
+      in: path
+      required: true
+      description: >
+        The bare Auth0 user_id (the token subject minus its `auth0|` prefix),
+        or the literal `me` for the caller's own record. Two id forms exist:
+        `p{digits}` for patrons migrated from the legacy system (their patron
+        number) and an Auth0-generated 24-char hex id for newer signups.
+        `isSelf` is a plain string comparison of this segment against the
+        caller's bare sub. Machine tokens cannot use `me`. (v1 used the bare
+        numeric patron number here; the website's BFF proxy only ever sends
+        `me`, so accepting the Auth0 id is not a breaking change for it.)
+      schema:
+        type: string
+        pattern: '^(me|p\d+|[a-f0-9]{24})$'
+
+  responses:
+    # v1-compat error responses ({message} JSON shape)
+    BadRequest:
+      description: Missing or invalid fields.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/IdentityError'
+    Unauthorised:
+      description: Missing/invalid token, or an invalid password where one is re-validated.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/IdentityError'
+    Forbidden:
+      description: The caller may not operate on this resource.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/IdentityError'
+    UserNotFound:
+      description: The user does not exist.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/IdentityError'
+    InternalError:
+      description: Unexpected error.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/IdentityError'
+
+  schemas:
+    User:
+      type: object
+      description: >
+        Faithful to v1 `models/user.ts` — sourced from the Auth0 profile (and
+        in v2, Folio) — except `userId`, which is a **string** in v2: the bare
+        Auth0 user_id (`p{digits}` for migrated patrons, Auth0-generated hex
+        for newer signups). This is a deliberate divergence from v1 (which
+        returned the numeric patron number): the website derives its own
+        userId from the session sub and never reads this field, so the change
+        is unconsumed-on-the-wire.
+      required: [userId, email, emailValidated, locked, creationDate, updatedDate]
+      properties:
+        userId:
+          type: string
+          description: The bare Auth0 user_id, e.g. `p1234567` or a 24-char hex id.
+        barcode:
+          type: string
+        firstName:
+          type: string
+        lastName:
+          type: string
+        email:
+          type: string
+        emailValidated:
+          type: boolean
+        locked:
+          type: boolean
+        creationDate:
+          type: string
+          format: date-time
+        updatedDate:
+          type: string
+          format: date-time
+        lastLoginDate:
+          type: [string, 'null']
+          format: date-time
+        lastLoginIp:
+          type: [string, 'null']
+        totalLogins:
+          type: [integer, 'null']
+        deleteRequested:
+          type: string
+          format: date-time
+
+    UpdateUserRequest:
+      type: object
+      required: [email, password]
+      properties:
+        email:
+          type: string
+          description: The new email address.
+        password:
+          type: string
+          description: The current password, re-validated before the change.
+
+    UpdatePasswordRequest:
+      type: object
+      required: [password, newPassword]
+      properties:
+        password:
+          type: string
+          description: The current password.
+        newPassword:
+          type: string
+
+    IdentityError:
+      type: object
+      description: v1 identity API error shape.
+      required: [message]
+      properties:
+        message:
+          type: string
+
+    WellcomeApiError:
+      type: object
+      description: >
+        Catalogue-platform error shape, used by the item-requests route group
+        (the website displays `description`).
+      required: [errorType, httpStatus, label, description, type]
+      properties:
+        errorType:
+          type: string
+        httpStatus:
+          type: integer
+        label:
+          type: string
+        description:
+          type: string
+        type:
+          type: string
+          const: Error
+
+    ItemRequest:
+      type: object
+      description: What the website's item-request modal sends today.
+      required: [workId, itemId, pickupDate, type]
+      properties:
+        workId:
+          type: string
+        itemId:
+          type: string
+        pickupDate:
+          type: string
+          description: Formatted by the website before submission.
+        type:
+          type: string
+          const: Item
+
+    RequestsList:
+      type: object
+      description: The website's requests list shape.
+      required: [results, totalResults, type]
+      properties:
+        type:
+          type: string
+          const: ResultList
+        totalResults:
+          type: integer
+        results:
+          type: array
+          items:
+            $ref: '#/components/schemas/RequestItem'
+
+    RequestItem:
+      type: object
+      required: [item, workId, pickupLocation, status, type]
+      properties:
+        item:
+          type: object
+          required: [id, locations, type]
+          properties:
+            id: { type: string }
+            identifiers:
+              type: array
+              items: { type: object }
+            title: { type: string }
+            locations:
+              type: array
+              items: { type: object }
+            type:
+              type: string
+              const: Item
+        workId:
+          type: string
+        workTitle:
+          type: string
+        pickupLocation:
+          type: object
+          required: [id, label, type]
+          properties:
+            id: { type: string }
+            label: { type: string }
+            type:
+              type: string
+              const: LocationDescription
+        pickupDate:
+          type: [string, 'null']
+        status:
+          type: object
+          required: [id, label, type]
+          properties:
+            id: { type: string }
+            label: { type: string }
+            type:
+              type: string
+              const: RequestStatus
+        type:
+          type: string
+          const: Request
+
+    EnrichResponse:
+      type: object
+      required: [app_metadata, profile]
+      properties:
+        app_metadata:
+          type: object
+          required:
+            - folio_user_id
+            - folio_username
+            - folio_patron_group
+            - folio_active
+            - folio_name_complete
+            - migrated
+            - barcode
+            - role
+            - source
+          properties:
+            folio_user_id:
+              type: string
+              format: uuid
+            folio_username:
+              type: [string, 'null']
+              description: The Auth0 user_id mirrored onto the Folio record.
+            folio_patron_group:
+              type: [string, 'null']
+            folio_active:
+              type: [boolean, 'null']
+            folio_name_complete:
+              type: boolean
+            migrated:
+              type: boolean
+              description: True when the Auth0 sub carries a legacy patron id.
+            barcode:
+              type: [string, 'null']
+              description: >
+                The Folio barcode. Migrated patrons keep their existing card
+                number; a patron with none is backfilled with the bare Auth0
+                id on first login (see Open questions: barcode and role).
+            role:
+              type: [string, 'null']
+              description: >
+                The legacy role vocabulary value (Reader, Staff,
+                SelfRegistered, Excluded, StaffWithRestricted), derived from
+                the FOLIO patron group name by a mapping the API owns;
+                unmapped groups fall back to Reader. Null when the patron
+                group could not be resolved. See Open questions: barcode and role.
+            source:
+              type: string
+        profile:
+          type: object
+          required: [given_name, family_name]
+          properties:
+            given_name:
+              type: [string, 'null']
+            family_name:
+              type: [string, 'null']
+
+    ItemsResponse:
+      type: object
+      required: [instanceHrid, instanceId, title, items]
+      properties:
+        instanceHrid:
+          type: string
+        instanceId:
+          type: string
+          format: uuid
+        title:
+          type: [string, 'null']
+        items:
+          type: array
+          items:
+            type: object
+            required: [id, barcode, status, location, requestable]
+            properties:
+              id: { type: [string, 'null'] }
+              barcode: { type: [string, 'null'] }
+              status: { type: [string, 'null'] }
+              location: { type: [string, 'null'] }
+              requestable: { type: boolean }
+
+  securitySchemes:
+    ApiKey:
+      type: apiKey
+      in: header
+      name: x-api-key
+      description: Gateway API key (usage-plan gate); required on every route.
+    Auth0UserToken:
+      type: oauth2
+      description: >
+        Auth0-issued end-user access token (RS256, validated at the gateway by
+        the user authorizer). v2 tokens carry the
+        `https://wellcomecollection.org/folio/folio_user_id` claim; the v1
+        scopes listed here are the target authorization model for the
+        v1-compat surface.
+      flows:
+        authorizationCode:
+          authorizationUrl: https://account.wellcomecollection.org/authorize
+          tokenUrl: https://account.wellcomecollection.org/oauth/token
+          scopes:
+            read:user: Read your user profile
+            update:email: Change your email address
+            update:password: Change your password
+            delete:patron: Request account deletion
+            send:verification-emails: Re-send the verification email
+            read:requests: List your item requests
+            create:requests: Place item requests
+    Auth0M2MToken:
+      type: oauth2
+      description: >
+        Auth0 client-credentials token (sub ends `@clients`), held by the Auth0
+        actions' M2M client and the webapp BFF (for registration).
+      flows:
+        clientCredentials:
+          tokenUrl: https://account.wellcomecollection.org/oauth/token
+          scopes:
+            register:write: Create Folio patrons at signup
+            enrich:read: Login-time enrichment/reconciliation
