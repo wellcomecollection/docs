@@ -9,7 +9,7 @@ identity API fronted by Auth0), the embedded API contract, the migration plan (a
 website toggle plus lazy patron migration, culminating in a single coordinated cutover), and the
 questions still open before cutover.
 
-**Last modified:** 2026-06-15T12:30:00+00:00
+**Last modified:** 2026-06-15T12:45:00+00:00
 
 **Related RFCs:**
 
@@ -477,8 +477,8 @@ Every stage is driven by configuration; no code is deployed after phase 5.
 | `identityApiV2` toggle | website toggles + `toggle_*` cookie | test-user cookie opt-in → `defaultValue` flip at cutover | Selects which API serves a request. Includes a safety condition: v2 is used only when the session carries `folio_user_id`, otherwise v1, which protects sessions issued before the cutover |
 | `app_metadata.folio_sync` | Auth0 user record | `on` for test users; `off` is a per-user opt-out | Per-user sync override |
 | `FOLIO_SYNC_DEFAULT` | folio-sync action secret | `off` → `on` (cutover) | Sync for users with no flag. While `off`, unsynced logins return early: no enrichment call, no added risk |
-| `FOLIO_REGISTER_EMAIL_PATTERN` | folio-register action secret | staff domain + test plus-addressing | Signup opt-in for the test cohort (a rollout control, not a security boundary) |
-| `FOLIO_REGISTER_DEFAULT` | folio-register action secret | `off` → `on` (cutover) | Registration for non-matching signups. A FOLIO failure denies the signup, which can be retried |
+| `FOLIO_REGISTER_EMAIL_PATTERN` | folio-register action secret | staff domain + test plus-addressing | Signup opt-in for the test cohort: a signup whose email matches the pattern (e.g. `firstname.lastname+foliotest@wellcomecollection.org`) creates a FOLIO patron. The pattern only *widens* registration (it ORs with `FOLIO_REGISTER_DEFAULT`), and a malformed pattern matches nothing. A rollout control, not a security boundary |
+| `FOLIO_REGISTER_DEFAULT` | folio-register action secret | `off` → `on` (cutover) | Registration for signups that do *not* match the pattern. The two combine as an OR: a signup registers if it matches the pattern **or** this default is `on`. While `off` (testing) only pattern-matching signups register; flipping to `on` at cutover registers every signup and makes the pattern moot. No fail-open mode: when registration runs, a FOLIO failure denies the signup, which can be retried |
 | `disableRequesting` | website toggle (runbook) | wraps the cutover window | Turns requesting off site-wide while open holds move from Sierra to FOLIO and operations switch |
 
 ### The cutover window
