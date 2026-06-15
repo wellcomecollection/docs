@@ -9,7 +9,7 @@ identity API fronted by Auth0), the embedded API contract, the migration plan (a
 website toggle plus lazy patron migration, culminating in a single coordinated cutover), and the
 questions still open before cutover.
 
-**Last modified:** 2026-06-15T11:45:00+00:00
+**Last modified:** 2026-06-15T12:10:00+00:00
 
 **Related RFCs:**
 
@@ -349,9 +349,9 @@ sequenceDiagram
   US-->>BFF: 202 → hold appears in the requests list
 ```
 
-The per-patron allowed-service-points check and hold cancellation are exposed by transitional
-prototype routes today; before cutover they move onto the v1-compatible `/users/{userId}` surface
-(see [API surface](#api-surface-v1--v2)).
+The per-patron allowed-service-points check and hold cancellation will be added to the
+v1-compatible `/users/{userId}` surface before cutover (see [API surface](#api-surface-v1--v2));
+they are not yet in the contract above.
 
 ---
 
@@ -383,7 +383,7 @@ catalogue error shape on item-requests). Each v1 operation has one of these disp
 |---|---|---|
 | `POST /m2m/register`, `POST /m2m/enrich` | new-in-v2 | Called by the Auth0 actions; the heart of registration and lazy migration. |
 | `GET /items` | new-in-v2 | Catalogue availability; API-key only. Overlaps the existing v2 catalogue API items endpoint — how the two run in parallel is [open question 5](#open-questions). |
-| Per-patron requestability (allowed-service-points) and hold cancellation | new-in-v2 (compat-shaped) | Prototyped on transitional `/user/{user_id}/*` routes; before cutover they move onto `/users/{userId}` (cancellation as `DELETE /users/{userId}/item-requests/{requestId}`). These transitional routes are **not** part of the intended contract below. |
+| Per-patron requestability (allowed-service-points) and hold cancellation | new-in-v2 (planned) | No v1 analogue — v1 never shipped cancel, and per-patron requestability is new. Both will be added to the `/users/{userId}` surface before cutover (cancellation as `DELETE /users/{userId}/item-requests/{requestId}`); not yet in the contract above. |
 
 ### Sierra → FOLIO mapping (reference)
 
