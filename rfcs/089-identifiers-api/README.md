@@ -4,14 +4,14 @@
 
 This RFC proposes a small, read-only **Identifiers API** that resolves a **canonical** catalogue
 identifier to its **source** identifier(s) and back, served from the catalogue ID Registry (the
-same store the ID Minter writes to, per [RFC 083](../083-stable_identifiers/README.md)). It is the
-single translation membrane between the canonical ids the public surface uses and the source ids
+same store the ID Minter writes to, per [RFC 083](../083-stable_identifiers/README.md)). It provides
+that translation in one place, between the canonical ids the public surface uses and the source ids
 (Sierra numbers, FOLIO UUIDs, CALM/Axiell refs) that the underlying systems require across the
 Sierra/CALM → FOLIO/Axiell migration. It sets out the contract, the AWS architecture, the
 authentication and cost model, the caching strategy, and what a working prototype has already
 established.
 
-**Last modified:** 2026-06-18T12:00:00+00:00
+**Last modified:** 2026-06-18T16:00:00+00:00
 
 **Related RFCs:**
 
@@ -61,37 +61,37 @@ derived from. [RFC 083](../083-stable_identifiers/README.md) makes those canonic
 mass migration of records from Sierra and CALM into FOLIO and Axiell Collections: when a record
 moves between source systems, the new source identifier is added to the **same** canonical id as a
 **predecessor alias**, rather than minting a new canonical id. The mapping is therefore
-**one-to-many** — a single canonical id can carry an original source identifier plus one or more
-inherited aliases. That one fact shapes most of this contract.
+**one-to-many**: a single canonical id can carry an original source identifier plus one or more
+inherited aliases. This shapes much of the contract.
 
 **The canonical-first principle.** Canonical identifiers are the currency everywhere public. Source
 identifiers appear only at the two unavoidable edges: **ingest** (the catalogue pipeline, which
 reads source records) and the **FOLIO boundary** (holds are placed on FOLIO item UUIDs). Everything
 between speaks canonical, for both works and items. The problem this API solves is that the two
 internal consumers at those edges each need to round-trip between a canonical id and the source ids
-the underlying systems use — and without a shared service, each consumer re-derives the mapping or
+the underlying systems use. Without a shared service, each consumer re-derives the mapping or
 queries the catalogue by source id, which the canonical-first principle is meant to avoid. This API
-is the single translation membrane at those edges.
+provides that translation in one place at those edges.
 
 The principle covers catalogue-level entities (works, items). It does **not** extend to sub-work
 IIIF structure (canvases, manifestations, files), which RFC 085 keeps at the Work-id level and
 filename/digest-derived below that.
 
 **The two consumers.** Both are internal server-side services, not anonymous public browsers, and
-both exercise *both* lookup directions — which is what justifies keeping forward and reverse as
+both exercise *both* lookup directions, which is what justifies keeping forward and reverse as
 distinct operations:
 
 - **IIIF / the DDS ([RFC 085](https://github.com/wellcomecollection/docs/pull/143)).** The DDS wants
   the Work id to be the canonical IIIF Manifest/Collection URI (e.g. `/presentation/zjytxny8` rather
   than `/presentation/b18035978`) and to 301-redirect old b-number / CALM forms to it. RFC 085
   describes a service that, given a string identity, returns all known current and previous
-  identifiers matching it — the reverse lookup (source → canonical) plus the sibling set
+  identifiers matching it: the reverse lookup (source → canonical) plus the sibling set
   (canonical → all sources).
 - **Requesting ([RFC 088](https://github.com/wellcomecollection/docs/pull/153), open question 1).**
   The v2 requesting routes translate the canonical catalogue item id ↔ the FOLIO item UUID in both
   directions: `POST …/item-requests` forward-translates the canonical `itemId` to a FOLIO item UUID
   to place the hold; `GET …/item-requests` reverse-translates FOLIO item UUIDs back to canonical
-  item ids. `workId` / `workTitle` are **not** this API's job — only the holds-list needs them, and
+  item ids. `workId` / `workTitle` are **not** this API's job; only the holds-list needs them, and
   they come from the catalogue API queried in canonical. RFC 088 lists the access mechanism for the
   translation as open (direct read, a service, or a sync); this API is the proposed *service*
   answer.
@@ -105,7 +105,7 @@ Two endpoints. The machine-readable contract is the OpenAPI spec carried alongsi
 
 | Endpoint | Returns |
 |---|---|
-| `GET /v1/identifiers/{canonicalId}` | The full `IdentifierSet` (always — there is no aliases toggle), ordered by `createdAt` so the original is first. |
+| `GET /v1/identifiers/{canonicalId}` | The full `IdentifierSet` (always; there is no aliases toggle), ordered by `createdAt` so the original is first. |
 | `GET /v1/identifiers/by-source/{sourceSystem}/{value}?type=Work` | A bare `{ "canonicalId": "..." }` (`CanonicalIdRef`). |
 | `GET /v1/identifiers/by-source/{sourceSystem}/{value}?type=Work&include=siblings` | The same full `IdentifierSet`. |
 
@@ -130,7 +130,7 @@ parser serve every response:
   about resolves to `404` rather than a spurious `400`.
 
 **Status codes:** `200` found; `304` conditional GET (matched `ETag`); `400` malformed `canonicalId`
-or an unsupported enum value (rejected at the gateway); `404` no mapping — an unknown id, an unknown
+or an unsupported enum value (rejected at the gateway); `404` no mapping: an unknown id, an unknown
 source tuple, or a canonical id that is pre-generated but not yet assigned, all opaque to the
 consumer as "no public identifier".
 
@@ -146,7 +146,7 @@ The contract lives alongside this RFC as a machine-readable spec:
 The spec is deliberately a fragment: it carries the two lookup operations, their schemas, the
 `ApiKeyAuth` security scheme with `x-amazon-apigateway-api-key-source: HEADER` (so API Gateway
 enforces keys), and `aws_proxy` integration stubs pointing at the Lambda. It does **not** carry the
-API keys, the per-consumer throttle, or their stage bindings — those are separate API
+API keys, the per-consumer throttle, or their stage bindings; those are separate API
 Gateway resources configured in Terraform, so importing or re-importing this definition does not
 disturb them.
 
@@ -192,7 +192,7 @@ graph LR
 |---|---|---|
 | Compute | API Gateway → Lambda | Serverless, scales to near-zero, matches a sparse cacheable lookup. |
 | Lambda arch | ARM64 (Graviton) | ~20% cheaper for identical work; the handler is trivially portable. |
-| Gateway type | **REST API (v1)**, not HTTP API | API keys and per-consumer throttling are native REST features; HTTP API would need a Lambda authorizer — more moving parts. |
+| Gateway type | **REST API (v1)**, not HTTP API | API keys and per-consumer throttling are native REST features; HTTP API would need a Lambda authorizer (more moving parts). |
 | Auth | API key in `x-api-key`, validated by the gateway | Identifies each consumer for cost attribution; no custom authorizer code. |
 | Throttling | Per-consumer throttle bound to the stage | Safety valve capping cache-miss load on the database; not a billing quota. |
 | Datastore | Aurora Serverless v2, kept (not DynamoDB) | One store, simpler infra; the same registry the ID Minter writes to. |
@@ -209,14 +209,14 @@ Aurora backend by a guard that refuses any non-`SELECT` statement.
 
 From [RFC 083](../083-stable_identifiers/README.md), two tables:
 
-- `canonical_ids` — the uniqueness registry. PK on `CanonicalId`. Supports pre-generation
+- `canonical_ids`: the uniqueness registry. PK on `CanonicalId`. Supports pre-generation
   (`Status` free/assigned).
-- `identifiers` — the mappings. PK on `(OntologyType, SourceSystem, SourceId)`, FK to `canonical_ids`,
+- `identifiers`: the mappings. PK on `(OntologyType, SourceSystem, SourceId)`, FK to `canonical_ids`,
   secondary index `idx_canonical` on `CanonicalId`.
 
 Consequences for the two lookups:
 
-- **Forward** (canonical → sources) rides `idx_canonical` and returns N rows — cheap, but not a
+- **Forward** (canonical → sources) rides `idx_canonical` and returns N rows: cheap, but not a
   point read.
 - **Reverse** (source → canonical) is a point read on the three-part PK tuple. The reverse key is
   `(type, sourceSystem, value)`, not a bare string.
@@ -233,8 +233,8 @@ the service issues only the two indexed lookups above.
 
 ## Authentication and cost
 
-Both consumers are known internal services. The concern is the **cost of database queries** — how
-often a request reaches Aurora — not policing a per-consumer billing quota, and not an anonymous
+Both consumers are known internal services. The concern is the **cost of database queries** (how
+often a request reaches Aurora), not policing a per-consumer billing quota, and not an anonymous
 public path. So the model is known callers identified by key, with a throttle protecting the
 database:
 
@@ -244,11 +244,11 @@ database:
   consumer so database cost can be attributed per consumer.
 - **A per-consumer throttle bound to the stage** is a safety valve that caps how many cache-misses
   one consumer can drive into the database (rate-limiting to protect the backend, not a quota that
-  bills usage). The keys, the throttle, and their stage binding are **not** in the OpenAPI body —
+  bills usage). The keys, the throttle, and their stage binding are **not** in the OpenAPI body;
   they are separate API Gateway resources in Terraform, so re-importing the definition does not
   disturb them.
 - A **gateway-level regex** on `canonicalId` (`^[a-hjkmnp-z][a-hjkmnp-z2-9]{7}$`) rejects malformed
-  ids with a `400` before they reach the Lambda — cheap defence-in-depth, and the basis for WAF
+  ids with a `400` before they reach the Lambda: cheap defence-in-depth, and the basis for WAF
   rate-based rules if the read path is ever exposed more widely.
 
 ---
@@ -256,7 +256,7 @@ database:
 ## Caching
 
 The data is highly cacheable and the service should be as low-cost as possible. The cost being
-protected is **database (Aurora) query volume** — how often a request reaches the store — not a
+protected is **database (Aurora) query volume** (how often a request reaches the store), not a
 per-consumer quota. So the strategy is to cache as far out and as aggressively as correctness allows,
 bounded only by how mutable each response is during the migration window. The topology is flagged
 here and the unresolved parts are tracked under [Open questions](#open-questions).
@@ -264,10 +264,10 @@ here and the unresolved parts are tracked under [Open questions](#open-questions
 **Push the cache to the edge.** Because the goal is to keep requests away from the database, the
 cache should sit as far in front of it as possible. An **edge cache (CloudFront)** in front of API
 Gateway is the candidate primary cache: a hit is served at the edge and never reaches the gateway,
-the Lambda, or Aurora — the maximum saving. (An earlier framing rejected the edge cache because a hit
-never reaches the gateway and so would not be counted for per-consumer metering; with database cost
-as the concern and no billing quota, an uncounted hit that never touches the database is exactly the
-win.) The API Gateway **stage cache** remains available as a secondary layer, but it sits behind the
+the Lambda, or Aurora, which saves the most. (An earlier framing rejected the edge cache because a
+hit never reaches the gateway and so would not be counted for per-consumer metering; with database
+cost as the concern and no billing quota, an uncounted hit that never touches the database is what we
+want.) The API Gateway **stage cache** remains available as a secondary layer, but it sits behind the
 gateway, so it saves less than an edge hit. This is a candidate, not a decision.
 
 **Freshness is direction- and time-dependent.**
@@ -288,7 +288,7 @@ the alias set is effectively frozen.
 ## What the prototype demonstrates
 
 A working build to this contract has been completed, with the `core` lookup logic kept independent
-of both the web framework and the datastore — so the production Lambda + RDS Data API is just a
+of both the web framework and the datastore, so the production Lambda + RDS Data API is just a
 second backend implementation:
 
 - **Both backends.** A seeded SQLite store (default, for tests and the demo) and a **read-only**
@@ -298,7 +298,7 @@ second backend implementation:
 - **Contract-tested.** The full status-code / `isAlias` / ordering / ETag / `If-None-Match` → `304`
   behaviour is validated against the spec with `openapi-core`, and the running app passes
   schemathesis response/status/content-type conformance (151 cases). Auth checks are out of scope in
-  the prototype (no keys — that is a deployment concern enforced by the gateway).
+  the prototype (no keys; that is a deployment concern enforced by the gateway).
 
 The prototype has also been run read-only against the live development registry to confirm the data
 model and surface findings that bear on the open questions below (the schema's column casing, the
@@ -316,8 +316,8 @@ beyond `Work` / `Image` / `Item`).
 - **HTTP API instead of REST API.** The HTTP API is cheaper per request, but API keys and
   per-consumer throttling are native REST API features; on the HTTP API they require a custom Lambda
   authorizer. Keeping keys (for cost attribution) and the throttle (the database safety valve) native
-  makes REST the lower-moving-parts choice — and once a cache sits in front, only misses reach the
-  gateway, so the per-request cost gap mostly evaporates.
+  makes REST the lower-moving-parts choice. Once a cache sits in front, only misses reach the
+  gateway, so the per-request cost gap largely closes.
 - **A direct database read, or a sync, instead of a service** (the RFC 088 open-question 1 framing).
   A direct read couples each consumer to the registry's schema and connection management; a sync
   introduces a second store and a staleness window. A thin read-only service keeps the schema behind
@@ -336,17 +336,17 @@ beyond `Work` / `Image` / `Item`).
 Each has a prototype direction but an unsettled integration point.
 
 1. **Caching and cost.** The cache placement (edge/CloudFront as primary vs the API Gateway stage
-   cache) is load-bearing for cost — it sets how often a request reaches the database — and is not
-   yet decided; the edge is the candidate. Sub-questions: the cache **hit ratio vs consumer access
-   patterns** (the saving depends on how repetitive requests are — immutable bare-reverse lookups
-   cache extremely well, but if consumers mostly fetch unique ids once the saving is low and the
+   cache) is load-bearing for cost, because it sets how often a request reaches the database, and is
+   not yet decided; the edge is the candidate. Sub-questions: the cache **hit ratio vs consumer
+   access patterns** (the saving depends on how repetitive requests are: immutable bare-reverse
+   lookups cache well, but if consumers mostly fetch unique ids once the saving is low and the
    throttle carries more weight); the concrete `max-age` values for the bounded (migration) and
    relaxed (post-switchover) phases; whether the `ETag` should stay a weak validator from
    `(row_count, max(createdAt))` or move to a content hash; concrete **per-consumer throttle limits**
    (the database safety valve); and the **cost-attribution mechanism** (edge/access logs keyed by API
    key, or CloudWatch). The prototype emits `Cache-Control` (`max-age=300` forward / `include=siblings`,
    `max-age=86400` on the immutable bare reverse lookup) and a weak `ETag`, and honours
-   `If-None-Match` with a `304` — as **prototype defaults, not contract decisions**, and as response
+   `If-None-Match` with a `304`, as **prototype defaults, not contract decisions**, and as response
    headers only (no real edge or stage cache).
 
 2. **The FOLIO-item ingestion dependency (RFC 088).** The requesting translation (canonical item id
@@ -387,7 +387,7 @@ Each has a prototype direction but an unsettled integration point.
   ([RFC 083](../083-stable_identifiers/README.md)); this API is read-only and the prototype enforces
   that with a `SELECT`-only guard.
 - **`workId` / `workTitle` resolution.** Only the requesting holds-list needs them, and they come
-  from the catalogue API queried in canonical — not from this API.
+  from the catalogue API queried in canonical, not from this API.
 - **Sub-work IIIF structure** (canvases, manifestations, files): out of the canonical-first scope,
   per RFC 085.
 - **An aliases toggle on the forward lookup.** The forward lookup always returns the full set; the
@@ -427,5 +427,5 @@ Each has a prototype direction but an unsettled integration point.
 | 7 | `type` per-row, defaults to `Work`; enum includes `Item` | Cross-type predecessors allowed; requesting is item-level (RFC 088). |
 | 8 | Read-only projection; writes via the ID Minter | Per RFC 083. |
 | 9 | Positioned as the "service" answer for RFC 088 open question 1 | vs a direct DB read or a sync. |
-| 10 | Canonical-first: source ids only at ingest + the FOLIO edge | This API is the translation membrane. |
+| 10 | Canonical-first: source ids only at ingest + the FOLIO edge | This API is the single place that translation lives. |
 | 11 | Caching topology deferred to an open question; edge cache the candidate | Load-bearing for cost (database-query volume). |
