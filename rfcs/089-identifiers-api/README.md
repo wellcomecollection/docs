@@ -39,7 +39,7 @@ established.
 
 - [Context](#context)
 - [API Contract](#api-contract)
-- [API contract (OpenAPI)](#api-contract-openapi)
+- [OpenAPI specification](#openapi-specification)
 - [Proposed architecture](#proposed-architecture)
 - [Data model](#data-model)
 - [Authentication and cost](#authentication-and-cost)
@@ -100,7 +100,7 @@ distinct operations:
 ## API Contract
 
 Two endpoints. The machine-readable contract is the OpenAPI spec carried alongside this RFC (see
-[API contract (OpenAPI)](#api-contract-openapi)); this is the summary.
+[OpenAPI specification](#openapi-specification)); this is the summary.
 
 | Endpoint | Returns |
 |---|---|
@@ -135,7 +135,7 @@ consumer as "no public identifier".
 
 ---
 
-## API contract (OpenAPI)
+## OpenAPI specification
 
 The contract lives alongside this RFC as a machine-readable spec:
 
