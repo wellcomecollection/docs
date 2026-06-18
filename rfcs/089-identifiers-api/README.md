@@ -38,7 +38,7 @@ established.
 ## Table of contents
 
 - [Context](#context)
-- [The contract](#the-contract)
+- [API Contract](#api-contract)
 - [API contract (OpenAPI)](#api-contract-openapi)
 - [Proposed architecture](#proposed-architecture)
 - [Data model](#data-model)
@@ -49,7 +49,6 @@ established.
 - [Open questions](#open-questions)
 - [Out of scope](#out-of-scope)
 - [Next steps](#next-steps)
-- [Decision log](#decision-log)
 
 ---
 
@@ -98,7 +97,7 @@ distinct operations:
 
 ---
 
-## The contract
+## API Contract
 
 Two endpoints. The machine-readable contract is the OpenAPI spec carried alongside this RFC (see
 [API contract (OpenAPI)](#api-contract-openapi)); this is the summary.
@@ -411,21 +410,3 @@ Each has a prototype direction but an unsettled integration point.
    `isAlias`/`obsolete` reconciliation, the `type` enum, and whether to hoist a top-level `type`.
 5. **Productionise**: the Terraform for the REST API, the Lambda (ARM64), the API keys and
    per-consumer throttle, and the chosen (edge) cache, deployed to a development environment first.
-
----
-
-## Decision log
-
-| # | Decision | Notes |
-|---|---|---|
-| 1 | API Gateway + Lambda + Aurora Serverless v2 | Baseline serverless pattern. |
-| 2 | Stay on Aurora via the RDS Data API; not DynamoDB | One store, simpler infra; same registry the minter writes to. |
-| 3 | REST API (v1) over HTTP API | Native API keys + per-consumer throttling, no custom authorizer. |
-| 4 | API-key auth + per-consumer throttle | Concern is database cost, not a billing quota; keys identify consumers for attribution. |
-| 5 | Forward lookup returns the full set; no aliases param | One-to-many model. |
-| 6 | Reverse lookup + `include=siblings`, identical element shape | One schema, one parser. |
-| 7 | `type` per-row, defaults to `Work`; enum includes `Item` | Cross-type predecessors allowed; requesting is item-level (RFC 088). |
-| 8 | Read-only projection; writes via the ID Minter | Per RFC 083. |
-| 9 | Positioned as the "service" answer for RFC 088 open question 1 | vs a direct DB read or a sync. |
-| 10 | Canonical-first: source ids only at ingest + the FOLIO edge | This API is the single place that translation lives. |
-| 11 | Caching topology deferred to an open question; edge cache the candidate | Load-bearing for cost (database-query volume). |
