@@ -8,8 +8,8 @@ same store the ID Minter writes to, per [RFC 083](../083-stable_identifiers/READ
 single translation membrane between the canonical ids the public surface uses and the source ids
 (Sierra numbers, FOLIO UUIDs, CALM/Axiell refs) that the underlying systems require across the
 Sierra/CALM → FOLIO/Axiell migration. It sets out the contract, the AWS architecture, the
-authentication and metering model, the caching question, and what a working prototype has already
-established about the live data.
+authentication and cost model, the caching strategy, and what a working prototype has already
+established.
 
 **Last modified:** 2026-06-18T12:00:00+00:00
 
@@ -42,7 +42,7 @@ established about the live data.
 - [API contract (OpenAPI)](#api-contract-openapi)
 - [Proposed architecture](#proposed-architecture)
 - [Data model](#data-model)
-- [Authentication and metering](#authentication-and-metering)
+- [Authentication and cost](#authentication-and-cost)
 - [Caching](#caching)
 - [What the prototype demonstrates](#what-the-prototype-demonstrates)
 - [Alternatives considered](#alternatives-considered)
@@ -145,8 +145,8 @@ The contract lives alongside this RFC as a machine-readable spec:
 
 The spec is deliberately a fragment: it carries the two lookup operations, their schemas, the
 `ApiKeyAuth` security scheme with `x-amazon-apigateway-api-key-source: HEADER` (so API Gateway
-enforces keys), and `aws_proxy` integration stubs pointing at the Lambda. It does **not** carry
-usage plans, quotas, throttle limits, API keys, or plan→stage bindings — those are separate API
+enforces keys), and `aws_proxy` integration stubs pointing at the Lambda. It does **not** carry the
+API keys, the per-consumer throttle, or their stage bindings — those are separate API
 Gateway resources configured in Terraform, so importing or re-importing this definition does not
 disturb them.
 
@@ -174,7 +174,7 @@ graph LR
   end
 
   subgraph AWS
-    GW["API Gateway<br/>REST API<br/>(x-api-key + usage plan)"]
+    GW["API Gateway<br/>REST API<br/>(x-api-key + throttle)"]
     L["Identifiers Lambda<br/>(ARM64)"]
   end
 
@@ -192,9 +192,9 @@ graph LR
 |---|---|---|
 | Compute | API Gateway → Lambda | Serverless, scales to near-zero, matches a sparse cacheable lookup. |
 | Lambda arch | ARM64 (Graviton) | ~20% cheaper for identical work; the handler is trivially portable. |
-| Gateway type | **REST API (v1)**, not HTTP API | API keys + usage plans are a native REST feature; HTTP API would need a Lambda authorizer — more moving parts. |
-| Auth | API key in `x-api-key`, validated by the gateway | Simplest ops for key-based access; no custom authorizer code. |
-| Metering | Usage plan (quota + throttle) bound to the stage | Per-consumer metering is a requirement. |
+| Gateway type | **REST API (v1)**, not HTTP API | API keys and per-consumer throttling are native REST features; HTTP API would need a Lambda authorizer — more moving parts. |
+| Auth | API key in `x-api-key`, validated by the gateway | Identifies each consumer for cost attribution; no custom authorizer code. |
+| Throttling | Per-consumer throttle bound to the stage | Safety valve capping cache-miss load on the database; not a billing quota. |
 | Datastore | Aurora Serverless v2, kept (not DynamoDB) | One store, simpler infra; the same registry the ID Minter writes to. |
 | DB access | RDS Data API | HTTP-based, no persistent connections to exhaust under Lambda concurrency; lower ops than RDS Proxy. |
 
@@ -231,17 +231,22 @@ the service issues only the two indexed lookups above.
 
 ---
 
-## Authentication and metering
+## Authentication and cost
 
-Both consumers are known internal services, and the requirement is to **meter per-consumer
-consumption** — so the model is known-callers + per-consumer metering, not an anonymous public path:
+Both consumers are known internal services. The concern is the **cost of database queries** — how
+often a request reaches Aurora — not policing a per-consumer billing quota, and not an anonymous
+public path. So the model is known callers identified by key, with a throttle protecting the
+database:
 
 - **API key in the `x-api-key` header, validated by API Gateway** before the request reaches the
   Lambda (`x-amazon-apigateway-api-key-source: HEADER`; the `ApiKeyAuth` security scheme in the
-  spec). The gateway enforces keys with no custom authorizer code.
-- **Usage plans (quota + throttle) bound to the stage** provide per-partner metering. The keys,
-  usage plans, and plan→stage binding are **not** in the OpenAPI body — they are separate API
-  Gateway resources in Terraform, so re-importing the definition does not disturb them.
+  spec). The gateway enforces keys with no custom authorizer code, and the key identifies the
+  consumer so database cost can be attributed per consumer.
+- **A per-consumer throttle bound to the stage** is a safety valve that caps how many cache-misses
+  one consumer can drive into the database (rate-limiting to protect the backend, not a quota that
+  bills usage). The keys, the throttle, and their stage binding are **not** in the OpenAPI body —
+  they are separate API Gateway resources in Terraform, so re-importing the definition does not
+  disturb them.
 - A **gateway-level regex** on `canonicalId` (`^[a-hjkmnp-z][a-hjkmnp-z2-9]{7}$`) rejects malformed
   ids with a `400` before they reach the Lambda — cheap defence-in-depth, and the basis for WAF
   rate-based rules if the read path is ever exposed more widely.
@@ -250,19 +255,20 @@ consumption** — so the model is known-callers + per-consumer metering, not an 
 
 ## Caching
 
-The data is highly cacheable and the service should be as low-cost as possible, but the requirement
-to **meter per-consumer consumption** constrains where the cache can sit, and the migration window
-makes freshness direction- and time-dependent. This is the part of the design with the most cost and
-correctness sensitivity, so the topology is flagged here and the unresolved parts are tracked under
-[Open questions](#open-questions).
+The data is highly cacheable and the service should be as low-cost as possible. The cost being
+protected is **database (Aurora) query volume** — how often a request reaches the store — not a
+per-consumer quota. So the strategy is to cache as far out and as aggressively as correctness allows,
+bounded only by how mutable each response is during the migration window. The topology is flagged
+here and the unresolved parts are tracked under [Open questions](#open-questions).
 
-**The metering-vs-edge-cache trade-off.** A CloudFront cache hit never reaches the gateway, so it
-would silently **undercount usage** — fatal if usage-plan quotas drive billing or partner limits.
-The candidate resolution is to drop the edge cache and use the **API Gateway stage cache** instead:
-the key is validated first, the cache then serves the body, and metering stays at the gateway. This
-trades the cheap edge cache for the stage cache's small fixed cost in exchange for the simplest
-topology — one managed service, no Lambda@Edge, no custom authorizer. This is a candidate, not a
-decision.
+**Push the cache to the edge.** Because the goal is to keep requests away from the database, the
+cache should sit as far in front of it as possible. An **edge cache (CloudFront)** in front of API
+Gateway is the candidate primary cache: a hit is served at the edge and never reaches the gateway,
+the Lambda, or Aurora — the maximum saving. (An earlier framing rejected the edge cache because a hit
+never reaches the gateway and so would not be counted for per-consumer metering; with database cost
+as the concern and no billing quota, an uncounted hit that never touches the database is exactly the
+win.) The API Gateway **stage cache** remains available as a secondary layer, but it sits behind the
+gateway, so it saves less than an edge hit. This is a candidate, not a decision.
 
 **Freshness is direction- and time-dependent.**
 
@@ -293,19 +299,11 @@ second backend implementation:
   behaviour is validated against the spec with `openapi-core`, and the running app passes
   schemathesis response/status/content-type conformance (151 cases). Auth checks are out of scope in
   the prototype (no keys — that is a deployment concern enforced by the gateway).
-- **Real-data findings** (read-only inspection of the live registry):
-  - The schema finding above (snake_case tables, PascalCase columns, timezone-naive `CreatedAt`
-    normalised to ISO-8601) was verified against the live development cluster.
-  - **`folio-instance` (Work-level) identifiers are present**, and many canonical ids already carry
-    a Sierra original plus one or more `folio-instance` aliases — a real one-to-many migration
-    example, exactly the shape this contract is built for.
-  - **`folio-item-id` (Item-level) identifiers are absent**: `Item` rows currently carry only
-    `sierra-system-number` / `miro-image-number`. So the RFC 088 requesting translation has **no
-    data in the registry yet** — the dependency on the catalogue pipeline ingesting FOLIO *items* is
-    currently unmet (see [Open questions](#open-questions)).
-  - The live registry holds **ontology types beyond** `Work` / `Image` / `Item` (e.g. `Concept`), so
-    the `type` enum likely needs opening, or the API explicitly scoping to the catalogue-entity
-    types.
+
+The prototype has also been run read-only against the live development registry to confirm the data
+model and surface findings that bear on the open questions below (the schema's column casing, the
+presence of `folio-instance` Work aliases, the current absence of `folio-item-id`, and ontology types
+beyond `Work` / `Image` / `Item`).
 
 ---
 
@@ -315,18 +313,21 @@ second backend implementation:
   a second copy of the registry to keep in sync with the Aurora store the ID Minter already writes
   to. Keeping one store is simpler and removes a synchronisation failure mode; the read shapes are
   served by the existing primary key and `idx_canonical`.
-- **HTTP API instead of REST API.** The HTTP API is cheaper per request, but API keys and usage
-  plans are a native REST API feature; on the HTTP API they require a custom Lambda authorizer.
-  Per-consumer metering is a hard requirement, so REST wins on total moving parts — and once a cache
-  sits in front, only misses reach the gateway, so the per-request cost gap mostly evaporates.
+- **HTTP API instead of REST API.** The HTTP API is cheaper per request, but API keys and
+  per-consumer throttling are native REST API features; on the HTTP API they require a custom Lambda
+  authorizer. Keeping keys (for cost attribution) and the throttle (the database safety valve) native
+  makes REST the lower-moving-parts choice — and once a cache sits in front, only misses reach the
+  gateway, so the per-request cost gap mostly evaporates.
 - **A direct database read, or a sync, instead of a service** (the RFC 088 open-question 1 framing).
   A direct read couples each consumer to the registry's schema and connection management; a sync
   introduces a second store and a staleness window. A thin read-only service keeps the schema behind
-  a stable contract, centralises the `isAlias` / ordering / freshness rules, and is the unit that
-  per-consumer metering attaches to. This RFC proposes the service; the decision is RFC 088's to
-  ratify.
-- **An edge (CloudFront) cache.** Rejected as the primary cache because an edge hit never reaches the
-  gateway and would undercount metered usage (see [Caching](#caching)).
+  a stable contract, centralises the `isAlias` / ordering / freshness rules, and is the single unit
+  the cache, the keys and the throttle attach to. This RFC proposes the service; the decision is
+  RFC 088's to ratify.
+- **The API Gateway stage cache as the primary cache.** Workable, but it sits behind the gateway, so
+  every hit still incurs a gateway request and saves less than an edge hit. An edge (CloudFront)
+  cache keeps the most traffic furthest from the database, so it is preferred; the stage cache is
+  kept only as a possible secondary layer (see [Caching](#caching)).
 
 ---
 
@@ -334,14 +335,16 @@ second backend implementation:
 
 Each has a prototype direction but an unsettled integration point.
 
-1. **Caching topology and metering.** The cache placement (API Gateway stage cache vs an
-   alternative) is load-bearing for both cost and metering correctness, and is not yet decided.
-   Sub-questions: the concrete `max-age` values for the bounded (migration) and relaxed
-   (post-switchover) phases; whether the `ETag` should stay a weak validator from
-   `(row_count, max(createdAt))` or move to a content hash; whether a usage-plan quota actually
-   decrements on a **stage-cache hit** (must be confirmed against current AWS documentation before
-   billing relies on the counts); and stage-cache sizing (the 0.5 GB minimum and its fixed monthly
-   floor). The prototype emits `Cache-Control` (`max-age=300` forward / `include=siblings`,
+1. **Caching and cost.** The cache placement (edge/CloudFront as primary vs the API Gateway stage
+   cache) is load-bearing for cost — it sets how often a request reaches the database — and is not
+   yet decided; the edge is the candidate. Sub-questions: the cache **hit ratio vs consumer access
+   patterns** (the saving depends on how repetitive requests are — immutable bare-reverse lookups
+   cache extremely well, but if consumers mostly fetch unique ids once the saving is low and the
+   throttle carries more weight); the concrete `max-age` values for the bounded (migration) and
+   relaxed (post-switchover) phases; whether the `ETag` should stay a weak validator from
+   `(row_count, max(createdAt))` or move to a content hash; concrete **per-consumer throttle limits**
+   (the database safety valve); and the **cost-attribution mechanism** (edge/access logs keyed by API
+   key, or CloudWatch). The prototype emits `Cache-Control` (`max-age=300` forward / `include=siblings`,
    `max-age=86400` on the immutable bare reverse lookup) and a weak `ETag`, and honours
    `If-None-Match` with a `304` — as **prototype defaults, not contract decisions**, and as response
    headers only (no real edge or stage cache).
@@ -389,8 +392,8 @@ Each has a prototype direction but an unsettled integration point.
   per RFC 085.
 - **An aliases toggle on the forward lookup.** The forward lookup always returns the full set; the
   one-to-many model makes a partial-set toggle pointless.
-- **API keys, usage plans and metering in the prototype.** These are deployment concerns enforced by
-  the gateway and configured in Terraform, not in the Lambda or the OpenAPI body.
+- **API keys, throttling and cost attribution in the prototype.** These are deployment concerns
+  enforced by the gateway and configured in Terraform, not in the Lambda or the OpenAPI body.
 
 ---
 
@@ -398,16 +401,16 @@ Each has a prototype direction but an unsettled integration point.
 
 1. **Ratify the service answer with RFC 088** as the access mechanism for identifier translation
    (open question 1 there), and with RFC 085 as the identity lookup it describes.
-2. **Resolve the caching topology** (open question 1): decide stage cache vs an alternative, confirm
-   the quota-on-cache-hit behaviour against current AWS documentation before billing relies on it,
-   and pick concrete TTLs for the migration and post-switchover phases.
+2. **Resolve the caching topology** (open question 1): decide the edge cache vs the stage cache,
+   pick concrete TTLs for the migration and post-switchover phases, pick per-consumer throttle
+   limits, and choose the cost-attribution mechanism.
 3. **Unblock requesting** (open questions 2 and 3): confirm with the catalogue-pipeline workstream
    that FOLIO items are ingested and `folio-item-id` predecessors are emitted at item level, so the
    requesting translation has data.
 4. **Settle the contract edges with RFC 085** (open questions 4 to 7): the bare-value lookup, the
    `isAlias`/`obsolete` reconciliation, the `type` enum, and whether to hoist a top-level `type`.
-5. **Productionise**: the Terraform for the REST API, the Lambda (ARM64), the API keys and usage
-   plans, and the chosen cache, deployed to a development environment first.
+5. **Productionise**: the Terraform for the REST API, the Lambda (ARM64), the API keys and
+   per-consumer throttle, and the chosen (edge) cache, deployed to a development environment first.
 
 ---
 
@@ -417,12 +420,12 @@ Each has a prototype direction but an unsettled integration point.
 |---|---|---|
 | 1 | API Gateway + Lambda + Aurora Serverless v2 | Baseline serverless pattern. |
 | 2 | Stay on Aurora via the RDS Data API; not DynamoDB | One store, simpler infra; same registry the minter writes to. |
-| 3 | REST API (v1) over HTTP API | Native API keys + usage plans, no custom authorizer. |
-| 4 | API-key auth + usage-plan metering | Per-consumer metering is a hard requirement. |
+| 3 | REST API (v1) over HTTP API | Native API keys + per-consumer throttling, no custom authorizer. |
+| 4 | API-key auth + per-consumer throttle | Concern is database cost, not a billing quota; keys identify consumers for attribution. |
 | 5 | Forward lookup returns the full set; no aliases param | One-to-many model. |
 | 6 | Reverse lookup + `include=siblings`, identical element shape | One schema, one parser. |
 | 7 | `type` per-row, defaults to `Work`; enum includes `Item` | Cross-type predecessors allowed; requesting is item-level (RFC 088). |
 | 8 | Read-only projection; writes via the ID Minter | Per RFC 083. |
 | 9 | Positioned as the "service" answer for RFC 088 open question 1 | vs a direct DB read or a sync. |
 | 10 | Canonical-first: source ids only at ingest + the FOLIO edge | This API is the translation membrane. |
-| 11 | Caching topology deferred to an open question | Load-bearing for cost and metering correctness. |
+| 11 | Caching topology deferred to an open question; edge cache the candidate | Load-bearing for cost (database-query volume). |
