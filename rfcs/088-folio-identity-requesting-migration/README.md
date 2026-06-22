@@ -172,8 +172,8 @@ signups. On the FOLIO record:
 
 > What `externalSystemId` carries is **not yet firmly decided**. It is the field the lazy-migration
 > enrichment matches on (email, or the legacy patron id before linking), so its value and normalisation
-> are load-bearing for migration; whether that field is the right home for it — versus a dedicated
-> identifier — may still change before cutover.
+> matter for migration. Whether that field is the right place for it, rather than a dedicated
+> identifier, may still change before cutover.
 
 A patron's FOLIO `active` flag mirrors **identity completeness**: a patron is active only once they
 have a real name *and* a verified email. New patrons are created **inactive**, carrying v1's literal
@@ -321,10 +321,10 @@ Requestability is decided in **two stages** because no single source has the who
    FOLIO would reject.
 
 > The `requestable` flag is **additive**, not a replacement: the works page keeps using the location's
-> access status and access method to decide whether to show the request button, and this flag
-> supplements that signal. The two-stage scheme above is a **prototype affordance**, not the settled
-> answer — how requestability is ultimately determined (and where that decision lives) is still
-> open; see [open question 2](#open-questions).
+> access status and access method to decide whether to show the request button, and this flag adds to
+> that. The two-stage scheme above is a **prototype affordance**, not a final design. How
+> requestability is ultimately determined, and where that decision lives, is still open; see
+> [open question 2](#open-questions).
 
 ```mermaid
 sequenceDiagram
