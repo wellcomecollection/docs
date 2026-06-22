@@ -129,7 +129,7 @@ parser serve every response:
   about resolves to `404` rather than a spurious `400`.
 
 **Status codes:** `200` found; `304` conditional GET (matched `ETag`); `400` malformed `canonicalId`
-or an unsupported enum value (rejected at the gateway); `404` no mapping: an unknown id, an unknown
+or an unsupported `type` enum value (rejected at the gateway); `404` no mapping: an unknown id, an unknown
 source tuple, or a canonical id that is pre-generated but not yet assigned, all opaque to the
 consumer as "no public identifier".
 
