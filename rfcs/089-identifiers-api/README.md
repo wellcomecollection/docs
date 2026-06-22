@@ -371,8 +371,9 @@ Each has a prototype direction but an unsettled integration point.
    not identical. Reconcile the two so one representation serves both consumers.
 
 6. **The `type` enum vs reality.** The live registry holds types beyond `Work` / `Image` / `Item`
-   (e.g. `Concept`). Decide whether to open the `SourceIdentifier.type` enum or to explicitly scope
-   the API to the catalogue-entity types.
+   (e.g. `Concept`). The contract scopes `SourceIdentifier.type` to the three types the API needs
+   today and extends the enum on demand as further types are required, rather than modelling the full
+   registry up front.
 
 7. **Top-level `type`.** `type` is currently per-row only (a canonical id can carry rows of differing
    types). Decide whether to also hoist a convenience top-level `type`, accepting that it could
