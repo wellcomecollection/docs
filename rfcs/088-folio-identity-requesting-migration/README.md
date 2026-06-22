@@ -9,7 +9,7 @@ identity API fronted by Auth0), the embedded API contract, the migration plan (a
 website toggle plus lazy patron migration, culminating in a single coordinated cutover), and the
 questions still open before cutover.
 
-**Last modified:** 2026-06-15T12:45:00+00:00
+**Last modified:** 2026-06-22T14:33:26+00:00
 
 **Related RFCs:**
 
@@ -170,6 +170,11 @@ signups. On the FOLIO record:
 - the FOLIO user **UUID** is the internal join key (surfaced to the app as the
   `folio_user_id` claim) and never appears in the public contract.
 
+> What `externalSystemId` carries is **not yet firmly decided**. It is the field the lazy-migration
+> enrichment matches on (email, or the legacy patron id before linking), so its value and normalisation
+> are load-bearing for migration; whether that field is the right home for it — versus a dedicated
+> identifier — may still change before cutover.
+
 A patron's FOLIO `active` flag mirrors **identity completeness**: a patron is active only once they
 have a real name *and* a verified email. New patrons are created **inactive**, carrying v1's literal
 placeholder names (`Auth0_Registration_tempFirstName` / `…tempLastName`) until registration
@@ -272,6 +277,7 @@ sequenceDiagram
   autonumber
   participant U as User (browser)
   participant A0 as Auth0
+  participant S as Sierra (custom-DB)
   participant POST as folio-sync action
   participant GW as API Gateway + m2m_authorizer
   participant L as m2m backend
@@ -279,6 +285,8 @@ sequenceDiagram
 
   Note over U,A0: Auth0 lazy (custom-DB) migration on, first login<br/>user_id carries the legacy patron id, e.g. auth0|p11215550
   U->>A0: Log in (migrated patron, no folio_user_id yet)
+  A0->>S: custom-DB login script: verify credentials
+  S-->>A0: 200 OK<br/>(password hash captured while Sierra is still available)
   A0->>POST: onExecutePostLogin
   POST->>GW: POST /m2m/enrich (Bearer JWT + x-api-key)<br/>{ auth0_user_id: "auth0|p11215550", email, email_verified, no folio_user_id }
   GW->>L: invoke
@@ -311,6 +319,12 @@ Requestability is decided in **two stages** because no single source has the who
    confirms it per item against FOLIO's mod-patron **allowed-service-points** (a non-empty list means
    requestable). The UI offers **Place hold** only when both stages agree, so it never offers a hold
    FOLIO would reject.
+
+> The `requestable` flag is **additive**, not a replacement: the works page keeps using the location's
+> access status and access method to decide whether to show the request button, and this flag
+> supplements that signal. The two-stage scheme above is a **prototype affordance**, not the settled
+> answer — how requestability is ultimately determined (and where that decision lives) is still
+> open; see [open question 2](#open-questions).
 
 ```mermaid
 sequenceDiagram
