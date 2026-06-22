@@ -356,7 +356,7 @@ Each has a prototype direction but an unsettled integration point.
 
 3. **Item canonical-id stability through the FOLIO migration.** Items are minted canonically today,
    but the canonical id must survive Sierra → FOLIO via RFC 083 predecessor inheritance at item
-   level (a FOLIO item UUID added as a predecessor of the Sierra item number). RFC 083's transformer
+   level (a Sierra item number added as a predecessor of the FOLIO item UUID). RFC 083's transformer
    changes are described at bib/work level; item-level predecessor emission needs confirming with the
    pipeline workstream.
 
