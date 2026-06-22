@@ -66,7 +66,7 @@ Freshness differs by variant: the bare lookup is immutable once minted and cache
 
 | Status | Body | Description |
 |---|---|---|
-| `200` | n/a | A mapping exists for the supplied tuple. |
+| `200` | [`CanonicalIdRef`](#canonicalidref) \| [`IdentifierSet`](#identifierset) | A mapping exists for the supplied tuple. |
 | `304` | n/a |  |
 | `400` | n/a |  |
 | `404` | n/a |  |

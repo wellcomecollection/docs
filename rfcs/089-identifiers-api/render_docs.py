@@ -44,6 +44,12 @@ def type_str(schema):
     if "$ref" in schema:
         name = ref_name(schema["$ref"])
         return f"[`{name}`](#{anchor(name)})"
+    # oneOf/anyOf render as the alternatives joined by an (escaped) pipe so they
+    # are safe in a table cell; allOf is an intersection, joined by "&".
+    for combiner, sep in (("oneOf", " \\| "), ("anyOf", " \\| "), ("allOf", " & ")):
+        if combiner in schema:
+            parts = [p for p in (type_str(sub) for sub in schema[combiner]) if p]
+            return sep.join(parts)
     if "const" in schema:
         return f"`{schema['const']}` (const)"
     t = schema.get("type")
