@@ -215,7 +215,7 @@ From [RFC 083](../083-stable_identifiers/README.md), two tables:
 
 Consequences for the two lookups:
 
-- **Forward** (canonical → sources) rides `idx_canonical` and returns N rows: cheap, but not a
+- **Forward** (canonical → sources) reads `idx_canonical` and returns N rows: cheap, but not a
   point read.
 - **Reverse** (source → canonical) is a point read on the three-part PK tuple. The reverse key is
   `(type, sourceSystem, value)`, not a bare string.
