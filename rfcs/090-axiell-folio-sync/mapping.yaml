@@ -1,0 +1,86 @@
+# AxC → FOLIO field mapping
+# Version is stamped into every produced payload for traceability.
+# Field rules:
+#   from_marc:  "TAG$subfield"  — extract first matching subfield value
+#   from_marc:  "TAG"           — extract control field value (no $)
+#   default:    <value>         — use this literal if from_marc is absent or empty
+#   lookup:     <type>          — resolve value via RefCache (location|materialType|loanType|instanceType)
+#   map:        <table_name>    — apply value mapping from mapping_tables section
+#   template:   "<text>"        — interpolate {source_id}, {instance_hrid}, {holdings_hrid}
+#   as_list:    true            — wrap result in a JSON array
+#   as_electronic_access: true  — wrap URI as [{uri: <value>}]
+#   transforms: [trim|upper|lower]
+#   required:   true            — MappingError raised if value is null after resolution
+# Fields with no value after all rules are omitted from the payload (not null).
+
+version: "1.0.0"
+
+mapping_tables:
+  # Material type normalization: Axiell source codes → FOLIO standard names
+  material_type:
+    "sound only": "sound recording"
+    "audio-visual material - visual": "video recording"
+    "audio-visual material - e-sound only": "sound recording"
+    "audio-visual material - e-visual only": "video recording"
+    "published material": "Books"
+    # Archives variants default to "unspecified" (handled via pattern matching below)
+    "archives": "unspecified"
+
+identity:
+  # MARC controlfield used as the source record identifier
+  marc_controlfield: "001"
+  # Prefix prepended to form the instance hrid:  AxC:{source_id}
+  hrid_prefix: "AxC"
+
+instance:
+  fields:
+    hrid:
+      template: "AxC:{source_id}"
+    title:
+      from_marc: "245$a"
+      transforms: [trim]
+      required: true
+    source:
+      default: "AxC"
+    instanceType.id:
+      lookup: instanceType
+      required: true
+
+holdings:
+  fields:
+    hrid:
+      template: "AxC:{source_id}-holding-{location_slug}"
+    # FOLIO requires holdings sourceId; resolve it by name via RefCache.
+    sourceId:
+      default: "MARC"
+      lookup: holdingsSource
+      required: true
+    permanentLocationId:
+      from_marc: "852$b"
+      default: "History of Medicine"
+      lookup: location
+      required: true
+
+item:
+  fields:
+    hrid:
+      template: "AxC:{source_id}"
+    materialType.id:
+      from_marc: "949$c"
+      map: material_type
+      default: "Books"
+      lookup: materialType
+      required: true
+    permanentLoanType.id:
+      from_marc: "949$l"
+      default: "Can Circulate"
+      lookup: loanType
+      required: true
+    permanentLocation.id:
+      from_marc: "852$b"
+      default: "History of Medicine"
+      lookup: location
+      required: true
+    status:
+      default:
+        name: "Available"
