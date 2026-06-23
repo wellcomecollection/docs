@@ -318,41 +318,56 @@ If gathered from CloudFront, the metrics data is post-request. This has benefits
 
 Our instinct is that many examples of IIIF traffic, especially image traffic, could only be judged as "bad bot" after evaluating multiple requests. A tile-stitcher script would not be obvious from just one request. If the evaluation of traffic is happening reasonably quickly (i.e., not a once-a-month report generation), and we could decide that traffic is a bot so we can block, or at least not-orchestrate the image it's hitting.
 
-How do we identify a bot?
+How do we identify a bot? On two timescales:
 
- - retrospectively, from metrics
- - As it's happening
+ - **retrospectively, from the aggregated metrics** - the per-asset and per-source rollups make some patterns obvious after the fact (a single source pulling every `/full/*` size of thousands of assets; a source whose requests walk an image's tile grid in order).
+ - **as it's happening** - the short-window Kinesis consumer (see [Latency](#latency)) keeps enough recent state to react on a minutes timescale, before a long scrape completes.
 
-// TODO - one of the hard parts! - We now have the metrics but how do we use them to detect bots!!!
+Crucially, deferred orchestration means we don't have to be fast or certain. An undetected bot is merely _slow_ (served from the S3-direct path), not cache-poisoning. So detection is mostly a _promotion filter_ - "is this traffic human-ish enough to justify moving the asset into the hot pool?" - rather than a _blocking_ decision. We only escalate to actual blocking for the inconsiderate, evasive end of the spectrum.
 
-Are the metrics streams discussed so far real-time enough for orchestration decisions, but not real-time enough to stamp on a bit before it does harm?
+### Signal categories
 
-What do we do if we do identify a bot?
+The metrics schema is designed to surface a handful of behavioural signals. The _specific thresholds, weights and signatures are deliberately not in this public document_ (see [Companion document](#companion-document-private) below); what follow are the categories.
 
-Bot detection now influences orchestration, so a false positive doesn't just rate-limit a user, it silently degrades image performance for them. The wellcomecollection.org viewer needs to be effectively unblockable (allowlist by origin/referer plus, if possible, the signed short-lived token idea hinted at in the API Keys section below. Spoofable in principle, but it raises the bar and we only need it to gate priority, not access).
+ - **Volume and spread per source.** Requests per (IP, user-agent) per window, and how many _distinct_ assets they touch. A human reads a handful of items deeply; a scraper touches thousands shallowly.
+ - **Request-type mix.** The ratio of tile / `/full/*` / thumb / info.json requests. A bulk `/full/*` harvester and a real OpenSeadragon session have very different mixes.
+ - **`sizes` adherence.** Wellcome publishes preferred [`sizes`](https://iiif.io/api/image/3.0/#53-sizes) per image. Bulk requests that ignore the advertised sizes are a soft tell - and a case where we'd rather respond politely ("please use a value from the sizes array") than block.
+ - **Tile-grid traversal.** Tile-stitchers tend to request a complete, ordered grid for an image at one scale. Humans pan and zoom irregularly and rarely fetch every tile.
+ - **OSD sub-tile bursts.** Sub-tile-size region requests that just waste server time (already flagged in the schema notes).
+ - **Distribution shape over time.** Real traffic is bursty around human attention; scrapers are flat and relentless.
+
+None of these is decisive alone; the point of the metrics store is to let us _combine_ them. The combining logic is where the sensitive detail lives.
+
+What do we do once we've decided? Bot detection now influences orchestration, so a false positive doesn't just rate-limit a user, it silently degrades image performance for them. The wellcomecollection.org viewer needs to be effectively unblockable (allowlist by origin/referer plus, if possible, the signed short-lived token idea hinted at in the [API Keys](#api-keys) section below. Spoofable in principle, but it raises the bar and we only need it to gate priority, not access).
+
+The response is graduated:
+
+ - **Don't-promote** - leave the asset on the slow S3-direct path. The default, cheapest, lowest-risk response; invisible to legitimate users beyond slightly slower image delivery.
+ - **Soft signal** - respond with the pixels _and_ a message pointing bulk requesters at the `sizes` array.
+ - **Rate-limit** - `429 Too Many Requests` with `Retry-After`. Considerate bots honour it.
+ - **Block at the edge** - push the offending IP/CIDR into a WAF IP set with a TTL, so CloudFront drops it before it costs us anything (see [Challenges](#challenges)). Reserved for the evasive, inconsiderate end.
 
 ### Firewall strategies
 
-What *general-purpose* services from WAF, Cloudflare, F5 Firewalls etc help us?
+What *general-purpose* services from WAF, Cloudflare, F5 firewalls etc. help us, and what can't they do because it's specific to IIIF image traffic?
 
-What can't they do because it's specific to IIIF traffic, especially image traffic?
+General-purpose tooling is good at the things that _aren't_ IIIF-specific: blunt per-IP rate limits, geo/ASN rules, bot-reputation lists, JS/Turnstile challenges for _browser_ entry points. What it can't do is understand that a stream of perfectly well-formed, individually-cheap-looking image requests is collectively a tile-stitch of a whole work, or that they ignore the advertised `sizes`. That IIIF-semantic judgement is what our own metrics layer adds on top.
 
 #### IIIF Presentation API
 
-This doesn't bother us so much at Wellcome, because Manifests are static and proxied. But is still a magnet for bots, and is problematic for dumb bots just following links in JSON. JSON-LD has a lot of links.
+This doesn't bother us so much at Wellcome, because Manifests are static and proxied. But it's still a magnet for bots, and is problematic for dumb bots just following links in JSON - JSON-LD has a lot of links.
 
-We need to ensure we *fail-fast* on requests that can't serve a response, e.g., Canvas `id`, Range `id` - don't waste resources on them (pattern match at CloudFront?)
+We need to *fail-fast* on requests that can't serve a response, e.g., Canvas `id`, Range `id` - don't waste resources on them (pattern match at CloudFront?).
 
-Discussion of current WAF rules for iiif.wellcomecollection.org
-
-(redacted!)
-
+The current WAF ruleset for `iiif.wellcomecollection.org`, and any specific patterns, live in the companion document - they are operationally sensitive and out of scope for this public repo.
 
 #### IIIF Image API
 
-Can WAF help us?
+This is the hard, IIIF-specific part, and the main subject of the companion document. The public position is: the signal categories above, computed from the metrics store, feed a scoring step whose job is mostly to gate promotion into the hot pool and, at the extreme, to feed the WAF IP set. The thresholds and scoring are kept private as anti-evasion friction - but, per the deferred-orchestration argument, the design does **not** depend on their secrecy for correctness, only for efficiency.
 
-What do other people do?
+### Companion document (private)
+
+Concrete heuristics, thresholds, scoring and the current WAF rules are maintained outside this public repository, in the private `dlcs/private-protagonist` repo under `docs/rfcs/wellcome-bots-metrics-support`. Anything that names real source IPs / actors (personal data), or that would hand an evader a recipe, belongs there rather than here.
 
 
 ## Scavenger
