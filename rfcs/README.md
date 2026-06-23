@@ -74,6 +74,7 @@ _This is generated from the RFCs in this directory using `.scripts/create_table_
 
 | RFC ID | Summary | Next Line | Last Modified |
 |--------|---------|-----------|---------------|
+| [090-axiell-folio-sync](090-axiell-folio-sync/README.md) | RFC 090: CMS to LMS Sync | This is proposal to synchronize library location and item holdings from Axiell Collections(Content Management System) into FOLIO (Library Management system) with strict requirements for idempotency, auditability, and graceful error isolation. | 23 Jun 2026 |
 | [087-kiosk-mode](087-kiosk-mode/README.md) | RFC 087: wellcomecollection.org in kiosk mode | This RFC serves to outline how we propose to offer in-venue experiences using our current website, while optimising it for a different experience than usual. | 13 May 2026 |
 | [086-item-viewer-refactor](086-item-viewer-refactor/README.md) | RFC 086: IIIF Viewer Context Refactoring | This folder contains a comprehensive plan to refactor the IIIF Viewer context to eliminate code duplication and centralise derived state calculations. | 14 Apr 2026 |
 | [084-shopify-integration-strategies](084-shopify-integration-strategies/README.md) | RFC 084: Shopify Integration Approaches for Wellcome Collection | This research outlines five approaches for integrating Shopify with the Wellcome Collection website, ranging from simple embedded solutions to fully headless implementations. | 16 Feb 2026 |
