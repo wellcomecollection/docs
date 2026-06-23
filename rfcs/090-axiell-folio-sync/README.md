@@ -179,28 +179,12 @@ The upserter uses a **YAML-driven mapper** (`mapping.yaml` + `YamlMapper`) to co
 
 ### Transformation Pipeline
 
-Raw MARCXML (from Iceberg)
-    │
-    ▼
-┌────────────────────────────────────────┐
-│  YAML Mapper                           │
-│  Input: raw MARCXML record             │
-│  Output: FOLIO item-level JSON         │
-└────────────────────────────────────────┘
-    │
-    ▼
-┌────────────────────────────────────────┐
-│  Schema Validation                     │
-│  Validate required fields present      │
-│  Check identifiers well-formed         │
-└────────────────────────────────────────┘
-    │
-    ▼
-┌────────────────────────────────────────┐
-│  FOLIO API Payload Builder             │
-│  Map validated output to FOLIO         │
-│  Inventory API request shape           │
-└────────────────────────────────────────┘
+```mermaid
+graph TD
+    A["Raw MARCXML<br/>(from Iceberg)"] --> B["YAML Mapper<br/>Input: raw MARCXML record<br/>Output: FOLIO item-level JSON"]
+    B --> C["Schema Validation<br/>Validate required fields present<br/>Check identifiers well-formed"]
+    C --> D["FOLIO API Payload Builder<br/>Map validated output to FOLIO<br/>Inventory API request shape"]
+```
 
 ### YAML Mapper (`mapping.yaml` + `YamlMapper`)
 
