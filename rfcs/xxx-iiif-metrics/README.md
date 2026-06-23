@@ -10,15 +10,33 @@ To some extent, we hope that generic anti-bot technologies sitting in front of o
 
 **Last modified:**  2026-06-01T17:00+00:00
 
+## Deferred orchestration
+
+This RFC introduces several concepts:
+
+ - the metrics pipeline
+ - the per-asset aggregates
+ - the bot heuristics
+ 
+...but they exist to support one structural change: **stop orchestrating on first request, and orchestrate only when _retrospective_ metrics say an asset is genuinely popular.**
+
+Today, any request that can't be served from a static thumb or from S3-direct (full-region images) forces an _immediate_ copy of the JP2 onto the fast Lustre volume, holding up the triggering request while it happens. That made sense in the pre-bot era, when traffic followed a [long-tail distribution of real human interest](https://github.com/dlcs/protagonist/issues/47): the cache naturally filled with the images people actually looked at. Automated traffic breaks that assumption. A single drive-by request for a non-full region, or one OpenSeadragon page-load whose top tiles are never zoomed into, is enough to pollute the cache. Bots, automated tile-stitchers, people grabbing images wholesale ... they all generate this load at volume. The result is a cache in constant churn (see [Context](#context)).
+
+Deferred orchestration breaks the link between "a request arrived" and "copy the file to fast disk". If tile-serving from an S3 back-end with no local copy is _tolerable_ (perceived as OK by users, even if not as smooth as from a real disk) then we no longer _have_ to orchestrate on demand. We can serve the first requests from a slower path and _wait to see what other traffic follows_, promoting an asset into a small, stable "hot" pool only when the metrics justify it.
+
+This is the only proposal here that **structurally fixes** cache pollution rather than detecting and reacting to it. Every bot-detection heuristic will have false negatives; deferred orchestration makes an undetected bot merely _slow_ rather than cache-poisoning. It also converts the hardest requirement - real-time bot classification - into a softer one: we only need to distinguish human-ish from bot-ish traffic _eventually_, on a minutes timescale, to decide promotion into the hot pool.
+
+The mechanics, open questions, and the metrics that feed the promotion decision are detailed in [Deferred orchestration in detail](#deferred-orchestration-in-detail). The one hard prerequisite — making S3-backed tile-serving tolerable with no local copy — is called out as a **TODO** there.
+
 ## Context
 
 What does DLCS do now? 
 
- - We serve the fixed-size thumbs that have been created by an image's configured  [`thumbs` delivery channel](https://dlcs.github.io/public-docs/api-doc/delivery-channels/#thumbs). These are proxied from S3; they are designed to service UIs that request a large number of thumbnails of known size. They do not hit an image server. Although this is called the thumbs delivery channel and the primary use case is UI that shows large numbers of thumbs at once, any size image may be a thumb, and we can store much larger images this way to drive _extremely responsive_ viewing UI [like this one](https://digirati-co-uk.github.io/st-louis-fed-exploded-viewer/?manifest=https://digirati-co-uk.github.io/st-louis-fed-exploded-viewer/b28047345.json).
+ - We serve the fixed-size thumbs that have been created by an image's configured [`thumbs` delivery channel](https://dlcs.github.io/public-docs/api-doc/delivery-channels/#thumbs). These are proxied from S3; they are designed to service UIs that request a large number of thumbnails of known size. They do not hit an image server. Although this is called the thumbs delivery channel and the primary use case is UI that shows large numbers of thumbs at once, any size image may be a thumb, and we can store much larger images this way to drive _extremely responsive_ viewing UI [like this one](https://digirati-co-uk.github.io/st-louis-fed-exploded-viewer/?manifest=https://digirati-co-uk.github.io/st-louis-fed-exploded-viewer/b28047345.json).
  - Requests for /full/{size}/ that cannot be served by a static "thumb" are routed to a configured Cantaloupe instance: [SpecialServer](https://github.com/dlcs/protagonist/issues/30). This is configured to read from S3, but it still copies the file down to a Cantaloupe-managed local storage. This scales out under load, but suffers from a number of issues that make it not-ideal.
  - Other requests (typically tile requests from deep zoom clients) are forwarded to an instance or instances of Cantaloupe that have a mounted Lustre volume, which Cantaloupe (using Kakadu) can perform fast random-access reads on. If an image file is not on this volume, DLCS's Orchestrator proxy will copy it onto the volume from S3, holding up the triggering request in the process. The idea is that the Lustre volume fills up with the most-used images. But automated scraping traffic pollutes the cache: this idea, while sound until a few years ago, no longer holds.
 
-We evict files from the Lustre volume on a simple least-recently-used basis, but when under heavy load, this eviction/scavenging process can fail to keep up with pressure on the volume, leading to more drastic indiscriminate eviction. The same issue affects the SpecialServer instances; although the "support S3 backends" they still need to copy the JP2 locally; each is effectively managing its own orchestration and cache eviction. Under load, eviction can fail to keep up and the box stalls.
+We evict files from the Lustre volume on a simple least-recently-used basis, but when under heavy load, this eviction/scavenging process can fail to keep up with pressure on the volume, leading to more drastic indiscriminate eviction. The same issue affects the SpecialServer instances; although they "support S3 backends", they still need to copy the JP2 locally; each is effectively managing its own orchestration and cache eviction. Under load, eviction can fail to keep up and the box stalls.
 
 ## Principles
 
@@ -38,9 +56,9 @@ We evict files from the Lustre volume on a simple least-recently-used basis, but
 
 But how do we block or throttle the bad traffic and allow the good?
 
-The Orchestrator component in DLCS is the "front of house" - it's a proxy to the underlying image servers, static thumbnails, transcoded AV and other resources. It enforces access control via the IIIF Authorization Flow API, it triggers file copies from S3 to the Lustre volume, it decides which downstream imaage server to route to.
+The Orchestrator component in DLCS is the "front of house" - it's a proxy to the underlying image servers, static thumbnails, transcoded AV and other resources. It enforces access control via the IIIF Authorization Flow API, it triggers file copies from S3 to the Lustre volume, it decides which downstream image server to route to.
 
-After WAF and CLoudfront, it's the "real" DLCS application and could contain arbitrarily complex throttling or blocking strategies.
+After WAF and CloudFront, it's the "real" DLCS application and could contain arbitrarily complex throttling or blocking strategies.
 
 Throttling in Orchestrator is not a good idea. Delaying a response means holding the HTTP connection, the [Kestrel](https://learn.microsoft.com/en-us/aspnet/core/fundamentals/servers/kestrel?view=aspnetcore-10.0) request slot, and any upstream resources open for the duration. Under exactly the load conditions where we would want to throttle, "tar-pitting" multiplies our concurrency problem. The cheap responses are `429 Too Many Requests` with `Retry-After`, or outright blocking. Considerate bots will honour Retry-After; inconsiderate ones get escalated to blocking anyway.
 
@@ -50,7 +68,7 @@ One detection method might be a burst of requests for different images from same
 
 If requests get through WAF, and Orchestrator (or some monitor of the metrics database) thinks they are problematic, how do they get blocked? Does Orchestrator do it? Or does Orchestrator tell WAF?
 
-The latter is possible: AWS WAF IP sets are updatable via API, and rate-based rules can be scoped to URI patterns. A DLCS _Metrics Monitor_ (or whatever watches the metrics database) pushes offending IPs/CIDRs into an IP set with a TTL; CloudFront+WAF enforces it at the edge, before traffic ever reaches Orchestrator. This is much better than blocking in Orchestrator itself, because blocked traffic costs us nothing. Orchestrator-level decisions then only need to cover the softer responses (don't-orchestrate, degrade to slower path)
+The latter is possible: AWS WAF IP sets are updatable via API, and rate-based rules can be scoped to URI patterns. A DLCS _Metrics Monitor_ (or whatever watches the metrics database) pushes offending IPs/CIDRs into an IP set with a TTL; CloudFront+WAF enforces it at the edge, before traffic ever reaches Orchestrator. This is much better than blocking in Orchestrator itself, because blocked traffic costs us nothing. Orchestrator-level decisions then only need to cover the softer responses (don't-orchestrate, degrade to slower path).
 
 
 ## Other people's problems
@@ -77,7 +95,7 @@ Most of these are not really dealing with Image API traffic, and are more conven
 
 All requests to Protagonist (current DLCS version) are via CloudFront. We already log access requests to S3, which we can query using Athena. CloudFront is already tracking usage requests - can we hook into this to get access requests? Can these be stored in a _Metrics Database_ - in PostgreSQL?
 
-For a raw per-request table, Postgres will work at first but billions of rows of append-heavy, scan-heavy data is what *columnar* stores are for. In the diagram above, S3 recieves Cloudfront data in partitioned [Parquet](https://en.wikipedia.org/wiki/Apache_Parquet) format. This is queryable forever via Athena, and is very cheap. Then, an **Aggregator** ([Athena CTAS](https://docs.aws.amazon.com/athena/latest/ug/ctas.html) or a small batch job) writes per-asset rows to PostgreSQL. PostgreSQL is the right place for the per-asset aggregate table (~60m rows max) and for joins against the existing Images table. If we later need fast ad-hoc queries on raw events, we could use [ClickHouse](https://clickhouse.com/). But we may never need it if Athena-over-Parquet covers retrospective analysis and the aggregator covers near-real-time.
+For a raw per-request table, Postgres will work at first but billions of rows of append-heavy, scan-heavy data is better handled by a *columnar* store. In the diagram above, S3 receives CloudFront data in partitioned [Parquet](https://en.wikipedia.org/wiki/Apache_Parquet) format. This is queryable forever via Athena, and is very cheap. Then, an **Aggregator** ([Athena CTAS](https://docs.aws.amazon.com/athena/latest/ug/ctas.html) or a small batch job) writes per-asset rows to PostgreSQL. PostgreSQL is the right place for the per-asset aggregate table (~60m rows max) and for joins against the existing Images table. If we later need fast ad-hoc queries on raw events, we could use [ClickHouse](https://clickhouse.com/). But we may never need it if Athena-over-Parquet covers retrospective analysis and the aggregator covers near-real-time.
 
 #### How can we get stats from CloudFront?
 
@@ -88,35 +106,37 @@ Orchestrator writes custom headers into the response that are very useful for su
  - `x-orchestrated` - (??) whether this particular request triggered the copy from S3 to Lustre
  - `...` - (others)
 
-Can Cloudfront use these? Lambda at edge? If we use origin response we will be able to determine how the image was served via x-proxy-destination header, and x-asset-id header for AssetId (do these 2 headers mean this is the preferred method?). Would/could this slow requests down as we are already using origin request lambda?
+Can CloudFront use these? Lambda at edge? If we use origin response we will be able to determine how the image was served via x-proxy-destination header, and x-asset-id header for AssetId (do these 2 headers mean this is the preferred method?). Would/could this slow requests down as we are already using origin request lambda?
 
 Orchestrator can add any additional headers to the response that will be useful in populating the hypothetical metrics structure below. This means that entries arrive at the metrics store _some time after the request has completed_, but also that Orchestrator has no metric-recording overheads of its own. We should be careful not to invent new headers for Orchestrator to emit that actually cost it significant overhead to determine.
 
 However:
 
-If we capture `x-proxy-destination` / `x-asset-id` via an origin-response Lambda, we only ever see requests that missed the CloudFront cache. For _cost analysis_ that's arguably the traffic we care about, but for bot detection we need the full request picture — a bot hammering a cached tile is invisible to origin-response. Viewer-response fires on every request but adds latency and cost to every request.
+If we capture `x-proxy-destination` / `x-asset-id` via an origin-response Lambda, we only ever see requests that missed the CloudFront cache. For _cost analysis_ that's the traffic we care about, but for bot detection we need the full request picture — a bot hammering a cached tile is invisible to origin-response. Viewer-response fires on every request but adds latency and cost to every request.
 
-CloudFront real-time logs (Kinesis-native, no Lambda@Edge at all) record every request including cache hits, with `x-edge-result-type` telling you hit/miss. **BUT** They don't carry custom origin response headers!
+CloudFront real-time logs (Kinesis-native, no Lambda@Edge at all) record every request including cache hits, with `x-edge-result-type` telling you hit/miss. **BUT** they don't carry custom origin response headers! No `x-proxy-destination` and friends.
 
-How much is actually derivable from the URL path alone? Thumbs vs /full/*/ vs tile is path-shaped.  The **orchestration-specific** facts (orchestrated, which backend served it) could come from Orchestrator's own event stream instead, joined on a correlation ID or just on (asset, timestamp). That avoids Lambda@Edge entirely. It can't slow requests down as it's not in the requests path. But it does mean correlating Orchestrator information with Cloudfront information.
+How much is actually derivable from the URL path alone? Thumbs vs /full/*/ vs tile is path-shaped.  The **orchestration-specific** facts (orchestrated, which backend served it) could come from Orchestrator's own event stream instead, joined on a correlation ID or just on (asset, timestamp). That avoids Lambda@Edge entirely. It can't slow requests down as it's not in the requests path. But it does mean correlating Orchestrator information with CloudFront information.
 
 To repeat:
 
-Real-time logs let you choose from a fixed field list (URI, IP, user-agent, result-type, response bytes, edge location…). They cannot carry custom origin response headers like `x-asset-id`. For DLCS that's _mostly_ fine, because asset ID and request type are derivable from the URI by the transform Lambda. But anything only Orchestrator knows (e.g. "this request triggered orchestration") must arrive by a separate path, such as Orchestrator's own events into the same Firehose or directly into Postgres, joined later on asset + time window, or more likely, Correlation ID. _This needs more design thought_.
+Real-time logs let you choose from a **fixed field list** (URI, IP, user-agent, result-type, response bytes, edge location...). They cannot carry custom origin response headers like `x-asset-id`. For DLCS that's _mostly_ fine, because asset ID and request type are derivable from the URI by the transform Lambda. But anything only Orchestrator knows (e.g. "this request triggered orchestration") must arrive by a separate path, such as Orchestrator's own events into the same Firehose or directly into Postgres, joined later on asset + time window, or more likely, Correlation ID. 
+
+_This needs more design thought_.
 
 
 ### Per request information, from logs
 
 _Scope to image requests only_
 
-Amazon Data Firehose (formerly Kinesis Data Firehose) is a fully managed service that does one job: accept a stream of small records (in this case, Cloudfront logs), buffer them, and periodically flush the batch to a destination — S3, in this case. We don't run servers, manage consumers, or handle retries.
+Amazon Data Firehose (formerly Kinesis Data Firehose) is a fully managed service that does one job: accept a stream of small records (in this case, CloudFront logs), buffer them, and periodically flush the batch to a destination: S3, in this case. We don't run servers, manage consumers, or handle retries.
 
 The core mechanic is the buffer. It has two thresholds:
 
   - Buffer size — e.g. 128 MB
   - Buffer interval — e.g. 300 seconds
 
-Whichever is hit first triggers a flush: Firehose writes everything it has accumulated as one object in S3. This matters enormously for our metrics workload. CloudFront real-time logs for image traffic could be thousands of records per second; written naively that's thousands of tiny S3 objects per second, which is both expensive (PUT requests cost  money) and terrible to query (Athena's performance dies on millions of small files). Firehose turns a firehose of records into a steady drip of a few large, well-sized files per minute. 
+Whichever is hit first triggers a flush: Firehose writes everything it has accumulated as one object in S3. This matters enormously for our metrics workload. CloudFront real-time logs for image traffic could be thousands of records per second; written naively that's thousands of tiny S3 objects per second, which is both expensive (PUT requests cost money) and terrible to query (Athena's performance dies on millions of small files). Firehose turns a firehose of records into a steady drip of a few large, well-sized files per minute. 
 
 CloudFront real-time logs are natively delivered to a Kinesis Data Stream, and Firehose can read straight from that stream. So the pipeline is:
 
@@ -157,7 +177,7 @@ Format conversion needs a *schema*, which Firehose reads from a Glue Data Catalo
 
 1. Region type, algorithm for computing this... simple: Is it square, power of two or from edge if not square? Better: Is it a valid tile from the image's info.json?
 2. OSD sub tile. OSD makes (or at least used to make) a burst of requests smaller than the specified tile size, which just waste the server's time.
-3. Destination - how did we service this request? Did it even reach orchestrator? Where did orchestrator route it to? (is this coming from Cloudfront?)
+3. Destination - how did we service this request? Did it even reach orchestrator? Where did orchestrator route it to? (is this coming from CloudFront?)
 4. Do we want to query on quality.format (store a specific value for default.jpg, for example?) Or is that overoptimisation?
 5. The incoming metrics aggregator could obtain and cache (in memory) the info.json which is needed to compute some of the above. If we are confident that we know what the `tiles` property of an info.json will be just from its height and width (fixed tiles, ignore any individual JP2 tile settings - like IIPImage) then we can answer the question "is this a valid tile request" from an algorithm (already implemented in iiif-net). This confidence is not necessarily justified - it depends on the image server (e.g., IIPImage will always generate a fixed 256 tile set, other image servers inspect the tiles and precincts of the actual JPEG 2000 to compute the ideal tile set(s)).
 
@@ -181,11 +201,11 @@ Date/hour partitioning is Firehose's default behaviour and is the right choice h
 
 #### Latency
 
-Records appear in S3 a few minutes after the request (buffer interval + delivery). That's fine for the scavenger/optimiser and for retrospective analysis, but it is not a real-time bot-blocking path. For sub-minute reaction, that consumer should read the Kinesis stream directly (a second consumer alongside Firehose, Kinesis supports this natively) and keep its own short-window state. Same ingest, two consumers with different latency needs; this cleanly resolves the RFC's tension between "rich forensic store" and "fast enough to act."
+Records appear in S3 a few minutes after the request (buffer interval + delivery). That's fine for the scavenger/optimiser and for retrospective analysis, but it is not a real-time bot-blocking path. For sub-minute reaction, that consumer should read the Kinesis stream directly (a second consumer alongside Firehose, Kinesis supports this natively) and keep its own short-window state. Same ingest, two consumers with different latency needs: "rich forensic store" vs "fast enough to act."
 
 #### Costs
 
-Firehose is priced per GB ingested (~$0.03/GB plus a little for format conversion), the Kinesis stream a few cents per hour per shard, S3 storage very little at these compressed volumes. The recurring cost that needs watching is Athena scans — which is exactly what Parquet + partitioning minimise. There's no idle cost: nothing in this pipeline incurs costs when traffic is quiet.
+Firehose is priced per GB ingested (~$0.03/GB plus a little for format conversion), the Kinesis stream a few cents per hour per shard, S3 storage very little at these compressed volumes. The recurring cost that can escalate is Athena scans, which is exactly what Parquet + partitioning minimise. There's no idle cost: nothing in this pipeline incurs costs when traffic is quiet.
 
 #### Compared with current CF+Athena
 
@@ -230,7 +250,7 @@ This can join to the existing DLCS Images table for:
  - location(s) (nas?)
  - open/not open (affects cloudfront cache)
 
-This table will be at least at big (eventually) as the number of rows in the DLCS Images table (~60m). But depending on our start/end partitioning approach, it could be multiples of this.
+This table will be at least as big (eventually) as the number of rows in the DLCS Images table (~60m). But depending on our start/end partitioning approach, it could be multiples of this.
 
 Notes
 
@@ -240,15 +260,9 @@ Notes
 
 ### Gather orchestration stats
 
-Given that we can only gather standard Cloudfront information, we need another way to feed and correlate Orchestrator-specific information into the store.
+Given that we can only gather standard CloudFront information, we need another way to feed and correlate Orchestrator-specific information into the store.
 
 TODO
-
-Orchestrator could raise events? We need to guarantee delivery, a little late is likely fine.
-
- - Write direct to postgres?
- - Raise an SNS message?
- - Raise CloudWatch metric?
 
 What other changes would be required for Orchestrator? 
 
@@ -270,7 +284,9 @@ Should we consider EBS multi-attach volume? What are the pros/cons?
 
 Multiple volumes. The optimizer can move between (logic TBC - e.g. big artworks in one and smaller/easier churn in another). Above re: ImageLocation.s3 refers to this behaviour.
 
-## Architectural alternative
+## Deferred orchestration in detail
+
+> This section gives the mechanics behind [the central proposal](#the-central-proposal-deferred-orchestration) at the top of the document.
 
 The above gathers the metrics we need for analysis of traffic for costs, cache eviction (scavenger) and perhaps bot-detection (see below). But we still have the problem of _having to orchestrate_ - having to pollute our expensive cache for what might be a single drive-by request for a non-full region of an image, or a single view of a page that renders the top layer of tiles in OpenSeadragon that a user never zooms into. We have to orchestrate for these because we can only serve such requests from an image server that has the image mounted on a fast random access filesystem (not S3). If we naively use Cantaloupe with an S3 back end (because it appears to solve the problem) we will have terrible performance and no control over an optimal cache at all. 
 
@@ -284,16 +300,21 @@ This would allow an orchestration decision to be based on retrospective metrics,
 
 This restores the original benefit of the orchestrated cache. In the pre-bot era, this cache represents the left-hand peak of the [long-tail distribution of traffic generated by real people](https://github.com/dlcs/protagonist/issues/47). This worked well until only a few years ago and is still the architectural core principle of the DLCS. If we can identify one-off, drive-by or otherwise non-human looking traffic, even for requests that today MUST be orchestrated, we can serve them through slower image servers than can still scale out if necessary. We can still maintain a pool (e.g., 1TB or 2TB) of "hot" images, on fast SSDs mounted on the image server for random access. But this pool is much more stable. With bot traffic, the cache is in a constant state of churn.
 
-This of course still requires the ability to differentiate the types of traffic.
+This of course still requires the ability to differentiate the types of traffic. `/full/*/` requests can route to a better SpecialServer. Tile requests for unorchestrated files can route initially to a different server that can meet this traffic from S3. 
 
-> [!TIP]
-> Deferred orchestration (serve first requests from a slower S3-backed image server, orchestrate only when metrics say the asset is genuinely popular) is the only proposal here that structurally fixes the cache-pollution problem rather than detecting and reacting to it. Every bot-detection heuristic will have false negatives; deferred orchestration makes undetected bots merely slow rather than cache-poisoning. It also converts the hardest requirement - real-time bot classification - into a softer one: we only need to distinguish human-ish from bot-ish traffic *eventually*, on a minutes timescale, to decide promotion into the hot pool. 
+If the tile requests keep coming (to be defined), AND they don't look like an automated tile-stitcher (which we would hope to block), then the source image can eventually be orchestrated.
 
-**TODO** - How do we make performance for tile-serving tolerable from an S3 back-end with no local file copy? We may have the answer...
+There is an interesting counter-tension here though. If an image is hugely popular - all its tiles are requested many times over - then we would expect CloudFront to kick in and cache those tile responses. But it isn't going to do that for all CDN edge locations, and for all tiles. It's popular, hundreds of people are viewing it in a deep zoom client, and many of them are zooming right in. But someone at a remote edge who zooms into the corner, triggering a request for the one tile not yet in Cloudfront at that edge - they would currently trigger an orchestration. But maybe not in future, because the smattering of "filling in the gaps" tile requests that come through for a popular image whose tiles are _mostly_ now present in CloudFront are not enough to trigger a reorchestration.
+
+There are many dimensions to adjust here to optimise performance, but until any form of deferred orchestration is possible, they are not available.
+
+**TODO** - How do we make performance for tile-serving tolerable from an S3 back-end with no local file copy? 
+
+> We are still working on image server enhancements
 
 ## 🤖 Dealing with bots 🤖
 
-If gathered from Cloudfront, the metrics data is post-request. This has benefits and weaknesses. 
+If gathered from CloudFront, the metrics data is post-request. This has benefits and weaknesses. 
 
 Our instinct is that many examples of IIIF traffic, especially image traffic, could only be judged as "bad bot" after evaluating multiple requests. A tile-stitcher script would not be obvious from just one request. If the evaluation of traffic is happening reasonably quickly (i.e., not a once-a-month report generation), and we could decide that traffic is a bot so we can block, or at least not-orchestrate the image it's hitting.
 
@@ -304,9 +325,11 @@ How do we identify a bot?
 
 // TODO - one of the hard parts! - We now have the metrics but how do we use them to detect bots!!!
 
-What do we do if we do identify one?
+Are the metrics streams discussed so far real-time enough for orchestration decisions, but not real-time enough to stamp on a bit before it does harm?
 
-Bot detection now influences orchestration, so a false positive doesn't just rate-limit a user, it silently degrades image performance for them. The wellcomecollection.org viewer needs to be effectively unblockable (allowlist by origin/referer plus, if possible, the signed short-lived token idea hinted at in the API Keys section. Spoofable in principle, but it raises the bar and we only need it to gate priority, not access).
+What do we do if we do identify a bot?
+
+Bot detection now influences orchestration, so a false positive doesn't just rate-limit a user, it silently degrades image performance for them. The wellcomecollection.org viewer needs to be effectively unblockable (allowlist by origin/referer plus, if possible, the signed short-lived token idea hinted at in the API Keys section below. Spoofable in principle, but it raises the bar and we only need it to gate priority, not access).
 
 ### Firewall strategies
 
@@ -318,7 +341,7 @@ What can't they do because it's specific to IIIF traffic, especially image traff
 
 This doesn't bother us so much at Wellcome, because Manifests are static and proxied. But is still a magnet for bots, and is problematic for dumb bots just following links in JSON. JSON-LD has a lot of links.
 
-We need to ensure we *fail-fast* on requests that can't serve a response, e.g., Canvas `id`, Range `id` - don't waste resources on them (pattern match at Cloudfront?)
+We need to ensure we *fail-fast* on requests that can't serve a response, e.g., Canvas `id`, Range `id` - don't waste resources on them (pattern match at CloudFront?)
 
 Discussion of current WAF rules for iiif.wellcomecollection.org
 
@@ -344,7 +367,7 @@ As the disk nears a threshold, we need to start deleting orchestrated files
 Example bad case
  - a very large artwork that is viewed intermittently. But often enough that it keeps getting re-orchestrated just after it's been scavenged
 
-Conversely a very small jp2 that won't free up much space and is occasionally viewed
+Conversely a very small jp2 that won't free up much space and is occasionally viewed may be worth keeping - although again, "good-enough" non-orchestrated image server performance is going to be easier for small images.
 
 ### Scavenging based on retrospective metrics
 
