@@ -4,7 +4,7 @@
 
 This is proposal to synchronize library location and item holdings from Axiell Collections(Content Management System) into FOLIO (Library Management system) with strict requirements for idempotency, auditability, and graceful error isolation.
 
-**Last modified:** 2026-06-22
+**Last modified:** 2026-06-23T00:00:00+00:00
 
 ## Table of Contents
 
