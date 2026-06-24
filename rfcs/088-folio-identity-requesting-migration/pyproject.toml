@@ -1,0 +1,20 @@
+[project]
+name = "folio-identity-rfc-docs"
+version = "0.1.0"
+description = "Validate and render the RFC 088 v2 identity API OpenAPI spec to Markdown"
+requires-python = ">=3.12"
+dependencies = []
+
+[dependency-groups]
+# Tooling for render_docs.py. Versions match the prototype's folio-api dev group.
+dev = [
+    "pyyaml>=6",
+    "openapi-spec-validator>=0.7",
+]
+
+[tool.uv]
+# Not a distributable package, just a home for the docs tooling.
+package = false
+
+# Regenerate the human-readable docs after editing openapi.yaml:
+#   uv run python render_docs.py
