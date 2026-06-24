@@ -118,6 +118,7 @@ parser serve every response:
 ```json
 {
   "canonicalId": "a2345bcd",
+  "type": "Work",
   "sourceIdentifiers": [
     { "type": "Work", "sourceSystem": "sierra-system-number", "value": "b1161044x", "isAlias": false, "createdAt": "2019-03-04T10:14:22Z" },
     { "type": "Work", "sourceSystem": "axiell-collections-id", "value": "12345", "isAlias": true, "createdAt": "2026-02-10T12:00:00Z" }
@@ -129,6 +130,9 @@ parser serve every response:
   canonical id can carry rows of differing types (cross-type predecessors are allowed).
 - **`isAlias`** is `false` for the earliest-`createdAt` row (the original) and `true` for later,
   inherited rows. The API derives it so consumers do not have to.
+- **Top-level `type`** copies the ontology type of the original row (the single `isAlias=false`
+  row), so consumers can read the canonical id's type without scanning the set. With cross-type
+  predecessors it reflects the original and may differ from a later alias's per-row `type`.
 - **`sourceSystem`** is an open set, not enum-constrained, so a system the gateway has not been told
   about resolves to `404` rather than a spurious `400`.
 
@@ -336,8 +340,8 @@ beyond `Work` / `Image` / `Item`).
 
 ## Open questions
 
-Each has a prototype direction. Those settled during review are marked; the rest still have an
-unsettled integration point.
+Each has a prototype direction. Items prefixed **Decided** were resolved during review; the rest
+still have an unsettled integration point.
 
 1. **Caching and cost.** The cache placement (edge/CloudFront as primary vs the API Gateway stage
    cache) is load-bearing for cost, because it sets how often a request reaches the database, and is
@@ -371,12 +375,12 @@ unsettled integration point.
    changes are described at bib/work level; item-level predecessor emission needs confirming with the
    pipeline workstream.
 
-4. **No bare-value reverse lookup for now (RFC 085).** RFC 085's identity service is WorkID-level:
+4. **Decided: no bare-value reverse lookup for now (RFC 085).** RFC 085's identity service is WorkID-level:
    given a work identifier it would return the full set of that work's current and previous
    identifiers (the sibling set this API already returns, so no new response shape). It wants
    `sourceSystem` to be an optional qualifier: query bare when the value is unambiguous
    (`?q=b18035978`), adding `sourceSystem` to disambiguate a short or shared value
-   (`?q=1234&sourceSystem=axiell-collections-id`). Settled: do not add the unqualified bare form now.
+   (`?q=1234&sourceSystem=axiell-collections-id`). We do not add the unqualified bare form now.
    `sourceSystem` stays a required key component, and the bare form is added only if a consumer
    explicitly requires it. The cost is the reason: an unqualified query cannot use the primary-key
    prefix so it needs a secondary index on `SourceId`, and a bare value can resolve to different
@@ -386,9 +390,9 @@ unsettled integration point.
    new-to-old direction that returns a filtered set (an absent sibling still returning canonical with
    a `200`, not a `404`), is deferred on the same basis.
 
-5. **`isAlias`, not an `obsolete` flag (RFC 085).** RFC 085 raised possibly tagging identifiers with
+5. **Decided: `isAlias`, not an `obsolete` flag (RFC 085).** RFC 085 raised possibly tagging identifiers with
    an `obsolete` flag (source system retired), adjacent to but distinct from `isAlias` (inherited
-   predecessor, derived from `createdAt`). Settled in favour of `isAlias`: the API returns the full
+   predecessor, derived from `createdAt`). The API returns the full
    sibling set with `isAlias` and does not model `obsolete`. The two are not the same axis: in the
    Sierra → FOLIO migration the original (`isAlias=false`) is the retired id and the later alias
    (`isAlias=true`) is the live one, so this is a decision not to model retired-ness, not a claim
@@ -397,16 +401,17 @@ unsettled integration point.
    `obsolete` would be mutable state the registry does not hold. A genuine retired-ness signal, if
    ever needed, is a separate addition rather than an overload of `isAlias`.
 
-6. **`type` enum scoped to the three types the API needs.** The live registry holds types
-   beyond `Work` / `Image` / `Item` (e.g. `Concept`). Settled: the contract scopes
+6. **Decided: `type` enum scoped to the three types the API needs.** The live registry holds types
+   beyond `Work` / `Image` / `Item` (e.g. `Concept`). The contract scopes
    `SourceIdentifier.type` to the three types the API needs today and extends the enum on demand as
    further types are required, rather than modelling the full registry up front.
 
-7. **`type` stays per-row only.** `type` is per-row, and a canonical id can carry rows of differing
-   types (cross-type predecessors are allowed). Settled: do not hoist a convenience top-level
-   `type`. A single top-level value would have to pick one row's type for a mixed-type set and could
-   then contradict the others, so the per-row representation is kept and the mixed-type ambiguity is
-   left to consumers rather than resolved here.
+7. **Decided: top-level `type`, taken from the original row.** Each row carries its own `type`, and
+   a canonical id can carry rows of differing types (cross-type predecessors are allowed). Hoist a
+   convenience top-level `type` onto the `IdentifierSet`, populated from the original row (the single
+   `isAlias=false` row), so consumers can read the canonical id's type without scanning the set. The
+   original is unambiguous because exactly one row has `isAlias=false`; with a mixed-type set the
+   top-level value reflects that original and may differ from a later alias.
 
 ---
 

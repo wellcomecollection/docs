@@ -120,6 +120,7 @@ paths:
                   summary: include=siblings
                   value:
                     canonicalId: a2345bcd
+                    type: Work
                     sourceIdentifiers:
                       - type: Work
                         sourceSystem: sierra-system-number
@@ -290,12 +291,22 @@ components:
     IdentifierSet:
       type: object
       description: A canonical id and the full set of source identifiers sharing it.
-      required: [canonicalId, sourceIdentifiers]
+      required: [canonicalId, type, sourceIdentifiers]
       properties:
         canonicalId:
           type: string
           pattern: '^[a-hjkmnp-z][a-hjkmnp-z2-9]{7}$'
           example: a2345bcd
+        type:
+          type: string
+          description: >-
+            Ontology type of the canonical id, taken from the original row (the
+            single isAlias=false row), so consumers need not scan the set. A
+            convenience copy of that row's per-row type; with cross-type
+            predecessors it reflects the original and may differ from a later
+            alias.
+          enum: [Work, Image, Item]
+          example: Work
         sourceIdentifiers:
           type: array
           description: Ordered by createdAt ascending; original first.

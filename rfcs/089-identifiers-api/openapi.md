@@ -91,11 +91,12 @@ A single source identifier mapped to a canonical id.
 
 A canonical id and the full set of source identifiers sharing it.
 
-**Required:** `canonicalId`, `sourceIdentifiers`
+**Required:** `canonicalId`, `type`, `sourceIdentifiers`
 
 | Property | Type | Required | Description |
 |---|---|---|---|
 | `canonicalId` | string | yes |  |
+| `type` | string (enum: Work, Image, Item) | yes | Ontology type of the canonical id, taken from the original row (the single isAlias=false row), so consumers need not scan the set. A convenience copy of that row's per-row type; with cross-type predecessors it reflects the original and may differ from a later alias. |
 | `sourceIdentifiers` | array of [`SourceIdentifier`](#sourceidentifier) | yes | Ordered by createdAt ascending; original first. |
 
 ### CanonicalIdRef
