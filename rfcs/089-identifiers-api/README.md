@@ -371,19 +371,20 @@ unsettled integration point.
    changes are described at bib/work level; item-level predecessor emission needs confirming with the
    pipeline workstream.
 
-4. **Bare-value reverse lookup (RFC 085).** The DDS wants to query by bare value without a
-   `sourceSystem` (`?q=b18035978`). The reverse path makes `sourceSystem` a required key component
-   (it is part of the primary key), so a bare-value lookup cannot use the primary-key prefix and
-   would need a secondary index on `SourceId`. It is also not just a cost question: the same bare
-   value can exist under different source systems and resolve to different canonical ids, so a
-   bare-value query can be ambiguous and may have to return multiple candidates or force
-   disambiguation. Decide whether to support it, and at what cost. Not part of the committed
-   contract. A related projection to settle together is a specific-sibling
-   include on the reverse lookup (`?include=sierra-system-number`), which is more cacheable than the
-   full sibling set, but only in the immutable new-to-old direction (e.g. folio to bNumber, which is
-   the digitisation case); the old-to-new direction may just be un-migrated yet and stays bounded.
-   Because the registry is one-to-many it returns a filtered set, not a single value, and an absent
-   requested sibling must return canonical with a `200` rather than a `404`.
+4. **No bare-value reverse lookup for now (RFC 085).** RFC 085's identity service is WorkID-level:
+   given a work identifier it would return the full set of that work's current and previous
+   identifiers (the sibling set this API already returns, so no new response shape). It wants
+   `sourceSystem` to be an optional qualifier: query bare when the value is unambiguous
+   (`?q=b18035978`), adding `sourceSystem` to disambiguate a short or shared value
+   (`?q=1234&sourceSystem=axiell-collections-id`). Settled: do not add the unqualified bare form now.
+   `sourceSystem` stays a required key component, and the bare form is added only if a consumer
+   explicitly requires it. The cost is the reason: an unqualified query cannot use the primary-key
+   prefix so it needs a secondary index on `SourceId`, and a bare value can resolve to different
+   canonical ids across source systems (e.g. a b-number under `sierra-system-number` vs `mets`),
+   needing a multiple-match rule. The related specific-sibling include
+   (`?include=sierra-system-number`), a more cacheable projection of the reverse set in the immutable
+   new-to-old direction that returns a filtered set (an absent sibling still returning canonical with
+   a `200`, not a `404`), is deferred on the same basis.
 
 5. **`isAlias`, not an `obsolete` flag (RFC 085).** RFC 085 raised possibly tagging identifiers with
    an `obsolete` flag (source system retired), adjacent to but distinct from `isAlias` (inherited
@@ -435,7 +436,5 @@ unsettled integration point.
 3. **Unblock requesting** (open questions 2 and 3): confirm with the catalogue-pipeline workstream
    that FOLIO items are ingested and `folio-item-id` predecessors are emitted at item level, so the
    requesting translation has data.
-4. **Settle the bare-value reverse lookup with RFC 085** (open question 4): whether to support it,
-   and at what cost.
-5. **Productionise**: the Terraform for the REST API, the Lambda, the API keys and
+4. **Productionise**: the Terraform for the REST API, the Lambda, the API keys and
    per-consumer throttle, and the chosen (edge) cache, deployed to a development environment first.
