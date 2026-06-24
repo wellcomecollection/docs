@@ -353,7 +353,11 @@ Each has a prototype direction but an unsettled integration point.
    ↔ FOLIO item UUID) has no data in the registry yet: `folio-item-id` identifiers are absent. This
    API cannot serve that translation until the catalogue pipeline ingests FOLIO items and the ID
    Minter records `folio-item-id` rows. Confirm the pipeline change with the catalogue-pipeline
-   workstream.
+   workstream. A related point to settle there: FOLIO records carry both a UUID and an HRID, so
+   confirm which form the OAI-PMH feed delivers. The registry already maps many source rows to one
+   canonical id, so the Minter could record both a UUID and an HRID row per item and this API would
+   serve HRID ↔ UUID translation directly; since okapi already resolves the two forms natively,
+   storing both is an optimisation rather than a requirement.
 
 3. **Item canonical-id stability through the FOLIO migration.** Items are minted canonically today,
    but the canonical id must survive Sierra → FOLIO via RFC 083 predecessor inheritance at item
