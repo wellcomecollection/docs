@@ -384,9 +384,16 @@ Each has a prototype direction but an unsettled integration point.
    Because the registry is one-to-many it returns a filtered set, not a single value, and an absent
    requested sibling must return canonical with a `200` rather than a `404`.
 
-5. **`isAlias` vs `obsolete` (RFC 085).** RFC 085 wants identifiers tagged by type and possibly an
-   `obsolete` flag (source system retired). That is adjacent to `isAlias` (inherited predecessor) but
-   not identical. Reconcile the two so one representation serves both consumers.
+5. **`isAlias`, not an `obsolete` flag (RFC 085).** RFC 085 raised possibly tagging identifiers with
+   an `obsolete` flag (source system retired), adjacent to but distinct from `isAlias` (inherited
+   predecessor, derived from `createdAt`). Settled in favour of `isAlias`: the API returns the full
+   sibling set with `isAlias` and does not model `obsolete`. The two are not the same axis: in the
+   Sierra → FOLIO migration the original (`isAlias=false`) is the retired id and the later alias
+   (`isAlias=true`) is the live one, so this is a decision not to model retired-ness, not a claim
+   that `isAlias` encodes it. The DDS redirect resolves any source form to its canonical id from the
+   full set, which needs no retired-ness signal, and `isAlias` stays derivable from the data where
+   `obsolete` would be mutable state the registry does not hold. A genuine retired-ness signal, if
+   ever needed, is a separate addition rather than an overload of `isAlias`.
 
 6. **The `type` enum vs reality.** The live registry holds types beyond `Work` / `Image` / `Item`
    (e.g. `Concept`). The contract scopes `SourceIdentifier.type` to the three types the API needs
@@ -425,7 +432,7 @@ Each has a prototype direction but an unsettled integration point.
 3. **Unblock requesting** (open questions 2 and 3): confirm with the catalogue-pipeline workstream
    that FOLIO items are ingested and `folio-item-id` predecessors are emitted at item level, so the
    requesting translation has data.
-4. **Settle the contract edges with RFC 085** (open questions 4 to 7): the bare-value lookup, the
-   `isAlias`/`obsolete` reconciliation, the `type` enum, and whether to hoist a top-level `type`.
+4. **Settle the contract edges with RFC 085** (open questions 4, 6 and 7): the bare-value lookup, the
+   `type` enum, and whether to hoist a top-level `type`.
 5. **Productionise**: the Terraform for the REST API, the Lambda, the API keys and
    per-consumer throttle, and the chosen (edge) cache, deployed to a development environment first.
