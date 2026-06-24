@@ -364,8 +364,11 @@ Each has a prototype direction but an unsettled integration point.
 4. **Bare-value reverse lookup (RFC 085).** The DDS wants to query by bare value without a
    `sourceSystem` (`?q=b18035978`). The reverse path makes `sourceSystem` a required key component
    (it is part of the primary key), so a bare-value lookup cannot use the primary-key prefix and
-   would need a secondary index on `SourceId`. Decide whether to support it, and at what cost. Not
-   part of the committed contract. A related projection to settle together is a specific-sibling
+   would need a secondary index on `SourceId`. It is also not just a cost question: the same bare
+   value can exist under different source systems and resolve to different canonical ids, so a
+   bare-value query can be ambiguous and may have to return multiple candidates or force
+   disambiguation. Decide whether to support it, and at what cost. Not part of the committed
+   contract. A related projection to settle together is a specific-sibling
    include on the reverse lookup (`?include=sierra-system-number`), which is more cacheable than the
    full sibling set, but only in the immutable new-to-old direction (e.g. folio to bNumber, which is
    the digitisation case); the old-to-new direction may just be un-migrated yet and stays bounded.
