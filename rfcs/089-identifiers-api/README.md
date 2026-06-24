@@ -63,7 +63,9 @@ moves between source systems, the new source identifier is added to the **same**
 **one-to-many**: a single canonical id can carry an original source identifier plus one or more
 inherited aliases. This shapes much of the contract.
 
-**The canonical-first principle.** Canonical identifiers are the currency everywhere public. Source
+### The canonical-first principle
+
+Canonical identifiers are the currency everywhere public. Source
 identifiers appear only at the two unavoidable edges: **ingest** (the catalogue pipeline, which
 reads source records) and the **FOLIO boundary** (holds are placed on FOLIO item UUIDs). Everything
 between speaks canonical, for both works and items. The problem this API solves is that the two
@@ -76,7 +78,9 @@ The principle covers catalogue-level entities (works, items). It does **not** ex
 IIIF structure (canvases, manifestations, files), which RFC 085 keeps at the Work-id level and
 filename/digest-derived below that.
 
-**The two consumers.** Both are internal server-side services, not anonymous public browsers, and
+### The two consumers
+
+Both are internal server-side services, not anonymous public browsers, and
 both exercise *both* lookup directions, which is what justifies keeping forward and reverse as
 distinct operations:
 
@@ -196,7 +200,7 @@ graph LR
 | Datastore | Aurora Serverless v2, kept (not DynamoDB) | One store, simpler infra; the same registry the ID Minter writes to. |
 | DB access | RDS Data API | HTTP-based, no persistent connections to exhaust under Lambda concurrency; lower ops than RDS Proxy. |
 
-**Service boundary.** A read-only projection over the Aurora ID Registry. All writes belong to the
+The service is a read-only projection over the Aurora ID Registry, and all writes belong to the
 ID Minter. This API never mints, never invalidates on write, and its only freshness concern is alias
 growth during the migration window. In the prototype the read-only contract is enforced in the
 Aurora backend by a guard that refuses any non-`SELECT` statement.
@@ -221,9 +225,10 @@ Consequences for the two lookups:
 - **Original vs alias** is derived from `CreatedAt` (earliest = original) and surfaced as the
   explicit `isAlias` flag so clients do not re-derive it.
 
-**Schema finding (verified against the live development cluster).** The tables are snake_case
-(`canonical_ids`, `identifiers`) but the **columns are PascalCase** (`CanonicalId`, `OntologyType`,
-`SourceSystem`, `SourceId`, `CreatedAt`, `Status`). `CreatedAt` is a timezone-naive MySQL `DATETIME`;
+Verifying the model against the live development cluster surfaced one schema detail worth
+recording. The tables are snake_case (`canonical_ids`, `identifiers`) but the **columns are
+PascalCase** (`CanonicalId`, `OntologyType`, `SourceSystem`, `SourceId`, `CreatedAt`, `Status`).
+`CreatedAt` is a timezone-naive MySQL `DATETIME`;
 the API normalises it to ISO-8601 UTC. The table is large enough that a full `COUNT(*)` times out, so
 the service issues only the two indexed lookups above.
 
@@ -259,7 +264,7 @@ per-consumer quota. So the strategy is to cache as far out and as aggressively a
 bounded only by how mutable each response is during the migration window. The topology is flagged
 here and the unresolved parts are tracked under [Open questions](#open-questions).
 
-**Push the cache to the edge.** Because the goal is to keep requests away from the database, the
+Because the goal is to keep requests away from the database, the
 cache should sit as far in front of it as possible. An **edge cache (CloudFront)** in front of API
 Gateway is the candidate primary cache: a hit is served at the edge and never reaches the gateway,
 the Lambda, or Aurora, which saves the most. (An earlier framing rejected the edge cache because a
@@ -268,7 +273,7 @@ cost as the concern and no billing quota, an uncounted hit that never touches th
 want.) The API Gateway **stage cache** remains available as a secondary layer, but it sits behind the
 gateway, so it saves less than an edge hit. This is a candidate, not a decision.
 
-**Freshness is direction- and time-dependent.**
+Freshness depends on both the lookup direction and the migration timeline:
 
 | Response | Freshness | Treatment |
 |---|---|---|
