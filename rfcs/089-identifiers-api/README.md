@@ -339,7 +339,9 @@ Each has a prototype direction but an unsettled integration point.
    not yet decided; the edge is the candidate. Sub-questions: the cache **hit ratio vs consumer
    access patterns** (the saving depends on how repetitive requests are: immutable bare-reverse
    lookups cache well, but if consumers mostly fetch unique ids once the saving is low and the
-   throttle carries more weight); the concrete `max-age` values for the bounded (migration) and
+   throttle carries more weight; the two expected clients differ here, with digitisation metadata
+   ingestion fetching mostly unique ids and the Items API more likely to repeat requests); the
+   concrete `max-age` values for the bounded (migration) and
    relaxed (post-switchover) phases; whether the `ETag` should stay a weak validator from
    `(row_count, max(createdAt))` or move to a content hash; concrete **per-consumer throttle limits**
    (the database safety valve); and the **cost-attribution mechanism** (edge/access logs keyed by API
