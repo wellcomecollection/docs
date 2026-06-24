@@ -388,7 +388,7 @@ catalogue error shape on item-requests). Each v1 operation has one of these disp
 | `PUT /users/{userId}/deletion-request` | keep-compat (Auth0-backed + email), extended | Re-validates password, emails admin + user (before recording, per v1), **deactivates the FOLIO patron and tags it `delete-requested`** (a v2 extension so the library-side record reflects the pending deletion immediately), then blocks the Auth0 account. Actual account removal is [open question 3](#open-questions). |
 | `POST /users/{userId}/send-verification-email` | keep-compat (Auth0-backed) | Moved into v2 so the website BFF calls one API and the Management-API credential stays server-side in one place. |
 | `PUT /users/{userId}/registration` (M2M) | keep-compat (reimplement-on-FOLIO) | Writes the name to FOLIO, guarded by v1's placeholder-name semantics: new signups carry the `Auth0_Registration_temp*` names until this route replaces them; the name may only be completed, never changed. |
-| `GET /users/{userId}/item-requests` | keep-compat (reimplement-on-FOLIO) | Translates mod-patron holds into the website's `RequestsList`. Requires reverse identifier translation (FOLIO item UUIDs → canonical item ids, `workId`, `workTitle`); see [open question 1](#open-questions). |
+| `GET /users/{userId}/item-requests` | keep-compat (reimplement-on-FOLIO) | Translates mod-patron holds into the website's `RequestsList`. Requires reverse identifier translation (FOLIO item UUIDs → canonical item ids, `workId`); see [open question 1](#open-questions). |
 | `POST /users/{userId}/item-requests` | keep-compat (reimplement-on-FOLIO) | Accepts `{workId, itemId, pickupDate, type}` where `itemId` is the canonical catalogue id; forward-translates to the FOLIO item UUID, places the hold, returns 202, maps FOLIO errors to `WellcomeApiError`. Business rules: see [open question 2](#open-questions). |
 
 **New in v2 (not website-facing, or new capability):**
@@ -544,7 +544,7 @@ These remain to be resolved before cutover. Each has a prototype direction but a
 integration point.
 
 1. **Identifier translation for requesting.** The requesting routes must translate canonical
-   catalogue item ids to and from FOLIO item UUIDs and derive `workId` / `workTitle`. The decision
+   catalogue item ids to and from FOLIO item UUIDs and derive `workId`. The decision
    is to look these up in our **identifiers database** (the platform id-minter store), rather than
    the catalogue API the current requests service queries, applying the multi-bib rule the current
    service documents (an item on several works resolves to the work with the lowest alphabetical
