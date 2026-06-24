@@ -174,7 +174,7 @@ graph LR
 
   subgraph AWS
     GW["API Gateway<br/>REST API<br/>(x-api-key + throttle)"]
-    L["Identifiers Lambda<br/>(ARM64)"]
+    L["Identifiers Lambda"]
   end
 
   REG[("Aurora Serverless v2<br/>ID Registry")]
@@ -190,7 +190,6 @@ graph LR
 | Area | Decision | Why |
 |---|---|---|
 | Compute | API Gateway → Lambda | Serverless, scales to near-zero, matches a sparse cacheable lookup. |
-| Lambda arch | ARM64 (Graviton) | ~20% cheaper for identical work; the handler is trivially portable. |
 | Gateway type | **REST API (v1)**, not HTTP API | API keys and per-consumer throttling are native REST features; HTTP API would need a Lambda authorizer (more moving parts). |
 | Auth | API key in `x-api-key`, validated by the gateway | Identifies each consumer for cost attribution; no custom authorizer code. |
 | Throttling | Per-consumer throttle bound to the stage | Safety valve capping cache-miss load on the database; not a billing quota. |
@@ -416,5 +415,5 @@ Each has a prototype direction but an unsettled integration point.
    requesting translation has data.
 4. **Settle the contract edges with RFC 085** (open questions 4 to 7): the bare-value lookup, the
    `isAlias`/`obsolete` reconciliation, the `type` enum, and whether to hoist a top-level `type`.
-5. **Productionise**: the Terraform for the REST API, the Lambda (ARM64), the API keys and
+5. **Productionise**: the Terraform for the REST API, the Lambda, the API keys and
    per-consumer throttle, and the chosen (edge) cache, deployed to a development environment first.
