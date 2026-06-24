@@ -336,7 +336,8 @@ beyond `Work` / `Image` / `Item`).
 
 ## Open questions
 
-Each has a prototype direction but an unsettled integration point.
+Each has a prototype direction. Those settled during review are marked; the rest still have an
+unsettled integration point.
 
 1. **Caching and cost.** The cache placement (edge/CloudFront as primary vs the API Gateway stage
    cache) is load-bearing for cost, because it sets how often a request reaches the database, and is
@@ -395,10 +396,10 @@ Each has a prototype direction but an unsettled integration point.
    `obsolete` would be mutable state the registry does not hold. A genuine retired-ness signal, if
    ever needed, is a separate addition rather than an overload of `isAlias`.
 
-6. **The `type` enum vs reality.** The live registry holds types beyond `Work` / `Image` / `Item`
-   (e.g. `Concept`). The contract scopes `SourceIdentifier.type` to the three types the API needs
-   today and extends the enum on demand as further types are required, rather than modelling the full
-   registry up front.
+6. **`type` enum scoped to the three types the API needs.** The live registry holds types
+   beyond `Work` / `Image` / `Item` (e.g. `Concept`). Settled: the contract scopes
+   `SourceIdentifier.type` to the three types the API needs today and extends the enum on demand as
+   further types are required, rather than modelling the full registry up front.
 
 7. **Top-level `type`.** `type` is currently per-row only (a canonical id can carry rows of differing
    types). Decide whether to also hoist a convenience top-level `type`, accepting that it could
@@ -432,7 +433,7 @@ Each has a prototype direction but an unsettled integration point.
 3. **Unblock requesting** (open questions 2 and 3): confirm with the catalogue-pipeline workstream
    that FOLIO items are ingested and `folio-item-id` predecessors are emitted at item level, so the
    requesting translation has data.
-4. **Settle the contract edges with RFC 085** (open questions 4, 6 and 7): the bare-value lookup, the
-   `type` enum, and whether to hoist a top-level `type`.
+4. **Settle the contract edges with RFC 085** (open questions 4 and 7): the bare-value lookup and
+   whether to hoist a top-level `type`.
 5. **Productionise**: the Terraform for the REST API, the Lambda, the API keys and
    per-consumer throttle, and the chosen (edge) cache, deployed to a development environment first.
