@@ -401,9 +401,11 @@ unsettled integration point.
    `SourceIdentifier.type` to the three types the API needs today and extends the enum on demand as
    further types are required, rather than modelling the full registry up front.
 
-7. **Top-level `type`.** `type` is currently per-row only (a canonical id can carry rows of differing
-   types). Decide whether to also hoist a convenience top-level `type`, accepting that it could
-   diverge from the per-row values.
+7. **`type` stays per-row only.** `type` is per-row, and a canonical id can carry rows of differing
+   types (cross-type predecessors are allowed). Settled: do not hoist a convenience top-level
+   `type`. A single top-level value would have to pick one row's type for a mixed-type set and could
+   then contradict the others, so the per-row representation is kept and the mixed-type ambiguity is
+   left to consumers rather than resolved here.
 
 ---
 
@@ -433,7 +435,7 @@ unsettled integration point.
 3. **Unblock requesting** (open questions 2 and 3): confirm with the catalogue-pipeline workstream
    that FOLIO items are ingested and `folio-item-id` predecessors are emitted at item level, so the
    requesting translation has data.
-4. **Settle the contract edges with RFC 085** (open questions 4 and 7): the bare-value lookup and
-   whether to hoist a top-level `type`.
+4. **Settle the bare-value reverse lookup with RFC 085** (open question 4): whether to support it,
+   and at what cost.
 5. **Productionise**: the Terraform for the REST API, the Lambda, the API keys and
    per-consumer throttle, and the chosen (edge) cache, deployed to a development environment first.
