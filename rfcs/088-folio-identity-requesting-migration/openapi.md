@@ -356,6 +356,7 @@ Machine-to-machine endpoints for the Auth0 actions
 |---|---|---|
 | `POST` | `/m2m/register` | Create a Folio patron for a new Auth0 signup |
 | `POST` | `/m2m/enrich` | Login-time enrichment and reconciliation |
+| `POST` | `/m2m/sequences/{name}/next` | Allocate the next value from a named sequence |
 
 #### `POST /m2m/register`
 
@@ -421,6 +422,36 @@ token with scope `enrich:read`.
 |---|---|---|
 | `200` | [`EnrichResponse`](#enrichresponse) | Enrichment payload for the Auth0 action. |
 | `404` | [`IdentityError`](#identityerror) | No Folio user could be resolved. |
+
+#### `POST /m2m/sequences/{name}/next`
+
+_Allocate the next value from a named sequence_
+
+Mints the next value from the named sequence and returns it formatted as
+a barcode (`prefix` + the counter zero-padded to the configured width; no
+check digit). Backed by a DynamoDB atomic counter, so concurrent callers
+each receive a distinct, strictly increasing value; gaps are possible and
+acceptable. The sequence (its prefix, width and seed) must be provisioned
+out of band first; an unprovisioned `name` returns 404. Used in-process by
+`/m2m/enrich` to assign a new patron's library-card barcode, and exposed
+here for standalone allocation and smoke tests. Requires an M2M token with
+scope `enrich:read`.
+
+**Security:** `ApiKey` + `Auth0M2MToken` (enrich:read)
+
+**Parameters:**
+
+| Name | In | Required | Type | Description |
+|---|---|---|---|---|
+| `name` | path | yes | string | The provisioned sequence name, e.g. `patron-barcode`. |
+
+**Responses:**
+
+| Status | Body | Description |
+|---|---|---|
+| `200` | object | The allocated value and its formatted barcode. |
+| `404` | [`IdentityError`](#identityerror) | No such provisioned sequence. |
+| `500` | n/a |  |
 
 ### Tag: items
 
