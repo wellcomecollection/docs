@@ -175,7 +175,7 @@ sequenceDiagram
     App->>Goobi: Package id = C, METS record identifier = folio-id
     Goobi->>Storage: Ingest (space=digitised, externalIdentifier=C)
     Storage-->>Pipeline: registered_bag_notification (externalIdentifier=C)
-    Pipeline->>Pipeline: Transformer supplies C (from externalIdentifier); id_minter verifies mets/folio-id is bound to C (not mint)
+    Pipeline->>Pipeline: Transformer supplies C (from externalIdentifier), id_minter verifies mets/folio-id is bound to C (not mint)
     Pipeline->>Pipeline: Merge candidate folio-instance/folio-id resolves to public Work id
     Pipeline->>Public: METS work C redirected onto Folio work, IIIF location folded on
     Storage-->>IIIF: Package available (keyed by C)
