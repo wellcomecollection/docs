@@ -109,7 +109,7 @@ const VirtualizedImageViewer: FunctionComponent = () => {
 
 **New file:** `PaginatedItemViewer.tsx`
 ```typescript
-// Only handles mixed content and archives
+// Handles non-image-only content (video, audio, PDF) and archives
 import { FunctionComponent } from 'react';
 
 const PaginatedItemViewer: FunctionComponent = () => {

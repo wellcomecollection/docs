@@ -188,56 +188,139 @@ Test with these specific work types:
   - [ ] Download disabled for restricted canvas
   
 - [ ] **Works with video/audio**
-  - [ ] Video player appears
-  - [ ] Audio player appears
+  - [ ] Video player appears in viewer
+  - [ ] Audio player appears in viewer
   - [ ] Download options include video/audio
   
 - [ ] **Works with downloadable PDFs**
+  - [ ] PDF renders in viewer
   - [ ] PDF download option appears
   - [ ] PDF downloads correctly
 
+### User Scenarios Matrix
+
+The table below lists key combinations of work types, authentication states, and access restrictions. Test coverage should span these scenarios to ensure the viewer handles all cases correctly.
+
+**Authentication States:**
+- **Logged out** - no authentication
+- **Logged in (regular user)** - standard library member  
+- **Logged in (restricted access)** - user with restricted content access (same UI, different access level)
+
+**Access Types:**
+- ✓ Open access - no restrictions
+- 🔒 Restricted - requires authentication with restricted access role
+- ⚠️ Content advisory - requires clicking through warning modal (any auth state)
+
+| Work Type | Logged Out | Logged In (Regular) | Logged In (Restricted) | Example Work ID | Notes |
+|-----------|-----------|---------------------|------------------------|-----------------|-------|
+| **Multi-canvas images** | ✓ Open | ✓ Open | ✓ Open | `a55dcp3h` | Grid view, navigation |
+| **Single canvas image** | ✓ Open | ✓ Open | ✓ Open | `b5kqccbb` | No grid/nav controls |
+| **Archive items** | ✓ Open | ✓ Open | ✓ Open | `a222zvge` | Tree navigation |
+| **Video/audio** | ✓ Open | ✓ Open | ✓ Open | `a9w3qy3j` | In-viewer playback |
+| **PDF** | ✓ Open | ✓ Open | ✓ Open | `ndx5vuhy` | In-viewer rendering |
+| **Mixed content (born digital)** | ✓ Open | ✓ Open | ✓ Open | `dn9jwck6` | Multiple media types |
+| **Content advisory** | ⚠️ Modal | ⚠️ Modal | ⚠️ Modal | `pnud3fzb` | Warning modal required |
+| **Restricted whole item** | 🔒 Blocked | 🔒 Blocked | ✓ Access granted | `rp9jnamu` | Auth + role required |
+| **Restricted audio** | 🔒 Blocked | 🔒 Blocked | ✓ Access granted | `esd6gs3s` | Auth + role required |
+| **Restricted video** | 🔒 Blocked | 🔒 Blocked | ✓ Access granted | `zsgh5y3z` | Auth + role required |
+| **Restricted born digital** | 🔒 Blocked | 🔒 Blocked | ✓ Access granted | `my6bzerr` | Auth + role required |
+
+**Note:** The "logged in (restricted)" authentication state only affects **access** (whether content is granted), not **which component renders** — the viewer always renders regardless of auth state.
+
 ### Specific Test Works
 
-Test each work type with all three authentication states. For each scenario, verify behavior is **identical** with toggle ON vs toggle OFF:
-- **Logged out** - no authentication
-- **Logged in (regular user)** - standard library member
-- **Logged in (restricted access)** - user with restricted content access
+The following works provide comprehensive coverage for all scenarios from the matrix above.
 
-#### Restricted Whole Item
-- Work page: https://www-dev.wellcomecollection.org/works/rp9jnamu
-- Items page: https://www-dev.wellcomecollection.org/works/rp9jnamu/items
+#### Unrestricted Works (Open Access)
 
-Test with: Logged out | Logged in (regular) | Logged in (restricted)
+##### Multi-Canvas Image Work
+- **Type:** Multi-canvas images (unrestricted)
+- **What to test:** Grid view, canvas navigation, thumbnails, all accessible to everyone
+- Work page: [prod](https://wellcomecollection.org/works/a55dcp3h) | [dev](https://www-dev.wellcomecollection.org/works/a55dcp3h)
+- Items page: [prod](https://wellcomecollection.org/works/a55dcp3h/items) | [dev](https://www-dev.wellcomecollection.org/works/a55dcp3h/items)
 
-#### Restricted/Clickthrough Mix
-- Work page: https://www-dev.wellcomecollection.org/works/pnud3fzb
-- Items page: https://www-dev.wellcomecollection.org/works/pnud3fzb/items
+**Test with:** Logged out | Logged in (regular) | Logged in (restricted)
 
-Test with: Logged out | Logged in (regular) | Logged in (restricted)
+##### Single Canvas Image Work
+- **Type:** Single canvas image (unrestricted)
+- **What to test:** No grid/nav controls, single image display, all accessible to everyone
+- Work page: [prod](https://wellcomecollection.org/works/b5kqccbb) | [dev](https://www-dev.wellcomecollection.org/works/b5kqccbb)
+- Images page: [prod](https://wellcomecollection.org/works/b5kqccbb/images?id=a22tjkrd&resultPosition=2) | [dev](https://www-dev.wellcomecollection.org/works/b5kqccbb/images?id=a22tjkrd&resultPosition=2)
 
-#### Restricted Audio
-- Work page: https://www-dev.wellcomecollection.org/works/esd6gs3s
-- Items page: https://www-dev.wellcomecollection.org/works/esd6gs3s/items
+**Test with:** Logged out | Logged in (regular) | Logged in (restricted)
 
-Test with: Logged out | Logged in (regular) | Logged in (restricted)
+##### Archive Items
+- **Type:** Archive with tree navigation (unrestricted)
+- **What to test:** Archive tree, breadcrumbs, canvas selection from tree, all accessible to everyone
+- Work page: [prod](https://wellcomecollection.org/works/a222zvge) | [dev](https://www-dev.wellcomecollection.org/works/a222zvge)
 
-#### Restricted Video
-- Work page: https://www-dev.wellcomecollection.org/works/zsgh5y3z
-- Items page: https://www-dev.wellcomecollection.org/works/zsgh5y3z/items
+**Test with:** Logged out | Logged in (regular) | Logged in (restricted)
 
-Test with: Logged out | Logged in (regular) | Logged in (restricted)
+##### PDF Work
+- **Type:** PDF document (unrestricted)
+- **What to test:** PDF rendering in viewer, download options, all accessible to everyone
+- Work page: [prod](https://wellcomecollection.org/works/ndx5vuhy) | [dev](https://www-dev.wellcomecollection.org/works/ndx5vuhy)
+- Items page: [prod](https://wellcomecollection.org/works/ndx5vuhy/items?shouldScrollToCanvas=true) | [dev](https://www-dev.wellcomecollection.org/works/ndx5vuhy/items?shouldScrollToCanvas=true)
 
-#### Restricted Born Digital
-- Work page: https://www-dev.wellcomecollection.org/works/my6bzerr
-- Items page: https://www-dev.wellcomecollection.org/works/my6bzerr/items
+**Test with:** Logged out | Logged in (regular) | Logged in (restricted)
 
-Test with: Logged out | Logged in (regular) | Logged in (restricted)
+##### Mixed Media (Born Digital)
+- **Type:** Mixed content with multiple media types (unrestricted)
+- **What to test:** Multiple media types in same viewer, navigation between media, all accessible to everyone
+- Work page: [prod](https://wellcomecollection.org/works/dn9jwck6) | [dev](https://www-dev.wellcomecollection.org/works/dn9jwck6)
+- Items page: [prod](https://wellcomecollection.org/works/dn9jwck6/items?canvas=20) | [dev](https://www-dev.wellcomecollection.org/works/dn9jwck6/items?canvas=20)
 
-#### Regular Video (unrestricted)
-- Work page: https://www-dev.wellcomecollection.org/works/a9w3qy3j
-- Items page: https://www-dev.wellcomecollection.org/works/a9w3qy3j/items
+**Test with:** Logged out | Logged in (regular) | Logged in (restricted)
 
-Test with: Logged out | Logged in (regular) | Logged in (restricted)
+##### Regular Video (Unrestricted)
+- **Type:** Open access video
+- **What to test:** Video player accessible to all users
+- Work page: [prod](https://wellcomecollection.org/works/a9w3qy3j) | [dev](https://www-dev.wellcomecollection.org/works/a9w3qy3j)
+- Items page: [prod](https://wellcomecollection.org/works/a9w3qy3j/items) | [dev](https://www-dev.wellcomecollection.org/works/a9w3qy3j/items)
+
+**Test with:** Logged out | Logged in (regular) | Logged in (restricted)
+
+#### Restricted/Special Access Works
+
+##### Content Advisory (Clickthrough Warning Modal)
+- **Type:** Restricted/Clickthrough Mix  
+- **What to test:** Modal warning appears for all users before accessing items
+- Work page: [prod](https://wellcomecollection.org/works/pnud3fzb) | [dev](https://www-dev.wellcomecollection.org/works/pnud3fzb)
+- Items page: [prod](https://wellcomecollection.org/works/pnud3fzb/items) | [dev](https://www-dev.wellcomecollection.org/works/pnud3fzb/items)
+
+**Test with:** Logged out | Logged in (regular) | Logged in (restricted)
+
+##### Restricted Whole Item
+- **Type:** Fully restricted content
+- **What to test:** Blocked for logged out + regular users; accessible for restricted role
+- Work page: [prod](https://wellcomecollection.org/works/rp9jnamu) | [dev](https://www-dev.wellcomecollection.org/works/rp9jnamu)
+- Items page: [prod](https://wellcomecollection.org/works/rp9jnamu/items) | [dev](https://www-dev.wellcomecollection.org/works/rp9jnamu/items)
+
+**Test with:** Logged out | Logged in (regular) | Logged in (restricted)
+
+##### Restricted Audio
+- **Type:** Restricted audio content
+- **What to test:** Audio player only appears for restricted role users
+- Work page: [prod](https://wellcomecollection.org/works/esd6gs3s) | [dev](https://www-dev.wellcomecollection.org/works/esd6gs3s)
+- Items page: [prod](https://wellcomecollection.org/works/esd6gs3s/items) | [dev](https://www-dev.wellcomecollection.org/works/esd6gs3s/items)
+
+**Test with:** Logged out | Logged in (regular) | Logged in (restricted)
+
+##### Restricted Video
+- **Type:** Restricted video content
+- **What to test:** Video player only appears for restricted role users
+- Work page: [prod](https://wellcomecollection.org/works/zsgh5y3z) | [dev](https://www-dev.wellcomecollection.org/works/zsgh5y3z)
+- Items page: [prod](https://wellcomecollection.org/works/zsgh5y3z/items) | [dev](https://www-dev.wellcomecollection.org/works/zsgh5y3z/items)
+
+**Test with:** Logged out | Logged in (regular) | Logged in (restricted)
+
+##### Restricted Born Digital
+- **Type:** Restricted born digital/mixed content
+- **What to test:** Mixed media (PDF/video/audio) only accessible for restricted role
+- Work page: [prod](https://wellcomecollection.org/works/my6bzerr) | [dev](https://www-dev.wellcomecollection.org/works/my6bzerr)
+- Items page: [prod](https://wellcomecollection.org/works/my6bzerr/items) | [dev](https://www-dev.wellcomecollection.org/works/my6bzerr/items)
+
+**Test with:** Logged out | Logged in (regular) | Logged in (restricted)
 
 ### Edge Cases
 
@@ -339,24 +422,25 @@ Different components previously calculated `currentCanvas` differently. Verify t
 **Most important test:** Side-by-side comparison.
 
 For each work type listed above:
-1. Test with feature flag OFF (legacy)
+1. Test with `iiifViewerRefactored` flag OFF (legacy)
 2. Note behaviour, take screenshots
-3. Test with feature flag ON ( refactored)
+3. Test with `iiifViewerRefactored` flag ON (refactored)
 4. Verify IDENTICAL behaviour and appearance
 5. Document any differences (should be zero)
 
 ## Test Work IDs
 
-Use these specific works for comprehensive testing:
+See the **User Scenarios Matrix** and **Specific Test Works** sections above for a comprehensive list of test works covering the scenarios listed in this document.
 
-```
-// Add actual work IDs here based on production data
-- Multi-canvas work: /works/[ID]/images
-- Single canvas work: /works/[ID]/images
-- Restricted work: /works/[ID]/items
-- Video work: /works/[ID]/items
-- Archive item: /works/[ID]/items
-```
+All test scenarios now have example work IDs:
+- ✅ Multi-canvas images: `a55dcp3h`
+- ✅ Single canvas: `b5kqccbb`
+- ✅ Archive items: `a222zvge`
+- ✅ PDF: `ndx5vuhy`
+- ✅ Mixed media (born digital): `dn9jwck6`
+- ✅ Video/audio: `a9w3qy3j`
+- ✅ Content advisory: `pnud3fzb`
+- ✅ Restricted works: `rp9jnamu`, `esd6gs3s`, `zsgh5y3z`, `my6bzerr`
 
 ## When Manual Testing Finds Issues
 
