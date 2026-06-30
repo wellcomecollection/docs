@@ -25,7 +25,6 @@ for :func:`axiell_folio_sync.upsert.upsert_from_payloads`.
 
 from __future__ import annotations
 
-import re
 from typing import Callable, Optional
 
 from pydantic import BaseModel, ConfigDict, Field
@@ -57,11 +56,6 @@ MARC_SOURCE: dict[str, str] = {
 }
 
 
-def _safe_segment(value: str) -> str:
-    """Lowercase slug from an arbitrary string — used in composite hrids."""
-    return re.sub(r"[^a-z0-9]+", "-", value.strip().lower()).strip("-") or "unknown"
-
-
 def parse_marcxml(xml_content: str, *, deleted: bool = False) -> CanonicalRecord:
     """Parse a single MARCXML string into a :class:`CanonicalRecord` via MARC_SOURCE.
 
@@ -74,13 +68,12 @@ def parse_marcxml(xml_content: str, *, deleted: bool = False) -> CanonicalRecord
     if not source_id:
         raise MappingError("Missing MARC 001 — cannot identify record")
 
-    instance_hrid = f"axiell:{source_id}"
-    holdings_hrid = (
-        f"{instance_hrid}-holding-{_safe_segment(values['location_code'] or 'unknown')}"
-    )
+    # Single GUID-based hrid scheme (see _instance_hrid / _holdings_hrid): every
+    # hrid is derived purely from the Axiell GUID, never from location, so the
+    # idempotency key stays stable even if a record's location changes.
     return CanonicalRecord(
-        instance_hrid=instance_hrid,
-        holdings_hrid=holdings_hrid,
+        instance_hrid=_instance_hrid(source_id),
+        holdings_hrid=_holdings_hrid(source_id),
         deleted=deleted,
         **values,
     )
@@ -167,7 +160,7 @@ class Item(BaseModel):
     status: Status = Field(default_factory=Status)
     materialType: IdRef
     permanentLoanType: IdRef
-    permanentLocation: IdRef
+    permanentLocationId: str  # bare UUID; `permanentLocation` is read-only in FOLIO
     barcode: Optional[str] = None
     copyNumber: Optional[str] = None
     volume: Optional[str] = None
@@ -249,7 +242,7 @@ def build_item(rec: CanonicalRecord, ref: RefCache) -> Item:
             ref.resolve_loan_type, rec.loan_type_code,
             label="loan type", default=DEFAULT_LOAN_TYPE,
         )),
-        permanentLocation=IdRef(id=location_id),
+        permanentLocationId=location_id,
         barcode=rec.barcode,
         copyNumber=rec.copy_number,
         volume=rec.volume,

@@ -48,7 +48,7 @@ models + builders, the source of truth) · `mapper.py` (MARC extraction via the
 
 ## Item
 
-`Item` model: `hrid`, `holdingsRecordId`, `status`, `materialType` `{id}`, `permanentLoanType` `{id}`, `permanentLocation` `{id}`, `barcode`, `copyNumber`, `volume`, `electronicAccess`, `notes`.
+`Item` model: `hrid`, `holdingsRecordId`, `status`, `materialType` `{id}`, `permanentLoanType` `{id}`, `permanentLocationId`, `barcode`, `copyNumber`, `volume`, `electronicAccess`, `notes`.
 
 | FOLIO Field | Type | Status | AxC source | MARC Tag | Notes |
 |-------------|------|--------|------------|----------|-------|
@@ -57,7 +57,7 @@ models + builders, the source of truth) · `mapper.py` (MARC extraction via the
 | `status.name` | string | Required *(in model)* | — | — | Defaults to `"Available"` (`status` is a nested object, `default_factory=Status`). |
 | `materialType.id` | UUID | Required *(in model)* | `Object_category` | `949$c` | Inventory `{ "id": "<uuid>" }` reference. RefCache + `MATERIAL_TYPE` table; default `"Books"`. Example: `"archives"` → `"unspecified"`. |
 | `permanentLoanType.id` | UUID | Required *(in model)* | `Free_texts` (`OrderingCodes`) | `949$l` | `{ "id": "<uuid>" }`. RefCache; default `"Can Circulate"`. |
-| `permanentLocation.id` | UUID | Required *(in model)* | `location` | `852$b` | `{ "id": "<uuid>" }`; same location as holdings. RefCache; default `"History of Medicine"`. |
+| `permanentLocationId` | UUID | Required *(in model)* | `location` | `852$b` | Bare UUID (the writable field; `permanentLocation` is read-only in FOLIO); same location as holdings. RefCache; default `"History of Medicine"`. |
 | `barcode` | string | Optional *(in model)* | — | `949$a` | May be absent for archival items. |
 | `copyNumber` | string | Optional *(in model)* | — | `876$p` | Example: `"copy 1"`. |
 | `volume` | string | Optional *(in model)* | — | `876$t` | Example: `"v.1"`. |

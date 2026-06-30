@@ -40,10 +40,10 @@ This RFC proposes an automated pipeline to synchronize data from **Axiell Collec
 - [Design Rationale: Why These Choices?](#design-rationale-why-these-choices)
   - [Mapping: Pydantic Models vs. YAML Mapper](#mapping-pydantic-models-vs-yaml-mapper)
   - [Orchestration: Step Functions vs. Alternatives](#orchestration-step-functions-vs-alternatives)
+  - [Caching Strategy: Reference Data Scaling Options](#caching-strategy-reference-data-scaling-options)
   - [Storage: S3 NDJSON vs. Alternatives](#storage-s3-ndjson-vs-alternatives)
   - [Invocation Pattern: EventBridge Trigger & Ordering](#invocation-pattern-eventbridge-trigger--ordering)
   - [Error Handling: Per-Record Isolation](#error-handling-per-record-isolation)
-  - [Caching Strategy: Reference Data Scaling Options](#caching-strategy-reference-data-scaling-options)
 - [SRS-backed Instances and the Update Path](#srs-backed-instances-and-the-update-path)
 - [FOLIO API Client](#folio-api-client)
 - [Cost Analysis](#cost-analysis)
@@ -300,7 +300,7 @@ Only AxC MARC records that have the **harvest flag set in MARC field `980 $a`** 
 
 ### Every Record in a Changeset Is Either
 
-Each record in a loader changeset is treated as **new** (the first time this `id` appears in Iceberg), in which case it is created in FOLIO, or **updated** (an existing `id` with a newer `last_modified`), in which case it is updated in FOLIO. Deletions are handled on the reconciler path (see [Delete detection](#delete-detection-the-reconciler-not-oai-tombstones) below), not by directly suppressing on the loader's `deleted=true` flag. The exact delete action in FOLIO (suppress vs remove, and cascade scope) remains an open policy question (see [Delete semantics](#delete-semantics-what-should-deletedtrue-do-in-folio)).
+Each record in a loader changeset is treated as **new** (the first time this `id` appears in Iceberg), in which case it is created in FOLIO, or **updated** (an existing `id` with a newer `last_modified`), in which case it is updated in FOLIO. Deletions are handled on the reconciler path (see [Delete detection](#delete-detection-the-reconciler-not-oai-tombstones) below), not by directly suppressing on the loader's `deleted=true` flag. The exact delete action in FOLIO (suppress vs remove, and cascade scope) remains an open policy question (see [Delete semantics](#delete-semantics-what-should-reconciler-detected-deletes-do-in-folio)).
 
 ### Delete detection: the reconciler, not OAI tombstones
 
@@ -308,7 +308,7 @@ Axiell's OAI tombstones (`deleted=true`) are unreliable, which is the very reaso
 
 This has two consequences for the FOLIO upserter. First, the upserter consumes the **loader's changeset**, so it does not see reconciler-detected deletes, which are produced by a separate, later transformer step. Second, a reconciler delete is keyed by the **old (superseded) GUID**, not by the changeset row being processed.
 
-Suggested approach: have the **reconciler** step fan out a FOLIO suppression path that mirrors the loader's fan-out to the upsert path, reusing the existing reconciler rather than building a parallel `collectId → guid` mapping store. On a reconciler delete, suppress the FOLIO records for the old GUID (`AxC-instance-{old-guid}`) and cascade to its holdings and item, in line with the [Delete semantics](#delete-semantics-what-should-deletedtrue-do-in-folio) question raised earlier. The loader-changeset `deleted=true` can remain a best-effort secondary signal, but the reconciler fan-out is the authoritative delete path.
+Suggested approach: have the **reconciler** step fan out a FOLIO suppression path that mirrors the loader's fan-out to the upsert path, reusing the existing reconciler rather than building a parallel `collectId → guid` mapping store. On a reconciler delete, suppress the FOLIO records for the old GUID (`AxC-instance-{old-guid}`) and cascade to its holdings and item, in line with the [Delete semantics](#delete-semantics-what-should-reconciler-detected-deletes-do-in-folio) question raised earlier. The loader-changeset `deleted=true` can remain a best-effort secondary signal, but the reconciler fan-out is the authoritative delete path.
 
 ---
 
@@ -809,7 +809,7 @@ The stale-write guard (see [Invocation Pattern](#invocation-pattern-eventbridge-
 
 ### Reference-data caching: when and how to cache across Lambda runs
 
-Today `RefCache` reloads all six reference sets on every invocation, which is the right trade-off at current volume (see [Reference Data Cache](#reference-data-cache-ref_cachepy)). The open question is what happens if the reference set grows substantially. We would need to decide the size or load-latency threshold at which caching across runs is worth the added complexity. Staleness is unlikely to be the blocker: the reference data changes rarely, so a long TTL would seldom be stale, and a reload-on-miss fallback would keep a newly-added code from failing as a `MappingError`. So the question is mostly about whether the saved reload justifies the extra infrastructure. We would also need to pick a tier when we get there: the progression runs from a warm-singleton with reload-on-miss, to an S3 snapshot rebuilt by a scheduled refresher, to DynamoDB, and only then to ElastiCache (see [Scaling the reference cache](#scaling-the-reference-cache-if-the-dataset-grows) for the trade-offs).
+Today `RefCache` reloads all six reference sets on every invocation, which is the right trade-off at current volume (see [Reference Data Cache](#reference-data-cache-ref_cachepy)). The open question is what happens if the reference set grows substantially. We would need to decide the size or load-latency threshold at which caching across runs is worth the added complexity. Staleness is unlikely to be the blocker: the reference data changes rarely, so a long TTL would seldom be stale, and a reload-on-miss fallback would keep a newly-added code from failing as a `MappingError`. So the question is mostly about whether the saved reload justifies the extra infrastructure. We would also need to pick a tier when we get there: the progression runs from a warm-singleton with reload-on-miss, to an S3 snapshot rebuilt by a scheduled refresher, to DynamoDB, and only then to ElastiCache (see [Caching Strategy: Reference Data Scaling Options](#caching-strategy-reference-data-scaling-options) for the trade-offs).
 
 ### Manifest query mechanism: S3 Select is not an established org pattern
 
