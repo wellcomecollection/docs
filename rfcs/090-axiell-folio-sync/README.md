@@ -411,7 +411,8 @@ flowchart TD
 flowchart TD
     input[Input from EventBridge] --> invoke[Task: Invoke Lambda]
     invoke --> output[Output: counts, URIs, errors]
-    invoke -. Retry: Max 3<br/>Backoff 2.0 .-> invoke
+  invoke --> retryPolicy[Retry policy<br/>Max attempts 3<br/>Backoff 2.0]
+  retryPolicy --> invoke
     invoke -->|TaskFailed| failed[SyncFailed]
     failed --> failedLog[Log to CloudWatch]
     output --> success[SyncComplete]
