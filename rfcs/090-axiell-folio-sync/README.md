@@ -10,7 +10,6 @@ This RFC proposes an automated pipeline to synchronize data from **Axiell Collec
 
 - [Purpose](#purpose)
 - [Background](#background)
-- [Scope](#scope)
 - [System Architecture](#system-architecture)
   - [Current Data Feeds for AxC and Folio Data](#current-data-feeds-for-axc-and-folio-data)
 - [Proposed Change: FOLIO Item Upsert on Every Adapter Run](#proposed-change-folio-item-upsert-on-every-adapter-run)
@@ -71,12 +70,6 @@ The library systems migration is replacing both layers. **CALM** is being migrat
 
 CALM-sourced data in Sierra is not being migrated to FOLIO. Therefore, AxC data must be synced to FOLIO to enable requesting and circulation workflows for items that were not included in the initial FOLIO migration. Library staff rely on FOLIO for real-time item availability and location data. Axiell-to-FOLIO sync is a core data pipeline for the new catalogue system and must be reliable, auditable, and manually recoverable.
 
-## Scope
-
-**In scope:** the idempotent upsert of AxC bibliographic records into FOLIO Inventory as instance → holdings → item, for records flagged for harvest in MARC `980 $a`. Records are keyed by GUID-based hrids (`AxC-{instance,holding,item}-{guid}`), created Inventory-native (`source = "FOLIO"`), updated in place, and suppressed on delete.
-
-**Out of scope:** patron data and circulation transactions (loans, holds, requests); real-time sync (the 15-minute adapter cadence is sufficient, sub-minute latency is not required); multiple items per AxC record (a 1:1 instance-to-item mapping is assumed for now, see [Item creation should likely be gated on record `Level`](#item-creation-should-likely-be-gated-on-record-level)); updating SRS/MARC-backed instances (their bibliographic fields are owned by quickMARC/SRS, not mod-inventory, see [SRS-backed Instances and the Update Path](#srs-backed-instances-and-the-update-path)); and discovery indexing (that stays with the existing ES transformer, this pipeline writes only to the LMS).
-
 ## System Architecture
 
 ### Current Data Feeds for AxC and Folio Data
@@ -128,11 +121,11 @@ flowchart TD
   loader --> transformer[Transformer (ES)]
   transformer --> es[Elasticsearch]
   loader --> iceberg[Iceberg Table]
-  loader --> upserter[FOLIO Upserter (new step)]
+  loader --> upserter[FOLIO Upserter]
   iceberg --> upserter
   upserter --> folio[FOLIO Inventory]
 
-  upserterSteps["1. Authenticate to FOLIO<br/>2. Load reference data cache<br/>3. Read changeset rows from Iceberg<br/>4. Pydantic mapping (mapping.py) -> instance/holdings/item<br/>5. Upsert: create/update/suppress"]
+  upserterSteps["1. Authenticate<br/>2. Load ref cache<br/>3. Read changesets<br/>4. Map: mapping.py<br/>5. Upsert: create/update/suppress"]
   upserter -. process .-> upserterSteps
 ```
 
@@ -147,21 +140,21 @@ So after the loader emits `changeset_ids`, the event fans out to **two** indepen
 
 ```mermaid
 flowchart LR
-    scheduler[EventBridge Scheduler<br/>15-minute cadence] --> trigger[Trigger step]
-    trigger --> loader[Loader step<br/>OAI-PMH harvest]
-    loader --> iceberg[(Iceberg adapter table)]
-    loader --> event[changeset_ids event]
+    scheduler[EventBridge<br/>15-min cadence] --> trigger[Trigger]
+    trigger --> loader[Loader<br/>OAI-PMH]
+    loader --> iceberg[(Iceberg)]
+    loader --> event[changeset_ids]
 
-    event --> es_transformer[Transformer step<br/>AxiellTransformer]
+    event --> es_transformer[Transformer<br/>AxiellTransformer]
     es_transformer --> es[(Elasticsearch)]
 
-    event --> folio_sync[Lambda: axiell-folio-sync<br/>prototypes/axiell-folio-sync]
-    folio_sync --> ssm[SSM SecureStrings<br/>FOLIO credentials]
-    folio_sync --> refcache[ref_cache.py<br/>locations/material/loan types]
-    folio_sync --> read_changes[Read Iceberg rows<br/>by changeset_ids]
-    read_changes --> mapper[mapping.py (Pydantic models)<br/>MARCXML -> instance/holdings/item]
-    mapper --> upsert[upsert.py<br/>create/update/suppress]
-    upsert --> okapi[(FOLIO OKAPI Inventory APIs)]
+    event --> folio_sync[Lambda:<br/>axiell-folio-sync]
+    folio_sync --> ssm[SSM Secrets]
+    folio_sync --> refcache[ref_cache.py]
+    folio_sync --> read_changes[Read Iceberg]
+    read_changes --> mapper[mapping.py<br/>Pydantic models]
+    mapper --> upsert[upsert.py]
+    upsert --> okapi[(FOLIO OKAPI)]
 ```
 
 
@@ -177,10 +170,10 @@ This replaces an earlier YAML-driven mapper (`mapping.yaml` + `YamlMapper`); see
 
 ```mermaid
 graph TD
-    A["Raw MARCXML<br/>(from Iceberg)"] --> B["parse_marcxml (mapper.py)<br/>MARC_SOURCE table → CanonicalRecord"]
-    B --> C["build_instance/holdings/item (mapping.py)<br/>map + RefCache resolve → typed Pydantic models"]
-    C --> D["Pydantic validation<br/>required fields, types, no unknown keys (extra=forbid)"]
-    D --> E["model_dump(exclude_none=True)<br/>JSON-ready instance / holdings / item dicts"]
+    A["Raw MARCXML<br/>(from Iceberg)"] --> B["parse_marcxml (mapper.py)<br/>MARC SOURCE -&gt; CanonicalRecord"]
+    B --> C["build_instance/holdings/item<br/>map + RefCache resolve"]
+    C --> D["Pydantic validation<br/>required fields, types"]
+    D --> E["model_dump<br/>JSON-ready dicts"]
 ```
 
 ### Pydantic Mapping (`mapping.py`)
@@ -252,7 +245,7 @@ table in `mapping.py`; the hrids are derived from the GUID (MARC `001`).
 | 001 (GUID) | `source_id` → `holdings_hrid` | Holdings `hrid` | `AxC-holding-4d8f1208-9812-4bb5-84ef-da436b22d9e2` |
 | 001 (GUID) | `source_id` → `item_hrid` | Item `hrid` | `AxC-item-4d8f1208-9812-4bb5-84ef-da436b22d9e2` |
 | 245$a | `title` | Instance `title` | Daniel Morley, an English Philosopher... |
-| 852$b | `location_code` | Holdings `permanentLocationId` (+ Item `permanentLocation`) | `215;B11;MR;84;3;7` |
+| 852$b | `location_code` | Holdings `permanentLocationId` | resolved FOLIO location UUID |
 | 852$c | `call_number_prefix` | Holdings `callNumberPrefix` | `Arch`, `Ref` |
 | 852$h | `call_number` | Holdings `callNumber` | (optional) |
 | 852$j | `shelving_order` | Holdings `shelvingOrder` | (optional) |
@@ -262,9 +255,9 @@ table in `mapping.py`; the hrids are derived from the GUID (MARC `001`).
 | 876$p | `copy_number` | Item `copyNumber` | `copy 1`, `copy 2` |
 | 876$t | `volume` | Item `volume` | `v.1`, `disc 1 of 2` |
 | 856$u | `electronic_access_uri` | Item `electronicAccess[].uri` | (optional) |
-| 852$b | `location_code` | Item `notes[]`, type `Axiell location` | `Axiell location: 215;B11;MR;84;3;7` |
+| 852$b | `location_code` | Item `notes[]`, type `Axiell location` | raw AxC location code: `215;B11;MR;84;3;7` |
 
-The AxC current location is therefore written to FOLIO twice: as the resolved `permanentLocation` UUID (for shelving/discovery) and, in human-readable form, as an item **note of type `Axiell location`**. On update, that note is refreshed from the incoming `852$b`, so the FOLIO item always reflects the latest AxC current location. (The note type name resolves to `itemNoteTypeId` via RefCache before the write; note that this note is not currently surfaced on the OAI-PMH feed, see [Item notes not visible on the FOLIO OAI-PMH feed](#item-notes-not-visible-on-the-folio-oai-pmh-feed).)
+The AxC location code is therefore written to FOLIO in two different fields: the Holdings `permanentLocationId` is set to the resolved FOLIO location UUID (for shelving/discovery and circulation), while the raw AxC location code is preserved as an item **note of type `Axiell location`** (for audit trail and historical reference). On update, the note is refreshed from the incoming `852$b`, so the FOLIO item always carries the latest AxC location code. (The note type name resolves to `itemNoteTypeId` via RefCache before the write; note that this note is not currently surfaced on the OAI-PMH feed, see [Item notes not visible on the FOLIO OAI-PMH feed](#item-notes-not-visible-on-the-folio-oai-pmh-feed).)
 
 ---
 
@@ -353,39 +346,39 @@ Reload-per-run assumes the reference set is small enough to bulk-load into Lambd
 
 ```mermaid
 flowchart TD
-    subgraph upstream["Axiell Adapter Platform - upstream, not in this stack"]
-        adapter["Adapter - 15-min cadence<br/>writes changesets to Iceberg<br/>emits axiell.adapter.completed"]
-        bus(["EventBridge bus<br/>catalogue-pipeline-adapter-event-bus"])
-        adapter -->|"PutEvents - detail:<br/>changeset_ids, job_id, transformer_type"| bus
+    subgraph upstream["Adapter Platform"]
+        adapter["Adapter<br/>15-min cadence<br/>writes Iceberg"]
+        bus(["EventBridge bus"])
+        adapter -->|"changeset_ids<br/>job_id"| bus
     end
 
-    subgraph sync["axiell-folio-sync - this Terraform stack"]
-        rule["EventBridge Rule<br/>axiell-folio-sync-axiell-adapter-completed<br/>pattern: source=axiell.adapter +<br/>detail-type=axiell.adapter.completed +<br/>detail.transformer_type=axiell"]
-        sfn["Step Function - STANDARD<br/>axiell-folio-sync-sfn<br/>InvokeSyncLambda then Retry 3x (backoff 2.0)<br/>Catch States.ALL then SyncFailed"]
-        lambda["Lambda - ECR image<br/>axiell-folio-sync<br/>timeout 300s, mem 512MB<br/>auth, scan, map, upsert, manifests"]
-        rule -->|"target: StartExecution<br/>role: eventbridge-exec"| sfn
-        sfn -->|"lambda InvokeFunction<br/>payload: detail.* plus dry_run"| lambda
+    subgraph sync["axiell-folio-sync"]
+        rule["EventBridge Rule<br/>axiell-adapter-completed"]
+        sfn["Step Function<br/>axiell-folio-sync-sfn<br/>Retry 3x"]
+        lambda["Lambda ECR<br/>axiell-folio-sync<br/>timeout 300s"]
+        rule --> sfn
+        sfn --> lambda
     end
 
     bus --> rule
 
-    subgraph data["Data stores and observability"]
-        ssm[("SSM SecureString<br/>okapi-credentials")]
-        iceberg[("S3 Tables / Iceberg<br/>wellcomecollection-platform-axiell-adapter")]
-        ecr[("ECR<br/>uk.ac.wellcome/axiell-folio-sync")]
-        s3man[("S3 manifests<br/>axiell-folio-sync-manifests-acct-region<br/>90-day lifecycle, versioned, SSE-S3")]
-        cw["CloudWatch<br/>Logs: /aws/lambda + /aws/states (30d)<br/>Metrics: AxiellFolioSync"]
+    subgraph data["Data and Observability"]
+        ssm[("SSM<br/>Secrets")]
+        iceberg[("S3 Iceberg")]
+        ecr[("ECR<br/>Image")]
+        s3man[("S3<br/>Manifests")]
+        cw["CloudWatch<br/>Logs+Metrics"]
     end
 
-    folio(["FOLIO OKAPI - external<br/>api-wellcome.folio.ebsco.com"])
+    folio(["FOLIO OKAPI"])
 
-    ecr -.->|"pull image"| lambda
-    ssm -.->|"GetParameter + KMS decrypt"| lambda
-    iceberg -.->|"scan changeset rows"| lambda
-    lambda -->|"authn/login + upsert<br/>instance, holdings, item"| folio
-    lambda -->|"NDJSON: ids / failures / manifest"| s3man
-    lambda -->|"metrics when not dry_run"| cw
-    sfn -.->|"execution history"| cw
+    ecr -.-> lambda
+    ssm -.-> lambda
+    iceberg -.-> lambda
+    lambda --> folio
+    lambda --> s3man
+    lambda --> cw
+    sfn -.-> cw
 ```
 
 ### 1. EventBridge Trigger
@@ -429,9 +422,9 @@ flowchart TD
 ```mermaid
 flowchart TD
     input[Input from EventBridge] --> invoke[Task: Invoke Lambda]
-    invoke --> output[Output: counts, manifest URIs, errors]
-    invoke -. Retry: MaxAttempts=3, BackoffRate=2.0, IntervalSeconds=2 .-> invoke
-    invoke -->|States.TaskFailed| failed[SyncFailed (terminal)]
+    invoke --> output[Output: counts, URIs, errors]
+    invoke -. Retry: MaxAttempts=3<br/>BackoffRate=2.0 .-> invoke
+    invoke -->|TaskFailed| failed[SyncFailed]
     failed --> failedLog[Log to CloudWatch]
     output --> success[SyncComplete]
 ```
