@@ -43,6 +43,7 @@ This RFC proposes an automated pipeline to synchronize data from **Axiell Collec
   - [Storage: S3 NDJSON vs. Alternatives](#storage-s3-ndjson-vs-alternatives)
   - [Invocation Pattern: EventBridge Trigger & Ordering](#invocation-pattern-eventbridge-trigger--ordering)
   - [Error Handling: Per-Record Isolation](#error-handling-per-record-isolation)
+  - [Caching Strategy: Reference Data Scaling Options](#caching-strategy-reference-data-scaling-options)
 - [SRS-backed Instances and the Update Path](#srs-backed-instances-and-the-update-path)
 - [FOLIO API Client](#folio-api-client)
 - [Cost Analysis](#cost-analysis)
@@ -89,7 +90,7 @@ and also exposes its own OAI-PMH feed every 15 minutes.
 flowchart TD
   scheduler[EventBridge Scheduler] --> trigger[Trigger]
   trigger --> loader[Loader]
-  loader --> transformer[Transformer (ES)]
+  loader --> transformer[Transformer ES]
   loader --> reconciler[Reconciler]
   transformer --> es[Elasticsearch]
   loader --> iceberg[Iceberg Adapter Table]
@@ -118,7 +119,7 @@ The Axiell adapter harvests over OAI-PMH using the `oai_marcxml` metadata prefix
 flowchart TD
   scheduler[EventBridge Scheduler] --> trigger[Trigger]
   trigger --> loader[Loader]
-  loader --> transformer[Transformer (ES)]
+  loader --> transformer[Transformer ES]
   transformer --> es[Elasticsearch]
   loader --> iceberg[Iceberg Table]
   loader --> upserter[FOLIO Upserter]
@@ -327,19 +328,6 @@ We propose a **Step Functions + Lambda + S3 architecture** with event-driven (as
 
 **Expected outcomes:** replay is safe without data corruption (idempotent upserts via FOLIO HRIDs); there is a complete audit trail, with every decision (create/update/suppress/skip) logged in S3 and CloudWatch; operational overhead stays low at ~$3–5/month for typical volume; and the mental model remains clear, with no eventual-consistency puzzles and ordered execution.
 
-#### Scaling the reference cache (if the dataset grows)
-
-Reload-per-run assumes the reference set is small enough to bulk-load into Lambda memory cheaply (see [Reference Data Cache](#reference-data-cache-ref_cachepy)). If we ever need **much more** reference data (many more types, or large per-record lookups), the choice of caching architecture matters. Options, cheapest first:
-
-| Option | What it is | Best when | Cost / overhead | Freshness control |
-|--------|-----------|-----------|-----------------|-------------------|
-| **Warm singleton + reload-on-miss** | Module-global cache reused across warm invocations; fetch-and-memoize a code on a cache miss | Set still fits in memory; modest growth | None (in-process) | Self-healing on miss; lost on cold start |
-| **S3 snapshot + scheduled refresher** | A cron (EventBridge) Lambda rebuilds a serialized snapshot (JSON/Parquet) from FOLIO every N hours; the sync Lambda reads it at startup (one GET) instead of N FOLIO calls | Whole set scanned each run; want to decouple sync from FOLIO availability | ~pennies/mo + one extra scheduled Lambda | Snapshot age = refresh cadence; pair with reload-on-miss |
-| **DynamoDB lookup table** | Refresher populates `(type, code) → uuid`; sync Lambda `BatchGetItem`s only the codes a changeset needs | Set too big for memory, or only a subset is needed per run | On-demand $/read; native TTL | TTL / refresher cadence; pair with reload-on-miss |
-| **ElastiCache (Redis)** | Shared in-memory cache across all invocations | Very large + hot lookups at high concurrency | Always-on (~$12+/mo), **requires VPC** (ENI cold-start + NAT to reach FOLIO/AWS APIs) | TTL |
-
-**Recommended progression:** stay on reload-per-run → **S3 snapshot + scheduled refresher** (cheap, no VPC, scales via columnar formats, decouples from FOLIO reference endpoints) → **DynamoDB** only once the set outgrows Lambda memory or you genuinely need selective point lookups → **ElastiCache** only for high-concurrency hot-lookup workloads that justify always-on infra and the VPC tax. In every tier, keep a **reload-on-miss fallback to FOLIO** so a newly-added code resolves on first sight rather than failing the record.
-
 ---
 
 ### System Diagram
@@ -423,7 +411,7 @@ flowchart TD
 flowchart TD
     input[Input from EventBridge] --> invoke[Task: Invoke Lambda]
     invoke --> output[Output: counts, URIs, errors]
-    invoke -. Retry: MaxAttempts=3<br/>BackoffRate=2.0 .-> invoke
+    invoke -. Retry: Max 3<br/>Backoff 2.0 .-> invoke
     invoke -->|TaskFailed| failed[SyncFailed]
     failed --> failedLog[Log to CloudWatch]
     output --> success[SyncComplete]
@@ -700,6 +688,19 @@ The YAML mapper's headline appeal, letting non-programmers edit mappings as conf
 We chose Step Functions + Lambda (B): it buys an explicit retry policy and a full execution history. Every state transition is logged to CloudWatch, so a sync that fails partway is diagnosable from the execution history rather than by reconstructing state from Lambda logs, and max attempts and backoff are declarative, so operations can tune retries in the state-machine definition without code changes. The adapter triggers the sync asynchronously (`StartExecution`) and does not block; ordering safety comes from source-timestamp watermarking plus a Step Functions concurrency limit of 1 (see [Invocation Pattern](#invocation-pattern-eventbridge-trigger--ordering)), not from backpressure. The design also leaves a clean extension point for scale: when volume outgrows a single invocation we swap in a Step Functions `Map` state to fan out per changeset, with no change to the manifest format. The cost is immaterial: pennies a month in state transitions at ~80 syncs/day (~2,400/month).
 
 A direct EventBridge→Lambda trigger (A) was rejected because it gives no failure signal, no automatic retry, and no execution history, so debugging would mean parsing Lambda logs. An async SQS queue (C) is cheaper per invocation but doesn't guarantee processing order within a batch, needs workers to coordinate which changeset they own, and carries monitoring overhead (error tracking, retries, dead-letter management) that isn't justified at current volume.
+
+### Caching Strategy: Reference Data Scaling Options
+
+Reload-per-run assumes the reference set is small enough to bulk-load into Lambda memory cheaply (see [Reference Data Cache](#reference-data-cache-ref_cachepy)). If we ever need **much more** reference data (many more types, or large per-record lookups), the choice of caching architecture matters. Options, cheapest first:
+
+| Option | What it is | Best when | Cost / overhead | Freshness control |
+|--------|-----------|-----------|-----------------|-------------------|
+| **Warm singleton + reload-on-miss** | Module-global cache reused across warm invocations; fetch-and-memoize a code on a cache miss | Set still fits in memory; modest growth | None (in-process) | Self-healing on miss; lost on cold start |
+| **S3 snapshot + scheduled refresher** | A cron (EventBridge) Lambda rebuilds a serialized snapshot (JSON/Parquet) from FOLIO every N hours; the sync Lambda reads it at startup (one GET) instead of N FOLIO calls | Whole set scanned each run; want to decouple sync from FOLIO availability | ~pennies/mo + one extra scheduled Lambda | Snapshot age = refresh cadence; pair with reload-on-miss |
+| **DynamoDB lookup table** | Refresher populates `(type, code) → uuid`; sync Lambda `BatchGetItem`s only the codes a changeset needs | Set too big for memory, or only a subset is needed per run | On-demand $/read; native TTL | TTL / refresher cadence; pair with reload-on-miss |
+| **ElastiCache (Redis)** | Shared in-memory cache across all invocations | Very large + hot lookups at high concurrency | Always-on (~$12+/mo), **requires VPC** (ENI cold-start + NAT to reach FOLIO/AWS APIs) | TTL |
+
+**Recommended progression:** stay on reload-per-run → **S3 snapshot + scheduled refresher** (cheap, no VPC, scales via columnar formats, decouples from FOLIO reference endpoints) → **DynamoDB** only once the set outgrows Lambda memory or you genuinely need selective point lookups → **ElastiCache** only for high-concurrency hot-lookup workloads that justify always-on infra and the VPC tax. In every tier, keep a **reload-on-miss fallback to FOLIO** so a newly-added code resolves on first sight rather than failing the record.
 
 ---
 
