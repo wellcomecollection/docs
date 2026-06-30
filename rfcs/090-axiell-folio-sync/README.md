@@ -119,10 +119,12 @@ The Axiell adapter harvests over OAI-PMH using the `oai_marcxml` metadata prefix
 flowchart TD
   scheduler[EventBridge Scheduler] --> trigger[Trigger]
   trigger --> loader[Loader]
-  loader --> transformer[Transformer ES]
-  transformer --> es[Elasticsearch]
   loader --> iceberg[Iceberg Table]
-  loader --> upserter[FOLIO Upserter]
+  loader --> event[changeset_ids event]
+  event --> transformer[Transformer ES]
+  transformer --> es[Elasticsearch]
+  event --> upserter[FOLIO Upserter]
+  iceberg --> transformer
   iceberg --> upserter
   upserter --> folio[FOLIO Inventory]
 
@@ -411,9 +413,9 @@ flowchart TD
 flowchart TD
     input[Input from EventBridge] --> invoke[Task: Invoke Lambda]
     invoke --> output[Output: counts, URIs, errors]
-  invoke --> retryPolicy[Retry policy<br/>Max attempts 3<br/>Backoff 2.0]
-  retryPolicy --> invoke
-    invoke -->|TaskFailed| failed[SyncFailed]
+    invoke -->|TaskFailed| retryPolicy[Retry policy<br/>Max attempts 3<br/>Backoff 2.0]
+    retryPolicy --> invoke
+    retryPolicy -->|Retries exhausted| failed[SyncFailed]
     failed --> failedLog[Log to CloudWatch]
     output --> success[SyncComplete]
 ```
