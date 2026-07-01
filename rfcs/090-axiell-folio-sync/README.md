@@ -605,19 +605,9 @@ At ~80 syncs/day the pipeline runs ~2,400 times/month, so the monthly quantities
 
 ## Design Decisions
 
-The decisions below are summarized in [Key Design Considerations](#key-design-considerations); the full trade-off analysis for each (alternatives weighed, why this option won) lives in **[design-rationale.md](design-rationale.md)**.
+The key choices are summarized in [Key Design Considerations](#key-design-considerations); the full trade-off analysis for each (alternatives weighed, why this option won) lives in **[design-rationale.md](design-rationale.md)** — covering mapping (Pydantic vs YAML), orchestration (Step Functions), reference caching, manifest storage (S3 NDJSON), ordering safety, error handling, and instance storage type.
 
-| Decision | Choice | Rationale |
-|----------|--------|-----------|
-| **Mapping** | Typed Pydantic models (`mapping.py`), not a YAML mapper | [Mapping](design-rationale.md#mapping-pydantic-models-vs-yaml-mapper) |
-| **Orchestration** | Step Functions + Lambda, not direct Lambda or SQS | [Orchestration](design-rationale.md#orchestration-step-functions-vs-alternatives) |
-| **Reference caching** | Reload-per-run; defined scale-up progression if it grows | [Caching](design-rationale.md#caching-strategy-reference-data-scaling-options) |
-| **Manifest storage** | S3 NDJSON (90-day TTL), not DynamoDB or streaming | [Storage](design-rationale.md#storage-s3-ndjson-vs-alternatives) |
-| **Ordering safety** | Source-timestamp stale-write guard + Step Functions concurrency = 1 | [Invocation Pattern](design-rationale.md#invocation-pattern-ordering--concurrency) |
-| **Error handling** | Per-record isolation; batch-level errors retry then fail | [Error Handling](design-rationale.md#error-handling-per-record-isolation) |
-| **Instance storage type** | Inventory-native (`Instance.source = "FOLIO"`), no linked SRS record | [SRS-backed Instances](design-rationale.md#srs-backed-instances-and-the-update-path) |
-
-The **ordering** and **error-handling** mechanisms referenced above are load-bearing for correctness, so they are stated as behaviour in [Step 4: Upsert to FOLIO](#step-4-upsert-to-folio-per-record) and the [Upsert Key Strategy](#upsert-key-strategy-idempotency); design-rationale.md explains *why* they take the form they do.
+The **ordering** and **error-handling** mechanisms are load-bearing for correctness, so they are stated as behaviour in [Step 4: Upsert to FOLIO](#step-4-upsert-to-folio-per-record) and the [Upsert Key Strategy](#upsert-key-strategy-idempotency); design-rationale.md explains *why* they take the form they do.
 
 > **Instance storage type (decision).** This sync creates Inventory-native instances (`Instance.source = "FOLIO"`, no linked SRS record), which keeps the bibliographic fields editable through mod-inventory and keeps the PUT-based update path valid. SRS-backed instances cannot be updated through the mod-inventory API, so a mixed estate is avoided. Confirmed via the prototype: these records are updatable through mod-inventory and are received on the FOLIO adapter in the catalogue pipeline; one gap (item notes not appearing on the OAI-PMH feed) remains open, see [Item notes not visible on the FOLIO OAI-PMH feed](#item-notes-not-visible-on-the-folio-oai-pmh-feed). Full reasoning: [design-rationale.md](design-rationale.md#srs-backed-instances-and-the-update-path).
 
