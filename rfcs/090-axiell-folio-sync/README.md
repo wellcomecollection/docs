@@ -14,40 +14,27 @@ This RFC proposes an automated pipeline to synchronize data from **Axiell Collec
   - [Current Data Feeds for AxC and Folio Data](#current-data-feeds-for-axc-and-folio-data)
 - [Proposed Change: FOLIO Item Upsert on Every Adapter Run](#proposed-change-folio-item-upsert-on-every-adapter-run)
   - [Fan-out Mechanism](#fan-out-mechanism)
-  - [Target Upsert/Mapping Architecture](#target-upsertmapping-architecture)
 - [Transformation Design](#transformation-design)
   - [Approach](#approach)
   - [Transformation Pipeline](#transformation-pipeline)
   - [Pydantic Mapping](#pydantic-mapping-mappingpy)
   - [Reference Data Cache](#reference-data-cache-ref_cachepy)
-  - [RefCache Resolution](#refcache-resolution)
   - [Sample Field Mapping](#sample-field-mapping)
   - [FOLIO Field Mapping Reference](#folio-field-mapping-reference)
 - [Change Detection Mechanism](#change-detection-mechanism)
   - [How It Works](#how-it-works)
   - [Record selection: only harvest-flagged records](#record-selection-only-harvest-flagged-records)
   - [Change Detection Signals](#change-detection-signals)
-  - [Every Record in a Changeset Is Either](#every-record-in-a-changeset-is-either)
-  - [Delete detection: the reconciler, not OAI tombstones](#delete-detection-the-reconciler-not-oai-tombstones)
+  - [How records are applied: create, update, delete](#how-records-are-applied-create-update-delete)
+  - [Upsert Key Strategy (Idempotency)](#upsert-key-strategy-idempotency)
 - [Proposed AWS Architecture](#proposed-aws-architecture)
   - [Key Design Considerations](#key-design-considerations)
   - [System Diagram](#system-diagram)
   - [1. EventBridge Trigger](#1-eventbridge-trigger)
   - [2. Step Function State Machine](#2-step-function-state-machine)
   - [3. Lambda Function: axiell-folio-sync](#3-lambda-function-axiell-folio-sync)
-  - [Upsert Key Strategy (Idempotency)](#upsert-key-strategy-idempotency)
   - [4. S3 Manifest Storage](#4-s3-manifest-storage)
-- [Design Rationale: Why These Choices?](#design-rationale-why-these-choices)
-  - [Mapping: Pydantic Models vs. YAML Mapper](#mapping-pydantic-models-vs-yaml-mapper)
-  - [Orchestration: Step Functions vs. Alternatives](#orchestration-step-functions-vs-alternatives)
-  - [Caching Strategy: Reference Data Scaling Options](#caching-strategy-reference-data-scaling-options)
-  - [Storage: S3 NDJSON vs. Alternatives](#storage-s3-ndjson-vs-alternatives)
-  - [Invocation Pattern: EventBridge Trigger & Ordering](#invocation-pattern-eventbridge-trigger--ordering)
-  - [Error Handling: Per-Record Isolation](#error-handling-per-record-isolation)
-- [SRS-backed Instances and the Update Path](#srs-backed-instances-and-the-update-path)
-- [FOLIO API Client](#folio-api-client)
-- [Cost Analysis](#cost-analysis)
-  - [Current Volume: ~1,000 records/day](#current-volume-1000-recordsday)
+- [Design Decisions](#design-decisions)
 - [Open Questions](#open-questions)
   - [Field Mapping from Axc to Folio Instance, Holdings and Items needs to be defined](#field-mapping-from-axc-to-folio-instance-holdings-and-items-needs-to-be-defined)
   - [Delete semantics: what should reconciler-detected deletes do in FOLIO?](#delete-semantics-what-should-reconciler-detected-deletes-do-in-folio)
@@ -56,8 +43,6 @@ This RFC proposes an automated pipeline to synchronize data from **Axiell Collec
   - [Manifest query mechanism: S3 Select is not an established org pattern](#manifest-query-mechanism-s3-select-is-not-an-established-org-pattern)
   - [Item creation should likely be gated on record `Level`](#item-creation-should-likely-be-gated-on-record-level)
   - [Item notes not visible on the FOLIO OAI-PMH feed](#item-notes-not-visible-on-the-folio-oai-pmh-feed)
-- [Next Steps](#next-steps)
-- [References](#references)
 
 
 ---
@@ -107,7 +92,7 @@ flowchart TD
 
 #### Key characteristics
 
-The Axiell adapter harvests over OAI-PMH using the `oai_marcxml` metadata prefix and the `collect` OAI set, authenticating with a custom `Token` header rather than the standard `Authorization` header. Record identity comes from the `axiell-guid` extracted from MARC `001`, while visibility is controlled by the `InvisibleSourceWork` flag (MimsyWorksAreNotVisible). Harvesting runs in 15-minute windows with a 7-day lookback and a 360-minute maximum lag. All records land in a single Iceberg table per adapter, whose schema is `namespace`, `id`, `content`, `changeset`, `last_modified`, and `deleted`.
+The Axiell adapter harvests over OAI-PMH using the `oai_marcxml` metadata prefix and the `collect` OAI set, authenticating with a custom `Token` header rather than the standard `Authorization` header. Record identity comes from the `axiell-guid` extracted from MARC `001`, while visibility is controlled by the `InvisibleSourceWork` flag (MimsyWorksAreNotVisible). Harvesting runs in 15-minute windows with a 7-day lookback and a 360-minute maximum lag. All records land in a single Iceberg table per adapter (row schema described under [Change Detection](#how-it-works)).
 
 ---
 
@@ -138,28 +123,9 @@ The FOLIO upserter follows the same pattern but targets a different sink, the **
 
 So after the loader emits `changeset_ids`, the event fans out to **two** independent transformers: the existing ES transformer (`AxiellTransformer`, unchanged) writing to Elasticsearch for discovery, and the new FOLIO upserter writing to FOLIO Inventory for circulation and requesting in the LMS. Both consume the same `changeset_ids` independently, and either path can fail and retry without affecting the other, so adding the LMS sink does not put the existing discovery feed at risk.
 
+The FOLIO upserter's internal module flow (`ref_cache` → read Iceberg → `mapping.py` → `upsert.py` → OKAPI) is detailed under [Transformation Pipeline](#transformation-pipeline) and the [Lambda execution steps](#3-lambda-function-axiell-folio-sync); its AWS deployment wiring is in the [System Diagram](#system-diagram).
+
 ---
-### Target Upsert/Mapping Architecture
-
-```mermaid
-flowchart LR
-    scheduler[EventBridge<br/>15-min cadence] --> trigger[Trigger]
-    trigger --> loader[Loader<br/>OAI-PMH]
-    loader --> iceberg[(Iceberg)]
-    loader --> event[changeset_ids]
-
-    event --> es_transformer[Transformer<br/>AxiellTransformer]
-    es_transformer --> es[(Elasticsearch)]
-
-    event --> folio_sync[Lambda:<br/>axiell-folio-sync]
-    folio_sync --> ssm[SSM Secrets]
-    folio_sync --> refcache[ref_cache.py]
-    folio_sync --> read_changes[Read Iceberg]
-    read_changes --> mapper[mapping.py<br/>Pydantic models]
-    mapper --> upsert[upsert.py]
-    upsert --> okapi[(FOLIO OKAPI)]
-```
-
 
 ## Transformation Design
 
@@ -167,7 +133,7 @@ flowchart LR
 
 The upserter converts raw MARCXML from the AxC adapter into FOLIO payloads using **typed Python with Pydantic models** (`mapping.py`). The three payloads (Instance, Holdings, and Item) are Pydantic models with `extra="forbid"`, so the field-mapping rules are ordinary, reviewable Python and the payloads are typed contracts: a malformed payload (missing/ill-typed required field, typo'd key) **fails at build time, before any OKAPI call**, instead of surfacing as a FOLIO 422 mid-batch.
 
-This replaces an earlier YAML-driven mapper (`mapping.yaml` + `YamlMapper`); see [Mapping: Pydantic Models vs. YAML Mapper](#mapping-pydantic-models-vs-yaml-mapper) for the trade-off.
+This replaces an earlier YAML-driven mapper (`mapping.yaml` + `YamlMapper`); see [Mapping: Pydantic Models vs. YAML Mapper](design-rationale.md#mapping-pydantic-models-vs-yaml-mapper) for the trade-off.
 
 ### Transformation Pipeline
 
@@ -183,17 +149,16 @@ graph TD
 
 `mapping.py` is the single home for everything that decides *what an Axiell record becomes in FOLIO*: the MARC source table, normalization tables, defaults, the hrid scheme, the typed payload contracts, and the field-by-field builders.
 
-The flow runs in three steps. `parse_marcxml()` (in `mapper.py`) first extracts MARC fields via the `MARC_SOURCE` table (e.g. `title: 245$a`, `location_code: 852$b`, `barcode: 949$a`) into a typed `CanonicalRecord`, where MARC `001` is the Axiell GUID and the basis for every hrid. `build_instance/holdings/item()` then map that record into the `Instance`, `Holdings`, and `Item` Pydantic models, resolving reference data (location, material type, loan type, holdings source, instance type) through **RefCache** and applying defaults. Finally, Pydantic validates on construction (`extra="forbid"` rejects unknown keys) and `build_payloads()` returns `{"instance", "holdings", "item", "meta"}` as JSON-ready dicts, with `meta` carrying `source_id`, the three hrids, and `mapping_version`.
+The flow runs in three steps. `parse_marcxml()` (in `mapper.py`) first extracts MARC fields via the `MARC_SOURCE` table (e.g. `title: 245$a`, `location_code: 852$b`, `barcode: 949$a`) into a typed `CanonicalRecord`, where MARC `001` is the Axiell GUID and the basis for every hrid. `build_instance/holdings/item()` then map that record into the `Instance`, `Holdings`, and `Item` Pydantic models, resolving reference data (location, material type, loan type, holdings source, instance type) through **RefCache** and applying defaults. Finally, Pydantic validates on construction (`extra="forbid"` rejects unknown keys) and `build_payloads()` returns `{"instance", "holdings", "item", "meta"}` as JSON-ready dicts, with `meta` carrying `source_id`, the three hrids, and `mapping_version` (used for audit, rollback, and tracing a record back to the rules that produced it).
 
-This buys several things. Invalid payloads raise `MappingError`/`ValidationError` at build time, before any FOLIO write, so there are no round-trip 422s; the payload shape is an enforced typed contract (`extra="forbid"`), so a typo'd key is a build error rather than a silently dropped field; the rules, defaults, and contracts live in one reviewable Python module with full language expressiveness for normalization and conditionals; and every payload is stamped with `mapping_version` for traceability.
-
-**hrid scheme** (the idempotency key for every upsert): `AxC-instance-{guid}`, `AxC-holding-{guid}`, `AxC-item-{guid}`. `Instance.source = "FOLIO"`. The sync creates no linked SRS MARC record, so the instance is FOLIO-native and its bibliographic fields stay editable via mod-inventory.
+**hrid scheme** (the idempotency key for every upsert): `AxC-instance-{guid}`, `AxC-holding-{guid}`, `AxC-item-{guid}`. `Instance.source = "FOLIO"` (FOLIO-native, no linked SRS record; see [Design Decisions](#design-decisions)).
 
 ---
 
 ### Reference Data Cache (`ref_cache.py`)
 
-The reference cache maintains in-memory lookups for static FOLIO configuration data that rarely changes. `RefCache.load()` fetches and indexes **six** reference sets:
+FOLIO APIs require UUIDs/IDs, but Axiell supplies human-readable names, so `RefCache` translates names → FOLIO IDs and caches them to avoid repeated API calls within a run. `RefCache.load()` runs once per invocation and fetches and indexes **six** reference sets:
+
 - **Locations**: indexed by both code *and* name → UUID
 - **Material types**: by name → UUID (e.g., "Books", "video recording")
 - **Loan types**: by name → UUID (e.g., "Can Circulate", "Reference")
@@ -201,41 +166,11 @@ The reference cache maintains in-memory lookups for static FOLIO configuration d
 - **Item note types**: by name → UUID (resolves the "Axiell location" note's `itemNoteTypeId`)
 - **Instance types**: the resolved default type id (e.g., "text"), applied to every instance
 
-(It also retains the full record list per set, but those are used only by the `summary()` / introspection helpers, not by the mapping.)
+**Resolution:** for each record the mapper looks names up against the cache (an in-memory, O(1) lookup, e.g. `ref_cache.location["Wellcome Science"]`) and embeds the resolved UUIDs directly in the payload; if a name isn't found the record fails with `MappingError` and is skipped for manual review. **Current normalisations:** material types map from AxC `Object_category` to a FOLIO material-type name (e.g. `"archives"` → `"unspecified"`, audio → `"sound recording"`); locations from an AxC hierarchical code (e.g. `"215;B11;MR;84;3;7"`) to a location UUID; loan types from AxC `OrderingCodes` (e.g. `"Archives - Requestable"`) to a loan-type UUID; instance type is typically `"text"`.
 
-FOLIO APIs require UUIDs/IDs rather than human-readable names, but Axiell supplies names, so `ref_cache` translates names to FOLIO IDs; caching them avoids repeated API calls during a sync run, which helps both performance and resilience.
-
-**Workflow:** on Lambda startup, `ref_cache.load()` fetches from the FOLIO reference endpoints; the mapper then resolves names against the cache (e.g. `location_uuid = ref_cache.location["Wellcome Science"]`); and if a name isn't found, the error is logged and the record is marked for manual review.
-
-**Cache persistence & freshness:** `RefCache.load()` runs once at the start of each
-invocation and is **not** carried across invocations.  Reloading every run
-mostly re-fetches identical data; the point is simply that doing so is trivially
-cheap (about six reference-endpoint GETs, a few hundred KB, ~1–3 s on a job that runs
-every ~15 minutes, ~80 syncs/day), negligible next to the per-record OKAPI upserts,
-and needs no extra infrastructure: no DynamoDB/ElastiCache/S3 layer, no TTL, no
-cache-invalidation logic. Reading fresh each run also means that on the rare occasion
-a new code does appear it is picked up on the very next sync instead of failing as a
-`MappingError`, but that is a bonus rather than the reason.
-
-The trigger to revisit is reference-load latency genuinely dominating runtime (much
-higher frequency or far larger reference sets); even then the order is
-**warm-singleton + reload-on-miss** first (the pattern the FOLIO token already uses),
-and an external cross-run cache only beyond that.
+**Caching decision:** the cache is reloaded every run and **not** carried across invocations — about six reference-endpoint GETs (~1–3 s) is negligible next to the per-record upserts and needs no extra infrastructure (no DynamoDB/ElastiCache/TTL). For when this stops being the right trade-off and the scale-up progression, see [Caching Strategy](design-rationale.md#caching-strategy-reference-data-scaling-options).
 
 ---
-
-### RefCache Resolution
-
-All reference lookups (location, material type, loan type, holdings source, item note type, and the default instance type) are resolved at sync time via **RefCache**, which caches that FOLIO reference data.
-
-**Resolution process:** on Lambda startup RefCache initializes by querying the FOLIO reference APIs once per invocation; for each record the mapper looks codes up against the cached values (an in-memory, O(1) lookup); if a code isn't found the upsert fails with `MappingError` and the record is skipped; and the resolved UUIDs are embedded directly in the payload.
-
-**Current normalisations:** material types map from AxC `Object_category` to a FOLIO material-type name (e.g. `"archives"` → `"unspecified"`, audio → `"sound recording"`); locations map from an AxC hierarchical location code (e.g. `"215;B11;MR;84;3;7"`) to a FOLIO location UUID; loan types map from AxC `OrderingCodes` (e.g. `"Archives - Requestable"`) to a FOLIO loan type UUID; and the instance type is typically `"text"` or a domain-specific type.
-
-
----
-
-Stamping each payload with `mapping_version` supports audit (comparing records created with different mapper versions), rollback (identifying the records affected by a mapping change by version), and metadata tracking (a historical record of the mapping logic used for each record).
 
 ###  Sample Field Mapping 
 
@@ -298,17 +233,27 @@ Only AxC MARC records that have the **harvest flag set in MARC field `980 $a`** 
 | Payload hash mismatch | XSL output comparison (optional) | FOLIO-relevant fields actually changed |
 | Reconciler GUID remap | Axiell reconciler step | Authoritative delete: old GUID superseded; suppress its FOLIO records |
 
-### Every Record in a Changeset Is Either
+### How records are applied: create, update, delete
 
-Each record in a loader changeset is treated as **new** (the first time this `id` appears in Iceberg), in which case it is created in FOLIO, or **updated** (an existing `id` with a newer `last_modified`), in which case it is updated in FOLIO. Deletions are handled on the reconciler path (see [Delete detection](#delete-detection-the-reconciler-not-oai-tombstones) below), not by directly suppressing on the loader's `deleted=true` flag. The exact delete action in FOLIO (suppress vs remove, and cascade scope) remains an open policy question (see [Delete semantics](#delete-semantics-what-should-reconciler-detected-deletes-do-in-folio)).
+Each record in a loader changeset is **new** (the first time this `id` appears in Iceberg) and is created in FOLIO, or **updated** (an existing `id` with a newer `last_modified`) and is updated in FOLIO.
 
-### Delete detection: the reconciler, not OAI tombstones
+**Deletes are driven by the reconciler, not the loader's `deleted=true` tombstone** (which is unreliable — the very reason the adapter has a separate reconciler step). The reconciler tracks the `collectId → guid` mapping in its own Iceberg store and, when a `collectId` is remapped, emits a `DeletedSourceWork` for the superseded GUID. Two things follow for the upserter: it consumes the **loader's** changeset, so it never sees these deletes directly, and a reconciler delete is keyed by the **old (superseded) GUID**, not the changeset row being processed.
 
-Axiell's OAI tombstones (`deleted=true`) are unreliable, which is the very reason the adapter has a separate **reconciler** step. The reconciler tracks the `collectId → guid` mapping in its own Iceberg store and, when a `collectId` is remapped to a different work, emits a `DeletedSourceWork` for the superseded GUID.
+**Suggested approach:** have the reconciler fan out a FOLIO suppression path mirroring the loader's fan-out to the upsert path (reusing the existing reconciler rather than building a parallel mapping store). On a reconciler delete, suppress the records for the old GUID (`AxC-instance-{old-guid}`) and cascade to its holdings and item; the loader `deleted=true` stays a best-effort secondary signal only. The exact delete action (suppress vs remove, and cascade scope) is an open policy question — see [Delete semantics](#delete-semantics-what-should-reconciler-detected-deletes-do-in-folio).
 
-This has two consequences for the FOLIO upserter. First, the upserter consumes the **loader's changeset**, so it does not see reconciler-detected deletes, which are produced by a separate, later transformer step. Second, a reconciler delete is keyed by the **old (superseded) GUID**, not by the changeset row being processed.
+### Upsert Key Strategy (Idempotency)
 
-Suggested approach: have the **reconciler** step fan out a FOLIO suppression path that mirrors the loader's fan-out to the upsert path, reusing the existing reconciler rather than building a parallel `collectId → guid` mapping store. On a reconciler delete, suppress the FOLIO records for the old GUID (`AxC-instance-{old-guid}`) and cascade to its holdings and item, in line with the [Delete semantics](#delete-semantics-what-should-reconciler-detected-deletes-do-in-folio) question raised earlier. The loader-changeset `deleted=true` can remain a best-effort secondary signal, but the reconciler fan-out is the authoritative delete path.
+Every entity is matched against its existing FOLIO record by `hrid` (a GET before each write), then created or updated — no blind creates, which is what makes replay idempotent:
+
+- Instance: `GET /inventory/instances?query=(hrid==AxC-instance-{guid})`
+- Holdings: `GET /holdings-storage/holdings?query=(hrid==AxC-holding-{guid})`
+- Item: `GET /inventory/items?query=(hrid==AxC-item-{guid})`
+
+The `hrid` is derived from the Axiell GUID (MARC 001), not the `collectId` (object number). Axiell reuses `collectId`s; keying on GUID prevents a reused id from overwriting the wrong FOLIO record.
+
+**Behavior:** when a record is found, its mutable fields are updated while FOLIO-internal metadata is preserved; when it isn't found, a new record is created; and when required fields are missing, the record is skipped with a structured error logged. An update applies only if it passes the stale-write guard (incoming Axiell `last_modified` strictly newer than the watermark on the existing FOLIO record), so out-of-order or replayed changesets never overwrite newer state (see [Invocation Pattern](design-rationale.md#invocation-pattern-ordering--concurrency)).
+
+**Replay safety:** upserts are idempotent by `hrid`, so processing the same changeset twice produces the same outcome, and manifest deduplication checks whether a changeset was already processed successfully before running it again.
 
 ---
 
@@ -438,7 +383,7 @@ flowchart TD
 
 #### Step 1: Authenticate with FOLIO
 
-Auth is delegated to the shared `folio-client` (see [FOLIO API Client](#folio-api-client)): a `FolioClient` is built with a credentials provider that reads SSM, and it logs in lazily on first use.
+Auth is delegated to the shared `folio-client` package: a `FolioClient` is built with a credentials provider that reads SSM, logs in lazily on first use, caches the token (valid 24h) for the invocation, and re-authenticates once automatically on a 401.
 ```
 SSM Parameter Store (SecureString)
   Path: /axiell-folio-sync/okapi-creds
@@ -456,17 +401,10 @@ FolioClient → POST /authn/login   (lazy, on first request)
 Query S3 Tables Iceberg catalog
   Bucket: {S3_TABLE_BUCKET_ARN}
   Table: {ICEBERG_TABLE_NAME} (e.g., default.axiell_changesets)
-  
+
 SELECT [namespace, id, content, changeset, last_modified, deleted]
 WHERE changeset IN ({changeset_ids from event})
-
-Schema:
-  namespace        string    e.g., "location", "item"
-  id               string    external identifier from Axiell
-  content          string    raw MARCXML payload from OAI-PMH
-  changeset        string    changeset ID from adapter
-  last_modified    timestamp when record changed
-  deleted          boolean   true if marked deleted
+  # row schema described under Change Detection > How It Works
 ```
 
 #### Step 3: Map & Validate
@@ -508,7 +446,7 @@ Every entity is matched by its **hrid** (from `meta`) and created or updated (no
 blind creates), which is what makes replay idempotent. On an existing record the
 update is additionally gated by the **stale-write guard**: it applies only if the
 incoming Axiell `last_modified` is strictly newer than the watermark on the FOLIO
-record, otherwise the record is skipped (see [Invocation Pattern](#invocation-pattern-eventbridge-trigger--ordering)).
+record, otherwise the record is skipped (see [Invocation Pattern](design-rationale.md#invocation-pattern-ordering--concurrency)).
 
 ```
 For each mapped record:
@@ -536,20 +474,6 @@ Per-record error handling:
   • HTTP 4xx/5xx → captured, batch continues
   • All errors logged to CloudWatch AND accumulated in the S3 failures manifest
 ```
-
-### Upsert Key Strategy (Idempotency)
-
-**Matching**: All entities are matched against existing FOLIO records by `hrid`:
-
-- Instance: `GET /inventory/instances?query=(hrid==AxC-instance-{guid})`
-- Holdings: `GET /holdings-storage/holdings?query=(hrid==AxC-holding-{guid})`
-- Item: `GET /inventory/items?query=(hrid==AxC-item-{guid})`
-
-The `hrid` is derived from the Axiell GUID (MARC 001), not the `collectId` (object number). Axiell reuses `collectId`s; keying on GUID prevents a reused id from overwriting the wrong FOLIO record. The reconciler emits `DeletedSourceWork` events when a GUID is superseded, so old FOLIO records are cleaned up automatically.
-
-**Behavior:** when a record is found, its mutable fields are updated while FOLIO-internal metadata is preserved; when it isn't found, a new record is created; and when required fields are missing, the record is skipped with a structured error logged. An update applies only if it passes the stale-write guard (incoming Axiell `last_modified` strictly newer than the watermark on the existing FOLIO record), so out-of-order or replayed changesets never overwrite newer state (see [Invocation Pattern](#invocation-pattern-eventbridge-trigger--ordering)).
-
-**Replay safety:** upserts are idempotent by `hrid`, so processing the same changeset twice produces the same outcome, and manifest deduplication checks whether a changeset was already processed successfully before running it again.
 
 #### Step 5: Batch & Write Manifests
 ```python
@@ -663,134 +587,28 @@ manifests/
 
 ---
 
-## Design Rationale: Why These Choices?
+## Design Decisions
 
-### Mapping: Pydantic Models vs. YAML Mapper
+The decisions below are summarized in [Key Design Considerations](#key-design-considerations); the full trade-off analysis for each (alternatives weighed, why this option won) lives in **[design-rationale.md](design-rationale.md)**.
 
-| Approach | Pros | Cons |
-|----------|------|------|
-| **A: YAML mapper** (`mapping.yaml` + `YamlMapper`) | Mapping config separated from code; in principle non-programmers can read/adjust rules; changes are config-only | Errors surface only at runtime (often as a FOLIO 422); no type safety, so a typo'd key or wrong shape passes silently; a second engine (YAML schema + interpreter) to build, test, and document; awkward for normalization tables, per-field defaults, and composite hrids |
-| **B: Typed Pydantic models** (`mapping.py`, chosen) | Validation at build time before any OKAPI call; payload shape is a typed contract (`extra="forbid"`); rules, defaults, and contracts in one reviewable module; full Python for normalization/conditionals; payloads stamped with `mapping_version` | Mapping changes need a Python edit + redeploy, not a config tweak; reading the rules assumes Python familiarity |
+| Decision | Choice | Rationale |
+|----------|--------|-----------|
+| **Mapping** | Typed Pydantic models (`mapping.py`), not a YAML mapper | [Mapping](design-rationale.md#mapping-pydantic-models-vs-yaml-mapper) |
+| **Orchestration** | Step Functions + Lambda, not direct Lambda or SQS | [Orchestration](design-rationale.md#orchestration-step-functions-vs-alternatives) |
+| **Reference caching** | Reload-per-run; defined scale-up progression if it grows | [Caching](design-rationale.md#caching-strategy-reference-data-scaling-options) |
+| **Manifest storage** | S3 NDJSON (90-day TTL), not DynamoDB or streaming | [Storage](design-rationale.md#storage-s3-ndjson-vs-alternatives) |
+| **Ordering safety** | Source-timestamp stale-write guard + Step Functions concurrency = 1 | [Invocation Pattern](design-rationale.md#invocation-pattern-ordering--concurrency) |
+| **Error handling** | Per-record isolation; batch-level errors retry then fail | [Error Handling](design-rationale.md#error-handling-per-record-isolation) |
+| **Instance storage type** | Inventory-native (`Instance.source = "FOLIO"`), no linked SRS record | [SRS-backed Instances](design-rationale.md#srs-backed-instances-and-the-update-path) |
 
-We chose the typed Pydantic models (B). The decisive factor is *when* errors surface: with typed models a missing or ill-typed required field (or an unknown key, since the models are `extra="forbid"`) raises `MappingError`/`ValidationError` during the build step, before any OKAPI call, whereas the YAML approach deferred the same failures to a FOLIO 422 mid-batch that is far harder to trace. Making the payload a typed contract also means a typo'd key is a build error rather than a silently dropped field, so the mapping and the FOLIO contract cannot drift apart unnoticed. Beyond correctness, it collapses two engines into one: ordinary Python replaces a bespoke YAML schema and its interpreter, so there is less to build, test, and document, and the normalization tables, defaults, and hrid scheme live beside the models. Every payload is also stamped with `mapping_version`, so any record in FOLIO or a manifest traces back to the exact rules that produced it.
+The **ordering** and **error-handling** mechanisms referenced above are load-bearing for correctness, so they are stated as behaviour in [Step 4: Upsert to FOLIO](#step-4-upsert-to-folio-per-record) and the [Upsert Key Strategy](#upsert-key-strategy-idempotency); design-rationale.md explains *why* they take the form they do.
 
-The YAML mapper's headline appeal, letting non-programmers edit mappings as config, every rule change still went through review, tests, and a deploy, so config-versus-code made little practical difference, while the absence of type safety let malformed output reach FOLIO and fail there. As the rules grew (normalization tables, per-field defaults, composite GUID-based hrids) they simply read more clearly as Python than as declarative YAML.
+> **Instance storage type (decision).** This sync creates Inventory-native instances (`Instance.source = "FOLIO"`, no linked SRS record), which keeps the bibliographic fields editable through mod-inventory and keeps the PUT-based update path valid. SRS-backed instances cannot be updated through the mod-inventory API, so a mixed estate is avoided. Confirmed via the prototype: these records are updatable through mod-inventory and are received on the FOLIO adapter in the catalogue pipeline; one gap (item notes not appearing on the OAI-PMH feed) remains open, see [Item notes not visible on the FOLIO OAI-PMH feed](#item-notes-not-visible-on-the-folio-oai-pmh-feed). Full reasoning: [design-rationale.md](design-rationale.md#srs-backed-instances-and-the-update-path).
 
-> The YAML mapper (`mapping.yaml` + `YamlMapper`) was the original prototype design and has been **superseded** by the Pydantic approach. Remaining `mapping.yaml` references elsewhere in this RFC are historical.
-
----
-
-### Orchestration: Step Functions vs. Alternatives
-
-| Approach | Pros | Cons | Cost/mo |
-|----------|------|------|---------|
-| **A: Direct Lambda** (EventBridge → Lambda, fire-and-forget) | Fewer services, lower overhead, fastest time-to-invocation | No built-in retry logic, no execution history, hard to extend, silent failures possible | ~$2 |
-| **B: Step Functions + Lambda** (chosen) | Explicit retry policy + audit trail, easy to parallelize later, clear visibility into success/failure | Extra service, marginal latency added | ~$3–5 |
-| **C: Async Queue** (EventBridge → SQS → Lambda workers) | Decouples producer/consumer, handles bursts, resilient to adapter restarts | Complex ordering semantics, harder to reason about, no clear success/failure signal, monitoring overhead | ~$10–15 |
-
-We chose Step Functions + Lambda (B): it buys an explicit retry policy and a full execution history. Every state transition is logged to CloudWatch, so a sync that fails partway is diagnosable from the execution history rather than by reconstructing state from Lambda logs, and max attempts and backoff are declarative, so operations can tune retries in the state-machine definition without code changes. The adapter triggers the sync asynchronously (`StartExecution`) and does not block; ordering safety comes from source-timestamp watermarking plus a Step Functions concurrency limit of 1 (see [Invocation Pattern](#invocation-pattern-eventbridge-trigger--ordering)), not from backpressure. The design also leaves a clean extension point for scale: when volume outgrows a single invocation we swap in a Step Functions `Map` state to fan out per changeset, with no change to the manifest format. The cost is immaterial: pennies a month in state transitions at ~80 syncs/day (~2,400/month).
-
-A direct EventBridge→Lambda trigger (A) was rejected because it gives no failure signal, no automatic retry, and no execution history, so debugging would mean parsing Lambda logs. An async SQS queue (C) is cheaper per invocation but doesn't guarantee processing order within a batch, needs workers to coordinate which changeset they own, and carries monitoring overhead (error tracking, retries, dead-letter management) that isn't justified at current volume.
-
-### Caching Strategy: Reference Data Scaling Options
-
-Reload-per-run assumes the reference set is small enough to bulk-load into Lambda memory cheaply (see [Reference Data Cache](#reference-data-cache-ref_cachepy)). If we ever need **much more** reference data (many more types, or large per-record lookups), the choice of caching architecture matters. Options, cheapest first:
-
-| Option | What it is | Best when | Cost / overhead | Freshness control |
-|--------|-----------|-----------|-----------------|-------------------|
-| **Warm singleton + reload-on-miss** | Module-global cache reused across warm invocations; fetch-and-memoize a code on a cache miss | Set still fits in memory; modest growth | None (in-process) | Self-healing on miss; lost on cold start |
-| **S3 snapshot + scheduled refresher** | A cron (EventBridge) Lambda rebuilds a serialized snapshot (JSON/Parquet) from FOLIO every N hours; the sync Lambda reads it at startup (one GET) instead of N FOLIO calls | Whole set scanned each run; want to decouple sync from FOLIO availability | ~pennies/mo + one extra scheduled Lambda | Snapshot age = refresh cadence; pair with reload-on-miss |
-| **DynamoDB lookup table** | Refresher populates `(type, code) → uuid`; sync Lambda `BatchGetItem`s only the codes a changeset needs | Set too big for memory, or only a subset is needed per run | On-demand $/read; native TTL | TTL / refresher cadence; pair with reload-on-miss |
-| **ElastiCache (Redis)** | Shared in-memory cache across all invocations | Very large + hot lookups at high concurrency | Always-on (~$12+/mo), **requires VPC** (ENI cold-start + NAT to reach FOLIO/AWS APIs) | TTL |
-
-**Recommended progression:** stay on reload-per-run → **S3 snapshot + scheduled refresher** (cheap, no VPC, scales via columnar formats, decouples from FOLIO reference endpoints) → **DynamoDB** only once the set outgrows Lambda memory or you genuinely need selective point lookups → **ElastiCache** only for high-concurrency hot-lookup workloads that justify always-on infra and the VPC tax. In every tier, keep a **reload-on-miss fallback to FOLIO** so a newly-added code resolves on first sight rather than failing the record.
+For the cost evidence behind the "~$3–5/month" figure, see [Cost Analysis](design-rationale.md#cost-analysis).
 
 ---
 
-### Storage: S3 NDJSON vs. Alternatives
-
-| Approach | Pros | Cons | Cost/mo (90-day) |
-|----------|------|------|------------------|
-| **A: DynamoDB** (per-record writes, TTL) | Query-friendly, real-time dashboards possible, strong consistency | O(n) write cost, schema evolution painful, expensive for batches, not auditable | ~$20–50 |
-| **B: S3 NDJSON** (chosen) | Batched writes (low cost), queryable (download + `jq`; Athena or S3 Select optional), matches the pipeline's NDJSON-manifest pattern, audit via versioning, easy to compress/archive | Requires S3 Select for queries (not real-time), not ideal for high-cardinality point lookups | ~$1–2 |
-| **C: Streaming** (Kinesis/Firehose → Parquet) | High throughput, good for ML pipelines, efficient compression | Overkill for current volume, adds infrastructure complexity, higher cost | ~$5–15 |
-
-We chose S3 NDJSON (B), and write-scaling is the main driver: per-record DynamoDB writes scale O(n) with record count, whereas the upserter batches its manifest writes into one S3 PUT per run (up to 5,000 records per object). At the current ~1,000 records/day across ~80 syncs that is about one object per run, so the batched model stays flat as volume grows rather than scaling per record. It is also explicitly the existing pipeline pattern rather than a new one: the adapter platform already emits per-job **NDJSON manifests** to S3, so reusing that format (and S3 generally) keeps backup, recovery, query, and downstream tooling consistent across the pipeline. And it stays queryable after the fact without any ETL. **S3 Select** is one convenient option (e.g. `SELECT * FROM s3://bucket/manifest.ndjson WHERE errors > 0`, ~500 ms on a 100 KB file), but note S3 Select is **not currently used elsewhere in the org**, so we don't depend on it: because the manifests are plain NDJSON, a failed-record list is equally available by just downloading the object and piping it through `jq`/`grep`, or by pointing Athena at the prefix if ad-hoc SQL is ever wanted. S3 Select is a nicety, not a load-bearing part of the design; whether to adopt it is an open question (below). S3 versioning provides an audit trail (every write is a recoverable object version, with the metadata JSON tracking historical jobs), and after 90 days manifests archive cheaply to Glacier, something DynamoDB has no low-cost equivalent for.
-
-DynamoDB (A) was rejected on fit rather than headline cost (at ~1,000 writes/day either store is cheap), because its per-record write model scales O(n), schema changes require a scan-and-rewrite, and there's no clean way to answer audit questions like "what was deleted last week?". Streaming via Kinesis/Firehose (C) is built for thousands of records per second (overkill for 10–500-record changesets) and adds buffer/flush operational complexity we don't need.
-
----
-
-### Invocation Pattern: EventBridge Trigger & Ordering
-
-EventBridge publishes changeset events to Step Functions via `StartExecution` (asynchronous, fire-and-forget); the adapter does not block waiting for the sync to complete. Step Functions provides the execution visibility and retry policy, and all invocations (initial or retry) are decoupled from the adapter.
-
-However, concurrent or retried executions create an **ordering risk**: if two changesets arrive within ~45 s of each other, or if a failed changeset is retried while a newer one is in flight, a naive last-write-wins upsert could apply an older state after a newer one, corrupting the FOLIO record. Similarly, idempotent replays (re-running failed changesets after a fix) must be no-ops if a newer changeset has already updated the same record.
-
-**Solution: Source-Timestamp Watermarking.** The upsert layer compares each incoming record's Axiell `last_modified` timestamp (from the source data) against a watermark stored on the FOLIO record. The write proceeds only if the incoming timestamp is strictly newer; otherwise the record is skipped, leaving the FOLIO state intact. Where exactly that watermark lives in FOLIO (an administrative note, a custom property, or a version field) is itself an open question; see [Watermark storage](#watermark-storage-where-does-the-source-timestamp-live). This ensures:
-- Out-of-order concurrent executions apply updates in source-timestamp order, not invocation order.
-- Replays (re-running failed changesets) are idempotent: an older changeset re-run after a newer one succeeds does not overwrite the newer state.
-- No coupling between adapter and sync (the adapter remains fire-and-forget).
-
-**Concurrency control:** A Step Functions concurrency limit of 1 (via the state machine definition) is a secondary guard, preventing the GET–PUT gap between a query and an upsert; with a limit of 1, only one execution can be in the `Lambda` state at a time, so even if two changesets arrive within milliseconds, the second waits for the first to commit. This is loose (the adapter cadence is 15 minutes, so concurrency is naturally rare) but provides an extra safeguard against read-skew during retries.
-
-Combined, these two mechanisms ensure ordering safety without blocking the adapter or introducing a queue.
-
----
-
-### Error Handling: Per-Record Isolation
-
-The guiding policy is that one bad record must never halt the batch.
-
-Per-record errors are non-blocking. A mapping error (Pydantic validation, a missing required field, or an unresolved reference) is captured as `{"source_id": "...", "type": "mapping", "detail": "..."}` and an API error (FOLIO returns 4xx/5xx) as `{"source_id": "...", "type": "api", "detail": "..."}`; in either case the record is written to the S3 error manifest and processing moves on to the next record. Batch-level errors, by contrast, are blocking: an OKAPI auth failure, an Iceberg connection failure, or an S3 write failure raises an exception that the Step Function retries up to `max_retries`, and if those are exhausted the execution ends in the terminal `SyncFailed` state and raises an alert (see the alert path below).
-
-Failures are observable across four channels: CloudWatch Logs (`/aws/lambda/axiell-folio-sync`) for detailed per-record execution, the S3 `.ids.failures.ndjson` manifest for a queryable error list (via a plain download + `jq`, or optionally S3 Select; see the storage note), CloudWatch Metrics (`RecordsFailed`, `RecordsCreated`, and the like) for alerting on a high failure rate, and the Step Function history (`/aws/states/axiell-folio-sync-sfn`) for state transitions and retry events.
-
-**Skipped records are also accounted for, not dropped silently.** Records skipped before a write (no `980 $a` harvest flag, `Level` gating, or the stale-write guard) are counted in a `RecordsSkipped` metric and recorded in the run's metadata manifest, so "why didn't record X appear in FOLIO?" is answerable after the fact rather than being an invisible no-op.
-
-**Alert path:** alerting follows the existing pipeline pattern: a **CloudWatch metric alarm** (on `RecordsFailed`/the failure rate, and on `SyncFailed` Step Function executions) fires into the team's **Slack** channel via **Amazon Q Developer in chat applications**. No new notification mechanism is introduced; the alarms are wired to the same SNS-topic → Amazon Q → Slack route already used elsewhere in the catalogue pipeline.
-
----
-
-## SRS-backed Instances and the Update Path
-
-A consideration worth making explicit for the update path. Some FOLIO instances are backed by **Source Record Storage (SRS)** as MARC, for example anything migrated or loaded as MARC. For those records the bibliographic fields are controlled by the underlying SRS MARC record and **cannot be updated through the mod-inventory instance API**; only administrative data is editable there. MARC edits go through **quickMARC**, which writes to SRS and syncs the Inventory record. A `PUT` to mod-inventory may therefore fail or be silently ignored for an SRS-backed instance, whereas the current update logic assumes the PUT takes effect.
-
-**which storage do we create records in, **Inventory-native** (FOLIO source) or **MARC/SRS**?**
-Records created the two ways behave differently on update, so a mixed estate is harder to reason about and maintain. This sync currently creates Inventory-native instances (`Instance.source = "FOLIO"`, with no linked SRS record), which keeps the bibliographic fields editable through mod-inventory and keeps the PUT-based update path valid.
-
-**Catalogue-pipeline impact:** the catalogue pipeline harvests FOLIO over OAI-PMH using the `marc21_withholdings` prefix (see `catalogue_graph/src/adapters/extractors/oai_pmh/folio/config.py`). Under that prefix the instance bib comes from SRS when an SRS record is present, or is generated on the fly from Inventory depending on the **mod-oai-pmh record-source** setting, while holdings and items come from Inventory. So whether the records this sync creates appear in that feed, and in what form, depends on the storage type we choose together with the mod-oai-pmh configuration. This has now been confirmed via the prototype for Inventory-native records: a `source = "FOLIO"` instance created here is updatable through mod-inventory and is received on the FOLIO adapter in the catalogue pipeline. One gap remains under investigation, the item notes not appearing on the OAI-PMH feed; see [Item notes not visible on the FOLIO OAI-PMH feed](#item-notes-not-visible-on-the-folio-oai-pmh-feed).
-
----
-
-## FOLIO API Client
-
-OKAPI traffic goes through the shared **`folio-client`** package (`prototypes/folio-client/`), the same dependency-free OKAPI client used by the folio-api Lambda and the CLI scripts. It is pure standard library (`urllib` + `ssl`), so it adds no third-party dependency to the bundle, and the build vendors its source into the image. The Lambda declares it as a path dependency (`[tool.uv.sources]` in `axiell-folio-sync/pyproject.toml`) and wires it up in `axiell_folio_sync.py`: a `FolioClient` is constructed with a `credentials_provider` (the SSM lookup) and `ssl_context_from_env()`, then a thin adapter (`_make_folio_callables`) wraps it into the `folio_get` / `folio_post` / `folio_put` callables that `ref_cache.py` and `upsert.py` consume.
-
-**Responsibilities:** the client authenticates to FOLIO via OKAPI (`/authn/login`) and refreshes the token automatically on a 401; the upsert layer (`upsert.py`) resolves existing records by CQL query (a GET before each write) and creates (POST), updates (PUT), or suppresses deleted records per entity.
-
-**Token management:** `FolioClient` logs in lazily on the first request using credentials from SSM, caches the resulting token (valid 24 hours, comfortably longer than the 5-minute Lambda execution) for the whole invocation (and across warm invocations on the same instance), and re-authenticates once automatically on a 401, so there is no per-call refresh overhead.
-
----
-
-
-## Cost Analysis
-
-### Current Volume: ~1,000 records/day
-
-At ~80 syncs/day the pipeline runs ~2,400 times/month, so the monthly quantities below derive from that:
-
-| Service | Operation | Qty/mo | Rate | Cost/mo |
-|---------|-----------|--------|------|---------|
-| Lambda | ~2,400 invocations × ~60s × 512 MB | ~2,400 invocations | $0.0000167/GB-s | ~$1.20 |
-| Step Functions | ~2,400 state transitions | ~2,400 transitions | $0.000025/transition | ~$0.06 |
-| EventBridge | ~2,400 events | ~2,400 events | $1/M events | ~$0.00 |
-| S3 (manifests) | ~2,400 objects written, 90-day retention | ~2,400 objects + storage | $0.005/K PUTs + $0.023/GB/mo | ~$1.50 |
-| CloudWatch Logs | ~2,400 × 5 KB ≈ 12 MB/month | 12 MB ingested | $0.50/GB ingested | ~$0.20 |
-| **Total** | | | | **~$3–5** |
-
-
----
 ## Open Questions
 
 ### Field Mapping from Axc to Folio Instance, Holdings and Items needs to be defined
@@ -805,11 +623,11 @@ Specific points to resolve with Collection Information: whether suppressed items
 
 ### Watermark storage: where does the source timestamp live?
 
-The stale-write guard (see [Invocation Pattern](#invocation-pattern-eventbridge-trigger--ordering)) needs the Axiell `last_modified` of the last applied change stored **on the FOLIO record** so the next write can compare against it. FOLIO does not offer an obvious home for this: `_version` is mod-inventory's optimistic-locking counter (not a source timestamp), and `discoverySuppress` is a boolean. Candidates are an **administrative note**, a **custom property**, or a dedicated field, each with trade-offs for visibility, OAI-PMH leakage, and whether it survives a quickMARC/SRS round-trip. The storage location needs to be decided (and confirmed not to pollute the catalogue feed) before the guard can be implemented.
+The stale-write guard (see [Invocation Pattern](design-rationale.md#invocation-pattern-ordering--concurrency)) needs the Axiell `last_modified` of the last applied change stored **on the FOLIO record** so the next write can compare against it. FOLIO does not offer an obvious home for this: `_version` is mod-inventory's optimistic-locking counter (not a source timestamp), and `discoverySuppress` is a boolean. Candidates are an **administrative note**, a **custom property**, or a dedicated field, each with trade-offs for visibility, OAI-PMH leakage, and whether it survives a quickMARC/SRS round-trip. The storage location needs to be decided (and confirmed not to pollute the catalogue feed) before the guard can be implemented.
 
 ### Reference-data caching: when and how to cache across Lambda runs
 
-Today `RefCache` reloads all six reference sets on every invocation, which is the right trade-off at current volume (see [Reference Data Cache](#reference-data-cache-ref_cachepy)). The open question is what happens if the reference set grows substantially. We would need to decide the size or load-latency threshold at which caching across runs is worth the added complexity. Staleness is unlikely to be the blocker: the reference data changes rarely, so a long TTL would seldom be stale, and a reload-on-miss fallback would keep a newly-added code from failing as a `MappingError`. So the question is mostly about whether the saved reload justifies the extra infrastructure. We would also need to pick a tier when we get there: the progression runs from a warm-singleton with reload-on-miss, to an S3 snapshot rebuilt by a scheduled refresher, to DynamoDB, and only then to ElastiCache (see [Caching Strategy: Reference Data Scaling Options](#caching-strategy-reference-data-scaling-options) for the trade-offs).
+Today `RefCache` reloads all six reference sets on every invocation, which is the right trade-off at current volume (see [Reference Data Cache](#reference-data-cache-ref_cachepy)). The open question is what happens if the reference set grows substantially. We would need to decide the size or load-latency threshold at which caching across runs is worth the added complexity. Staleness is unlikely to be the blocker: the reference data changes rarely, so a long TTL would seldom be stale, and a reload-on-miss fallback would keep a newly-added code from failing as a `MappingError`. So the question is mostly about whether the saved reload justifies the extra infrastructure. We would also need to pick a tier when we get there: the progression runs from a warm-singleton with reload-on-miss, to an S3 snapshot rebuilt by a scheduled refresher, to DynamoDB, and only then to ElastiCache (see [Caching Strategy: Reference Data Scaling Options](design-rationale.md#caching-strategy-reference-data-scaling-options) for the trade-offs).
 
 ### Manifest query mechanism: S3 Select is not an established org pattern
 
@@ -822,18 +640,3 @@ The legacy CALM→Sierra transform (`docs/discovery/CalmInnopac.xsl`) only attac
 ### Item notes not visible on the FOLIO OAI-PMH feed
 
 Confirmed via the prototype: FOLIO-native instances (`source = "FOLIO"`) created by this sync **can** be updated through mod-inventory, and the records **are** received on the FOLIO adapter in the catalogue pipeline (so the storage-type and catalogue-feed concerns are largely settled for Inventory-native records). One issue remains open: the item **notes list does not appear on the OAI-PMH feed** (`marc21_withholdings`). The records otherwise come through, but the notes we set (for example the `Axiell location` note) are missing from the harvested output. This needs further investigation, likely into how mod-oai-pmh renders Inventory item notes in the MARC output and whether a note type, `staffOnly`, or suppression setting hides them.
-
----
-
-## Next Steps
-
-- **Initial backfill / cutover (to be worked out).** The design above handles the ongoing 15-minute changeset flow, but the first task is populating FOLIO with the **entire existing harvest-flagged (`980 $a`) corpus**, not a single window. We need to work out how the one-off initial load runs (replay all historical changesets, or a full Iceberg scan filtered on the harvest flag), how it is validated against FOLIO, how it is throttled so it does not overwhelm OKAPI, and how it sequences with the switch-over to the steady-state event-driven sync.
-
----
-
-## References
-
-- **Axiell Adapter Platform**: Emits changesets to Iceberg; documentation in location-movement-control-docs
-- **FOLIO API**: https://api-wellcome.folio.ebsco.com (OKAPI auth required)
-- **AWS S3 Tables**: Iceberg catalog on S3; managed via Terraform
-- **Mapping rules**: `mapping.py`, the typed Pydantic Instance/Holdings/Item models + builders (bundled in the Lambda image)
