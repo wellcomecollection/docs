@@ -2,8 +2,7 @@
 
 This document records *why* the [RFC 090 CMS→LMS sync](README.md) makes the
 choices it does. The README states the decisions; this document holds the
-trade-off analysis behind them, plus the cost evidence that backs the
-"keep it simple" conclusions.
+trade-off analysis behind them.
 
 ## Table of Contents
 
@@ -14,7 +13,6 @@ trade-off analysis behind them, plus the cost evidence that backs the
 - [Invocation Pattern: Ordering & Concurrency](#invocation-pattern-ordering--concurrency)
 - [Error Handling: Per-Record Isolation](#error-handling-per-record-isolation)
 - [SRS-backed Instances and the Update Path](#srs-backed-instances-and-the-update-path)
-- [Cost Analysis](#cost-analysis)
 
 ---
 
@@ -117,18 +115,3 @@ A consideration worth making explicit for the update path. Some FOLIO instances 
 Records created the two ways behave differently on update, so a mixed estate is harder to reason about and maintain. This sync currently creates Inventory-native instances (`Instance.source = "FOLIO"`, with no linked SRS record), which keeps the bibliographic fields editable through mod-inventory and keeps the PUT-based update path valid.
 
 **Catalogue-pipeline impact:** the catalogue pipeline harvests FOLIO over OAI-PMH using the `marc21_withholdings` prefix (see `catalogue_graph/src/adapters/extractors/oai_pmh/folio/config.py`). Under that prefix the instance bib comes from SRS when an SRS record is present, or is generated on the fly from Inventory depending on the **mod-oai-pmh record-source** setting, while holdings and items come from Inventory. So whether the records this sync creates appear in that feed, and in what form, depends on the storage type we choose together with the mod-oai-pmh configuration. This has now been confirmed via the prototype for Inventory-native records: a `source = "FOLIO"` instance created here is updatable through mod-inventory and is received on the FOLIO adapter in the catalogue pipeline. One gap remains under investigation, the item notes not appearing on the OAI-PMH feed; see the README open question.
-
----
-
-## Cost Analysis
-
-At ~80 syncs/day the pipeline runs ~2,400 times/month, so the monthly quantities below derive from that:
-
-| Service | Operation | Qty/mo | Rate | Cost/mo |
-|---------|-----------|--------|------|---------|
-| Lambda | ~2,400 invocations × ~60s × 512 MB | ~2,400 invocations | $0.0000167/GB-s | ~$1.20 |
-| Step Functions | ~2,400 state transitions | ~2,400 transitions | $0.000025/transition | ~$0.06 |
-| EventBridge | ~2,400 events | ~2,400 events | $1/M events | ~$0.00 |
-| S3 (manifests) | ~2,400 objects written, 90-day retention | ~2,400 objects + storage | $0.005/K PUTs + $0.023/GB/mo | ~$1.50 |
-| CloudWatch Logs | ~2,400 × 5 KB ≈ 12 MB/month | 12 MB ingested | $0.50/GB ingested | ~$0.20 |
-| **Total** | | | | **~$3–5** |

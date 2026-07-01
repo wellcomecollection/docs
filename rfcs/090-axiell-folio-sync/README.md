@@ -34,6 +34,7 @@ This RFC proposes an automated pipeline to synchronize data from **Axiell Collec
   - [2. Step Function State Machine](#2-step-function-state-machine)
   - [3. Lambda Function: axiell-folio-sync](#3-lambda-function-axiell-folio-sync)
   - [4. S3 Manifest Storage](#4-s3-manifest-storage)
+- [Cost Analysis](#cost-analysis)
 - [Design Decisions](#design-decisions)
 - [Open Questions](#open-questions)
   - [Field Mapping from Axc to Folio Instance, Holdings and Items needs to be defined](#field-mapping-from-axc-to-folio-instance-holdings-and-items-needs-to-be-defined)
@@ -587,6 +588,21 @@ manifests/
 
 ---
 
+## Cost Analysis
+
+At ~80 syncs/day the pipeline runs ~2,400 times/month, so the monthly quantities below derive from that:
+
+| Service | Operation | Qty/mo | Rate | Cost/mo |
+|---------|-----------|--------|------|---------|
+| Lambda | ~2,400 invocations × ~60s × 512 MB | ~2,400 invocations | $0.0000167/GB-s | ~$1.20 |
+| Step Functions | ~2,400 state transitions | ~2,400 transitions | $0.000025/transition | ~$0.06 |
+| EventBridge | ~2,400 events | ~2,400 events | $1/M events | ~$0.00 |
+| S3 (manifests) | ~2,400 objects written, 90-day retention | ~2,400 objects + storage | $0.005/K PUTs + $0.023/GB/mo | ~$1.50 |
+| CloudWatch Logs | ~2,400 × 5 KB ≈ 12 MB/month | 12 MB ingested | $0.50/GB ingested | ~$0.20 |
+| **Total** | | | | **~$3–5** |
+
+---
+
 ## Design Decisions
 
 The decisions below are summarized in [Key Design Considerations](#key-design-considerations); the full trade-off analysis for each (alternatives weighed, why this option won) lives in **[design-rationale.md](design-rationale.md)**.
@@ -605,7 +621,7 @@ The **ordering** and **error-handling** mechanisms referenced above are load-bea
 
 > **Instance storage type (decision).** This sync creates Inventory-native instances (`Instance.source = "FOLIO"`, no linked SRS record), which keeps the bibliographic fields editable through mod-inventory and keeps the PUT-based update path valid. SRS-backed instances cannot be updated through the mod-inventory API, so a mixed estate is avoided. Confirmed via the prototype: these records are updatable through mod-inventory and are received on the FOLIO adapter in the catalogue pipeline; one gap (item notes not appearing on the OAI-PMH feed) remains open, see [Item notes not visible on the FOLIO OAI-PMH feed](#item-notes-not-visible-on-the-folio-oai-pmh-feed). Full reasoning: [design-rationale.md](design-rationale.md#srs-backed-instances-and-the-update-path).
 
-For the cost evidence behind the "~$3–5/month" figure, see [Cost Analysis](design-rationale.md#cost-analysis).
+For the cost evidence behind the "~$3–5/month" figure, see [Cost Analysis](#cost-analysis).
 
 ---
 
