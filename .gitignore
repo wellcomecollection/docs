@@ -5,3 +5,9 @@ terraform.tfstate*
 .metals/
 .scala-build/
 .vscode/
+
+# Claude Code local state: worktree checkouts and personal settings.
+# .claude itself stays trackable in case shared settings are added later.
+.claude/worktrees/
+.claude/settings.local.json
+.git-worktrees/
