@@ -8,7 +8,7 @@ The second is the increasing challenge of bot traffic - automated, high volume r
 
 To some extent, we hope that generic anti-bot technologies sitting in front of our systems will kick in and protect our services - e.g., Web Application Firewall on AWS (WAF). But IIIF Image API traffic may not fit the patterns WAF is looking for. We may need our own additional custom heuristics as well. The same metrics store can, we hope, drive both use cases.
 
-**Last modified:**  2026-06-01T17:00+00:00
+**Last modified:** 2026-07-30T13:56:45Z
 
 ## Deferred orchestration
 
@@ -26,7 +26,7 @@ Deferred orchestration breaks the link between "a request arrived" and "copy the
 
 This is the only proposal here that **structurally fixes** cache pollution rather than detecting and reacting to it. Every bot-detection heuristic will have false negatives; deferred orchestration makes an undetected bot merely _slow_ rather than cache-poisoning. It also converts the hardest requirement - real-time bot classification - into a softer one: we only need to distinguish human-ish from bot-ish traffic _eventually_, on a minutes timescale, to decide promotion into the hot pool.
 
-The mechanics, open questions, and the metrics that feed the promotion decision are detailed in [Deferred orchestration in detail](#deferred-orchestration-in-detail). The one hard prerequisite — making S3-backed tile-serving tolerable with no local copy — is called out as a **TODO** there.
+The mechanics, open questions, and the metrics that feed the promotion decision are detailed in [Deferred orchestration in detail](#deferred-orchestration-in-detail). The one hard prerequisite — making S3-backed tile-serving tolerable with no local copy — is called out as a **TODO** there. If that prerequisite turns out to be unachievable, much of this RFC still stands; [If we can't defer orchestration](#if-we-cant-defer-orchestration) covers what would have to change.
 
 ## Context
 
@@ -103,10 +103,10 @@ Orchestrator writes custom headers into the response that are very useful for su
 
  - `x-proxy-destination` - which image server / static resource / thumb the request was routed to
  - `x-asset-id` - the image ID in DLCS
- - `x-orchestrated` - (??) whether this particular request triggered the copy from S3 to Lustre
+ - `x-orchestrated` - (proposed) whether this particular request triggered the copy from S3 to Lustre
  - `...` - (others)
 
-Can CloudFront use these? Lambda at edge? If we use origin response we will be able to determine how the image was served via x-proxy-destination header, and x-asset-id header for AssetId (do these 2 headers mean this is the preferred method?). Would/could this slow requests down as we are already using origin request lambda?
+Can CloudFront capture these, via Lambda@Edge? An origin-response Lambda could record how the image was served (`x-proxy-destination`) and which asset it was for (`x-asset-id`) - does that make it the preferred method? And would it slow requests down, given we are already using an origin-request Lambda?
 
 Orchestrator can add any additional headers to the response that will be useful in populating the hypothetical metrics structure below. This means that entries arrive at the metrics store _some time after the request has completed_, but also that Orchestrator has no metric-recording overheads of its own. We should be careful not to invent new headers for Orchestrator to emit that actually cost it significant overhead to determine.
 
@@ -122,7 +122,7 @@ To repeat:
 
 Real-time logs let you choose from a **fixed field list** (URI, IP, user-agent, result-type, response bytes, edge location...). They cannot carry custom origin response headers like `x-asset-id`. For DLCS that's _mostly_ fine, because asset ID and request type are derivable from the URI by the transform Lambda. But anything only Orchestrator knows (e.g. "this request triggered orchestration") must arrive by a separate path, such as Orchestrator's own events into the same Firehose or directly into Postgres, joined later on asset + time window, or more likely, Correlation ID. 
 
-_This needs more design thought_.
+**Open question:** exactly how Orchestrator-only facts are emitted and correlated with the CloudFront records — see [Gather orchestration stats](#gather-orchestration-stats), and step 3 of [Next Steps](#next-steps).
 
 
 ### Per request information, from logs
@@ -260,33 +260,35 @@ Notes
 
 ### Gather orchestration stats
 
-Given that we can only gather standard CloudFront information, we need another way to feed and correlate Orchestrator-specific information into the store.
+Given that we can only gather standard CloudFront information, we need another way to feed and correlate Orchestrator-specific information into the store. As discussed [above](#how-can-we-get-stats-from-cloudfront), the likely shape is Orchestrator emitting its own events (into the same Firehose, or directly to PostgreSQL), correlated with the CloudFront records on a correlation ID - but this needs design work.
 
-TODO
+Other changes we know Orchestrator would need:
 
-What other changes would be required for Orchestrator? 
+ - Write the fast-disk location to `ImageLocation.Nas`, which allows an asset to live on one of multiple volumes (see [Lustre Alternative](#lustre-alternative)).
+ - Stop touching files to record usage: file mtime no longer needs to be accurate, because the scavenger service tracks usage itself from the metrics.
 
-Write to ImageLocation.nas location (allows multi diff locations)
-
-No need to touch files - mtime doesn’t need to be accurate as scavenger service will track itself.
+**Open question:** what else would Orchestrator need to change?
 
 ### Scavenger / Optimiser
 
-This is a new service, responsible for looking at data entered into the Metrics Database and making a decision on what should go from the Lustre volume.
+This is a new service, responsible for looking at data entered into the Metrics Database and deciding what should be removed from the Lustre volume - and, with [deferred orchestration](#deferred-orchestration), what should be promoted onto it. Eviction policy is discussed further in [Scavenger in detail](#scavenger-in-detail).
 
-What is this? (dotnet/python). Is it part of Protagonist or separate? How does it make decisions? Does it use LRU/LFU or some combination of both?
+Open questions:
 
-This needs to feed deleted events back into the Metrics Database. Does it go in raw? Or does something manage io? Is this the master of the metrics db? (ie manages schema etc).
+ - What is it implemented in (dotnet/python)? Is it part of Protagonist or separate?
+ - How does it make decisions? LRU, LFU, or some combination of both?
+ - It needs to feed deletion events back into the Metrics Database. Does it write them directly, or does something else manage that I/O?
+ - Is this service the owner of the metrics database (i.e., does it manage the schema)?
 
 ### Lustre Alternative
 
-Should we consider EBS multi-attach volume? What are the pros/cons? 
+Should we consider EBS multi-attach volumes instead of Lustre? What are the pros/cons?
 
-Multiple volumes. The optimizer can move between (logic TBC - e.g. big artworks in one and smaller/easier churn in another). Above re: ImageLocation.s3 refers to this behaviour.
+We could also run multiple volumes, with the optimiser moving assets between them (logic TBC - e.g., large artworks on one volume, smaller/higher-churn images on another). The `ImageLocation.Nas` change in [Gather orchestration stats](#gather-orchestration-stats) above is what makes multiple locations possible.
 
 ## Deferred orchestration in detail
 
-> This section gives the mechanics behind [the central proposal](#the-central-proposal-deferred-orchestration) at the top of the document.
+> This section gives the mechanics behind [the central proposal](#deferred-orchestration) at the top of the document.
 
 The above gathers the metrics we need for analysis of traffic for costs, cache eviction (scavenger) and perhaps bot-detection (see below). But we still have the problem of _having to orchestrate_ - having to pollute our expensive cache for what might be a single drive-by request for a non-full region of an image, or a single view of a page that renders the top layer of tiles in OpenSeadragon that a user never zooms into. We have to orchestrate for these because we can only serve such requests from an image server that has the image mounted on a fast random access filesystem (not S3). If we naively use Cantaloupe with an S3 back end (because it appears to solve the problem) we will have terrible performance and no control over an optimal cache at all. 
 
@@ -298,7 +300,7 @@ What if performance for _tile-serving_ - not [SpecialServer](https://github.com/
 
 This would allow an orchestration decision to be based on retrospective metrics, rather than immediate need. A metrics monitor could have a candidate list of files to orchestrate as well as files to scavenge; if in the list, a subsequent request for the image would make orchestrator move it (even allowing traffic to pass through to the slower S3-direct server until the orchestration copy has been completed).
 
-This restores the original benefit of the orchestrated cache. In the pre-bot era, this cache represents the left-hand peak of the [long-tail distribution of traffic generated by real people](https://github.com/dlcs/protagonist/issues/47). This worked well until only a few years ago and is still the architectural core principle of the DLCS. If we can identify one-off, drive-by or otherwise non-human looking traffic, even for requests that today MUST be orchestrated, we can serve them through slower image servers than can still scale out if necessary. We can still maintain a pool (e.g., 1TB or 2TB) of "hot" images, on fast SSDs mounted on the image server for random access. But this pool is much more stable. With bot traffic, the cache is in a constant state of churn.
+This restores the original benefit of the orchestrated cache. In the pre-bot era, this cache represents the left-hand peak of the [long-tail distribution of traffic generated by real people](https://github.com/dlcs/protagonist/issues/47). This worked well until only a few years ago and is still the architectural core principle of the DLCS. If we can identify one-off, drive-by or otherwise non-human looking traffic, even for requests that today MUST be orchestrated, we can serve them through slower image servers that can still scale out if necessary. We can still maintain a pool (e.g., 1TB or 2TB) of "hot" images, on fast SSDs mounted on the image server for random access. But this pool is much more stable. With bot traffic, the cache is in a constant state of churn.
 
 This of course still requires the ability to differentiate the types of traffic. `/full/*/` requests can route to a better SpecialServer. Tile requests for unorchestrated files can route initially to a different server that can meet this traffic from S3. 
 
@@ -312,18 +314,39 @@ There are many dimensions to adjust here to optimise performance, but until any 
 
 > We are still working on image server enhancements
 
+## If we can't defer orchestration
+
+Deferred orchestration depends on one empirical result: tile-serving directly from S3, with no local copy, being tolerable to human users. The first item in [Next Steps](#next-steps) is the spike that answers this. If the answer is no - we simply can't get good enough performance - much of this RFC still stands, but some of the approach changes.
+
+**What is unaffected:**
+
+ - The metrics pipeline (CloudFront real-time logs → Kinesis → Firehose → Parquet → Athena, plus the aggregator into PostgreSQL). Its value for cost analysis, retrospective forensics and scavenger input does not depend on how orchestration is triggered.
+ - The per-asset aggregate table and its joins to the Images table.
+ - The graduated bot response and the WAF IP set blocking path, and the API keys idea.
+ - The Scavenger - its job gets harder (see below), but metrics-driven eviction still replaces naive LRU.
+
+**What changes:**
+
+ - **Bot detection reverts to being a hard, fast problem.** The softening described in [Dealing with bots](#-dealing-with-bots-) - that an undetected bot is merely _slow_ - no longer applies. Every request that reaches an image server pollutes the cache again, so detection has to act before or very shortly after orchestration. The short-window Kinesis consumer becomes load-bearing infrastructure rather than an optimisation, and the trade-off worsens in both directions: false negatives cost cache quality, and false positives now mean rate-limiting or refusing real users rather than quietly serving them from a slower path.
+ - **Containment replaces prevention.** We can't stop drive-by traffic entering the cache, but we can contain what it damages. New orchestrations from sources without a human-ish track record go onto a separate _probationary_ volume, scavenged first and aggressively, keeping a stable hot pool for assets whose metrics justify promotion. The multiple-volume mechanics already proposed ([Lustre Alternative](#lustre-alternative), `ImageLocation.Nas`) are exactly what this needs. It is a weaker form of the same idea: metrics still decide promotion into the stable pool, but the "waiting room" is a sacrificial disk rather than S3-direct serving.
+ - **The Scavenger becomes the main lever for cache quality.** Instead of a stable pool with rare evictions, we are back to managing churn. Retrospective metrics drive eviction priority - evict what bots dragged in first, weight by asset size and by human-ish traffic share.
+ - **Refusal moves earlier in the response ladder.** With no tolerable slow path to demote suspect traffic to, the realistic responses to suspected-bot tile requests for unorchestrated assets are rate-limiting or `429` - applied sooner, and with less certainty, than we would like.
+ - **Pre-generation as an alternative slow path?** Static tiles (level-0 style) served straight from S3 need no image server at all - the thumbs channel already proves the pattern. Generating a tile pyramid on first touch, asynchronously, trades compute-per-request for storage and could cover the probationary period without touching the fast volume. Whether this is affordable at 60m-asset scale (or only for some subset) is an open question.
+
+A partial result from the spike is perhaps more likely than a flat no: S3-direct serving might be tolerable for smaller JP2s but not the largest, or fine except under load spikes. In that case deferred orchestration applies where it is tolerable and the containment approach covers the rest. Either way, the promotion/eviction machinery (metrics monitor, multiple locations) is worth designing the same in both worlds - which is why it is in the main proposal and not gated on the spike.
+
 ## 🤖 Dealing with bots 🤖
 
 If gathered from CloudFront, the metrics data is post-request. This has benefits and weaknesses. 
 
-Our instinct is that many examples of IIIF traffic, especially image traffic, could only be judged as "bad bot" after evaluating multiple requests. A tile-stitcher script would not be obvious from just one request. If the evaluation of traffic is happening reasonably quickly (i.e., not a once-a-month report generation), and we could decide that traffic is a bot so we can block, or at least not-orchestrate the image it's hitting.
+Our instinct is that many examples of IIIF traffic, especially image traffic, could only be judged as "bad bot" after evaluating multiple requests. A tile-stitcher script would not be obvious from just one request. But if the evaluation of traffic happens reasonably quickly (i.e., not a once-a-month report generation), we could decide that traffic is a bot in time to block it, or at least to not-orchestrate the images it's hitting.
 
 How do we identify a bot? On two timescales:
 
  - **retrospectively, from the aggregated metrics** - the per-asset and per-source rollups make some patterns obvious after the fact (a single source pulling every `/full/*` size of thousands of assets; a source whose requests walk an image's tile grid in order).
  - **as it's happening** - the short-window Kinesis consumer (see [Latency](#latency)) keeps enough recent state to react on a minutes timescale, before a long scrape completes.
 
-Crucially, deferred orchestration means we don't have to be fast or certain. An undetected bot is merely _slow_ (served from the S3-direct path), not cache-poisoning. So detection is mostly a _promotion filter_ - "is this traffic human-ish enough to justify moving the asset into the hot pool?" - rather than a _blocking_ decision. We only escalate to actual blocking for the inconsiderate, evasive end of the spectrum.
+Crucially, deferred orchestration means we don't have to be fast or certain. An undetected bot is merely _slow_ (served from the S3-direct path), not cache-poisoning. So detection is mostly a _promotion filter_ - "is this traffic human-ish enough to justify moving the asset into the hot pool?" - rather than a _blocking_ decision. We only escalate to actual blocking for the inconsiderate, evasive end of the spectrum. (This softening is contingent on deferred orchestration being achievable; see [If we can't defer orchestration](#if-we-cant-defer-orchestration) for what detection has to become without it.)
 
 ### Signal categories
 
@@ -338,7 +361,7 @@ The metrics schema is designed to surface a handful of behavioural signals. The 
 
 None of these is decisive alone; the point of the metrics store is to let us _combine_ them. The combining logic is where the sensitive detail lives.
 
-What do we do once we've decided? Bot detection now influences orchestration, so a false positive doesn't just rate-limit a user, it silently degrades image performance for them. The wellcomecollection.org viewer needs to be effectively unblockable (allowlist by origin/referer plus, if possible, the signed short-lived token idea hinted at in the [API Keys](#api-keys) section below. Spoofable in principle, but it raises the bar and we only need it to gate priority, not access).
+What do we do once we've decided? Bot detection now influences orchestration, so a false positive doesn't just rate-limit a user, it silently degrades image performance for them. The wellcomecollection.org viewer needs to be effectively unblockable: allowlist by origin/referer plus, if possible, a signed short-lived token (see the [API Keys](#api-keys) section below). That's spoofable in principle, but it raises the bar, and we only need it to gate priority, not access.
 
 The response is graduated:
 
@@ -365,30 +388,37 @@ The current WAF ruleset for `iiif.wellcomecollection.org`, and any specific patt
 
 This is the hard, IIIF-specific part, and the main subject of the companion document. The public position is: the signal categories above, computed from the metrics store, feed a scoring step whose job is mostly to gate promotion into the hot pool and, at the extreme, to feed the WAF IP set. The thresholds and scoring are kept private as anti-evasion friction - but, per the deferred-orchestration argument, the design does **not** depend on their secrecy for correctness, only for efficiency.
 
+### API Keys
+
+This is a possibility; others have done this. It is NOT IIIF Auth, but something different: the APIs remain open, but traffic with a known API key is not rate-limited (or has higher limits), whereas other traffic is.
+
+The problem with this approach is that we don't want to rate-limit human-generated traffic originating from wellcomecollection.org, and perhaps from any real viewer. But how do we identify such traffic - in a way that can't be spoofed/emulated by attackers? And how do we rate-limit traffic we think is something else?
+
+The conventional resolution: anonymous traffic gets a generous-but-real rate limit; registered keys get higher limits. We don't need to identify humans perfectly. We need the default limit set above what any human viewer generates, which the metrics will tell us.
+
 ### Companion document (private)
 
 Concrete heuristics, thresholds, scoring and the current WAF rules are maintained outside this public repository, in the private `dlcs/private-protagonist` repo under `docs/rfcs/wellcome-bots-metrics-support`. Anything that names real source IPs / actors (personal data), or that would hand an evader a recipe, belongs there rather than here.
 
 
-## Scavenger
+## Scavenger in detail
 
-Decision to evict is based on:
+> This section expands on the [Scavenger / Optimiser](#scavenger--optimiser) service introduced in the Proposal.
+
+The decision to evict is based on:
 
  - performance for human users
  - cost
 
-As the disk nears a threshold, we need to start deleting orchestrated files
+As the disk nears a threshold, we need to start deleting orchestrated files.
 
-Example bad case
- - a very large artwork that is viewed intermittently. But often enough that it keeps getting re-orchestrated just after it's been scavenged
+An example bad case: a very large artwork that is viewed intermittently - but often enough that it keeps getting re-orchestrated just after it's been scavenged.
 
-Conversely a very small jp2 that won't free up much space and is occasionally viewed may be worth keeping - although again, "good-enough" non-orchestrated image server performance is going to be easier for small images.
+Conversely, a very small JP2 that won't free up much space and is occasionally viewed may be worth keeping - although again, "good-enough" non-orchestrated image server performance is going to be easier for small images.
 
 ### Scavenging based on retrospective metrics
 
-Decisions to evict is not just a LRU touched time.
-
-It's based on the metrics database... but if so, what is the eviction algorithm?
+The decision to evict is not just a matter of least-recently-touched time; it's based on the metrics database. But if so, what is the eviction algorithm?
 
 
 ### Metrics Monitor
@@ -401,31 +431,16 @@ Is there something watching the metrics and determining
 ... and is this same watcher evaluating traffic for potential bots, and if so, what does it do when it detects one? This isn't happening at the firewall level, it's something adjacent to the normal HTTP flow. What component does it tell, and what information does it give it such that a subsequent request from that source will be blocked?
 
 
-### API Keys
-
-This is a possibility, others have done this.
-
-This is NOT IIIF Auth, but something different.
-
-The APIs are open, but traffic with a known API key is not rate-limited whereas other traffic is.
-
-The problem with this approach is that we don't want to rate-limit human-generated traffic originating from wellcomecollection.org, and perhaps from any real viewer. But how do we identify such traffic - in a way that can't be spoofed/emulated by attackers? And how do we rate-limit traffic we think is something else?
-
-Anonymous traffic gets a generous-but-real rate limit; registered keys get higher limits. We don't need to identify humans perfectly. We need the default limit set above what any human viewer generates, which the metrics will tell us.
-
-
-
 ## Alternatives Considered
 
-Proof of work barriers
+### Proof-of-work barriers
 
- - at the web page level, edge case - and that's for Wellcome to decide
- - at the API, absolutely not
+ - At the web page level: an edge case, and that's for Wellcome to decide.
+ - At the API level: absolutely not.
 
-IIIF Auth API on everything
+### IIIF Auth API on everything
 
- - Too much overhead, harms interoperability in practice, even if not in principle - "everyone can just implement a IIIF Auth client right?"
-
+Too much overhead, and it harms interoperability in practice, even if not in principle ("everyone can just implement a IIIF Auth client, right?").
 
 ### Prometheus
 
@@ -433,20 +448,24 @@ Prometheus is built for *low-cardinality*, pre-aggregated numeric time series. O
 
 ### PostgreSQL for per-request logging
 
-For the raw per-request table, Postgres will work at first but billions of rows of append-heavy, scan-heavy data is more suited to a *columnar store*. 
-
-Firehose → S3 in partitioned Parquet (queryable forever via Athena and very cheap, can keep for very long periods). The Aggregator writes only ... *aggregates* to Postgres. 
-  
+For the raw per-request table, Postgres would work at first, but billions of rows of append-heavy, scan-heavy data are better suited to a *columnar store* - hence the Firehose → S3/Parquet pipeline in the [Proposal](#proposal), with PostgreSQL keeping only the role it is good at: the per-asset aggregate table.
 
 ## Impact
 
-(incl risks)
+**Privacy.** IP addresses are personal data under UK GDPR, so this metrics store needs a privacy policy and a retention answer. Consider storing a salted hash (or /24 truncation) in long-lived data, and keeping raw IPs only in a short-window table used for active bot response; [partitioning](#partitioning) gives us the deletion mechanism.
 
-IP address is personal data under UK GDPR. There needs to be a privacy policy. We need a retention answer anyway; consider storing a salted hash (or /24 truncation) in long-lived data and keeping raw IPs only in a short-window table used for active bot response.
+**Cost of the pipeline itself.** There is a risk that super-rich metrics are so costly to collect that they're not worth it. Sampling is the standard mitigation, but note the asymmetry: cache optimisation tolerates sampling well, bot detection much less so. We might sample the raw archive while keeping the short-window bot table complete.
 
-Cost of the pipeline itself: "super-rich metrics may be so costly... it's not worth it" — sampling is the standard mitigation, but note the asymmetry: cache optimisation tolerates sampling well, bot detection much less so. We might sample the raw archive while keeping the short-window bot table complete.
+**False positives now degrade service.** Because bot detection influences orchestration, a false positive doesn't just rate-limit a user - it silently degrades image performance for them. The graduated response, and making the wellcomecollection.org viewer effectively unblockable, are the mitigations (see [Dealing with bots](#-dealing-with-bots-)).
 
 ## Next Steps
 
-A list of next steps for implementing the proposed solution, including any dependencies or prerequisites.
+Proposed order - the shape-determining question first:
+
+1. **Spike: S3-backed tile-serving performance.** Establish whether tile-serving direct from S3, with no local copy, can be made tolerable. This is the hard prerequisite for [deferred orchestration](#deferred-orchestration), and the whole architecture's shape depends on the answer - [If we can't defer orchestration](#if-we-cant-defer-orchestration) describes the fallback. (Image server enhancement work is already in progress.)
+2. **Prototype the metrics pipeline.** CloudFront real-time logs → Kinesis → Firehose (+ transform Lambda) → partitioned Parquet in S3, queryable via Athena. This is independently useful for cost analysis even before any orchestration changes.
+3. **Design the Orchestrator event path.** Decide how Orchestrator-only facts (orchestration events, routing destination) reach the store, and how they are correlated with the CloudFront records.
+4. **Define the per-asset aggregate table** and the Aggregator that materialises it into PostgreSQL.
+5. **Design the Scavenger / Metrics Monitor:** ownership, the eviction/promotion algorithm, and how block decisions reach the WAF IP set.
+6. **Populate the companion document** with concrete heuristics, thresholds and WAF rules as they emerge from real data.
 
