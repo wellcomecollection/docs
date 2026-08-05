@@ -1,17 +1,19 @@
-# RFC 091: Digitisation ingest identifiers during the Sierra to Folio migration
+# RFC 091: Preservation identifiers across the LMS migration
 
 ## Purpose
 
-Wellcome Collection is migrating its library management system from Sierra to Folio. The b-number (the Sierra system number) is embedded in storage locations, METS records, IIIF manifest URIs, and the join key that merges digitised content onto the public catalogue work. This RFC sets out why the b-number cannot simply be swapped for a Folio id, and proposes minting catalogue-style identifiers at ingest via a secured endpoint on the Identifiers API (RFC 089), with separate cross-migration and post-migration ingest paths.
+Wellcome Collection is migrating its library management system from Sierra to Folio, and its archive management system from CALM to Axiell Collections. The Sierra b-number is embedded in storage locations, METS records, IIIF manifest URIs, and the join key that merges digitised content onto the public catalogue work. This RFC names that identifier role the **preservation identifier**, records the decision that preservation identifiers remain the canonical identifiers for digital objects (nothing is minted at ingest, and IIIF Manifest URIs do not move to the catalogue Work id), and sets out cross-migration and post-migration ingest paths covering both digitised and born-digital content.
 
-**Last modified:** 2026-06-29T12:00:00+00:00
+An earlier draft of this RFC proposed minting catalogue-style identifiers at ingest through a secured extension to the Identifiers API. The review discussion on this RFC's pull request reversed that proposal; this version records the agreed direction and the reasoning. See [Alternatives considered](#alternatives-considered) for the rejected designs.
+
+**Last modified:** 2026-08-05T14:00:00+00:00
 
 **Related RFCs:**
 
-- [RFC 089: Identifiers API](../089-identifiers-api/README.md): the read-only Identifiers API this RFC extends with a secured mint endpoint (open in [PR #156](https://github.com/wellcomecollection/docs/pull/156)).
+- [RFC 089: Identifiers API](../089-identifiers-api/README.md): the read-only canonical to source identifier translation service over the ID Registry. The ingest app uses it to find predecessor identifiers. It stays read-only; the secured mint extension the earlier draft of this RFC proposed is withdrawn.
 - [RFC 083: Stable identifiers following mass record migration](../083-stable_identifiers/README.md): the predecessor / many-to-one minting that keeps an old b-number resolving to the same canonical id.
-- [RFC 081: Identifiers in iiif-builder: beyond the B number](../081-identifiers-in-iiif-builder/README.md): the `IIdentityService`, a blocking prerequisite for the post-migration path.
-- [RFC 085: Identifiers of and within IIIF resources after the migration](../085-IIIF-Identities-and-Migration/README.md): canonical IIIF URIs move to the Work id (open in [PR #143](https://github.com/wellcomecollection/docs/pull/143)); reinforces the iiif-builder prerequisite and the requirement to keep b-number IIIF URLs resolving.
+- [RFC 081: Identifiers in iiif-builder: beyond the B number](../081-identifiers-in-iiif-builder/README.md): the DDS identity service. Its structural constraints shape the form of the new preservation identifier, but it is no longer a blocking gate on the ingest path.
+- [RFC 085: Identifiers of and within IIIF resources after the migration](../085-IIIF-Identities-and-Migration/README.md): proposes that canonical IIIF URIs move to the Work id (open in [PR #143](https://github.com/wellcomecollection/docs/pull/143)). The decision recorded here inverts that position; amending RFC 085 is a named deliverable of this RFC (see [Next steps](#next-steps)).
 - [RFC 088: Migrating identity, requesting and items APIs from Sierra to FOLIO](../088-folio-identity-requesting-migration/README.md): the wider identity and requesting half of the same Sierra to Folio migration.
 - [RFC 090: CMS to LMS Sync](../090-axiell-folio-sync/README.md): the adjacent CMS to LMS synchronisation work (open in [PR #157](https://github.com/wellcomecollection/docs/pull/157)).
 - RFC 002: Archival storage, <https://docs.wellcomecollection.org/developers/rfcs/002-archival_storage>.
@@ -19,19 +21,25 @@ Wellcome Collection is migrating its library management system from Sierra to Fo
 ## Table of contents
 
 - [Context](#context)
-  - [Current digitisation ingest](#current-digitisation-ingest)
-  - [How components are keyed on the b-number](#how-components-are-keyed-on-the-b-number)
+  - [The preservation identifier](#the-preservation-identifier)
+  - [Current ingest flows](#current-ingest-flows)
+  - [How components are keyed on the preservation identifier](#how-components-are-keyed-on-the-preservation-identifier)
   - [The problem after migration](#the-problem-after-migration)
-  - [Two kinds of digitisation](#two-kinds-of-digitisation)
+  - [Two kinds of ingest](#two-kinds-of-ingest)
   - [Predecessor identifiers (RFC 083)](#predecessor-identifiers-rfc-083)
   - [Merge behaviour after migration](#merge-behaviour-after-migration)
+- [The decision](#the-decision)
+  - [Preservation identifiers stay canonical](#preservation-identifiers-stay-canonical)
+  - [The redirect contract](#the-redirect-contract)
 - [Proposal](#proposal)
-  - [Where minting lives](#where-minting-lives)
+  - [Finding the predecessor](#finding-the-predecessor)
   - [Two ingest paths](#two-ingest-paths)
-  - [iiif-builder prerequisite](#iiif-builder-prerequisite)
   - [Post-migration merge candidate](#post-migration-merge-candidate)
   - [METS works keep their own id](#mets-works-keep-their-own-id)
+  - [The form of the new preservation identifier](#the-form-of-the-new-preservation-identifier)
+  - [DDS and DLCS changes](#dds-and-dlcs-changes)
   - [Where each identifier lives after migration](#where-each-identifier-lives-after-migration)
+  - [Worked examples](#worked-examples)
 - [Alternatives considered](#alternatives-considered)
 - [Impact](#impact)
   - [Risks](#risks)
@@ -44,7 +52,13 @@ Wellcome Collection is migrating its library management system from Sierra to Fo
 
 ## Context
 
-### Current digitisation ingest
+### The preservation identifier
+
+Goobi, Archivematica and the storage service share one identifier for each digital object. It names the ingest package, the METS file and every sub-asset file, it is the storage `externalIdentifier` under which versions accumulate, and it is the string those systems emit when a workflow finishes. It is also, today, the canonical IIIF Manifest URI. For digitised content that identifier is the Sierra b-number; for born-digital archival content it is the CALM ref (e.g. `SABTS/A/2/10`). The role is the same in both cases even though the form differs, and the review discussion on this RFC settled on a name for it: the **preservation identifier**.
+
+This RFC is about what the preservation identifier is once Sierra and CALM are gone, and how it relates to the other identifiers a digital object accumulates, namely its source ids in the new systems (the Folio instance id, the Axiell ref) and the public catalogue Work id.
+
+### Current ingest flows
 
 Digital production staff drive digitisation by hand. They pull descriptive metadata from Sierra (the LMS) and use Goobi (intranda) to assemble the file package for an item. Goobi uses the Sierra b-number as the ingest package identifier. It generates the METS files (which record the locations of the sub-assets within the package) and hands the package plus METS to the storage service for preservation. The storage service creates preservation and presentation copies.
 
@@ -83,11 +97,15 @@ sequenceDiagram
     DLCS->>Public: Viewer serves manifests at /presentation/{b-number}
 ```
 
-### How components are keyed on the b-number
+Born-digital archival material follows the same shape through Archivematica rather than Goobi. The package is identified by the CALM ref, the storage space is `born-digital` (e.g. `born-digital/SABTS/A/2/10`), the METS transformer falls back to a `calm-ref-no` merge candidate, and the manifest is served at `/presentation/SABTS/A/2/10`. There is no Sierra record and no b-number anywhere in that flow, which is worth keeping in view: a non-b-number preservation identifier is not a new idea, it is how half the estate already works.
 
-The b-number threads through four components, each keying on it in a different way:
+There is one historical overlap between the two routes. Archival items digitised through Goobi were given Sierra b-numbers, so an item catalogued in CALM as `SB/1/1/298` can be preserved at `digitised/b19995271` and served at `/presentation/b19995271`. Those items keep their b-numbers forever, exactly like any other digitised item.
 
-| Component | How it keys on the b-number | Reference |
+### How components are keyed on the preservation identifier
+
+The preservation identifier threads through four components, each keying on it in a different way. The table shows the digitised (b-number) case; the born-digital case substitutes the CALM ref and the `born-digital` space throughout.
+
+| Component | How it keys on the preservation identifier | Reference |
 | --- | --- | --- |
 | **Storage service** | A bag is the pair `(space, externalIdentifier)` with an auto-incremented version; the S3 path is `space/externalIdentifier/vN/...` (e.g. `digitised/b31497652/v2`). For digitised content the `externalIdentifier` **is** the b-number. On a successful store it publishes `{space, externalIdentifier, version, type}` to the `*_registered_bag_notifications` SNS topic. | `BagId.scala`; [RFC 002](https://docs.wellcomecollection.org/developers/rfcs/002-archival_storage) |
 | **METS adapter** | Consumes the storage notification, filters to `space ∈ {digitised, born-digital}`, fetches the bag JSON, stores `MetsSourceData` in a DynamoDB VHS keyed by `Version(externalIdentifier, version)`, and publishes a `MetsSourcePayload` whose `id` is the `externalIdentifier`, the b-number. | `MetsAdapterWorkerService.scala` |
@@ -102,16 +120,18 @@ The b-number is embedded in several parts of the system. It appears in:
 - the METS record identity and the merge candidate it emits,
 - the IIIF manifest URI and the DLCS asset ids.
 
-After the migration, library records live in Folio with new identifiers. The relationship between the old Sierra b-number and the new Folio identifier has to be carried explicitly, otherwise the digitised content (which still speaks b-number) loses its link to the public-facing record (which now speaks Folio).
+After the migration, library records live in Folio with new identifiers. The relationship between the old Sierra b-number and the new Folio identifier has to be carried explicitly, otherwise the digitised content (which still speaks b-number) loses its link to the public-facing record (which now speaks Folio). And for wholly new items there is no b-number at all, so something has to play the preservation identifier role for them.
 
-### Two kinds of digitisation
+The archival side is less disrupted on its face, because refs are expected to survive the CALM to Axiell move, but that expectation is itself unconfirmed (see [Open questions](#open-questions)).
 
-Two kinds of digitisation matter here, and they need different handling:
+### Two kinds of ingest
 
-- **Cross-migration digitisation.** The item already existed in Sierra and has an old b-number. The Folio record carries a predecessor pointer back to that b-number.
-- **Post-migration digitisation.** The item is new. It has no Sierra ancestry and no predecessor pointer.
+Two kinds of ingest matter here, and they need different handling:
 
-The presence or absence of a predecessor ID in the Folio output is the signal we use to tell these two apart.
+- **Cross-migration ingest.** The item's record already existed in Sierra and has an old b-number, whether or not it was ever digitised before. The Folio record carries a predecessor relationship back to that b-number.
+- **Post-migration ingest.** The item is new. It has no Sierra ancestry and no predecessor.
+
+The presence or absence of a predecessor identifier is the signal we use to tell these two apart.
 
 ### Predecessor identifiers (RFC 083)
 
@@ -121,7 +141,7 @@ The fix is to make the minter many-to-one. A Folio or Axiell record that carries
 
 The id_minter has been rewritten as a Python Lambda for this. It uses two tables: `canonical_ids(CanonicalId PK, Status ENUM('free','assigned'))` and `identifiers((OntologyType, SourceSystem, SourceId) PK, CanonicalId FK)`. It mints by claiming free ids from a pool with `SELECT ... FOR UPDATE SKIP LOCKED` and uses idempotent race detection.
 
-The predecessor mechanism is what makes cross-migration digitisation tractable: the old b-number keeps resolving to the same canonical id, so anything still keyed on the b-number stays correctly attached.
+The predecessor mechanism is what makes cross-migration ingest tractable: the old b-number keeps resolving to the same canonical id, so anything still keyed on the b-number stays correctly attached.
 
 ### Merge behaviour after migration
 
@@ -141,18 +161,41 @@ After the catalogue pipeline migrates to Folio there will be no Sierra-sourced w
 
 The identifier type already exists: `IdentifierType.FolioInstance` (`id = "folio-instance"`) is defined in `IdentifierType.scala`. What is missing is a Folio predicate in `WorkPredicates`, an entry in `TargetPrecedence`, and a Folio target on the METS fold rule (the fold itself, `appendLocationsFrom`, is generic and does not care about source type). This is merger-rule work, not an id_minter or canonical-id change.
 
+A consequence of this mechanism matters for everything that follows. Which public work a digital object's METS work merges onto is computed at merge time from mutable metadata, and can change when merge rules or the metadata change. The registry of source and canonical ids does not hold that outcome, and nothing upstream of the pipeline can know it at ingest time.
+
+## The decision
+
+### Preservation identifiers stay canonical
+
+An earlier draft of this RFC proposed minting a catalogue-style id at ingest and working towards `presentation/{workId}` as the canonical IIIF URI (the position of [RFC 085](../085-IIIF-Identities-and-Migration/README.md)). The review discussion on [PR #159](https://github.com/wellcomecollection/docs/pull/159) reversed that proposal, for three independent reasons, each sufficient on its own:
+
+1. **The pipeline constraint.** The METS-sourced work can never be given the public work's canonical id, because the merge that links them is computed downstream at merge time and its outcome is mutable. Baking a merge-derived id into immutable artefacts (S3 keys, METS filenames, JP2 names) would make permanent object names depend on a mutable join.
+2. **Works and digital objects are not 1:1.** A merged work can aggregate multiple storage objects, so manifest to work was never guaranteed one-to-one. Keeping the id schemes visibly distinct avoids false expectations when merge rules change.
+3. **URI consistency.** Canvas ids, image URIs and annotation targets derive from METS filenames and can never be redirected, because IIIF clients string-match ids inside the JSON rather than dereferencing them. Moving the manifest URI to the Work id would rename only the outer URI while everything inside every document keeps the preservation identifier, creating permanent internal inconsistency for old and new content alike. Keeping the preservation identifier canonical is the only arrangement where a manifest and its contents agree.
+
+The agreed position is therefore:
+
+- The preservation identifier stays the canonical IIIF Manifest URI, for old and new content alike. `https://iiif.wellcomecollection.org/presentation/b28855541` stays canonical forever, full of image links like `b28855541_0001.jp2`; a new item preserved under id `P` is served at `/presentation/P`, full of image links like `P_0001.jp2`.
+- Nothing is minted at ingest. The catalogue pipeline continues to mint canonical ids downstream exactly as it does today; digital production assigns preservation identifiers but never touches the catalogue id space.
+- The Work id never appears in a canonical digital-object URI. It appears only as a redirect source (see below).
+- The Identifiers API ([RFC 089](../089-identifiers-api/README.md)) stays read-only.
+
+The cost is deliberate and worth recording plainly. The work page (`/works/{workId}`) and the digital object it presents (`/presentation/{preservationId}`) permanently stop sharing a tail, trading URL elegance for internal consistency and a much smaller system. Nothing breaks, because the Work id form redirects and the catalogue API's digital locations carry the real manifest URI, so links are followed rather than constructed.
+
+### The redirect contract
+
+The DDS continues its redirect duty, and under this decision that duty becomes a committed contract covering all content: given a Work id, `/presentation/{workId}` redirects cheaply to `/presentation/{preservationId}`. For digitised content this is current behaviour. For born-digital it is new: today `/presentation/{workId}` for a born-digital item does not resolve at all, and it will start redirecting to the ref-based URI.
+
+The binding that backs this redirect is merge-derived, so it cannot come from the ID Registry; which work a digital object merged into is catalogue knowledge. The DDS holds it in its own records (the identity service's stored `CatalogueId`, refreshed when a package is reprocessed), with the catalogue API as the authoritative source. The Identifiers API complements this with source-id to canonical-id translation but does not replace it.
+
 ## Proposal
 
-Build a small application for digital production staff that creates the ingest package metadata from the Folio LMS while accommodating the predecessor ID.
-
-The central choice is not to use the Folio LMS id as the package identifier. Using the Folio id would repeat the same problem at the *next* LMS migration. Instead, mint an identifier in the public catalogue style at ingest time, using a minting capability added to the Identifiers API ([RFC 089](../089-identifiers-api/README.md)).
+Build a small application for digital production staff that creates the ingest package metadata from the Folio LMS (and, for archival digitisation, from Axiell Collections), determines the preservation identifier, and hands the package to Goobi. Nothing is minted at any point.
 
 Behaviour splits on the predecessor signal:
 
-- **Cross-migration digitisation** (predecessor ID present): reuse the old b-number.
-- **Post-migration digitisation** (no predecessor): mint a fresh catalogue-style id.
-
-The post-migration flow below reflects the mechanics set out in [Post-migration merge candidate](#post-migration-merge-candidate) and [METS works keep their own id](#mets-works-keep-their-own-id): the id is minted from the Folio id, the Folio id rides in the METS so the transformer can emit the merge candidate, and the minted id becomes the package handle.
+- **Cross-migration ingest** (predecessor present): reuse the old b-number as the preservation identifier.
+- **Post-migration ingest** (no predecessor): assign a new preservation identifier according to the scheme in [The form of the new preservation identifier](#the-form-of-the-new-preservation-identifier).
 
 ```mermaid
 sequenceDiagram
@@ -160,7 +203,7 @@ sequenceDiagram
     actor DP as Digital production staff
     participant App as Ingest metadata app
     participant Folio as Folio (LMS)
-    participant IdAPI as Identifiers API (resolve-or-mint)
+    participant IdAPI as Identifiers API (read-only)
     participant Goobi as Goobi
     participant Storage as Storage service
     participant Pipeline as Catalogue pipeline
@@ -168,36 +211,31 @@ sequenceDiagram
     participant Public as Public catalogue work
 
     DP->>App: Start digitisation
-    App->>Folio: Read item metadata
-    Folio-->>App: Metadata, no predecessor (post-migration path)
-    App->>IdAPI: resolve-or-mint mets/folio-id (type Work)
-    IdAPI-->>App: canonical id C (the METS work's own id)
-    App->>Goobi: Package id = C, METS record identifier = folio-id
-    Goobi->>Storage: Ingest (space=digitised, externalIdentifier=C)
-    Storage-->>Pipeline: registered_bag_notification (externalIdentifier=C)
-    Pipeline->>Pipeline: Transformer supplies C (from externalIdentifier), id_minter verifies mets/folio-id is bound to C (not mint)
-    Pipeline->>Pipeline: Merge candidate folio-instance/folio-id resolves to public Work id
-    Pipeline->>Public: METS work C redirected onto Folio work, IIIF location folded on
-    Storage-->>IIIF: Package available (keyed by C)
-    IIIF->>IdAPI: Resolve C (no b-number to string-parse)
-    IIIF->>Public: Serve IIIF manifests at /presentation/C
+    App->>Folio: Read instance metadata (folio-id)
+    App->>IdAPI: Reverse lookup folio-instance/folio-id with siblings
+    IdAPI-->>App: No sierra-system-number sibling (post-migration path)
+    App->>App: Assign preservation identifier P
+    App->>Goobi: Package id = P, METS record identifier = folio-id
+    Goobi->>Storage: Ingest (space=digitised, externalIdentifier=P)
+    Storage-->>Pipeline: registered_bag_notification (externalIdentifier=P)
+    Pipeline->>Pipeline: Transformer emits mets/folio-id identity + folio-instance/folio-id merge candidate
+    Pipeline->>Pipeline: id_minter mints canonical ids downstream, exactly as today
+    Pipeline->>Public: METS work merged onto Folio work, IIIF location folded on
+    Storage-->>IIIF: Package available (keyed by P)
+    IIIF->>Public: Serve IIIF manifests at /presentation/P
 ```
 
-The proposal rests on five decisions, set out below: where the minting happens, how the two ingest paths are told apart, what has to be in place in iiif-builder first, what merge candidate the post-migration path emits, and how the METS work's own id is minted.
+On the cross-migration path the lookup finds a `sierra-system-number` sibling, `P` is that b-number, the METS record identifier is the b-number too, and the flow is indistinguishable from today's from Goobi onwards.
 
-### Where minting lives
+### Finding the predecessor
 
-[RFC 089](../089-identifiers-api/README.md) as written ([PR #156](https://github.com/wellcomecollection/docs/pull/156), open) is a read-only service: given a canonical id it returns the source id(s), and given a source id it returns the canonical id. It never mints and never invalidates. It is served from the catalogue ID Registry, the same store the id_minter writes to per RFC 083, with the architecture API Gateway to Lambda to Aurora Serverless v2, x-api-key auth, and CloudFront caching. Its planned consumers are IIIF/DDS (which wants the Work id to be the canonical IIIF manifest URI) and Requesting (canonical item id to Folio item UUID).
+The predecessor signal is a registry lookup, not a Folio field read. The app calls the Identifiers API's reverse lookup for `folio-instance/<folio-id>` with siblings included; a `sierra-system-number` sibling is the old b-number, established by the RFC 083 predecessor relationship at migration time. The registry is the system of record for predecessor relationships, so this is the authoritative answer rather than a copy of it.
 
-We will **extend RFC 089 with a secured write/mint endpoint**. That endpoint shares the catalogue id_minter's registry and its pool and concurrency logic (the `SELECT ... FOR UPDATE SKIP LOCKED` pool claim from RFC 083). Digital production will **not** write to the id_minter database directly.
-
-The rationale: it keeps a single minting authority and a single pool, so there is no second writer competing with the catalogue id_minter against the same registry. The secured endpoint gives digital production a controlled way to mint without handing out database credentials, and it sits alongside the read endpoints that IIIF and Requesting already need.
+Where the Folio record also carries its own predecessor field, the app can cross-check the two. A disagreement between the registry and the record is a data-quality problem worth failing loudly on, not something to resolve silently in favour of either side.
 
 ### Two ingest paths
 
-We treat these as two separate paths, with the presence of a predecessor ID in the Folio output as the signal.
-
-For **cross-migration digitisation** we:
+For **cross-migration ingest** we:
 
 - Reuse the old b-number as the storage `externalIdentifier`, and
 - Keep emitting `sierra-system-number/<old-b-number>` as the METS merge candidate.
@@ -206,75 +244,149 @@ That means **this path needs no change to the METS transformer** (`MetsMergeCand
 
 This holds even though the target becomes a Folio work after migration. The METS work keeps emitting `sierra-system-number/<b-number>`, the id_minter keeps resolving that b-number to the existing canonical id through the predecessor link, and the matcher keeps graphing by shared canonical id. The one piece that does need updating is the merger's target selection, which is currently coupled to Sierra predicates (`TargetPrecedence.scala`, `WorkPredicates.scala`, `ItemsRule.scala`); it needs a `FolioInstance` predicate added so a Folio work can be picked as a target and the METS location folded onto it. See [Merge behaviour after migration](#merge-behaviour-after-migration).
 
-For **post-migration digitisation** there is no predecessor. We mint a catalogue-style id for the storage handle and emit a Folio merge candidate instead of reusing a b-number; the next two sections set out the mechanics.
+Reuse applies whether or not the item was digitised before the migration. A record with a b-number predecessor that is digitised for the first time after migration still uses the b-number as its preservation identifier: it costs nothing, keeps the transformer untouched, and gives iiif-builder an identifier form it already understands.
 
-### iiif-builder prerequisite
-
-iiif-builder currently infers the storage space and processing route by string-parsing the b-number. [RFC 081](../081-identifiers-in-iiif-builder/README.md), "Identifiers in iiif-builder: beyond the B number", states that "we cannot know METS formats, storage locations or anything else just by looking at the string" once b-numbers go away. The plan is to replace the string-parsed `DdsIdentifier` with a `DdsIdentity` obtained from an `IIdentityService`. That plan is not yet implemented.
-
-A non-b-number identifier therefore cannot flow through iiif-builder today. The post-migration minted-id path is blocked until RFC 081's `IIdentityService` is implemented. Cross-migration does not hit this, because it reuses the b-number; post-migration does, because the minted id has no b-number for iiif-builder to parse.
-
-The Identifiers API (RFC 089) is intended to help satisfy this prerequisite: it gives iiif-builder a service to resolve identifiers instead of string-parsing b-numbers. So the same API that gains the mint endpoint in [Where minting lives](#where-minting-lives) is also what lets iiif-builder stop inferring everything from the b-number. This dovetails with [RFC 085](../085-IIIF-Identities-and-Migration/README.md), which proposes that canonical IIIF URIs use the Work id rather than the b-number.
+For **post-migration ingest** there is no predecessor. The app assigns a new preservation identifier `P`, passes `P` to Goobi as the package id, and puts the Folio id in the METS record identifier. The next sections set out the mechanics.
 
 ### Post-migration merge candidate
 
-For post-migration digitisation the target is a Folio work and there is no b-number to match on, so the METS work must emit a `folio-instance/<folio-id>` merge candidate. We carry the Folio id in the METS record identifier, the same dual role the b-number plays today: it drives both the METS work's own identity (`mets/<folio-id>`) and the merge candidate (`folio-instance/<folio-id>`). No extra METS field is needed.
+For post-migration ingest the target is a Folio work and there is no b-number to match on, so the METS work must emit a `folio-instance/<folio-id>` merge candidate. We carry the Folio id in the METS record identifier, the same dual role the b-number plays today: it drives both the METS work's own identity (`mets/<folio-id>`) and the merge candidate (`folio-instance/<folio-id>`). No extra METS field is needed.
 
-This needs a transformer change. `MetsMergeCandidate` today emits `sierra-system-number` for a b-number and otherwise falls back to `calm-ref-no`; it gains a `folio-instance` branch. `MetsData` builds the `mets/<folio-id>` own-identity as it builds `mets/<b-number>` today. This is the `folio-instance` branch we deliberately keep out of the cross-migration path: cross-migration reuses the b-number and stays on `sierra-system-number`, and post-migration is the case that genuinely needs the new branch.
+This needs a transformer change. `MetsMergeCandidate` today emits `sierra-system-number` for a b-number and otherwise falls back to `calm-ref-no`; it gains a `folio-instance` branch for record identifiers in the Folio id form, with the `calm-ref-no` fallback retained for archival refs. The branching is by shape, which is one of the constraints on identifier forms in [The form of the new preservation identifier](#the-form-of-the-new-preservation-identifier). `MetsData` builds the `mets/<folio-id>` own-identity as it builds `mets/<b-number>` today.
 
 The merge runs through the merge candidate, not by the two works sharing a canonical id. The METS work has its own canonical id (see next section); its `folio-instance/<folio-id>` candidate resolves to the Folio work's own canonical id, which is the public Work id; the matcher connects them through that resolved id; the merger redirects the METS work onto the Folio work. The Folio-target merger changes in [Merge behaviour after migration](#merge-behaviour-after-migration) are what let the merger select the Folio work and fold the IIIF location on.
 
 ### METS works keep their own id
 
-The METS-sourced work keeps its own canonical id, distinct from the public Work id, exactly as today, where `mets/<b-number>` already mints a canonical id distinct from the Sierra work's. We do not collapse the handle onto the public Work id.
+The METS-sourced work keeps its own canonical id, distinct from the public Work id, exactly as today, where `mets/<b-number>` already mints a canonical id distinct from the Sierra work's. We do not collapse anything onto the public Work id.
 
-The id is minted ahead of ingest. The app calls the secured resolve-or-mint endpoint for the METS work's source identifier `mets/<folio-id>`, receives the canonical id C, and passes C to Goobi as the package id and storage `externalIdentifier`. C therefore travels with the package: the storage notification, and so the `MetsSourcePayload`, carry it as the `externalIdentifier`.
+Nothing about that minting changes. The pipeline id_minter mints the METS work's canonical id downstream when the work first flows through, exactly as it does now. The preservation identifier `P` never enters the pipeline's identifier block at all: it reaches the pipeline only as the storage `externalIdentifier`, which the METS adapter uses as its versioning key, while the transformer works from the record identifier inside the METS XML. The earlier draft's pre-minting, its binding verification, and its fail-loud id_minter guard are all unnecessary once nothing upstream mints.
 
-When the METS work later flows through the pipeline the transformer has both halves it needs: the record identifier `folio-id` from inside the METS XML (which gives the source identifier `mets/<folio-id>`) and the canonical id C from the payload's `externalIdentifier`. It emits a full identifier block carrying both. The id_minter then **verifies** the binding (that `mets/<folio-id>` is already bound to C) rather than assigning a fresh canonical id. The canonical id is not minted a second time, and it is not embedded inside the METS XML; it is the storage handle the package already travels under.
+### The form of the new preservation identifier
 
-A fail-loud guard backs this: if `mets/<folio-id>` is not already bound to C, the id_minter raises rather than minting a fresh, divergent id. This matches RFC 083's stance of failing immediately on a missing predecessor instead of silently masking a data-quality problem. A plain resolve-or-mint would instead mint a new id on a miss, silently diverging the work's canonical id from the storage handle it was ingested under, which is the failure this guard exists to prevent.
+For wholly new items something has to be assigned, and its form is the main remaining design decision. These strings become public, permanent, cited URLs, S3 keys, METS filenames, JP2 filenames and DLCS references, and they can never be renamed or reused. The review discussion (and the DDS-side review of it) produced a concrete set of requirements:
 
-After the merge the METS work (C) is redirected onto the Folio work, so C resolves to the public Work id. The handle is therefore a resolvable catalogue identifier that redirects to the public work, rather than a string bound to no record.
+- **Unique forever and never reused**, assignable at ingest without a service round-trip.
+- **Frozen at ingest.** A future migration must not touch it; the predecessor mechanism (RFC 083) is how a future system inherits it, exactly as Folio is inheriting b-numbers now.
+- **Path-element safe as-is**, because it is stamped into S3 keys, METS filenames, IIIF URIs and DLCS string references on day one, upstream of any service.
+- **Case-stable, defined lowercase from birth.** The one accepted risk in the DDS identity service today is CALM ref case-collision on a lowercased key; a new scheme should never inherit that problem.
+- **Visibly distinct by shape** from the catalogue Work id scheme (8 chars of `[2-9a-z]` minus `o,i,l,1`), from the b-number regex, and from CALM refs including their underscore-written forms. Distinctness is what lets the METS transformer branch correctly, lets the DDS classify identifiers cheaply, and preserves the debugging property that a storage id and a work id can never be confused.
+- **A defined multi-volume suffix convention.** Goobi stamps `<id>_0002`-style suffixes into METS and JP2 names for multi-volume items. `<P>_0002` must be unambiguously splittable into package id and volume suffix, and must not collide with CALM refs written with underscores (`PPCRI_A_1`). This cannot be left implicit.
+
+Candidates, in current order of preference:
+
+1. **The Folio instance HRID** (e.g. `in00012345`). Human-legible, provenance-visible, lowercase, path-safe, and distinct by shape from Work ids (wrong length and alphabet), b-numbers and CALM refs. It has a further structural benefit: the storage `externalIdentifier` and the METS record identifier become the same string again, restoring the property both have today with the b-number and collapsing open question 2. The apparent objection, that embedding an LMS id repeats the b-number problem, does not hold under this design. The b-number pain was identity coupling to a live system; a preservation identifier frozen at ingest is inherited by the next system via predecessors rather than replaced, exactly as b-numbers are being handled now. The id is a permanent name whose origin happens to be legible, not a live foreign key.
+2. **A dedicated scheme** (e.g. a short prefix plus a random lowercase string). Maximally decoupled and easy to make shape-distinct, but opaque to the digital production staff who handle packages between digitisation and preservation, and it reintroduces the divergence between `externalIdentifier` and record identifier.
+3. **A UUID.** Trivially unique and safe, but hostile in filenames and URLs, opaque, and also divergent.
+
+The recommendation is the Folio HRID, with the Axiell ref playing the same role for archival digitisation as it already does for born-digital. This is open question 1 until confirmed.
+
+### DDS and DLCS changes
+
+iiif-builder today infers source system, generator and storage space from identifier shape: a b-number means Sierra, Goobi and the `digitised` space, anything else means CALM, Archivematica and `born-digital`. A new preservation identifier form breaks that inference, and post-migration even a ref-shaped identifier is ambiguous on its own, because an Axiell-catalogued item digitised through Goobi lands in `digitised` while a born-digital sibling lands in `born-digital`.
+
+This is a much smaller problem than the full [RFC 081](../081-identifiers-in-iiif-builder/README.md) programme, and it is not a gate on this RFC's ingest paths. The DDS identity service already persists identities in its own table, and the facts the parser currently guesses all have authoritative sources at hand: the workflow message origin supplies the generator at ingest, a storage-service probe validates the space, and the Identifiers API resolves any known source identifier to its canonical id and labelled siblings. Shape-based inference shrinks to shape-based candidate generation, paid once per identifier. What remains genuinely local to the DDS is sub-package structure (volume suffixes, canvas naming), which no registry will ever answer, and which the suffix convention above is designed to keep trivial.
+
+The corresponding open item is confirmation that DLCS and iiif-builder tolerate the storage `externalIdentifier` differing from the METS record identifier, which the recommended scheme would make moot by keeping them equal.
 
 ### Where each identifier lives after migration
 
-Post-migration:
+Post-migration, with the recommended scheme (P = the Folio HRID):
 
 | Identifier | What it is | Used for |
 | --- | --- | --- |
 | `folio-id` | The Folio instance id, carried in the METS record identifier | Drives the METS own-identity and the merge candidate, the dual role the b-number plays today |
-| `mets/<folio-id>` | The METS work's source identity | Resolves to C |
+| `P` | The preservation identifier, assigned at ingest | Package handle: storage `externalIdentifier`, METS and JP2 naming, DLCS asset ids, canonical IIIF URI `/presentation/P` |
+| `mets/<folio-id>` | The METS work's source identity | Mints (downstream, as today) the METS work's own canonical id |
 | `folio-instance/<folio-id>` | The Folio work's source identity, and the METS merge candidate | Resolves to the public Work id; this is the merge join |
-| C | The METS work's own canonical id, catalogue-style | Package handle: storage `externalIdentifier`, METS object naming, DLCS/IIIF key `/presentation/C`; redirects to the public Work id |
-| Public Work id | The Folio work's own canonical id, catalogue-style | The public-facing catalogue work; kept stable across future migrations by RFC 083 |
+| Public Work id | The Folio work's own canonical id | The public-facing catalogue work at `/works/{workId}`; `/presentation/{workId}` redirects to `/presentation/P` |
 
-For cross-migration the same shape holds with the b-number in place of both `folio-id` and C, and `sierra-system-number` in place of `folio-instance`, with no minting and no transformer change.
+For cross-migration the same shape holds with the b-number as both `P` and the record identifier, and `sierra-system-number` in place of `folio-instance`, with no transformer change.
+
+### Worked examples
+
+Concrete identifier strings at every layer, for the four permutations. Work ids are illustrative.
+
+**Digitised, cross-migration.** A book catalogued in Sierra as `b18035978`, its record now migrated to Folio instance `in00067890` with a predecessor relationship. It may or may not have been digitised before; either way the b-number is reused.
+
+| Layer | Identifier |
+| --- | --- |
+| Folio record | `in00067890`, predecessor `b18035978` |
+| Preservation identifier | `b18035978` (reused) |
+| Storage | `digitised/b18035978/vN` (version history continues) |
+| METS file / images | `b18035978.xml`, `b18035978_0001.jp2` |
+| METS record identifier | `b18035978` |
+| Merge candidate | `sierra-system-number/b18035978` |
+| Public Work id | `zjytxny8` (inherited via predecessor) |
+| Canonical manifest | `/presentation/b18035978` |
+| Redirects | `/presentation/zjytxny8` redirects to `/presentation/b18035978` |
+
+**Digitised, post-migration, Folio-catalogued.** A new printed book, catalogued only in Folio as `in00012345`.
+
+| Layer | Identifier |
+| --- | --- |
+| Folio record | `in00012345`, no predecessor |
+| Preservation identifier | `in00012345` (recommended scheme; substitute if open question 1 lands elsewhere) |
+| Storage | `digitised/in00012345/v1` |
+| METS file / images | `in00012345.xml`, `in00012345_0001.jp2` |
+| METS record identifier | `in00012345` |
+| Merge candidate | `folio-instance/in00012345` |
+| Public Work id | `abcd3456` (newly minted, downstream) |
+| Canonical manifest | `/presentation/in00012345` |
+| Redirects | `/presentation/abcd3456` redirects to `/presentation/in00012345`; the work page is `/works/abcd3456` |
+
+**Digitised, post-migration, Axiell-catalogued.** An archival item digitised through Goobi. Before the migration this item would have been given a b-number; now the ref plays the preservation identifier role, as it already does for born-digital.
+
+| Layer | Identifier |
+| --- | --- |
+| Axiell record | ref `PPCRI/D/4/2`, no Sierra ancestry |
+| Preservation identifier | `PPCRI/D/4/2` |
+| Storage | `digitised/PPCRI/D/4/2/v1` |
+| METS file / images | per ref, e.g. `PPCRI_D_4_2.xml`, `PPCRI_D_4_2_0001.jp2` |
+| METS record identifier | `PPCRI/D/4/2` |
+| Merge candidate | `calm-ref-no/PPCRI/D/4/2` (whether this stays `calm-ref-no` or becomes an Axiell type is part of open question 3) |
+| Public Work id | `mkt6dqe2` (newly minted, downstream) |
+| Canonical manifest | `/presentation/PPCRI/D/4/2` |
+| Redirects | `/presentation/mkt6dqe2` redirects to `/presentation/PPCRI/D/4/2` |
+
+**Born-digital, Axiell-catalogued.** Through Archivematica; unchanged from today except that the Work id redirect starts working.
+
+| Layer | Identifier |
+| --- | --- |
+| Axiell record | ref `SABTS/A/2/10` |
+| Preservation identifier | `SABTS/A/2/10` |
+| Storage | `born-digital/SABTS/A/2/10/v1` |
+| METS record identifier | `SABTS/A/2/10` |
+| Merge candidate | `calm-ref-no/SABTS/A/2/10` |
+| Public Work id | `h3jc4wga` |
+| Canonical manifest | `/presentation/SABTS/A/2/10` |
+| Redirects | `/presentation/h3jc4wga` starts redirecting to `/presentation/SABTS/A/2/10` (today it does not resolve) |
+
+A fifth permutation, born-digital material catalogued in Folio, is expected eventually (it was the original driver for the DDS identity service in RFC 081). It takes the same shape as the second example with `born-digital` as the space and Archivematica as the generator, and needs no new mechanics beyond those above.
 
 ## Alternatives considered
 
-**Feed the Folio id into Goobi as the package id.** The simplest option is to keep the existing flow and use the Folio id where the b-number is used today. This breaks two independent mechanisms.
+**Use the Work id as the canonical manifest URI.** The position of RFC 085 as drafted, and of the earlier version of this RFC. Rejected for the three reasons in [The decision](#the-decision): the merge that binds a digital object to its public work is computed downstream from mutable metadata, so the Work id cannot be baked into immutable artefacts; works and digital objects are not reliably 1:1; and canvas ids, image URIs and annotation targets can never be redirected, so the flip would buy a matching URL tail at the cost of permanent internal inconsistency in every document.
 
-The first is storage versioning. The `externalIdentifier` is effectively immutable; there is no rename operation. Whether the storage service creates a new bag or updates an existing one is decided purely by whether the `(space, externalIdentifier)` pair already exists. Changing the identifier produces a different bag whose version counter starts again at v1, and the version history that IIIF and the catalogue rely on does not carry across. (A catalogue-style id is itself a valid `externalIdentifier`: an 8-character id such as `a1b2c3d4` passes the validation rules, so the problem is the version reset and the merge break, not validation.)
+**Mint catalogue-style ids at ingest.** The earlier draft of this RFC: a secured resolve-or-mint endpoint on the Identifiers API, a pre-minted canonical id C as the storage handle, the transformer carrying C into the identifier block, and a fail-loud id_minter guard verifying the binding. Withdrawn. Once the manifest URI does not need to be a catalogue-style id, the minted handle buys nothing the preservation identifier does not already provide, and the design carried real costs: a write path on an otherwise read-only API, a second minting client, new id_minter verification behaviour, a transformer change to carry the id, and a hard dependency on RFC 081's identity service before any post-migration item could be ingested.
 
-The second, and more serious because it is silent, is the merge join key. If the package identifier moved off the b-number, `MetsMergeCandidate` would emit a non-matching candidate, the id_minter would mint a *different* canonical id, the matcher would leave the two works in separate graph components, and the digitised content would never reach the public work. The METS work stays invisible (`MetsWorksAreNotVisible`), so nothing is surfaced and no error is raised. The digitisation would be missing from the public record with no error and no obvious signal. This is why changing the package id is not a safe option.
+**Feed the Folio id into Goobi as the package id for existing items.** The simplest option for cross-migration would be to use the Folio id where the b-number is used today. This breaks two independent mechanisms.
 
-**Write directly to the id_minter database.** Digital production could mint by writing to the catalogue ID Registry directly. Rejected: it puts a second writer in a race with the catalogue id_minter against the same pool, and it requires handing out database credentials. The secured mint endpoint on RFC 089 keeps a single minting authority. See [Where minting lives](#where-minting-lives).
+The first is storage versioning. The `externalIdentifier` is effectively immutable; there is no rename operation. Whether the storage service creates a new bag or updates an existing one is decided purely by whether the `(space, externalIdentifier)` pair already exists. Changing the identifier produces a different bag whose version counter starts again at v1, and the version history that IIIF and the catalogue rely on does not carry across.
 
-**Collapse the METS handle onto the public Work id.** We could make the METS work's canonical id the same as the public Work id. Rejected: it departs from how METS works behave today (`mets/<b-number>` already mints a canonical id distinct from the Sierra work's), and the merge mechanism does not require it, because the merge runs through the merge candidate, not through a shared canonical id. See [METS works keep their own id](#mets-works-keep-their-own-id).
+The second, and more serious because it is silent, is the merge join key. If the package identifier moved off the b-number, `MetsMergeCandidate` would emit a non-matching candidate, the id_minter would mint a *different* canonical id, the matcher would leave the two works in separate graph components, and the digitised content would never reach the public work. The METS work stays invisible (`MetsWorksAreNotVisible`), so nothing is surfaced and no error is raised. The digitisation would be missing from the public record with no error and no obvious signal.
 
-**Rely on plain resolve-or-mint with no verification.** The pre-minting (the app mints `mets/<folio-id>` to C before ingest) could be left to stand on its own, trusting the pipeline id_minter to look the source id up and find the same C. Rejected: a resolve-or-mint that misses, for a METS work whose source identifier was never pre-minted or was minted to a different id, would mint a fresh canonical id and silently diverge the work's id from the storage handle C it was ingested under, which is the silent failure mode this design is trying to avoid. The proposal instead has the transformer supply C (read from the storage `externalIdentifier`, not embedded in the METS XML) and the id_minter verify the binding of `mets/<folio-id>` to C, raising on a mismatch. See [METS works keep their own id](#mets-works-keep-their-own-id).
-
-**Embed the canonical id inside the METS XML.** C could instead be written into the METS itself for the transformer to read. Rejected: C is already the storage `externalIdentifier`, so it travels with the package in the `MetsSourcePayload` and the transformer can read it from there; writing it into the METS as well would duplicate the handle and add a third identifier to the XML alongside the `folio-id` record identifier, for no gain.
+Neither mechanism applies to wholly new items, which have no history to reset and whose merge candidate is driven by the Folio id in any case. That is why the Folio HRID is a live candidate for the *new-item* scheme in [The form of the new preservation identifier](#the-form-of-the-new-preservation-identifier) while remaining rejected as a replacement identifier for existing ones.
 
 ## Impact
 
 ### Risks
 
-The principal risk is the silent merge break described under [Alternatives considered](#alternatives-considered): a mis-handled package identifier leaves digitised content invisible on the public record with no error. The proposal mitigates this by (a) reusing the b-number on the cross-migration path so the join key is untouched, and (b) a fail-loud guard on the post-migration path that raises rather than minting a divergent id when a METS source identifier is not already bound to its storage handle.
+The principal risk is unchanged from the earlier draft: a mis-handled package identifier leaves digitised content invisible on the public record with no error, because the METS work is invisible by design. The mitigation is now simpler. The cross-migration path reuses the b-number so the join key is untouched, and the post-migration path drives the merge from the METS record identifier exactly as today, so the failure mode reduces to a wrong or missing record identifier, the same class of error the current system already carries.
 
 ### Backwards compatibility
 
-Existing `https://iiif.wellcomecollection.org/presentation/{b-number}` URLs and the `wellcomelibrary.org` redirects must keep resolving whatever the new identifier scheme. The cross-migration path reuses the b-number, so its IIIF URIs are unchanged; the post-migration path mints new handles only for genuinely new items, which have no pre-existing URLs to preserve.
+This decision is maximally conservative for existing URIs. Every `https://iiif.wellcomecollection.org/presentation/{b-number}` URL and every born-digital ref URL stays canonical rather than becoming a redirect, and the `wellcomelibrary.org` 301s keep resolving unchanged. External annotations whose targets embed b-number canvas ids remain consistent with the manifests that contain them. The new behaviour is additive: Work-id redirects extend to born-digital, and new items appear under new preservation identifiers with no pre-existing URLs to preserve.
 
 ### Dependencies for each path
 
@@ -282,39 +394,40 @@ After the catalogue pipeline migrates to Folio, **both** paths need the Folio-ta
 
 The **post-migration path additionally** depends on:
 
-1. the secured resolve-or-mint endpoint on the Identifiers API ([Where minting lives](#where-minting-lives)),
-2. the `folio-instance` branch in the METS transformer (`MetsMergeCandidate` and `MetsData`), plus the transformer carrying the pre-minted canonical id C from the storage `externalIdentifier` into the work's identifier block ([Post-migration merge candidate](#post-migration-merge-candidate), [METS works keep their own id](#mets-works-keep-their-own-id)),
-3. the id_minter verifying the binding of `mets/<folio-id>` to C and failing loudly rather than minting ([METS works keep their own id](#mets-works-keep-their-own-id)), and
-4. RFC 081's `IIdentityService` in iiif-builder, so a non-b-number identifier resolves rather than being string-parsed ([iiif-builder prerequisite](#iiif-builder-prerequisite)).
+1. the preservation identifier scheme being agreed (open question 1), since Goobi stamps it into filenames on day one,
+2. the `folio-instance` branch in the METS transformer (`MetsMergeCandidate`, plus the `mets/<folio-id>` own-identity in `MetsData`), and
+3. the DDS recognising the new identifier form (shape-distinct classification plus the authoritative-source lookups in [DDS and DLCS changes](#dds-and-dlcs-changes)), coordinated with Digirati. This is a bounded DDS change, not the full RFC 081 programme.
 
-Cross-migration needs none of these: it reuses the b-number, keeps the transformer on `sierra-system-number`, and gives iiif-builder a b-number to parse.
+Cross-migration needs none of these: it reuses the b-number, keeps the transformer on `sierra-system-number`, and gives iiif-builder an identifier it already understands.
 
 ### Open questions
 
-1. **Storage identifier and record identifier diverge.** Post-migration the storage `externalIdentifier` (C) is no longer the same string as the METS record identifier (`folio-id`). Today both are the b-number, and parts of the estate may rely on that. The split is mechanically sound for the catalogue pipeline: the METS adapter keys on the `externalIdentifier`, and the transformer reads the record identifier from inside the METS XML. What is not yet confirmed is whether iiif-builder and DLCS rely on the two being equal, since iiif-builder loads the package by its storage handle but derives Canvas and DLCS asset identifiers from the file names recorded in the METS. This sits with [RFC 085](../085-IIIF-Identities-and-Migration/README.md), which is reworking IIIF and DLCS identity for the migration but currently lists the shape of the Goobi notification message and the post-migration METS (including file names) among its open unknowns. It should be resolved alongside RFC 085 before the post-migration path ships.
-2. **The id_minter can verify a supplied canonical id.** The fail-loud guard in [METS works keep their own id](#mets-works-keep-their-own-id) needs the pipeline id_minter to accept a pre-assigned canonical id for a source identifier, verify the binding of `mets/<folio-id>` to C, and raise on a mismatch or absence rather than assigning a new one. Confirm the id_minter can do this, or scope the change needed, before the guard is implemented.
+1. **The form of the new preservation identifier.** The requirements are set out in [The form of the new preservation identifier](#the-form-of-the-new-preservation-identifier); the recommendation is the Folio HRID. The decision includes the multi-volume suffix convention, which must be defined alongside the form because Goobi stamps it into METS and JP2 filenames upstream of any service.
+2. **Storage identifier and record identifier divergence.** Post-migration the storage `externalIdentifier` (P) need not be the same string as the METS record identifier (`folio-id`). Today both are the b-number, and whether iiif-builder and DLCS rely on the two being equal is unconfirmed: iiif-builder loads the package by its storage handle but derives Canvas and DLCS asset identifiers from file names recorded in the METS. Choosing the Folio HRID as P keeps the two equal and makes this question moot; any other scheme must answer it before the post-migration path ships.
+3. **Axiell ref stability across the CALM migration.** The born-digital story above assumes archival refs survive the move to Axiell Collections identically, in which case born-digital needs no change, ever. If refs can be restructured in Axiell, born-digital needs the same predecessor mechanism as b-numbers, and that mechanism is currently only specified for Sierra to Folio. Related: whether the METS merge candidate for Axiell-catalogued material stays `calm-ref-no` or becomes an Axiell identifier type, which touches the same transformer fallback.
 
 ## Next steps
 
-1. **Extend RFC 089** with a secured resolve-or-mint endpoint that reuses the id_minter pool and registry. Do not give digital production direct database access.
-2. **Build the digital production ingest app** that reads Folio metadata and branches on the predecessor signal.
-3. **Cross-migration first.** It is the lower-risk path: reuse the b-number, leave the METS transformer untouched, and lean on the RFC 083 predecessor relationship to keep canonical ids stable. It needs only the Folio-target merger rules (step 5), not RFC 081 or a transformer change.
-4. **Add the post-migration transformer work.** Add the `folio-instance` branch to the METS transformer (`MetsMergeCandidate`, `MetsData`), have the transformer carry the pre-minted canonical id C from the storage `externalIdentifier` into the work's identifier block, and add the fail-loud guard so the id_minter verifies the binding of `mets/<folio-id>` to C rather than minting a divergent id.
+1. **Agree the preservation identifier scheme** (open question 1), including the multi-volume suffix convention, with digital production, the pipeline team and Digirati, since all three consume its shape.
+2. **Build the digital production ingest app** that reads Folio (and Axiell) metadata, finds predecessors through the Identifiers API, and branches on the predecessor signal.
+3. **Cross-migration first.** It is the lower-risk path: reuse the b-number, leave the METS transformer untouched, and lean on the RFC 083 predecessor relationship to keep canonical ids stable. It needs only the Folio-target merger rules (step 5).
+4. **Add the `folio-instance` transformer branch** (`MetsMergeCandidate`, `MetsData`), shape-gated so b-numbers and refs are unaffected.
 5. **Update the merger rules for Folio targets.** Add a `FolioInstance` predicate to `WorkPredicates`, an entry to `TargetPrecedence`, and a Folio target on the METS fold rule in `ItemsRule`, so that after migration a Folio work is selected as the merge target. Both paths need this; it does not touch the id_minter or the canonical id, and it is independent of the transformer change.
-6. **Gate the post-migration path on RFC 081.** Do not ship minted-id digitisation through iiif-builder until `IIdentityService` is implemented and iiif-builder resolves identifiers through the Identifiers API rather than string-parsing.
-7. **Resolve the open questions.** Confirm iiif-builder and DLCS tolerate the storage `externalIdentifier` differing from the METS record identifier, and confirm the id_minter can verify a supplied binding of a source id to its canonical id (raising rather than minting), before the post-migration path ships.
-8. **Keep b-number IIIF URLs permanent.** Whatever the new identifier scheme, existing `iiif.wellcomecollection.org/presentation/{b-number}` URLs and the `wellcomelibrary.org` redirects must keep resolving.
+6. **Scope the DDS recognition change with Digirati**: shape-distinct classification of the new form, authoritative-source lookups for generator and space, and the extended Work-id redirect contract covering born-digital.
+7. **Amend RFC 085** to invert its "Use the Work ID" position, as a deliverable of this RFC rather than a follow-up intention, so the two documents do not disagree in the interim.
+8. **Resolve the open questions**, in particular Axiell ref stability (open question 3), which decides whether born-digital needs predecessor support at all.
+9. **Keep existing IIIF URLs permanent.** Existing `iiif.wellcomecollection.org/presentation/{b-number}` URLs, born-digital ref URLs and the `wellcomelibrary.org` redirects stay canonical and keep resolving; this decision strengthens that guarantee rather than weakening it.
 
-| Aspect | Cross-migration digitisation | Post-migration digitisation |
+| Aspect | Cross-migration ingest | Post-migration ingest |
 | --- | --- | --- |
-| Predecessor ID present? | Yes | No |
-| Signal | Predecessor present in Folio output | Predecessor absent |
-| Storage `externalIdentifier` (handle) | Reuse old b-number | Minted catalogue-style id C |
+| Predecessor present? | Yes | No |
+| Signal | `sierra-system-number` sibling in the ID Registry (Identifiers API reverse lookup) | No sibling found |
+| Preservation identifier (storage `externalIdentifier`) | Reused old b-number | Newly assigned P (recommended: the Folio HRID) |
 | METS record identifier | b-number | `folio-id` |
-| Minting | None (b-number reused) | resolve-or-mint `mets/<folio-id>` to C |
+| Minting at ingest | None | None |
 | METS merge candidate | `sierra-system-number/<old-b-number>` | `folio-instance/<folio-id>` |
 | Change to `MetsMergeCandidate.scala`? | No | Yes (`folio-instance` branch) |
 | Folio-target merger rules | Required after migration | Required after migration |
-| Public work canonical id | Inherited via RFC 083 predecessor link | Newly minted from `folio-instance` |
-| RFC 081 `IIdentityService` required? | No | Yes (blocking prerequisite) |
+| Public work canonical id | Inherited via RFC 083 predecessor link | Newly minted downstream from `folio-instance` |
+| Canonical manifest URI | `/presentation/<b-number>` (unchanged) | `/presentation/<P>` |
 | Storage version history | Preserved (id unchanged) | Starts at v1 (new item, expected) |
