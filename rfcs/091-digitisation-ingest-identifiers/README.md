@@ -175,7 +175,7 @@ An earlier draft of this RFC proposed minting a catalogue-style id at ingest and
 
 The agreed position is therefore:
 
-- The preservation identifier stays the canonical IIIF Manifest URI, for old and new content alike. `https://iiif.wellcomecollection.org/presentation/b28855541` stays canonical forever, full of image links like `b28855541_0001.jp2`; a new item preserved under id `P` is served at `/presentation/P`, full of image links like `P_0001.jp2`.
+- The preservation identifier stays the canonical IIIF Manifest URI, for old and new content alike. `https://iiif.wellcomecollection.org/presentation/b28855541` stays canonical forever, full of image links like `b28855541_0001.jp2`; a new digitised item preserved under id `P` is served at `/presentation/P`, full of image links like `P_0001.jp2`.
 - Nothing is minted at ingest. The catalogue pipeline continues to mint canonical ids downstream exactly as it does today; digital production assigns preservation identifiers but never touches the catalogue id space.
 - The Work id never appears in a canonical digital-object URI. It appears only as a redirect source (see below).
 - The Identifiers API ([RFC 089](../089-identifiers-api/README.md)) stays read-only.
@@ -184,7 +184,7 @@ The cost is deliberate and worth recording plainly. The work page (`/works/{work
 
 ### The redirect contract
 
-The DDS continues its redirect duty, and under this decision that duty becomes a committed contract covering all content: given a Work id, `/presentation/{workId}` redirects cheaply to `/presentation/{preservationId}`. For digitised content this is current behaviour. For born-digital it is new: today `/presentation/{workId}` for a born-digital item does not resolve at all, and it will start redirecting to the ref-based URI.
+The DDS continues its redirect duty, and under this decision that duty becomes a committed contract covering all content: given a Work id, `/presentation/{workId}` redirects cheaply to `/presentation/{preservationId}`. This already works for both kinds of content. `/presentation/k6y5ykqz` 301s to `/presentation/b28855541` for digitised, and `/presentation/h3jc4wga` 301s to `/presentation/SABTS/A/2/10` for born-digital. What this decision changes is the status of that behaviour rather than the behaviour itself: an informal convenience becomes a contract the public URI scheme depends on, so it needs to hold for every digital object and survive reprocessing.
 
 The binding that backs this redirect is merge-derived, so it cannot come from the ID Registry; which work a digital object merged into is catalogue knowledge. The DDS holds it in its own records (the identity service's stored `CatalogueId`, refreshed when a package is reprocessed), with the catalogue API as the authoritative source. The Identifiers API complements this with source-id to canonical-id translation but does not replace it.
 
@@ -349,18 +349,21 @@ Concrete identifier strings at every layer, for the four permutations. Work ids 
 | Canonical manifest | `/presentation/PPCRI/D/4/2` |
 | Redirects | `/presentation/mkt6dqe2` redirects to `/presentation/PPCRI/D/4/2` |
 
-**Born-digital, Axiell-catalogued.** Through Archivematica; unchanged from today except that the Work id redirect starts working.
+**Born-digital, Axiell-catalogued.** Through Archivematica, and unchanged from today in every respect.
 
 | Layer | Identifier |
 | --- | --- |
 | Axiell record | ref `SABTS/A/2/10` |
 | Preservation identifier | `SABTS/A/2/10` |
 | Storage | `born-digital/SABTS/A/2/10/v1` |
+| Files | original filenames retained, e.g. `BTSARCH.LST`, giving canvas ids like `/presentation/SABTS/A/2/10/canvases/SABTS_A_2_10---BTSARCH.LST` |
 | METS record identifier | `SABTS/A/2/10` |
 | Merge candidate | `calm-ref-no/SABTS/A/2/10` |
 | Public Work id | `h3jc4wga` |
 | Canonical manifest | `/presentation/SABTS/A/2/10` |
-| Redirects | `/presentation/h3jc4wga` starts redirecting to `/presentation/SABTS/A/2/10` (today it does not resolve) |
+| Redirects | `/presentation/h3jc4wga` redirects to `/presentation/SABTS/A/2/10`, as it does today |
+
+File naming is the one place where born-digital genuinely differs from the digitised examples above. Archivematica does not rename anything, so born-digital files keep the names they arrived with, subject to URL-safety changes, and the DLCS-served URI keeps that original name at the tail. There is no `<P>_0001.jp2` sequence and no multi-volume suffix, so the suffix convention in open question 1 applies only to Goobi digitisation. The preservation identifier names the package; the files inside keep their own names.
 
 A fifth permutation, born-digital material catalogued in Folio, is expected eventually (it was the original driver for the DDS identity service in RFC 081). It takes the same shape as the second example with `born-digital` as the space and Archivematica as the generator, and needs no new mechanics beyond those above.
 
@@ -386,7 +389,7 @@ The principal risk is unchanged from the earlier draft: a mis-handled package id
 
 ### Backwards compatibility
 
-This decision is maximally conservative for existing URIs. Every `https://iiif.wellcomecollection.org/presentation/{b-number}` URL and every born-digital ref URL stays canonical rather than becoming a redirect, and the `wellcomelibrary.org` 301s keep resolving unchanged. External annotations whose targets embed b-number canvas ids remain consistent with the manifests that contain them. The new behaviour is additive: Work-id redirects extend to born-digital, and new items appear under new preservation identifiers with no pre-existing URLs to preserve.
+This decision is maximally conservative for existing URIs. Every `https://iiif.wellcomecollection.org/presentation/{b-number}` URL and every born-digital ref URL stays canonical rather than becoming a redirect, and the `wellcomelibrary.org` 301s keep resolving unchanged. External annotations whose targets embed b-number canvas ids remain consistent with the manifests that contain them. The only new behaviour is that new items appear under new preservation identifiers, with no pre-existing URLs to preserve. Work-id redirects already cover digitised and born-digital content alike, so committing to them as a contract adds an obligation rather than a URL.
 
 ### Dependencies for each path
 
@@ -413,7 +416,7 @@ Cross-migration needs none of these: it reuses the b-number, keeps the transform
 3. **Cross-migration first.** It is the lower-risk path: reuse the b-number, leave the METS transformer untouched, and lean on the RFC 083 predecessor relationship to keep canonical ids stable. It needs only the Folio-target merger rules (step 5).
 4. **Add the `folio-instance` transformer branch** (`MetsMergeCandidate`, `MetsData`), shape-gated so b-numbers and refs are unaffected.
 5. **Update the merger rules for Folio targets.** Add a `FolioInstance` predicate to `WorkPredicates`, an entry to `TargetPrecedence`, and a Folio target on the METS fold rule in `ItemsRule`, so that after migration a Folio work is selected as the merge target. Both paths need this; it does not touch the id_minter or the canonical id, and it is independent of the transformer change.
-6. **Scope the DDS recognition change with Digirati**: shape-distinct classification of the new form, authoritative-source lookups for generator and space, and the extended Work-id redirect contract covering born-digital.
+6. **Scope the DDS recognition change with Digirati**: shape-distinct classification of the new form, authoritative-source lookups for generator and space, and committing to the Work-id redirect behaviour the DDS already provides as a contract.
 7. **Amend RFC 085** to invert its "Use the Work ID" position, as a deliverable of this RFC rather than a follow-up intention, so the two documents do not disagree in the interim.
 8. **Resolve the open questions**, in particular Axiell ref stability (open question 3), which decides whether born-digital needs predecessor support at all.
 9. **Keep existing IIIF URLs permanent.** Existing `iiif.wellcomecollection.org/presentation/{b-number}` URLs, born-digital ref URLs and the `wellcomelibrary.org` redirects stay canonical and keep resolving; this decision strengthens that guarantee rather than weakening it.
