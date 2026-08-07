@@ -1,5 +1,6 @@
 # RFC 010: Data model
 
+## Purpose
 This RFC outlines the process and models used to create ontologies for Wellcome Collection's digital platform, focusing on a unified graph of linked data.
 
 **Last modified:** 2019-01-09T14:56:11+00:00

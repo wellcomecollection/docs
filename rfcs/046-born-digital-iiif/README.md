@@ -1,8 +1,9 @@
 # RFC 046: Born Digital in IIIF
 
+## Purpose
 This RFC is a proposal for how Wellcome can represent born digital archival material using IIIF.
 
-**Last modified:** 2022-04-21T10:00:00+01:00
+**Last modified:** 2022-04-21T09:00:00+00:00
 
 ## Context
 

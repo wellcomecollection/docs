@@ -1,5 +1,6 @@
 # RFC 065: Library Data Link Explorer
 
+## Purpose
 This RFC outlines the plan for the Library Data Link Explorer web application. This tool will enable Collections Information colleagues the ability to view and debug work relationships independently, potentially replacing the workflow of requesting a developer-run script to produce a matcher graph .dot file. 
 
 **Last modified:** 2024-11-27T17:37:23+00:00

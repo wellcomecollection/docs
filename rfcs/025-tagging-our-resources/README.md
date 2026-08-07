@@ -1,8 +1,9 @@
 # RFC 025: Tagging our Terraform resources
 
+## Purpose
 This RFC describes a proposal for how to tag our Terraform-managed resources, so we can find the corresponding Terraform configuration in the console.
 
-**Last modified:** 2020-08-03T15:05:05+01:00
+**Last modified:** 2020-08-03T14:05:05+00:00
 
 ## Problem statement
 

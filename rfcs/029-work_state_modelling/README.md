@@ -1,8 +1,9 @@
 # RFC 029: Work state modelling
 
+## Purpose
 This RFC proposes a new way of modelling works in the catalogue pipeline and API, separating the type of work from its state in the pipeline. This aims to improve composability, clarity, and ease of adding new types or states.
 
-**Last modified:** 2020-09-07T14:40:36+01:00
+**Last modified:** 2020-09-07T13:40:36+00:00
 
 ## Context
 

@@ -1,8 +1,9 @@
 # RFC 021: Data science in the pipeline
 
+## Purpose
 This RFC outlines a proposal for integrating data science services into the Wellcome Collection catalogue pipeline. The goal is to augment works and images with data inferred from them using data science techniques, such as feature vectors and colour palettes for images.
 
-**Last modified:** 2020-07-29T11:05:28+01:00
+**Last modified:** 2020-07-29T10:05:28+00:00
 
 ## Motivation
 
@@ -33,7 +34,7 @@ The usage of these services would look like this:
 
 ![An architecture diagram for data science services](https://user-images.githubusercontent.com/4429247/88694368-5bde8d00-d0f8-11ea-8d0b-4b1c7687877b.png)
 
-#### Implementation details
+### Implementation details
 
 - The inferrers and inference manager exist in one task definition (and therefore on one host).
 - Non-trivial results of the shared work that the manager might perform (eg, images that it downloads and that are required by all of the inferrers) are stored in EBS volumes attached to each host and mounted in both the manager and inferrer tasks. In this case, the request to the inferrers from the manager would include a local filesystem path to the files. As the EBS volumes just act as a shared cache they can delete on termination of the host instance.

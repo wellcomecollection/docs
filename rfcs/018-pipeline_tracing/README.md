@@ -1,5 +1,6 @@
 # RFC 018: Pipeline Tracing 
 
+## Purpose
 This RFC outlines a proposal for adding distributed tracing to the Wellcome Collection catalogue pipeline. The goal is to improve debugging and monitoring of the pipeline by tracking the flow of data through it, from the adapters right through to ingest.
 
 **Last modified:** 2020-01-29T10:36:52+00:00

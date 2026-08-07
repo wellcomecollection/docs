@@ -1,6 +1,16 @@
 # Fortnotes!
 
 Fortnightly updates about the work of the digital platform team.
+- [2026 July 29](20260729.md)
+- [2026 July 15](20260715.md)
+- [2026 July 1](20260701.md)
+- [2026 June 10](20260610.md)
+- [2026 May 27](20260527.md)
+- [2026 May 13](20260513.md)
+- [2026 April 29](20260429.md)
+- [2026 April 15](20260415.md)
+- [2026 April 1](20260401.md)
+- [2026 March 4](20260304.md)
 - [2026 February 18](20260218.md)
 - [2026 February 4](20260204.md)
 - [2026 January 21](20260121.md)

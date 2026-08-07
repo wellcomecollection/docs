@@ -1,5 +1,6 @@
 # RFC 066: Catalogue Graph pipeline
 
+## Purpose
 This RFC outlines considerations for the development of the catalogue-graph pipeline. The first iteration of the graph will be focused on concepts and their enrichment with data from external ontologies, as discussed below.
 
 **Last modified:** 2025-01-08T15:36:09+00:00

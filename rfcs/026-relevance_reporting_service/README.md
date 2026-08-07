@@ -1,8 +1,9 @@
 # RFC 026: Relevance reporting service
 
+## Purpose
 This RFC describes a proposal for a service that will allow us to test and report on the efficacy of our elastic-queries by comparing a set of search-terms and their respective expected results and ordering.
 
-**Last modified:** 2020-07-20T12:18:54+01:00
+**Last modified:** 2020-07-20T11:18:54+00:00
 
 ## Glossary
 

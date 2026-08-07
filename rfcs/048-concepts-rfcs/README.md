@@ -1,8 +1,9 @@
 # RFC 048: Concepts work plan
 
+## Purpose
 This RFC outlines the work plan for introducing concepts to the Wellcome digital platform, including the design of a concepts API, knowledge graph population, and integration with works.
 
-**Last modified:** 2022-05-10T13:14:58+01:00
+**Last modified:** 2022-05-10T12:14:58+00:00
 
 ## Context
 
@@ -27,15 +28,15 @@ This approach presupposes the following architectural decisions:
 - There is a knowledge graph of concepts that exists independently of works
 - Works will be tagged with identifiable concepts which (may) exist in the knowledge graph
 
-#### 1. Concepts API Design
+### 1. Concepts API Design
 
 We need to design an API that will allow us to populate concept pages. This may be one API for all concept types (ie subjects or people), or different APIs may provide different types. It should be designed in such a way that the future inclusion of curated content is possible. There should be sufficient information on a concept to disambiguate it (eg birth/death dates for people).
 
-#### 2. Knowledge graph population
+### 2. Knowledge graph population
 
 We need to populate a knowledge graph (wherein the nodes are concepts or have an injective mapping to concepts) from arbitrary sources eg. LCSH, LC names, MeSH, Wikidata, Wikipedia. This will likely initially be just one source without consideration of edges.
 
-#### 3. Identified concepts on works
+### 3. Identified concepts on works
 
 Where works are tagged with identifiable (in practice, Library of Congress and MeSH) concepts, we need to be able to match these up with concepts in our knowledge graph. The outcome here is that, given a work, we should be able to know its subjects/agents/etc, and given a concept, we should be able to query for the works that are tagged with it.
 

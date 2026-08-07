@@ -1,8 +1,9 @@
 # RFC 063: Catalogue Pipeline services from ECS to Lambda
 
+## Purpose
 Discuss the potential benefits and challenges of moving the catalogue pipeline services from AWS Elastic Container Service (ECS) to AWS Lambda.
 
-**Last modified:** 2024-10-25T10:16:40+01:00
+**Last modified:** 2024-10-25T09:16:40+00:00
 
 ## Context
 

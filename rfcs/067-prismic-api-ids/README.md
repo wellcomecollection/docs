@@ -1,5 +1,6 @@
 # RFC 067: Prismic API ID casing
 
+## Purpose
 This RFC proposes a consistent casing for Prismic API IDs across custom types, fields, and slices, to align with Prismic defaults and improve maintainability.
 
 **Last modified:** 2025-01-13T12:28:03+00:00

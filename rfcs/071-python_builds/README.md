@@ -1,5 +1,6 @@
 # RFC 071: Python Building and Deployment
 
+## Purpose
 Building and deploying Python projects
 
 **Last modified:** 2025-03-13T18:14:09+00:00

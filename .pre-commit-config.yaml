@@ -1,0 +1,14 @@
+repos:
+  - repo: local
+    hooks:
+      - id: validate-rfc-readme
+        name: Validate RFC required sections
+        entry: python3 .scripts/validate_rfc.py
+        language: system
+        files: ^rfcs/[^/]+/README\.md$
+      - id: update-rfc-table
+        name: Update RFC listing table
+        entry: python3 .scripts/create_table_summary.py --write-readme
+        language: system
+        pass_filenames: false
+        files: ^(rfcs/[^/]+/README\.md|rfcs/README\.md|\.scripts/create_table_summary\.py)$

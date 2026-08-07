@@ -1,5 +1,6 @@
 # RFC 070: Concepts API changes
 
+## Purpose
 This RFC describes changes to the concepts API, which will be used to support new theme pages on the Wellcome Collection website.
 
 **Last modified:** 2025-03-13T18:14:09+00:00

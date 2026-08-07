@@ -1,8 +1,9 @@
 # RFC 076: Integrating the catalogue graph into the works pipeline
 
+## Purpose
 This RFC proposes integrating the catalogue graph deeper into the catalogue pipeline to enable enrichment of the production works index with additional metadata and hierarchical relationships. The changes would replace the relation embedder subsystem with graph-based operations and create a new Python-based works ingestor, allowing for enhanced work pages and improved consistency between theme pages and search results.
 
-**Last modified:** 2025-06-21T09:00:00Z
+**Last modified:** 2025-06-21T09:00:00+00:00
 
 ## Table of contents
 

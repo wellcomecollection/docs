@@ -1,8 +1,9 @@
 # RFC 049: Changing how aggregations are retrieved by the Catalogue API
 
+## Purpose
 This RFC proposes a change to how aggregations are handled in the Catalogue API, allowing us to remove the internal/display model coupling that currently exists.
 
-**Last modified:** 2022-05-13T12:43:30+01:00
+**Last modified:** 2022-05-13T11:43:30+00:00
 
 ## Background
 

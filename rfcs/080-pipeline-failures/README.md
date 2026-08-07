@@ -1,10 +1,11 @@
 # RFC 080: Handling failures in Python Step Functions
 
+## Purpose
 Pipeline steps may fail for certain inputs.  Those failures are caught, logged, and retried using
 a templated recursive state machine defined for each step.  The overall pipeline is thereby kept clean of 
 error handling and can simply describe the happy-path flow of data.
 
-**Last modified:** 2025-12-01T00:00:00Z
+**Last modified:** 2025-12-01T00:00:00+00:00
 
 ## Scope
 
@@ -108,7 +109,7 @@ Something goes awry when reading or writing an individual record, but other reco
 
 When an individual record cannot be read or transformed due to unexpected content.
 
-##### Examples
+#### Examples
 * a record has a field containing an unknown country code.
 * messages have been processed out of order, and a record has been deleted.
 

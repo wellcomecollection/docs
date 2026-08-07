@@ -1,8 +1,9 @@
 # RFC 047: Changing the structure of the Catalogue API index
 
+## Purpose
 This RFC proposes a change to the structure of the Catalogue API index, which is used to store and retrieve documents for the Catalogue API.
 
-**Last modified:** 2022-04-29T10:23:20+01:00
+**Last modified:** 2022-04-29T09:23:20+00:00
 
 ## Context
 

@@ -1,5 +1,6 @@
 # RFC 045: Work relationships in Sierra, part 2
 
+## Purpose
 This RFC is a continuation of the work started in [RFC-044: Sierra Series](044-sierra-series).
 
 **Last modified:** 2022-02-21T15:06:55+00:00

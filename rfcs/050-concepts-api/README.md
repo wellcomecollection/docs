@@ -1,9 +1,10 @@
 # RFC 050: Design considerations for the concepts API
 
+## Purpose
 This RFC collects some initial thinking on how we might represent concepts in the catalogue API.
 It's a starting point for discussions; not a final design.
 
-**Last modified:** 2022-05-31T10:06:03+01:00
+**Last modified:** 2022-05-31T09:06:03+00:00
 
 ## Goals
 

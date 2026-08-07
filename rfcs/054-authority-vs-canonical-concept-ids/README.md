@@ -1,5 +1,6 @@
 # RFC 054: Authoritative ids with multiple Canonical ids.
 
+## Purpose
 This RFC proposes a change to the way Concepts are stored in the catalogue-concepts index
 
 **Last modified:** 2023-02-10T11:51:49+00:00

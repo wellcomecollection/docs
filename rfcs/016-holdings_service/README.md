@@ -1,5 +1,6 @@
 # RFC 016: Holdings service
 
+## Purpose
 This RFC proposes a now deprecated approach to building a holdings service, which has been superseded by the [020-locations_requesting](../020-locations-requesting/README.md) RFC.
 
 **Last modified:** 2020-03-03T16:46:23+00:00

@@ -1,8 +1,9 @@
 # RFC 042: Requesting model
 
+## Purpose
 This RFC describes how we will model the data for physical items in the catalogue API, so that users can find out how to access them.
 
-**Last modified:** 2021-05-20T12:29:35+01:00
+**Last modified:** 2021-05-20T11:29:35+00:00
 
 ## Context
 

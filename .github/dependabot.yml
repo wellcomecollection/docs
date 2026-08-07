@@ -1,0 +1,11 @@
+version: 2
+updates:
+  - package-ecosystem: "pip"
+    directory: "/"
+    # Intentionally skip RFC experiments/docs to avoid dependency update PRs there.
+    exclude-paths:
+      - "rfcs/**"
+    schedule:
+      interval: "weekly"
+    ignore:
+      - dependency-name: "*"

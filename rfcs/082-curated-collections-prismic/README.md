@@ -2,7 +2,10 @@
 
 _“Theme” and “Concept” are used interchangeably in this document._
 
+## Purpose
 As we increasingly connect Collections to Content (Prismic), we are having a lot of conversations that can get muddled together. We thought it best to separate concerns. There are a few things to address, from the selection process to the actual solution implementation, and we wanted to start documenting them.
+
+**Last modified:** 2026-01-26T16:41:00+00:00
 
 I welcome all input, and we’ll eventually be clear about what issues need fixing and how best to address them.
 

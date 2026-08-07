@@ -1,8 +1,9 @@
 # RFC 043: Removing deleted records from (re)indexes
 
+## Purpose
 This RFC proposes a change to the way we handle deleted source records in the Catalogue API index.
 
-**Last modified:** 2021-07-26T14:26:24+01:00
+**Last modified:** 2021-07-26T13:26:24+00:00
 
 ## Context
 

@@ -1,5 +1,6 @@
 # RFC 009: AWS account setup
 
+## Purpose
 This RFC proposes a solution for breaking up the monolithic "wellcomedigitalplatform" AWS account into smaller, more manageable accounts, improving security and access control.
 
 **Last modified:** 2019-01-09T13:53:56+00:00

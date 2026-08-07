@@ -1,8 +1,9 @@
-# RFC 026: Relation Embedder
+# RFC 027: Relation Embedder
 
+## Purpose
 This RFC describes a proposal for how to denormalise relations between works in the catalogue pipeline, to improve the API response times and allow for richer queries.
 
-**Last modified:** 2020-09-07T10:16:09+01:00
+**Last modified:** 2020-09-07T09:16:09+00:00
 
 ## Background
 

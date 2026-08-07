@@ -1,5 +1,6 @@
 # RFC 069: Catalogue Graph Ingestor
 
+## Purpose
 Following on from the [Catalogue Graph pipeline](https://github.com/wellcomecollection/docs/tree/main/rfcs/066-graph_pipeline), 
 this RFC outlines the requirements for the Catalogue Graph Ingestor to replace 
 the existing Concepts Pipeline. 
