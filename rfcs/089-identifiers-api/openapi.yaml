@@ -1,0 +1,346 @@
+openapi: 3.0.3
+
+# ---------------------------------------------------------------------------
+# Identifiers API — OpenAPI fragment
+#
+# Read-only lookup of canonical <-> source identifier mappings, served from the
+# Aurora ID Registry (the same store the ID Minter writes to; see RFC 083).
+#
+# Scope of this fragment:
+#   - The two identifier lookup operations and their schemas.
+#   - The apiKey security scheme + key source, so API Gateway enforces keys.
+#   - aws_proxy integration stubs pointing at the Lambda.
+#
+# NOT in this fragment (deliberately — see design doc, "Metering"):
+#   - Usage plans, quota/throttle limits, API keys, and plan->stage bindings.
+#     These are separate API Gateway resources configured in Terraform. Importing
+#     or re-importing this definition will not touch them.
+# ---------------------------------------------------------------------------
+
+info:
+  title: Wellcome Collection Identifiers API
+  version: "1.0.0"
+  description: >-
+    Resolves public catalogue (canonical) identifiers to their source
+    identifiers and back. Mappings are one-to-many: a single canonical id can
+    carry several source identifiers (an original plus "predecessor" aliases
+    inherited during source-system migration).
+
+servers:
+  - url: https://api.wellcomecollection.org
+    description: Production edge
+
+# API Gateway reads the key from the x-api-key request header.
+x-amazon-apigateway-api-key-source: HEADER
+
+# Applied to every operation; API Gateway maps this to apiKeyRequired: true.
+security:
+  - ApiKeyAuth: []
+
+paths:
+  /v1/identifiers/{canonicalId}:
+    get:
+      operationId: getByCanonicalId
+      summary: Resolve a canonical id to its source identifiers
+      description: >-
+        Returns the full set of source identifiers that share this canonical id,
+        ordered by createdAt ascending so the original is always first. The set
+        can grow during a source-system migration as aliases are inherited, so
+        responses are cached with a bounded TTL and revalidated via ETag.
+      parameters:
+        - $ref: '#/components/parameters/CanonicalId'
+      responses:
+        '200':
+          description: Canonical id is assigned and has at least one mapping.
+          headers:
+            Cache-Control:
+              $ref: '#/components/headers/CacheControl'
+            ETag:
+              $ref: '#/components/headers/ETag'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/IdentifierSet'
+        '304':
+          $ref: '#/components/responses/NotModified'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '404':
+          $ref: '#/components/responses/NotFound'
+      x-amazon-apigateway-integration:
+        type: aws_proxy
+        httpMethod: POST
+        # Lambda invocation is always POST regardless of the client method.
+        uri: ${identifiers_lambda_invoke_arn}
+        passthroughBehavior: when_no_match
+        timeoutInMillis: 29000
+
+  /v1/identifiers/by-source/{sourceSystem}/{value}:
+    get:
+      operationId: getBySourceIdentifier
+      summary: Resolve a source identifier to its canonical id
+      description: >-
+        Point lookup on the (OntologyType, SourceSystem, SourceId) primary key.
+        By default returns only the canonical id. With include=siblings it also
+        returns every source identifier sharing that canonical id (identical
+        element shape to the forward lookup). The queried tuple is included in
+        that set.
+
+
+        Freshness differs by variant: the bare lookup is immutable once minted
+        and cached hard; include=siblings carries the mutable canonical->sources
+        set and inherits the bounded-TTL + ETag treatment.
+      parameters:
+        - $ref: '#/components/parameters/SourceSystem'
+        - $ref: '#/components/parameters/SourceValue'
+        - $ref: '#/components/parameters/TypeParam'
+        - $ref: '#/components/parameters/IncludeParam'
+      responses:
+        '200':
+          description: A mapping exists for the supplied tuple.
+          headers:
+            Cache-Control:
+              $ref: '#/components/headers/CacheControl'
+            ETag:
+              $ref: '#/components/headers/ETag'
+          content:
+            application/json:
+              schema:
+                oneOf:
+                  - $ref: '#/components/schemas/CanonicalIdRef'
+                  - $ref: '#/components/schemas/IdentifierSet'
+                # Default response is CanonicalIdRef.
+                # include=siblings returns IdentifierSet.
+              examples:
+                default:
+                  summary: Default (no include)
+                  value:
+                    canonicalId: a2345bcd
+                siblings:
+                  summary: include=siblings
+                  value:
+                    canonicalId: a2345bcd
+                    type: Work
+                    sourceIdentifiers:
+                      - type: Work
+                        sourceSystem: sierra-system-number
+                        value: b1161044x
+                        isAlias: false
+                        createdAt: "2019-03-04T10:14:22Z"
+                      - type: Work
+                        sourceSystem: axiell-collections-id
+                        value: "12345"
+                        isAlias: true
+                        createdAt: "2026-02-10T12:00:00Z"
+        '304':
+          $ref: '#/components/responses/NotModified'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '404':
+          $ref: '#/components/responses/NotFound'
+      x-amazon-apigateway-integration:
+        type: aws_proxy
+        httpMethod: POST
+        uri: ${identifiers_lambda_invoke_arn}
+        passthroughBehavior: when_no_match
+        timeoutInMillis: 29000
+
+components:
+
+  securitySchemes:
+    ApiKeyAuth:
+      type: apiKey
+      in: header
+      name: x-api-key
+
+  parameters:
+    CanonicalId:
+      name: canonicalId
+      in: path
+      required: true
+      description: >-
+        8-char public catalogue id. Alphabet a-z and 2-9, excluding o/i/l/1,
+        first character a letter. Malformed ids are rejected at the gateway.
+      schema:
+        type: string
+        pattern: '^[a-hjkmnp-z][a-hjkmnp-z2-9]{7}$'
+      example: a2345bcd
+
+    SourceSystem:
+      name: sourceSystem
+      in: path
+      required: true
+      description: Source system identifier type.
+      schema:
+        type: string
+        # Open set; new systems are added over time. Not enum-constrained here
+        # so the gateway does not 400 on a system it simply hasn't been told
+        # about yet — a genuinely unknown system resolves to 404 instead.
+        example: sierra-system-number
+
+    SourceValue:
+      name: value
+      in: path
+      required: true
+      description: >-
+        The identifier value within the source system. Must be a single,
+        URL-encoded path segment. Source-id formats are heterogeneous, so this
+        is not pattern-validated; unknown values resolve to 404 rather than 400.
+      schema:
+        type: string
+      example: b1161044x
+
+    TypeParam:
+      name: type
+      in: query
+      required: false
+      description: Ontology type. Part of the lookup key; defaults to Work.
+      schema:
+        type: string
+        # Item is required by the requesting use case (RFC 088): translation is
+        # at the catalogue-item level (canonical item id <-> FOLIO item UUID).
+        enum: [Work, Image, Item]
+        default: Work
+
+    IncludeParam:
+      name: include
+      in: query
+      required: false
+      description: >-
+        Set to "siblings" to also return all source identifiers sharing the
+        resolved canonical id. Omit for the canonical id alone.
+      schema:
+        type: string
+        enum: [siblings]
+
+  headers:
+    CacheControl:
+      description: >-
+        Bounded TTL during migration (alias set may grow); relaxed to a long TTL
+        after source-system switchover. The bare reverse lookup is immutable and
+        may carry a long TTL regardless.
+      schema:
+        type: string
+      example: "public, max-age=300"
+    ETag:
+      description: >-
+        Weak validator derived from (row_count, max(createdAt)). Changes exactly
+        when an alias is added, enabling cheap 304 revalidation.
+      schema:
+        type: string
+      example: 'W/"2-2026-02-10T12:00:00Z"'
+
+  responses:
+    NotModified:
+      description: Resource unchanged since the supplied ETag (conditional GET).
+    BadRequest:
+      description: >-
+        Request failed gateway-level validation (e.g. canonicalId format, or an
+        unsupported type enum value).
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+          example:
+            error: badRequest
+            message: canonicalId does not match the required format
+    NotFound:
+      description: >-
+        No mapping exists. Covers an unknown id, an unknown source tuple, and a
+        canonical id that is pre-generated but not yet assigned — all opaque to
+        the consumer as "no public identifier".
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+          example:
+            error: notFound
+            message: no mapping found
+
+  schemas:
+
+    SourceIdentifier:
+      type: object
+      description: A single source identifier mapped to a canonical id.
+      required: [type, sourceSystem, value, isAlias, createdAt]
+      properties:
+        type:
+          type: string
+          description: >-
+            Ontology type for this row. Kept per-row because a canonical id can
+            carry rows of differing types (cross-type predecessors are allowed).
+          enum: [Work, Image, Item]
+          example: Work
+        sourceSystem:
+          type: string
+          example: sierra-system-number
+        value:
+          type: string
+          example: b1161044x
+        isAlias:
+          type: boolean
+          description: >-
+            False for the original (earliest createdAt), true for inherited
+            predecessor aliases.
+          example: false
+        createdAt:
+          type: string
+          format: date-time
+          example: "2019-03-04T10:14:22Z"
+
+    IdentifierSet:
+      type: object
+      description: A canonical id and the full set of source identifiers sharing it.
+      required: [canonicalId, type, sourceIdentifiers]
+      properties:
+        canonicalId:
+          type: string
+          pattern: '^[a-hjkmnp-z][a-hjkmnp-z2-9]{7}$'
+          example: a2345bcd
+        type:
+          type: string
+          description: >-
+            Ontology type of the canonical id, taken from the original row (the
+            single isAlias=false row), so consumers need not scan the set. A
+            convenience copy of that row's per-row type; with cross-type
+            predecessors it reflects the original and may differ from a later
+            alias.
+          enum: [Work, Image, Item]
+          example: Work
+        sourceIdentifiers:
+          type: array
+          description: Ordered by createdAt ascending; original first.
+          minItems: 1
+          items:
+            $ref: '#/components/schemas/SourceIdentifier'
+
+    CanonicalIdRef:
+      type: object
+      description: Bare canonical id reference (default reverse-lookup response).
+      # PROTOTYPE CLARIFICATION (not in the original .context contract): the
+      # reverse 200 is `oneOf: [CanonicalIdRef, IdentifierSet]`. Without this
+      # `additionalProperties: false`, an IdentifierSet body (canonicalId +
+      # sourceIdentifiers) also validates against CanonicalIdRef, so `oneOf`
+      # matches BOTH and fails machine validation of the include=siblings
+      # response. Pinning CanonicalIdRef to exactly {canonicalId} disambiguates
+      # the two arms. Flagged in the README as feedback for the spec authors.
+      additionalProperties: false
+      required: [canonicalId]
+      properties:
+        canonicalId:
+          type: string
+          pattern: '^[a-hjkmnp-z][a-hjkmnp-z2-9]{7}$'
+          example: a2345bcd
+
+    Error:
+      type: object
+      required: [error, message]
+      properties:
+        error:
+          type: string
+          description: Stable machine-readable code.
+          example: notFound
+        message:
+          type: string
+          description: Human-readable detail.
+          example: no mapping found
