@@ -4,7 +4,7 @@ Wellcome's published IIIF resources use a combination of system identifiers and 
 
 > **Status note.** An earlier version of this RFC proposed that the catalogue Work ID become the canonical URI for IIIF Manifests and Collections, with b-number and CALM forms redirecting to it. The review discussion on [RFC 091 (PR #159)](https://github.com/wellcomecollection/docs/pull/159) reversed that position: **the preservation identifier stays the canonical IIIF URI, for old and new content alike**, and the Work ID only ever appears as a redirect source. Much of the analysis in the earlier version of this document, in particular the analysis of Canvas IDs and annotation targets, turned out to be the argument *for* that reversal, so it is retained here as the rationale. This version records the agreed direction; amending this RFC is a named deliverable of RFC 091.
 
-**Last modified:** 2026-08-06T12:00+00:00
+**Last modified:** 2026-08-07T14:11:33+00:00
 
 **Related RFCs:**
 
@@ -12,6 +12,10 @@ Wellcome's published IIIF resources use a combination of system identifiers and 
 - [RFC 089: Identifiers API](../089-identifiers-api/README.md) (merged; [amendment in PR #163](https://github.com/wellcomecollection/docs/pull/163)): the read-only identifier translation service this RFC's earlier version sketched as a "Wellcome identity service". It now exists, with a concrete contract.
 - [RFC 083: Stable identifiers](../083-stable_identifiers/README.md) (merged): the predecessor mechanism that keeps an old source identifier resolving to the same canonical Work ID across the migration.
 - [RFC 081: Identifiers in iiif-builder](../081-identifiers-in-iiif-builder/README.md) (merged): the DDS's own identity service, which owns digital-object and sub-package identity. Implemented (with a database) in [iiif-builder PR #286](https://github.com/wellcomecollection/iiif-builder/pull/286).
+
+## Purpose
+
+To record the agreed approach to IIIF resource identity across the LMS migration: preservation identifiers remain the canonical URIs for IIIF Manifests and Collections, for old and new content alike, with Work IDs acting only as redirect sources. The RFC retains the analysis that led to this decision — chiefly the behaviour of Canvas IDs and annotation targets — and sets out the consequences for the DDS: the redirect contract, the constraints on the form of new preservation identifiers, sub-package identity, and the persistence of Canvas identity.
 
 ## Context
 
