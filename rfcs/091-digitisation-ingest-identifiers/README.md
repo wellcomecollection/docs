@@ -2,11 +2,11 @@
 
 ## Purpose
 
-Wellcome Collection is migrating its library management system from Sierra to Folio, and its archive management system from CALM to Axiell Collections. The Sierra b-number is embedded in storage locations, METS records, IIIF manifest URIs, and the join key that merges digitised content onto the public catalogue work. This RFC names that identifier role the **preservation identifier**, records the decision that preservation identifiers remain the canonical identifiers for digital objects (nothing is minted at ingest, and IIIF Manifest URIs do not move to the catalogue Work id), and sets out cross-migration and post-migration ingest paths covering both digitised and born-digital content.
+Wellcome Collection is migrating its library management system from Sierra to Folio, and its archive management system from CALM to Axiell Collections. The Sierra b-number is embedded in storage locations, METS records, IIIF manifest URIs, and the join key that merges digitised content onto the public catalogue work. This RFC names that identifier role the **preservation identifier**, records the decision that preservation identifiers remain the canonical identifiers for digital objects (nothing is minted at ingest, and IIIF Manifest URIs do not move to the catalogue Work id), and sets out cross-migration and post-migration ingest paths covering both digitised and born-digital content. For items ingested after the migration the proposed preservation identifier is the Folio instance HRID, e.g. `in00012345`.
 
 An earlier draft of this RFC proposed minting catalogue-style identifiers at ingest through a secured extension to the Identifiers API. The review discussion on this RFC's pull request reversed that proposal; this version records the agreed direction and the reasoning. See [Alternatives considered](#alternatives-considered) for the rejected designs.
 
-**Last modified:** 2026-08-05T14:00:00+00:00
+**Last modified:** 2026-08-07T12:00:00+00:00
 
 **Related RFCs:**
 
@@ -264,22 +264,22 @@ Nothing about that minting changes. The pipeline id_minter mints the METS work's
 
 ### The form of the new preservation identifier
 
-For wholly new items something has to be assigned, and its form is the main remaining design decision. These strings become public, permanent, cited URLs, S3 keys, METS filenames, JP2 filenames and DLCS references, and they can never be renamed or reused. The review discussion (and the DDS-side review of it) produced a concrete set of requirements:
+For wholly new items something has to be assigned. These strings become public, permanent, cited URLs, S3 keys, METS filenames, JP2 filenames and DLCS references, and they can never be renamed or reused.
 
-- **Unique forever and never reused**, assignable at ingest without a service round-trip.
-- **Frozen at ingest.** A future migration must not touch it; the predecessor mechanism (RFC 083) is how a future system inherits it, exactly as Folio is inheriting b-numbers now.
-- **Path-element safe as-is**, because it is stamped into S3 keys, METS filenames, IIIF URIs and DLCS string references on day one, upstream of any service.
-- **Case-stable, defined lowercase from birth.** The one accepted risk in the DDS identity service today is CALM ref case-collision on a lowercased key; a new scheme should never inherit that problem.
-- **Visibly distinct by shape** from the catalogue Work id scheme (8 chars of `[2-9a-z]` minus `o,i,l,1`), from the b-number regex, and from CALM refs including their underscore-written forms. Distinctness is what lets the METS transformer branch correctly, lets the DDS classify identifiers cheaply, and preserves the debugging property that a storage id and a work id can never be confused.
-- **A defined multi-volume suffix convention.** Goobi stamps `<id>_0002`-style suffixes into METS and JP2 names for multi-volume items. `<P>_0002` must be unambiguously splittable into package id and volume suffix, and must not collide with CALM refs written with underscores (`PPCRI_A_1`). This cannot be left implicit.
+**The proposal is the Folio instance HRID**, e.g. `in00012345`, with the Axiell ref playing the same role for archival digitisation as it already does for born-digital. The review discussion has supported this form and the rest of this RFC is written on that assumption. What remains is confirmation with digital production and the pipeline team, and agreeing the multi-volume suffix convention below.
 
-Candidates, in current order of preference:
+The requirements come from the review discussion and the DDS-side review of it. The HRID meets all of them:
 
-1. **The Folio instance HRID** (e.g. `in00012345`). Human-legible, provenance-visible, lowercase, path-safe, and distinct by shape from Work ids (wrong length and alphabet), b-numbers and CALM refs. It has a further structural benefit: the storage `externalIdentifier` and the METS record identifier become the same string again, restoring the property both have today with the b-number and collapsing open question 2. The apparent objection, that embedding an LMS id repeats the b-number problem, does not hold under this design. The b-number pain was identity coupling to a live system; a preservation identifier frozen at ingest is inherited by the next system via predecessors rather than replaced, exactly as b-numbers are being handled now. The id is a permanent name whose origin happens to be legible, not a live foreign key.
-2. **A dedicated scheme** (e.g. a short prefix plus a random lowercase string). Maximally decoupled and easy to make shape-distinct, but opaque to the digital production staff who handle packages between digitisation and preservation, and it reintroduces the divergence between `externalIdentifier` and record identifier.
-3. **A UUID.** Trivially unique and safe, but hostile in filenames and URLs, opaque, and also divergent.
+- **Unique forever and never reused.** Folio assigns the HRID when the instance is created, so it is already present in the record the ingest app reads and costs no extra service call.
+- **Frozen at ingest.** A future migration must not touch it; the predecessor mechanism (RFC 083) is how a future system inherits it, exactly as Folio is inheriting b-numbers now. The apparent objection, that embedding an LMS id repeats the b-number problem, does not hold under this design: the b-number pain was identity coupling to a live system, whereas an identifier frozen at ingest is inherited rather than replaced. The id is a permanent name whose origin happens to be legible, not a live foreign key.
+- **Path-element safe and case-stable, lowercase from birth.** It is stamped into S3 keys, METS filenames, IIIF URIs and DLCS string references on day one, upstream of any service. `in00012345` is lowercase alphanumeric with no separators. The one accepted risk in the DDS identity service today is CALM ref case-collision on a lowercased key, and a new scheme should not inherit it.
+- **Distinguishable from the b-number regex and from CALM refs.** The METS transformer picks between `sierra-system-number`, `folio-instance` and `calm-ref-no` by inspecting the record identifier, with no service call available in the transform path, so this one is a hard requirement rather than a convenience. The `in` prefix and digit tail satisfy it.
+- **Distinct from the catalogue Work id scheme** (8 chars of `[2-9a-z]` minus `o,i,l,1`). The HRID is the wrong length and alphabet, so it satisfies this too. How much weight this deserves is under discussion: it lets the DDS classify identifiers cheaply and preserves the debugging property that a storage id and a work id can never be confused, but the DDS could instead resolve by lookup and persist the answer. Choosing the HRID makes the question moot either way.
+- **A defined multi-volume suffix convention.** Goobi stamps `<id>_0002`-style suffixes into METS and JP2 names for multi-volume items. `in00012345_0002` splits unambiguously into package id and volume suffix and does not collide with CALM refs written with underscores (`PPCRI_A_1`), but the convention still has to be written down, because Goobi stamps it into filenames on day one and nothing downstream can correct it afterwards.
 
-The recommendation is the Folio HRID, with the Axiell ref playing the same role for archival digitisation as it already does for born-digital. This is open question 1 until confirmed.
+The HRID has a further structural benefit. The storage `externalIdentifier` and the METS record identifier become the same string again, restoring the property both have today with the b-number and collapsing open question 2.
+
+Two alternatives were considered and are not preferred. **A dedicated scheme** (a short prefix plus a random lowercase string) is maximally decoupled and easy to make shape-distinct, but it is opaque to the digital production staff who handle packages between digitisation and preservation, and it reintroduces the divergence between `externalIdentifier` and record identifier. **A UUID** is trivially unique and safe, but hostile in filenames and URLs, opaque, and also divergent.
 
 ### DDS and DLCS changes
 
@@ -326,7 +326,7 @@ Concrete identifier strings at every layer, for the four permutations. Work ids 
 | Layer | Identifier |
 | --- | --- |
 | Folio record | `in00012345`, no predecessor |
-| Preservation identifier | `in00012345` (recommended scheme; substitute if open question 1 lands elsewhere) |
+| Preservation identifier | `in00012345`, the Folio instance HRID |
 | Storage | `digitised/in00012345/v1` |
 | METS file / images | `in00012345.xml`, `in00012345_0001.jp2` |
 | METS record identifier | `in00012345` |
@@ -379,7 +379,7 @@ The first is storage versioning. The `externalIdentifier` is effectively immutab
 
 The second, and more serious because it is silent, is the merge join key. If the package identifier moved off the b-number, `MetsMergeCandidate` would emit a non-matching candidate, the id_minter would mint a *different* canonical id, the matcher would leave the two works in separate graph components, and the digitised content would never reach the public work. The METS work stays invisible (`MetsWorksAreNotVisible`), so nothing is surfaced and no error is raised. The digitisation would be missing from the public record with no error and no obvious signal.
 
-Neither mechanism applies to wholly new items, which have no history to reset and whose merge candidate is driven by the Folio id in any case. That is why the Folio HRID is a live candidate for the *new-item* scheme in [The form of the new preservation identifier](#the-form-of-the-new-preservation-identifier) while remaining rejected as a replacement identifier for existing ones.
+Neither mechanism applies to wholly new items, which have no history to reset and whose merge candidate is driven by the Folio id in any case. That is why the Folio HRID is proposed for the *new-item* scheme in [The form of the new preservation identifier](#the-form-of-the-new-preservation-identifier) while remaining rejected as a replacement identifier for existing ones.
 
 ## Impact
 
@@ -397,7 +397,7 @@ After the catalogue pipeline migrates to Folio, **both** paths need the Folio-ta
 
 The **post-migration path additionally** depends on:
 
-1. the preservation identifier scheme being agreed (open question 1), since Goobi stamps it into filenames on day one,
+1. the Folio HRID being confirmed as the preservation identifier, and its suffix convention defined (open question 1), since Goobi stamps both into filenames on day one,
 2. the `folio-instance` branch in the METS transformer (`MetsMergeCandidate`, plus the `mets/<folio-id>` own-identity in `MetsData`), and
 3. the DDS recognising the new identifier form (shape-distinct classification plus the authoritative-source lookups in [DDS and DLCS changes](#dds-and-dlcs-changes)), coordinated with Digirati. This is a bounded DDS change, not the full RFC 081 programme.
 
@@ -405,13 +405,13 @@ Cross-migration needs none of these: it reuses the b-number, keeps the transform
 
 ### Open questions
 
-1. **The form of the new preservation identifier.** The requirements are set out in [The form of the new preservation identifier](#the-form-of-the-new-preservation-identifier); the recommendation is the Folio HRID. The decision includes the multi-volume suffix convention, which must be defined alongside the form because Goobi stamps it into METS and JP2 filenames upstream of any service.
+1. **Confirming the Folio HRID, and the multi-volume suffix convention.** The form itself is proposed rather than open (see [The form of the new preservation identifier](#the-form-of-the-new-preservation-identifier)); what is outstanding is sign-off from digital production and the pipeline team, and writing down the suffix convention, which cannot be left implicit because Goobi stamps it into METS and JP2 filenames upstream of any service.
 2. **Storage identifier and record identifier divergence.** Post-migration the storage `externalIdentifier` (P) need not be the same string as the METS record identifier (`folio-id`). Today both are the b-number, and whether iiif-builder and DLCS rely on the two being equal is unconfirmed: iiif-builder loads the package by its storage handle but derives Canvas and DLCS asset identifiers from file names recorded in the METS. Choosing the Folio HRID as P keeps the two equal and makes this question moot; any other scheme must answer it before the post-migration path ships.
 3. **Axiell ref stability across the CALM migration.** The born-digital story above assumes archival refs survive the move to Axiell Collections identically, in which case born-digital needs no change, ever. If refs can be restructured in Axiell, born-digital needs the same predecessor mechanism as b-numbers, and that mechanism is currently only specified for Sierra to Folio. Related: whether the METS merge candidate for Axiell-catalogued material stays `calm-ref-no` or becomes an Axiell identifier type, which touches the same transformer fallback.
 
 ## Next steps
 
-1. **Agree the preservation identifier scheme** (open question 1), including the multi-volume suffix convention, with digital production, the pipeline team and Digirati, since all three consume its shape.
+1. **Confirm the Folio HRID and agree its multi-volume suffix convention** (open question 1) with digital production, the pipeline team and Digirati, since all three consume its shape.
 2. **Build the digital production ingest app** that reads Folio (and Axiell) metadata, finds predecessors through the Identifiers API, and branches on the predecessor signal.
 3. **Cross-migration first.** It is the lower-risk path: reuse the b-number, leave the METS transformer untouched, and lean on the RFC 083 predecessor relationship to keep canonical ids stable. It needs only the Folio-target merger rules (step 5).
 4. **Add the `folio-instance` transformer branch** (`MetsMergeCandidate`, `MetsData`), shape-gated so b-numbers and refs are unaffected.
