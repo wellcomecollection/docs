@@ -11,7 +11,7 @@ Sierra/CALM → FOLIO/Axiell migration. It sets out the contract, the AWS archit
 authentication and cost model, the caching strategy, and what a working prototype has already
 established.
 
-**Last modified:** 2026-06-18T16:00:00+00:00
+**Last modified:** 2026-08-05T15:00:00+00:00
 
 **Related RFCs:**
 
@@ -20,9 +20,15 @@ established.
   the mapping one-to-many. This API is a read-only projection over that registry; all writes belong
   to the ID Minter described there.
 - [RFC 085: IIIF identities](https://github.com/wellcomecollection/docs/pull/143) (open PR): the
-  DDS / IIIF consumer. It wants the canonical Work id to be the IIIF Manifest/Collection URI and to
-  redirect old b-number / CALM forms to it, which maps onto this API's reverse lookup plus sibling
-  set.
+  DDS / IIIF consumer. As drafted it proposed the canonical Work id as the IIIF Manifest/Collection
+  URI; the RFC 091 decision inverts that, so the preservation identifier stays canonical and the
+  Work id form redirects to it. The DDS still uses this API's reverse lookup plus sibling set to
+  resolve and classify source identifier forms.
+- [RFC 091: Preservation identifiers across the LMS migration](https://github.com/wellcomecollection/docs/pull/159)
+  (open PR): names the preservation identifier, records that it stays the canonical digital-object
+  identifier with nothing minted at ingest, and adds the digitisation ingest app as a consumer of
+  this API's reverse lookup (finding b-number predecessors). An earlier draft proposed extending
+  this API with a secured mint endpoint; that extension is withdrawn and this API stays read-only.
 - [RFC 088: Migrating identity, requesting and items APIs from Sierra to FOLIO](https://github.com/wellcomecollection/docs/pull/153)
   (open PR): the requesting consumer. Its open question 1 (identifier translation for requesting)
   names "a service" as one candidate access mechanism; this API is that candidate.
@@ -65,31 +71,31 @@ inherited aliases. This shapes much of the contract.
 
 ### The canonical-first principle
 
-Canonical identifiers are the currency everywhere public. Source
-identifiers appear only at the two unavoidable edges: **ingest** (the catalogue pipeline, which
-reads source records) and the **FOLIO boundary** (holds are placed on FOLIO item UUIDs). Everything
-between speaks canonical, for both works and items. The problem this API solves is that the two
-internal consumers at those edges each need to round-trip between a canonical id and the source ids
-the underlying systems use. Without a shared service, each consumer re-derives the mapping or
-queries the catalogue by source id, which the canonical-first principle is meant to avoid. This API
-provides that translation in one place at those edges.
+Canonical identifiers are the currency of the public catalogue. Source
+identifiers appear only at the unavoidable edges: **ingest** (the catalogue pipeline, which reads
+source records, and the digitisation ingest app of RFC 091) and the **FOLIO boundary** (holds are
+placed on FOLIO item UUIDs). Everything between speaks canonical, for both works and items. The
+problem this API solves is that the internal consumers at those edges each need to round-trip
+between a canonical id and the source ids the underlying systems use. Without a shared service,
+each consumer re-derives the mapping or queries the catalogue by source id, which the
+canonical-first principle is meant to avoid. This API provides that translation in one place at
+those edges.
 
-The principle covers catalogue-level entities (works, items). It does **not** extend to sub-work
-IIIF structure (canvases, manifestations, files), which RFC 085 keeps at the Work-id level and
-filename/digest-derived below that.
+The principle covers catalogue-level entities (works, items) and has a deliberate boundary:
+**digital objects speak preservation identifiers**. Per
+[RFC 091](https://github.com/wellcomecollection/docs/pull/159), the identifier Goobi, Archivematica
+and the storage service share for a digital object (a b-number, a CALM ref, or a newly assigned id)
+stays the canonical IIIF Manifest URI, with the Work id form redirecting to it. Preservation
+identifiers are a public, permanent identifier space alongside canonical and source ids, not an
+exception to be migrated away. Sub-work IIIF structure (canvases, manifestations, files) is
+likewise preservation-identifier- and filename-derived, and stays out of this API's scope.
 
-### The two consumers
+### The consumers
 
-Both are internal server-side services, not anonymous public browsers, and
-both exercise *both* lookup directions, which is what justifies keeping forward and reverse as
-distinct operations:
+All are internal server-side services, not anonymous public browsers, and between them they
+exercise *both* lookup directions, which is what justifies keeping forward and reverse as distinct
+operations:
 
-- **IIIF / the DDS ([RFC 085](https://github.com/wellcomecollection/docs/pull/143)).** The DDS wants
-  the Work id to be the canonical IIIF Manifest/Collection URI (e.g. `/presentation/zjytxny8` rather
-  than `/presentation/b18035978`) and to 301-redirect old b-number / CALM forms to it. RFC 085
-  describes a service that, given a string identity, returns all known current and previous
-  identifiers matching it: the reverse lookup (source → canonical) plus the sibling set
-  (canonical → all sources).
 - **Requesting ([RFC 088](https://github.com/wellcomecollection/docs/pull/153), open question 1).**
   The v2 requesting routes translate the canonical catalogue item id ↔ the FOLIO item UUID in both
   directions: `POST …/item-requests` forward-translates the canonical `itemId` to a FOLIO item UUID
@@ -98,6 +104,22 @@ distinct operations:
   they come from the catalogue API queried in canonical. RFC 088 lists the access mechanism for the
   translation as open (direct read, a service, or a sync); this API is the proposed *service*
   answer.
+- **The digitisation ingest app ([RFC 091](https://github.com/wellcomecollection/docs/pull/159)).**
+  At the start of an ingest the app reverse-looks-up `folio-instance/<folio-id>` with siblings to
+  find a `sierra-system-number` predecessor. A sibling found means the old b-number is reused as
+  the preservation identifier (cross-migration); none found means a new one is assigned
+  (post-migration). The registry is the system of record for predecessor relationships, so this
+  lookup is the authoritative signal. These fetches are mostly unique ids, which bears on the
+  caching question below.
+- **IIIF / the DDS ([RFC 085](https://github.com/wellcomecollection/docs/pull/143)), in a reduced
+  role.** An earlier framing had the DDS as a primary consumer, resolving incoming b-number and
+  CALM forms to the Work id that would become the canonical manifest URI. Under the RFC 091
+  decision that flip does not happen, and the binding the DDS needs at request time (Work id to
+  preservation identifier) is merge-derived, so it lives in the catalogue API and the DDS's own
+  records, not in this registry. What remains for this API is source-identifier resolution and
+  classification: given an identifier string, return its canonical id and labelled siblings, which
+  lets the DDS shrink shape-based inference to shape-based candidate generation. The contract is
+  unchanged by the redirect direction; the reverse lookup plus sibling set serves it.
 
 ---
 
@@ -207,7 +229,10 @@ graph LR
 The service is a read-only projection over the Aurora ID Registry, and all writes belong to the
 ID Minter. This API never mints, never invalidates on write, and its only freshness concern is alias
 growth during the migration window. In the prototype the read-only contract is enforced in the
-Aurora backend by a guard that refuses any non-`SELECT` statement.
+Aurora backend by a guard that refuses any non-`SELECT` statement. The read-only stance is settled
+rather than provisional: an earlier draft of RFC 091 proposed a secured resolve-or-mint extension
+for digitisation ingest, and its withdrawal (nothing is minted at ingest) removes the only write
+path ever proposed for this API.
 
 ---
 
@@ -388,7 +413,14 @@ still have an unsettled integration point.
    needing a multiple-match rule. The related specific-sibling include
    (`?include=sierra-system-number`), a more cacheable projection of the reverse set in the immutable
    new-to-old direction that returns a filtered set (an absent sibling still returning canonical with
-   a `200`, not a `404`), is deferred on the same basis.
+   a `200`, not a `404`), is deferred on the same basis. Post-merge review reinforced the decision
+   from the consumer side: normalisation of variant forms (checksum-completing a seven-digit
+   b-number) has to stay in the DDS either way, because the registry only holds the forms the
+   Minter minted from; and a bare-value lookup could enumerate ambiguous matches but not rank them,
+   since every digitised b-number sits under both `sierra-system-number` and `mets` with different
+   canonical ids, and which of those is public is merger knowledge the registry does not hold. A
+   bare form would swap format-parsing for a selection policy plus a secondary index, so the DDS
+   keeps a thin precedence rule and queries qualified.
 
 5. **Decided: `isAlias`, not an `obsolete` flag (RFC 085).** RFC 085 raised possibly tagging identifiers with
    an `obsolete` flag (source system retired), adjacent to but distinct from `isAlias` (inherited
@@ -419,7 +451,8 @@ still have an unsettled integration point.
 
 - **Writes of any kind.** All minting and all writes belong to the ID Minter
   ([RFC 083](../083-stable_identifiers/README.md)); this API is read-only and the prototype enforces
-  that with a `SELECT`-only guard.
+  that with a `SELECT`-only guard. The mint extension an earlier draft of RFC 091 proposed is
+  withdrawn; no write path is planned.
 - **`workId` / `workTitle` resolution.** Only the requesting holds-list needs them, and they come
   from the catalogue API queried in canonical, not from this API.
 - **Sub-work IIIF structure** (canvases, manifestations, files): out of the canonical-first scope,
@@ -434,7 +467,8 @@ still have an unsettled integration point.
 ## Next steps
 
 1. **Ratify the service answer with RFC 088** as the access mechanism for identifier translation
-   (open question 1 there), and with RFC 085 as the identity lookup it describes.
+   (open question 1 there). RFC 091 has since adopted this API for its predecessor lookup, and the
+   DDS's use narrows to source-identifier resolution (see [The consumers](#the-consumers)).
 2. **Resolve the caching topology** (open question 1): decide the edge cache vs the stage cache,
    pick concrete TTLs for the migration and post-switchover phases, pick per-consumer throttle
    limits, and choose the cost-attribution mechanism.
