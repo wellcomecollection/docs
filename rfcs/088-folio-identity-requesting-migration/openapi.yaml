@@ -485,6 +485,54 @@ paths:
               schema:
                 $ref: '#/components/schemas/IdentityError'
 
+  /m2m/sequences/{name}/next:
+    post:
+      tags: [m2m]
+      operationId: m2mSequenceNext
+      summary: Allocate the next value from a named sequence
+      description: |
+        Mints the next value from the named sequence and returns it formatted as
+        a barcode (`prefix` + the counter zero-padded to the configured width; no
+        check digit). Backed by a DynamoDB atomic counter, so concurrent callers
+        each receive a distinct, strictly increasing value; gaps are possible and
+        acceptable. The sequence (its prefix, width and seed) must be provisioned
+        out of band first; an unprovisioned `name` returns 404. Used in-process by
+        `/m2m/enrich` to assign a new patron's library-card barcode, and exposed
+        here for standalone allocation and smoke tests. Requires an M2M token with
+        scope `enrich:read`.
+      security:
+        - ApiKey: []
+          Auth0M2MToken: [enrich:read]
+      parameters:
+        - name: name
+          in: path
+          required: true
+          schema:
+            type: string
+          description: The provisioned sequence name, e.g. `patron-barcode`.
+      responses:
+        '200':
+          description: The allocated value and its formatted barcode.
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [value, barcode]
+                properties:
+                  value:
+                    type: integer
+                    description: The raw counter value allocated.
+                  barcode:
+                    type: string
+                    description: prefix + the value zero-padded to the configured width.
+        '404':
+          description: No such provisioned sequence.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/IdentityError'
+        '500': { $ref: '#/components/responses/InternalError' }
+
   # ---------------------------------------------------------------- items
 
   /items:

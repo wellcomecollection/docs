@@ -9,7 +9,7 @@ identity API fronted by Auth0), the embedded API contract, the migration plan (a
 website toggle plus lazy patron migration, culminating in a single coordinated cutover), and the
 questions still open before cutover.
 
-**Last modified:** 2026-06-22T14:33:26+00:00
+**Last modified:** 2026-06-26T00:00:00+00:00
 
 **Related RFCs:**
 
@@ -225,6 +225,12 @@ the `app_metadata` for Auth0 to persist and surface to the app. FOLIO is the sou
 name: a name changed in FOLIO propagates to Auth0 on the next login. Enrichment failures fail closed
 (login is denied rather than letting a user through in an inconsistent state).
 
+Enrichment also mints the patron's library-card barcode. If the resolved FOLIO record has no
+barcode, `/m2m/enrich` allocates a numeric card number from the patron-barcode sequence (see [open
+question 4](#open-questions)) and writes it to the record. This is allocate-once (a migrated patron
+already carries a barcode, so it only fires for new signups) and best-effort: a sequence failure is
+logged and retried on the next login rather than blocking the current one.
+
 ```mermaid
 sequenceDiagram
   autonumber
@@ -396,6 +402,7 @@ catalogue error shape on item-requests). Each v1 operation has one of these disp
 | Route | Disposition | Notes |
 |---|---|---|
 | `POST /m2m/register`, `POST /m2m/enrich` | new-in-v2 | Called by the Auth0 actions; central to registration and lazy migration. |
+| `POST /m2m/sequences/{name}/next` | new-in-v2 | Mints the next value from a named sequence (a DynamoDB atomic counter), returned as a barcode. Used in-process by `/m2m/enrich` to assign a new patron's card number, and exposed for standalone allocation; M2M `enrich:read` scope. An unprovisioned sequence returns 404. See [open question 4](#open-questions). |
 | `GET /items` | new-in-v2 | Catalogue availability; API-key only. Overlaps the existing v2 catalogue API items endpoint; how the two run in parallel is [open question 5](#open-questions). |
 | Per-patron requestability (allowed-service-points) and hold cancellation | new-in-v2 (planned) | No v1 analogue: v1 never shipped cancel, and per-patron requestability is new. Both will be added to the `/users/{userId}` surface before cutover (cancellation as `DELETE /users/{userId}/item-requests/{requestId}`); not yet in the contract above. |
 
@@ -570,12 +577,17 @@ integration point.
    nothing. *Open:* confirm event-integration options with the LMS vendor, and decide the mechanism
    before cutover (this is GDPR-relevant).
 
-4. **Barcode and role.** New users receive the bare Auth0 id as their initial barcode (backfilled at
-   first login); migrated users keep their card number; `role` is the FOLIO patron-group name mapped
-   to the legacy vocabulary by a table the API owns (unmapped groups fall back to `Reader` with a
-   warning). *Open:* verify the 24-character barcode format against the systems that consume barcodes
-   (physical cards and scanners, OpenAthens), and confirm the patron-group-to-role assignment for the
-   currently-unmapped groups with the LMS workstream.
+4. **Barcode and role.** New users are minted a numeric, sequential card number by a barcode
+   **sequence service** (a DynamoDB atomic counter: a configurable prefix plus the counter
+   zero-padded to a fixed width, no check digit), allocated at first login by `/m2m/enrich` and
+   seeded above the maximum Sierra patron number so a minted number never collides with a migrated
+   patron's physical card. Migrated users keep their existing card number. `role` is the FOLIO
+   patron-group name mapped to the legacy vocabulary by a table the API owns (unmapped groups fall
+   back to `Reader` with a warning). Keeping the value numeric, rather than the bare Auth0 id, leaves
+   the printed and scanned card representation unchanged by the migration. *Open:* agree the concrete
+   seed, prefix and width with the LMS migration and the card supplier, and confirm the reading-room
+   scanners and self-issue kiosks accept the chosen format and range; and confirm the
+   patron-group-to-role assignment for the currently-unmapped groups with the LMS workstream.
 
 5. **Running the new items API alongside the existing catalogue API.** The new `GET /items` route
    serves item availability and requestability from FOLIO and will be built as part of this project.
