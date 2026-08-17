@@ -2,9 +2,9 @@
 
 ## Purpose
 
-Digitised archive material on wellcomecollection.org is connected to its archive description through the CALM-synced Sierra bib, and those bibs are deliberately not migrated to FOLIO. This RFC records how the connection works today, shows that the catalogue pipeline can maintain it with no Sierra or FOLIO record existing provided the Axiell Collections record cites the Sierra b number, quantifies the gap (roughly 93% of digitised archive records carry no b number in Axiell), and proposes importing the b numbers into Axiell Collections, matched on each record's archive reference and verified through the CALM RecordID carried in the migration. It is the archive-side companion to RFC 091, which covers the library-side (FOLIO-target) half of post-migration digitisation merging.
+Digitised archive material on wellcomecollection.org is connected to its archive description through the CALM-synced Sierra bib, and those bibs are deliberately not migrated to FOLIO. This RFC records how the connection works today, shows that the catalogue pipeline can maintain it with no Sierra or FOLIO record existing provided the Axiell Collections record cites the Sierra b number, quantifies the gap (roughly 93% of digitised archive records carry no b number in Axiell), and proposes importing the b numbers into Axiell Collections, matched on each record's public reference and verified through the CALM RecordID carried in the migration. It is the archive-side companion to RFC 091, which covers the library-side (FOLIO-target) half of post-migration digitisation merging.
 
-**Last modified:** 2026-08-17T13:57:00+00:00
+**Last modified:** 2026-08-17T14:12:00+00:00
 
 **Related RFCs:**
 
@@ -64,11 +64,11 @@ We also hold the complete b number mapping. Production currently has 246,474 Sie
 
 ## Proposal
 
-Generate the (CALM RecordID, b number) pairs from the current Sierra data and import the b numbers into the AxC records so they surface as `035 (Bibliographic Number)` in the harvest. The Axiell import matches records on their object_number, the archive reference; the CALM RecordID carried in the migration is how the tooling derives and verifies each record's reference before it becomes the match key. From there the existing pipeline does the rest, with no Sierra or FOLIO record needed.
+Generate the (CALM RecordID, b number) pairs from the current Sierra data and import the b numbers into the AxC records so they surface as `035 (Bibliographic Number)` in the harvest. The Axiell import matches records on their object_number, the public reference (AltRefNo); the CALM RecordID carried in the migration is how the tooling derives and verifies each record's reference before it becomes the match key. From there the existing pipeline does the rest, with no Sierra or FOLIO record needed.
 
 The agreed import format is `object_number,alternative_number,alternative_number.type`, for example `WT/D/1/20/1/35/95,b33174192,Bibliographic Number`, with the type column constant.
 
-Tooling for this lives in the catalogue-pipeline repo under `scripts/axiell_bnumber_import/` (wellcomecollection/catalogue-pipeline#3579). One script extracts the pairs from the Sierra source works' merge candidates; a second joins them against the 907 RecordIDs in the Axiell adapter store and emits the import CSV in the agreed format alongside conflict and unmatched reports, withholding rows where several AxC records share the reference the import would match on. Both steps are read only and deterministic, and a delta mode emits only rows new since a previous CSV. The first cut, run 17 August against the round-2 store, extracted 246,204 pairs (exactly one bib per RecordID) and yields 197,089 importable rows, with 6,476 already present in AxC, 38 conflicts to review and a single shared-reference row withheld.
+Tooling for this lives in the catalogue-pipeline repo under `scripts/axiell_bnumber_import/` (wellcomecollection/catalogue-pipeline#3579). One script extracts the pairs from the Sierra source works' merge candidates; a second joins them against the 907 RecordIDs in the Axiell adapter store and emits the import CSV in the agreed format alongside conflict and unmatched reports, withholding rows where several AxC records would share the reference the import matches on. Both steps are read only and deterministic, and a delta mode emits only rows new since a previous CSV. The first cut, run 17 August against the round-2 store, extracted 246,204 pairs (exactly one bib per RecordID) and yields 197,090 importable rows, with 6,476 already present in AxC and 38 conflicts to review; every matched record carries a unique public reference, so nothing is withheld.
 
 The data should live in AxC rather than be enriched in the pipeline. A pipeline enrichment step is feasible as a fallback, but it leaves the linkage invisible to every other consumer of the Axiell data, and where the linkage lives is exactly the kind of what-goes-where decision this RFC exists to record.
 
@@ -94,7 +94,7 @@ Risks and caveats:
 ## Next steps
 
 1. Generate the (CALM RecordID, b number) CSV from current Sierra data: done, first cut 17 August via wellcomecollection/catalogue-pipeline#3579 (tracked in [wellcomecollection/platform#6525](https://github.com/wellcomecollection/platform/issues/6525)).
-2. Agree the import route and format with collections staff: format agreed 17 August (`object_number,alternative_number,alternative_number.type`, matching on the archive reference); Victoria Webb has confirmed importing b numbers into Axiell archive records is straightforward.
+2. Agree the import route and format with collections staff: format agreed 17 August (`object_number,alternative_number,alternative_number.type`, matching on the public reference, the AltRefNo); Victoria Webb has confirmed importing b numbers into Axiell archive records is straightforward.
 3. Finalise the import list from the measured gap (6,999 of 210,846 records carry the field in the 17 August load).
 4. Run the import, re-harvest, and verify a sample of digitised archive works merge without their Sierra records.
 5. Cross-reference this RFC from RFC 091 and soften its "the Sierra work is always the target" wording to the library-material case.
