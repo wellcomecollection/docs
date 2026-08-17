@@ -4,7 +4,7 @@
 
 Digitised archive material on wellcomecollection.org is connected to its archive description through the CALM-synced Sierra bib, and those bibs are deliberately not migrated to FOLIO. This RFC records how the connection works today, shows that the catalogue pipeline can maintain it with no Sierra or FOLIO record existing provided the Axiell Collections record cites the Sierra b number, quantifies the gap (roughly 93% of digitised archive records carry no b number in Axiell), and proposes importing the b numbers into Axiell Collections keyed on the CALM RecordID carried in the migration. It is the archive-side companion to RFC 091, which covers the library-side (FOLIO-target) half of post-migration digitisation merging.
 
-**Last modified:** 2026-08-17T12:45:00+00:00
+**Last modified:** 2026-08-17T13:25:00+00:00
 
 **Related RFCs:**
 
@@ -66,6 +66,8 @@ We also hold the complete b number mapping. Production currently has 246,474 Sie
 
 Generate the (CALM RecordID, b number) pairs from the current Sierra data and import the b numbers into the AxC records, matched on the CALM RecordID carried in the migration, so they surface as `035 (Bibliographic Number)` in the harvest. From there the existing pipeline does the rest, with no Sierra or FOLIO record needed.
 
+Tooling for this lives in the catalogue-pipeline repo under `scripts/axiell_bnumber_import/` (wellcomecollection/catalogue-pipeline#3579). One script extracts the pairs from the Sierra source works' merge candidates; a second joins them against the 907 RecordIDs in the Axiell adapter store and emits the import CSV (working column headers `RecordID,Bnumber,RefNo`, pending agreement with collections staff) alongside conflict and unmatched reports. Both steps are read only and deterministic, and a delta mode emits only rows new since a previous CSV. The first cut, run 17 August against the round-2 store, extracted 246,204 pairs (exactly one bib per RecordID) and yields 197,090 importable rows, with 6,476 already present in AxC and 38 conflicts to review.
+
 The data should live in AxC rather than be enriched in the pipeline. A pipeline enrichment step is feasible as a fallback, but it leaves the linkage invisible to every other consumer of the Axiell data, and where the linkage lives is exactly the kind of what-goes-where decision this RFC exists to record.
 
 ## Alternatives considered
@@ -81,7 +83,7 @@ The import reconnects digitised images for the large majority of the ~94,430 dig
 
 Risks and caveats:
 
-- The mapping is a snapshot. Records digitised between extraction and cutover need a repeat pass, or the b number capture needs to become part of the digitisation workflow until Sierra actually stops. The extraction is cheap to re-run.
+- The mapping is a snapshot. Records digitised between extraction and cutover need a repeat pass, or the b number capture needs to become part of the digitisation workflow until Sierra actually stops. The extraction is cheap to re-run. Relatedly, about 42,600 of the extracted pairs have no AxC record yet, dominated by CALM records committed after the migration extract; those arrive with the final delta migration load and need a second import pass, which the tooling's delta mode covers.
 - The coverage figures above were measured against the round-2 load of 17 August; a further load before cutover would need the same measurement repeated.
 - Import quality depends on the CALM RecordID surviving in AxC, which round-1 testing supports (201,072 matched ids, zero mismatches), but the import job should report unmatched rows rather than dropping them.
 - Digitised AV whose Sierra bib is not CALM-linked is out of scope and worse off: a METS record can never stand alone as a work, so if those bibs are migrated nowhere the works drop out of the catalogue entirely. That needs its own decision and owner.
@@ -89,7 +91,7 @@ Risks and caveats:
 
 ## Next steps
 
-1. Generate the (CALM RecordID, b number) CSV from current Sierra data (tracked in [wellcomecollection/platform#6525](https://github.com/wellcomecollection/platform/issues/6525)).
+1. Generate the (CALM RecordID, b number) CSV from current Sierra data: done, first cut 17 August via wellcomecollection/catalogue-pipeline#3579 (tracked in [wellcomecollection/platform#6525](https://github.com/wellcomecollection/platform/issues/6525)).
 2. Agree the import route and format with collections staff; Victoria Webb has confirmed importing b numbers into Axiell archive records is straightforward.
 3. Finalise the import list from the measured gap (6,999 of 210,846 records carry the field in the 17 August load).
 4. Run the import, re-harvest, and verify a sample of digitised archive works merge without their Sierra records.
