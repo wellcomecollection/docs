@@ -6,7 +6,7 @@ Wellcome Collection is migrating its library management system from Sierra to Fo
 
 An earlier draft of this RFC proposed minting catalogue-style identifiers at ingest through a secured extension to the Identifiers API. The review discussion on this RFC's pull request reversed that proposal; this version records the agreed direction and the reasoning. See [Alternatives considered](#alternatives-considered) for the rejected designs.
 
-**Last modified:** 2026-08-07T12:00:00+00:00
+**Last modified:** 2026-08-18T15:40:00+00:00
 
 **Related RFCs:**
 
@@ -16,6 +16,7 @@ An earlier draft of this RFC proposed minting catalogue-style identifiers at ing
 - [RFC 085: Identifiers of and within IIIF resources after the migration](../085-IIIF-Identities-and-Migration/README.md): proposes that canonical IIIF URIs move to the Work id (open in [PR #143](https://github.com/wellcomecollection/docs/pull/143)). The decision recorded here inverts that position; amending RFC 085 is a named deliverable of this RFC (see [Next steps](#next-steps)).
 - [RFC 088: Migrating identity, requesting and items APIs from Sierra to FOLIO](../088-folio-identity-requesting-migration/README.md): the wider identity and requesting half of the same Sierra to Folio migration.
 - [RFC 090: CMS to LMS Sync](../090-axiell-folio-sync/README.md): the adjacent CMS to LMS synchronisation work (open in [PR #157](https://github.com/wellcomecollection/docs/pull/157)).
+- [RFC 092: Keeping digitised archive material connected after Sierra](../092-digitised-archive-links/README.md): the archive-side companion. Digitised archive material merges into a CALM (later Axiell) target rather than a Sierra or Folio one, and keeps its METS link through a b number on the Axiell record with no Folio record involved. The merge-behaviour notes in this RFC describe library material.
 - RFC 002: Archival storage, <https://docs.wellcomecollection.org/developers/rfcs/002-archival_storage>.
 
 ## Table of contents
@@ -151,9 +152,9 @@ The merge that puts digitised content onto the public work runs through a merge 
 2. The Sierra work's own `SourceIdentifier` is also `sierra-system-number/<b-number>`.
 3. The id_minter mints both of those to the **same** canonical id. A canonical id is 8 characters from `[2-9a-z]` minus `o,i,l,1` with a letter first.
 4. The matcher graphs works by shared canonical id.
-5. The merger folds the METS digital item's `DigitalLocation` (the IIIF location) onto the Sierra item. A standalone METS work is never selected as a merge target; the Sierra work is always the target. The link is one-way, METS to Sierra; the Sierra work does not reference the METS work.
+5. The merger folds the METS digital item's `DigitalLocation` (the IIIF location) onto the Sierra item. A standalone METS work is never selected as a merge target; for library material the Sierra work is always the target, while digitised archive material merges into a CALM (later Axiell) target instead (see RFC 092). The link is one-way, METS to Sierra; the Sierra work does not reference the METS work.
 
-After the catalogue pipeline migrates to Folio there will be no Sierra-sourced works, and the records digitisations attach to will be Folio-sourced. Two considerations apply here, and they point in different directions.
+After the catalogue pipeline migrates to Folio there will be no Sierra-sourced works, and the records library digitisations attach to will be Folio-sourced; digitised archive material attaches to Axiell-sourced works and deliberately has no Folio record, a path covered by RFC 092. Two considerations apply here, and they point in different directions.
 
 **Canonical id continuity.** The canonical id does not change. The predecessor work in the id_minter (RFC 083) means a Folio work carrying a predecessor pointer to its old b-number inherits the *same* canonical id that the b-number had. The METS work still emits `sierra-system-number/<b-number>`, the id_minter still resolves that b-number to that canonical id, and the matcher still graphs by shared canonical id. So the METS work and the Folio work land in the same graph component, and the canonical id that works are redirected to is unchanged. Bookmarks and IIIF URIs keyed on the old id keep resolving.
 
