@@ -2,9 +2,9 @@
 
 ## Purpose
 
-Digitised archive material on wellcomecollection.org is connected to its archive description through the CALM-synced Sierra bib, and those bibs are deliberately not migrated to FOLIO. This RFC records how the connection works today, shows that the catalogue pipeline can maintain it with no Sierra or FOLIO record existing provided the Axiell Collections record cites the Sierra b number, quantifies the gap (roughly 93% of digitised archive records carry no b number in Axiell), and proposes importing the b numbers into Axiell Collections, matched on each record's public reference and verified through the CALM RecordID carried in the migration. It is the archive-side companion to RFC 091, which covers the library-side (FOLIO-target) half of post-migration digitisation merging.
+Digitised archive material on wellcomecollection.org is connected to its archive description through the CALM-synced Sierra bib, and those bibs are deliberately not migrated to FOLIO. This RFC records how the connection works today, shows that the catalogue pipeline can maintain it with no Sierra or FOLIO record existing provided the Axiell Collections record cites the Sierra b number, and quantifies the gap (roughly 93% of digitised archive records carry no b number in Axiell). The proposed fix is to import the missing b numbers into Axiell Collections, matched on each record's public reference and verified through the CALM RecordID carried in the migration. It is the archive-side companion to RFC 091, which covers the library-side (FOLIO-target) half of post-migration digitisation merging.
 
-**Last modified:** 2026-08-17T14:12:00+00:00
+**Last modified:** 2026-08-18T11:58:00+00:00
 
 **Related RFCs:**
 
@@ -50,7 +50,7 @@ flowchart LR
     AXC ==> WORK(["merged work: AxC description<br/>+ METS digitised images,<br/>keeping the work id inherited from CALM"])
 ```
 
-The Axiell transformer already turns an `035 (Bibliographic Number)` into exactly this link; it is the mechanism behind the GC179 merge test records.
+The Axiell transformer already turns an `035 (Bibliographic Number)` into exactly this link; it is the mechanism behind the GC179 merge test records, a small archive collection whose AxC records were seeded with b numbers during migration testing to prove the Sierra and Axiell merge (the only written trace is in [wellcomecollection/platform#6525](https://github.com/wellcomecollection/platform/issues/6525)).
 
 ### The missing b numbers
 
@@ -64,9 +64,11 @@ We also hold the complete b number mapping. Production currently has 246,474 Sie
 
 ## Proposal
 
-Generate the (CALM RecordID, b number) pairs from the current Sierra data and import the b numbers into the AxC records so they surface as `035 (Bibliographic Number)` in the harvest. The Axiell import matches records on their object_number, the public reference (AltRefNo); the CALM RecordID carried in the migration is how the tooling derives and verifies each record's reference before it becomes the match key. From there the existing pipeline does the rest, with no Sierra or FOLIO record needed.
+Generate the (CALM RecordID, b number) pairs from the current Sierra data and import the b numbers into the AxC records so they surface as `035 (Bibliographic Number)` in the harvest. From there the existing pipeline does the rest, with no Sierra or FOLIO record needed.
 
-The agreed import format is `object_number,alternative_number,alternative_number.type`, for example `WT/D/1/20/1/35/95,b33174192,Bibliographic Number`, with the type column constant.
+The Axiell import matches records on their object_number, which corresponds to the public reference (AltRefNo in CALM); the tooling to generate an input CSV uses the  CALM RecordID carried in the migration to derive and verify each record's reference before it becomes the match key. 
+
+The agreed import format is `object_number,alternative_number,alternative_number.type`, for example `WT/D/1/20/1/35/95,b33174192,Bibliographic Number`, with the type column constant. That match key is the one collections staff specified for the Collections Import tool; it was verified collision-free across all 209,544 matched records before adoption.
 
 Tooling for this lives in the catalogue-pipeline repo under `scripts/axiell_bnumber_import/` (wellcomecollection/catalogue-pipeline#3579). One script extracts the pairs from the Sierra source works' merge candidates; a second joins them against the 907 RecordIDs in the Axiell adapter store and emits the import CSV in the agreed format alongside conflict and unmatched reports, withholding rows where several AxC records would share the reference the import matches on. Both steps are read only and deterministic, and a delta mode emits only rows new since a previous CSV. The first cut, run 17 August against the round-2 store, extracted 246,204 pairs (exactly one bib per RecordID) and yields 197,090 importable rows, with 6,476 already present in AxC and 38 conflicts to review; every matched record carries a unique public reference, so nothing is withheld.
 
