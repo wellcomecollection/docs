@@ -334,7 +334,7 @@ second backend implementation:
 
 The prototype has also been run read-only against the live development registry to confirm the data
 model and surface findings that bear on the open questions below (the schema's column casing, the
-presence of `folio-instance` Work aliases, the current absence of `folio-item-id`, and ontology types
+presence of `folio-instance` Work aliases, the current absence of `folio-item`, and ontology types
 beyond `Work` / `Image` / `Item`).
 
 ---
@@ -385,9 +385,9 @@ still have an unsettled integration point.
    headers only (no real edge or stage cache).
 
 2. **The FOLIO-item ingestion dependency (RFC 088).** The requesting translation (canonical item id
-   ↔ FOLIO item UUID) has no data in the registry yet: `folio-item-id` identifiers are absent. This
+   ↔ FOLIO item UUID) has no data in the registry yet: `folio-item` identifiers are absent. This
    API cannot serve that translation until the catalogue pipeline ingests FOLIO items and the ID
-   Minter records `folio-item-id` rows. Confirm the pipeline change with the catalogue-pipeline
+   Minter records `folio-item` rows. Confirm the pipeline change with the catalogue-pipeline
    workstream. A related point to settle there: FOLIO records carry both a UUID and an HRID, so
    confirm which form the OAI-PMH feed delivers. The registry already maps many source rows to one
    canonical id, so the Minter could record both a UUID and an HRID row per item and this API would
@@ -473,7 +473,7 @@ still have an unsettled integration point.
    pick concrete TTLs for the migration and post-switchover phases, pick per-consumer throttle
    limits, and choose the cost-attribution mechanism.
 3. **Unblock requesting** (open questions 2 and 3): confirm with the catalogue-pipeline workstream
-   that FOLIO items are ingested and `folio-item-id` predecessors are emitted at item level, so the
+   that FOLIO items are ingested and `folio-item` predecessors are emitted at item level, so the
    requesting translation has data.
 4. **Productionise**: the Terraform for the REST API, the Lambda, the API keys and
    per-consumer throttle, and the chosen (edge) cache, deployed to a development environment first.
