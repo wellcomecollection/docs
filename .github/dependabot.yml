@@ -1,11 +1,14 @@
 version: 2
 updates:
-  - package-ecosystem: "pip"
-    directory: "/"
-    # Intentionally skip RFC experiments/docs to avoid dependency update PRs there.
-    exclude-paths:
-      - "rfcs/**"
+  # RFCs are design experiments, not deployed code: no dependency PRs for them.
+  # The ecosystem must be `uv` and the paths must match the real manifests,
+  # or the block matches nothing and is silently ignored.
+  - package-ecosystem: "uv"
+    directories:
+      - "/rfcs/*"
+      - "/rfcs/**"
     schedule:
       interval: "weekly"
+    open-pull-requests-limit: 0
     ignore:
       - dependency-name: "*"
