@@ -1,8 +1,9 @@
 version: 2
 updates:
-  # RFCs are design experiments, not deployed code: no dependency PRs for them.
-  # The ecosystem must be `uv` and the paths must match the real manifests,
-  # or the block matches nothing and is silently ignored.
+  # RFCs are design experiments, not deployed code, so we don't want version
+  # update PRs for them. Security updates are exempt from the limit below, so
+  # those may still open PRs. The ecosystem must be `uv` and the paths must
+  # match the real manifests, or the block matches nothing and is ignored.
   - package-ecosystem: "uv"
     directories:
       - "/rfcs/*"
