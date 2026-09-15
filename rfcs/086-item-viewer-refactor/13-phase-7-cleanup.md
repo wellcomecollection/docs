@@ -5,11 +5,12 @@
 **Effort:** 1-2 hours  
 **Risk:** Low  
 **Priority:** Required (after toggle has been defaulted to ON)  
+**Status:** Not started - [#12990](https://github.com/wellcomecollection/wellcomecollection.org/issues/12990)  
 **Previous:** [Phase 6: Duplicate Index Calls](./12-phase-6-duplicate-calls.md)
 
 ## Goal
 
-Clean up feature flag infrastructure after successful adoption. Remove legacy code, rename refactored files, and finalize the implementation.
+Clean up feature flag infrastructure after successful adoption. Remove legacy code, promote the refactored tree to be the only one, and finalise the implementation.
 
 ## When to Do This
 
@@ -19,113 +20,99 @@ Clean up feature flag infrastructure after successful adoption. Remove legacy co
 - All metrics stable
 - Team confidence is high
 
+Note that the toggle can't go on publicly until the temporary badges and console logs are removed - see item 1 of [#13273](https://github.com/wellcomecollection/wellcomecollection.org/issues/13273).
+
 ## Steps
 
-### 5.1 Remove Feature Flag
+The steps below were rewritten once Phases 0-6 were done, because the original ones referenced a file layout that was never built (`ItemViewerContextV2`, `.legacy.tsx`/`.refactored.tsx` filename suffixes). The paths here are the real ones.
 
-**File:** `toggles/webapp/app/toggles.ts`
+### 7.1 Remove the feature flag
+
+**File:** `toggles/webapp/toggles.ts`
 
 ```typescript
-// DELETE:
-iiifViewerRefactored: {
-  id: 'iiifViewerRefactored',
-  title: 'IIIF Viewer - Refactored Context',
-  defaultValue: false,
-  description: 'Use refactored ItemViewerContext with centralised derived values',
+// DELETE from featureFlags:
+{
+  id: 'itemViewerRefactor',
+  title: 'Item viewer refactor',
+  initialValue: false,
+  description:
+    'Displays the refactored item viewer instead of the current one.',
+  type: 'experimental',
 },
 ```
 
-### 5.2 Delete Legacy Files
+Deploy the toggles package afterwards, so the flag stops being served from `toggles.wellcomecollection.org/toggles.json`.
+
+### 7.2 Delete the legacy viewer and its context
+
+```bash
+cd content/webapp
+rm -r views/pages/works/work/IIIFViewer/legacy
+rm contexts/ItemViewerContext/legacy.tsx
+```
+
+Then delete any types that only legacy used.
+
+### 7.3 Promote the refactored viewer
+
+`views/pages/works/work/IIIFViewer/index.tsx` is the `dynamic()` switch between the two trees. It goes, and `refactored/index.tsx` takes its place:
 
 ```bash
 cd content/webapp/views/pages/works/work/IIIFViewer
-
-# Delete all .legacy.tsx files
-rm IIIFViewer.legacy.tsx
-rm ViewerTopBar.legacy.tsx
-rm ZoomedImage.legacy.tsx
-rm MainViewer.legacy.tsx
-# ... any other .legacy.tsx files
+rm index.tsx
+mv refactored/* .
+rmdir refactored
 ```
 
-Also remove types that are not in use anymore.
+### 7.4 Collapse the context
 
-### 5.3 Rename Refactored Files to Standard Names
+`contexts/ItemViewerContext/index.tsx` is a barrel that picks legacy or refactored on the flag. With legacy gone it has no job: fold `refactored.tsx` into `index.tsx` and delete the barrel's switching logic.
+
+While doing so, remove:
+
+- the `console.log` that reports which context is in use, and the `window.__ivr_context_logged` global declaration that guards it (both marked TODO in the file)
+- `isRefactoredContext` from the context type and its default value - the discriminant only existed to narrow the legacy-or-refactored union
+
+### 7.5 Consolidate the import paths
+
+Components currently reach the context two ways, and both need to end up on one path:
 
 ```bash
-# Rename .refactored.tsx to .tsx
-mv IIIFViewer.refactored.tsx IIIFViewer.tsx
-mv ViewerTopBar.refactored.tsx ViewerTopBar.tsx
-mv ZoomedImage.refactored.tsx ZoomedImage.tsx
-mv MainViewer.refactored.tsx MainViewer.tsx
+cd content/webapp
+grep -rl "contexts/ItemViewerContext'" --include="*.ts" --include="*.tsx" .      # via the barrel
+grep -rl "contexts/ItemViewerContext/refactored" --include="*.ts" --include="*.tsx" .
 ```
 
-### 5.4 Delete Wrapper Component
+At the time of writing that's 32 files on the barrel and 16 importing `refactored` directly.
 
-```bash
-# No longer needed - IIIFViewer.tsx is now the main component
-rm index.tsx  # The wrapper that switched between legacy/refactored
-```
+### 7.6 Simplify the test harness
 
-### 5.5 Rename Context
+`test/fixtures/iiif/render.tsx` carries the migration's dual-context machinery: `renderWithContext`'s `useRefactoredContext` option, the `RenderWithContextOptions` discriminated union, `RenderWithRefactoredContextOptions`, and separate legacy/refactored mock context factories. All of that collapses to a single context.
 
-```bash
-# Delete old context
-rm -rf content/webapp/contexts/ItemViewerContext
+Individual test files then drop the `jest.mock` of `useFeatureFlags` that forces `itemViewerRefactor: true`, and the `useRefactoredContext: true` argument at each call site.
 
-# Rename new context to standard name
-mv content/webapp/contexts/ItemViewerContextV2 \
-   content/webapp/contexts/ItemViewerContext
-```
+### 7.7 Remove unused props
 
-### 5.6 Update All Imports
+Identify components that can drop props now that context provides the data.
 
-Replace all occurrences of `ItemViewerContextV2` with `ItemViewerContext`:
-
-```bash
-# Find all imports
-grep -r "ItemViewerContextV2" content/webapp
-
-# Update each file:
-# OLD: import ItemViewerContextV2 from '@weco/common/contexts/ItemViewerContextV2';
-# NEW: import ItemViewerContext from '@weco/common/contexts/ItemViewerContext';
-```
-
-### 5.7 Remove Unused Props
-
-Identify components that can drop props now that context provides the data:
-
-```typescript
-// Example: ViewerTopBar might have received props that context now provides
-// Remove those props from the interface and component
-```
-
-### 5.8 Update Tests
-
-Rename test files and update imports:
-
-```bash
-mv ItemViewerContextV2.test.tsx ItemViewerContext.test.tsx
-mv IIIFViewer.refactored.test.tsx IIIFViewer.test.tsx
-# Update imports in test files from V2 to standard
-```
-
-### 5.9 Type Cleanup
+### 7.8 Type cleanup
 
 Ensure all TypeScript types reflect the final context shape. Remove any temporary types used during migration.
 
-### 5.10 Documentation
+### 7.9 Documentation
 
-- [ ] Update inline comments if needed
-- [ ] Remove any "TODO: remove after refactor" comments
-- [ ] Update component documentation if it references old structure
+- [ ] Update inline comments that describe the legacy/refactored split - `IIIFViewer/index.tsx` and the context barrel both carry explanatory comments that die with them, but others reference the split in passing
+- [ ] Remove any "TODO: remove after itemViewerRefactor is fully rolled out" comments
+- [ ] Update this RFC's status, and close out [#13273](https://github.com/wellcomecollection/wellcomecollection.org/issues/13273) items that only existed because of the split
 
 ## Success Criteria
 
-- [ ] No more .legacy.tsx files
-- [ ] No more .refactored.tsx files
-- [ ] No ItemViewerContextV2 references
-- [ ] Feature flag removed from toggles
+- [ ] No `legacy/` directory under `IIIFViewer`, and no `legacy.tsx` context
+- [ ] No `refactored/` directory - its contents sit directly under `IIIFViewer`
+- [ ] Feature flag removed from `toggles.ts` and the toggles package redeployed
+- [ ] One import path for the context, no flag-switching barrel
+- [ ] No `isRefactoredContext`, and no migration console logs
 - [ ] All tests still pass
 - [ ] TypeScript compiles with no errors
 - [ ] Application runs correctly
@@ -138,4 +125,4 @@ Ensure all TypeScript types reflect the final context shape. Remove any temporar
 The IIIF Viewer context refactoring is complete!
 
 **See also:**
-- [14-risks-and-success.md](./14-risks-and-success.md) - Final success metrics
+- [15-risks-and-success.md](./15-risks-and-success.md) - Final success metrics

@@ -209,12 +209,12 @@ Your Catalogue API types (`Work`, `WorkBasic`, `Item`, etc.) are manually define
 
 ## Acceptance Criteria
 
-- [ ] Fixed both `setSearchResults` implicit `any` types
-- [ ] (Optional) Added `ImageService` type to `content/webapp/types/item-viewer.ts`
-- [ ] Documented existing type structure for reference
-- [ ] Checked for duplicate type definitions across files
-- [ ] `yarn tsc` runs without errors in ItemViewer files
-- [ ] All team members understand what types exist and where they live
+- [x] Fixed both `setSearchResults` implicit `any` types - now `(v: SearchResults | null) => void` in both context files
+- [x] (Optional) Added `ImageService` type to `content/webapp/types/item-viewer.ts` - used as `PartialImageService = Pick<ImageService, '@id'>`
+- [x] Documented existing type structure for reference
+- [x] Checked for duplicate type definitions across files
+- [x] `yarn tsc` runs without errors in ItemViewer files
+- [ ] All team members understand what types exist and where they live - not something the code can evidence, left for the team to judge
 
 ## What This Phase Achieves
 

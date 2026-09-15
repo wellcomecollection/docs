@@ -132,7 +132,7 @@ All tests should pass.
 
 ### 1.6 (Optional) Manual Testing
 
-See [13-testing-strategy.md](./13-testing-strategy.md) for comprehensive manual testing checklist.
+See [14-testing-strategy.md](./14-testing-strategy.md) for comprehensive manual testing checklist.
 
 **Quick smoke tests:**
 - [ ] Viewer loads correctly
@@ -158,10 +158,10 @@ Self-documenting code! No mental gymnastics required.
 
 ## Success Criteria
 
-- [ ] All automated tests pass (context + components)
-- [ ] TypeScript compiles with no errors
-- [ ] Components use context values (not calculating locally)
-- [ ] Feature flag toggle works (old vs new identical behaviour)
+- [x] All automated tests pass (context + components)
+- [x] TypeScript compiles with no errors
+- [x] Components use context values (not calculating locally) - with two deliberate exceptions under principle 7: `canNavigateNext`/`canNavigatePrevious` stay local to `ViewerBottomBar`, their only consumer, derived from the shared `totalCanvases`; and `hasIiifImageService` stays local to `IIIFViewer`. `currentCanvasIndex` was never added at all - see the [README](./README.md).
+- [x] Feature flag toggle works (old vs new identical behaviour)
 - [ ] Manual testing checklist complete (optional)
 
 ## Time Breakdown
