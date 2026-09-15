@@ -130,9 +130,9 @@ Two endpoints. The machine-readable contract is the OpenAPI spec carried alongsi
 
 | Endpoint | Returns |
 |---|---|
-| `GET /v1/identifiers/{canonicalId}` | The full `IdentifierSet` (always; there is no aliases toggle), ordered by `createdAt` so the original is first. |
-| `GET /v1/identifiers/by-source/{sourceSystem}/{value}?type=Work` | A bare `{ "canonicalId": "..." }` (`CanonicalIdRef`). |
-| `GET /v1/identifiers/by-source/{sourceSystem}/{value}?type=Work&include=siblings` | The same full `IdentifierSet`. |
+| `GET /identifiers/v1/{canonicalId}` | The full `IdentifierSet` (always; there is no aliases toggle), ordered by `createdAt` so the original is first. |
+| `GET /identifiers/v1/by-source/{sourceSystem}/{value}?type=Work` | A bare `{ "canonicalId": "..." }` (`CanonicalIdRef`). |
+| `GET /identifiers/v1/by-source/{sourceSystem}/{value}?type=Work&include=siblings` | The same full `IdentifierSet`. |
 
 The element shape (`SourceIdentifier`) is identical across both endpoints, so one schema and one
 parser serve every response:
