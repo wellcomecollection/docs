@@ -220,12 +220,12 @@ After this phase, consider splitting other components with multiple modes:
 
 ## Success Criteria
 
-- [ ] `MainViewer` is a simple router (<20 lines)
-- [ ] `VirtualizedImageViewer` handles only image-only works
-- [ ] `PaginatedItemViewer` handles only mixed/archive works
-- [ ] All tests pass
-- [ ] No behavioral changes detected
-- [ ] Code is easier to understand and test
+- [x] `MainViewer` is a simple router (<20 lines) - it routes and does nothing else, but the file is 32 lines: about 14 of routing, the rest imports and a styled container
+- [x] `VirtualizedImageViewer` handles only image-only works
+- [x] `PaginatedItemViewer` handles only mixed/archive works
+- [x] All tests pass
+- [x] No behavioral changes detected
+- [x] Code is easier to understand and test
 
 ## Time Estimate
 

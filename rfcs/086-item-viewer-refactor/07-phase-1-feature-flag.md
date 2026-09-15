@@ -125,15 +125,17 @@ import ItemViewerContextV2 from '@weco/common/contexts/ItemViewerContextV2';
 
 ## Success Criteria
 
-- [ ] Feature flag defined in `toggles.ts`
-- [ ] ItemViewerContextV2 created (identical to ItemViewerContext)
-- [ ] All original components renamed to `.legacy.tsx`
-- [ ] Wrapper component loads legacy or refactored based on flag
-- [ ] All `.refactored.tsx` files created and import ItemViewerContextV2
-- [ ] Application runs with flag OFF (uses legacy)
-- [ ] Application runs with flag ON (uses refactored, identical behaviour)
-- [ ] No TypeScript errors
-- [ ] No console warnings
+Met, though several were delivered under different names than planned - see the naming note in the [README](./README.md).
+
+- [x] Feature flag defined in `toggles.ts` - as `itemViewerRefactor`
+- [x] ItemViewerContextV2 created (identical to ItemViewerContext) - built as `contexts/ItemViewerContext/refactored.tsx`, with `legacy.tsx` beside it
+- [x] All original components renamed to `.legacy.tsx` - moved into a `legacy/` directory instead of renamed
+- [x] Wrapper component loads legacy or refactored based on flag - `IIIFViewer/index.tsx`
+- [x] All `.refactored.tsx` files created and import ItemViewerContextV2 - created under `refactored/`
+- [x] Application runs with flag OFF (uses legacy)
+- [x] Application runs with flag ON (uses refactored, identical behaviour)
+- [x] No TypeScript errors
+- [ ] No console warnings - a temporary log reporting which context is in use was added deliberately, in the context barrel. Removing it is item 1 of [#13273](https://github.com/wellcomecollection/wellcomecollection.org/issues/13273), and has to happen before the toggle goes on publicly.
 
 ## Next Steps
 

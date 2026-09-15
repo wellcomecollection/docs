@@ -154,10 +154,10 @@ All should pass.
 
 ## Success Criteria
 
-- [ ] Tests for `useDownloadOptions` pass
-- [ ] `ViewerTopBar` ~65 lines shorter
-- [ ] Download dropdown still works identically
-- [ ] All download types still appear correctly
+- [x] Tests for `useDownloadOptions` pass
+- [x] `ViewerTopBar` ~65 lines shorter
+- [x] Download dropdown still works identically
+- [x] All download types still appear correctly
 
 ## Time Breakdown
 
