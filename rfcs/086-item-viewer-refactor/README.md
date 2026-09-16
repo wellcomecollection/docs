@@ -1,13 +1,25 @@
 # RFC 086: IIIF Viewer Context Refactoring
 
-**Status:** Not started  
+**Status:** Phases 0-6 complete. Phase 7 (cleanup) is blocked on the `itemViewerRefactor` toggle being defaulted to ON for 1+ week.  
 **Estimated effort:** 14-17 hours  
-**Last modified:** 2026-04-14T13:30:00+00:00
+**Last modified:** 2026-09-15T10:31:29+00:00
 
 ## Purpose
 This folder contains a comprehensive plan to refactor the IIIF Viewer context to eliminate code duplication and centralise derived state calculations.
 
 **Key principle:** Write automated tests BEFORE refactoring (test-first approach), then use manual testing for extra confidence.
+
+## Names in these documents vs the code
+
+The phase documents were written before implementation, and use provisional names the code doesn't match. Translate as follows when following them:
+
+| In these documents | In the code |
+|---|---|
+| `contexts/ItemViewerContextV2/` | `content/webapp/contexts/ItemViewerContext/refactored.tsx`, with `legacy.tsx` beside it and `index.tsx` selecting between the two on the toggle |
+| `Component.legacy.tsx` / `Component.refactored.tsx` | `IIIFViewer/legacy/Component.tsx` / `IIIFViewer/refactored/Component.tsx` - directories, not filename suffixes |
+| `iiifViewerRefactored` toggle | `itemViewerRefactor` |
+
+`currentCanvasIndex` also never went onto the context: it would duplicate `query.canvas`, which is already there. Several documents list it as a context value - Phase 6 in particular is written on the assumption that it exists.
 
 ## Table of Contents
 
@@ -60,17 +72,23 @@ See [14-testing-strategy.md](./14-testing-strategy.md) for automated test requir
 5. **Test-first workflow** - Green to Green refactoring (tests pass before and after)
 6. **Manual tests as backup** - Comprehensive checklist for extra confidence
 7. **Context for shared state only** - Only add to context if used by 2+ components or likely to be needed soon
-8. **Hooks for complex logic** - Extract to custom hooks for testability, even if only used once8. **Split components with drastically different modes** - See [Future Improvements](./16-future-improvements.md) for details
+8. **Hooks for complex logic** - Extract to custom hooks for testability, even if only used once
+9. **Split components with drastically different modes** - See [Future Improvements](./16-future-improvements.md) for details
+
 ## Progress Tracking
 
-- [ ] Phase 0: Type Audit
-- [ ] Phase 1: Feature Flag Setup
-- [ ] Phase 2: Split MainViewer Components
-- [ ] Phase 3: Canvas Data (with automated tests)
-- [ ] Phase 4: Download Logic
-- [ ] Phase 5: Restriction Status
-- [ ] Phase 6: Duplicate Calls
-- [ ] Phase 7: Cleanup
+Tickets are in [wellcomecollection.org](https://github.com/wellcomecollection/wellcomecollection.org).
+
+- [x] Phase 0: Type Audit - [#12982](https://github.com/wellcomecollection/wellcomecollection.org/issues/12982)
+- [x] Phase 1: Feature Flag Setup - [#12983](https://github.com/wellcomecollection/wellcomecollection.org/issues/12983)
+- [x] Phase 2: Split MainViewer Components - [#12985](https://github.com/wellcomecollection/wellcomecollection.org/issues/12985)
+- [x] Phase 3: Canvas Data (with automated tests) - [#12986](https://github.com/wellcomecollection/wellcomecollection.org/issues/12986)
+- [x] Phase 4: Download Logic - [#12987](https://github.com/wellcomecollection/wellcomecollection.org/issues/12987)
+- [x] Phase 5: Restriction Status - [#12988](https://github.com/wellcomecollection/wellcomecollection.org/issues/12988)
+- [x] Phase 6: Duplicate Calls - [#12989](https://github.com/wellcomecollection/wellcomecollection.org/issues/12989)
+- [ ] Phase 7: Cleanup - [#12990](https://github.com/wellcomecollection/wellcomecollection.org/issues/12990), waiting on the toggle being defaulted to ON
+
+Two tickets sit outside the phase structure: [#12984](https://github.com/wellcomecollection/wellcomecollection.org/issues/12984) (review and add tests) ran alongside Phases 0-2, and [#13329](https://github.com/wellcomecollection/wellcomecollection.org/issues/13329) (readability/normalisation pass) alongside Phase 3. Out-of-scope findings picked up along the way are collected in [#13273](https://github.com/wellcomecollection/wellcomecollection.org/issues/13273), which includes items to clear before the toggle can go on publicly.
 
 ---
 

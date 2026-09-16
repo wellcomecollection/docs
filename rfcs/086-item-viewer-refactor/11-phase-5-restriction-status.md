@@ -69,9 +69,9 @@ const { isCurrentCanvasRestricted } = useItemViewerContextV2();
 
 ## Success Criteria
 
-- [ ] `isCurrentCanvasRestricted` in context
-- [ ] `ViewerTopBar` uses context value
-- [ ] Restricted badge appears correctly
+- [x] `isCurrentCanvasRestricted` in context
+- [x] `ViewerTopBar` uses context value
+- [ ] Restricted badge appears correctly - there is no restricted badge, in either tree. What `isCurrentCanvasRestricted` actually gates in `ViewerTopBar` is hiding the download button on a restricted canvas, unless the user is staff with restricted access.
 
 ## Time: ~1 hour
 

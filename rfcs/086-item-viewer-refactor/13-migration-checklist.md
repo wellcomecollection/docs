@@ -4,6 +4,8 @@
 
 This checklist helps you track progress through each phase. Check off items as you complete them.
 
+Phases 0-6 are done; only Phase 7 is outstanding. The fine-grained boxes below are left as originally written rather than ticked retrospectively - each phase document's own success criteria have been checked off against the code instead, including the handful that weren't met as specified. Phase 6 and Phase 7 here have been rewritten, because their items no longer described the work to be done.
+
 ## Before Starting
 
 - [ ] Create feature branch: `refactor/iiif-viewer-context`
@@ -163,13 +165,13 @@ Duration: 1-1.5 hours
 
 ## Phase 6: Duplicate Index Calls
 
-- [ ] Find all `queryParamToArrayIndex(query.canvas)` calls
-- [ ] Update Thumbnails.tsx to use `currentCanvasIndex` from context
-- [ ] Update NoScriptImage.tsx to use `currentCanvasIndex`
-- [ ] Update MultipleManifestList.tsx to use `currentCanvasIndex`
-- [ ] Update any other files found
-- [ ] Test thumbnails highlight correctly
-- [ ] Test all navigation works
+This ran as an audit rather than the find-and-replace planned here: `currentCanvasIndex` was never added to the context, and none of the three files named below calculate a canvas index any more. See [Phase 6](./12-phase-6-duplicate-calls.md) for what the audit found.
+
+- [x] Find all `queryParamToArrayIndex(query.canvas)` calls
+- [x] Audit the whole `refactored/` directory for duplicated current-canvas calculations
+- [x] Deduplicate the one real case, in `GridViewer.tsx`
+- [x] Test thumbnails highlight correctly
+- [x] Test all navigation works
 
 **Time checkpoint:** Should take ~30 minutes
 
@@ -179,14 +181,14 @@ Duration: 1-1.5 hours
 
 **Only do this after toggle defaults to ON for 1+ week with no issues!**
 
-- [ ] Remove feature flag from `toggles.ts`
-- [ ] Delete all `.legacy.tsx` files- [ ] Rename `.refactored.tsx` to `.tsx`
-- [ ] Delete wrapper `index.tsx`
-- [ ] Delete old `ItemViewerContext` directory
-- [ ] Rename `ItemViewerContextV2` to `ItemViewerContext`
-- [ ] Update all imports from V2 to standard
-- [ ] Rename test files (remove .refactored)
-- [ ] Update test imports
+- [ ] Remove the `itemViewerRefactor` flag from `toggles/webapp/toggles.ts`, and redeploy the toggles package
+- [ ] Delete `IIIFViewer/legacy/` and `contexts/ItemViewerContext/legacy.tsx`
+- [ ] Delete the `IIIFViewer/index.tsx` switch and move `refactored/`'s contents up a level
+- [ ] Fold `contexts/ItemViewerContext/refactored.tsx` into `index.tsx`, dropping the flag-switching barrel
+- [ ] Remove `isRefactoredContext` and the migration console log
+- [ ] Put every consumer on one context import path
+- [ ] Collapse the dual-context test harness in `test/fixtures/iiif/render.tsx`
+- [ ] Drop the per-test `jest.mock` of `useFeatureFlags` and the `useRefactoredContext` arguments
 - [ ] Run all tests - still pass
 - [ ] `yarn tsc` - no errors
 - [ ] Application runs correctly
