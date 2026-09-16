@@ -11,7 +11,7 @@ Sierra/CALM → FOLIO/Axiell migration. It sets out the contract, the AWS archit
 authentication and cost model, the caching strategy, and what a working prototype has already
 established.
 
-**Last modified:** 2026-08-05T15:00:00+00:00
+**Last modified:** 2026-09-15T10:29:00+00:00
 
 **Related RFCs:**
 
@@ -125,14 +125,16 @@ operations:
 
 ## API Contract
 
-Two endpoints. The machine-readable contract is the OpenAPI spec carried alongside this RFC (see
-[OpenAPI specification](#openapi-specification)); this is the summary.
+Two endpoints. The machine-readable contract is the OpenAPI spec in catalogue-api (see
+[OpenAPI specification](#openapi-specification)); this is the summary. The paths sit under
+`/identifiers/` because `api.wellcomecollection.org` routes each service by its first path segment,
+so the public form is `https://api.wellcomecollection.org/identifiers/v1/...`.
 
 | Endpoint | Returns |
 |---|---|
-| `GET /v1/identifiers/{canonicalId}` | The full `IdentifierSet` (always; there is no aliases toggle), ordered by `createdAt` so the original is first. |
-| `GET /v1/identifiers/by-source/{sourceSystem}/{value}?type=Work` | A bare `{ "canonicalId": "..." }` (`CanonicalIdRef`). |
-| `GET /v1/identifiers/by-source/{sourceSystem}/{value}?type=Work&include=siblings` | The same full `IdentifierSet`. |
+| `GET /identifiers/v1/{canonicalId}` | The full `IdentifierSet` (always; there is no aliases toggle), ordered by `createdAt` so the original is first. |
+| `GET /identifiers/v1/by-source/{sourceSystem}/{value}?type=Work` | A bare `{ "canonicalId": "..." }` (`CanonicalIdRef`). |
+| `GET /identifiers/v1/by-source/{sourceSystem}/{value}?type=Work&include=siblings` | The same full `IdentifierSet`. |
 
 The element shape (`SourceIdentifier`) is identical across both endpoints, so one schema and one
 parser serve every response:
