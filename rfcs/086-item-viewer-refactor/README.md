@@ -84,7 +84,7 @@ Tickets are in [wellcomecollection.org](https://github.com/wellcomecollection/we
 - [x] Phase 2: Split MainViewer Components - [#12985](https://github.com/wellcomecollection/wellcomecollection.org/issues/12985)
 - [x] Phase 3: Canvas Data (with automated tests) - [#12986](https://github.com/wellcomecollection/wellcomecollection.org/issues/12986)
 - [x] Phase 4: Download Logic - [#12987](https://github.com/wellcomecollection/wellcomecollection.org/issues/12987)
-- [x] Phase 5: Restriction Status - [#13412](https://github.com/wellcomecollection/wellcomecollection.org/pull/13412)
+- [x] Phase 5: Restriction Status - [#12988](https://github.com/wellcomecollection/wellcomecollection.org/issues/12988)
 - [x] Phase 6: Duplicate Calls - [#12989](https://github.com/wellcomecollection/wellcomecollection.org/issues/12989)
 - [ ] Phase 7: Cleanup - [#12990](https://github.com/wellcomecollection/wellcomecollection.org/issues/12990), waiting on the toggle being defaulted to ON
 
