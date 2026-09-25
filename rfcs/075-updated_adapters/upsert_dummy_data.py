@@ -17,7 +17,7 @@ catalog = load_catalog(
   catalog_name,
   **{
     "type": "rest",    
-    "warehouse": f"123497843905:s3tablescatalog/{s3_tables_bucket}",
+    "warehouse": f"ACCOUNT_ID:s3tablescatalog/{s3_tables_bucket}",
     "uri": f"https://glue.eu-west-1.amazonaws.com/iceberg",
     "rest.sigv4-enabled": "true",
     "rest.signing-name": "glue",

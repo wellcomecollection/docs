@@ -18,7 +18,6 @@ See https://github.com/wellcomecollection/aws-account-infrastructure for the Inf
 
 ## `platform`
 
-**Number**: 760097843905  
 **Description**: The platform account is the central hub for managing shared infrastructure and services across Wellcome Collection AWS accounts. It contains the core services that support the Wellcome Collection's digital infrastructure, including CI/CD pipelines, logging and the first place API requests are routed to.
 
 ### Services 
@@ -43,7 +42,6 @@ See https://github.com/wellcomecollection/aws-account-infrastructure for the Inf
 
 ## `catalogue`
 
-**Number**: 756629837203  
 **Description**: Contains the infrastructure for the Wellcome Collection public facing APIs.
 
 ### Services 
@@ -65,7 +63,6 @@ See https://github.com/wellcomecollection/aws-account-infrastructure for the Inf
 
 ## `experience`
 
-**Number**: 130871440101  
 **Description**: Hosts the infrastructure for the main Wellcome Collection website.
 
 ### Services 
@@ -92,7 +89,6 @@ See https://github.com/wellcomecollection/aws-account-infrastructure for the Inf
 
 ## `identity`
 
-**Number**: 770700576653  
 **Description**: Contains the requesting service and identity APIs for the Wellcome Collection. 
 
 ### Services 
@@ -107,7 +103,6 @@ See https://github.com/wellcomecollection/aws-account-infrastructure for the Inf
 
 ## `storage`
 
-**Number**: 299497370133
 **Description**: Contains the storage service and other long-term storage for the Wellcome Collection.
 
 ### Services
@@ -121,7 +116,6 @@ See https://github.com/wellcomecollection/aws-account-infrastructure for the Inf
 
 ## `workflow`
 
-**Number**: 365125299635
 **Description**: Contains the workflow management systems for the Wellcome Collection.
 
 ### Services
@@ -131,7 +125,6 @@ See https://github.com/wellcomecollection/aws-account-infrastructure for the Inf
 
 ## `digitisation`
 
-**Number**: 964279954909
 **Description**: Contains the infrastructure for the digitisation workflow.
 
 ### Services
@@ -140,7 +133,6 @@ See https://github.com/wellcomecollection/aws-account-infrastructure for the Inf
 
 ## `digirati`
 
-**Number**: 048926554549
 **Description**: Contains the infrastructure for the Digirati-managed services.
 
 ### Services
@@ -151,15 +143,12 @@ See https://github.com/wellcomecollection/aws-account-infrastructure for the Inf
 
 ### `born-digital-accessions`
 
-**Number**: 094622098392
 **Description**: Contains the infrastructure for the born-digital accessions service. This is a legacy account and is no longer used.
 
 ### `catalogue-api-prismic`
 
-**Number**: 418439632722
 **Description**: Contains the infrastructure for the Prismic content API. This is a legacy account and is no longer used.
 
 ### `wc-platform-infra`
 
-**Number**: 312583357253
 **Description**: Contains the infrastructure for the Wellcome Collection platform. This is a legacy account and is no longer used.

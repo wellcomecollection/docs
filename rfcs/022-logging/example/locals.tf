@@ -3,10 +3,10 @@ locals {
 
   revision = aws_ecs_task_definition.example.revision
 
-  secret_esuser_arn = "arn:aws:secretsmanager:eu-west-1:760097843905:secret:shared/logging/es_user-NzgYRK"
-  secret_espass_arn = "arn:aws:secretsmanager:eu-west-1:760097843905:secret:shared/logging/es_pass-Wrmt3C"
-  secret_eshost_arn = "arn:aws:secretsmanager:eu-west-1:760097843905:secret:shared/logging/es_host-wFZkP1"
-  secret_esport_arn = "arn:aws:secretsmanager:eu-west-1:760097843905:secret:shared/logging/es_port-KAwnVi"
+  secret_esuser_arn = "arn:aws:secretsmanager:eu-west-1:ACCOUNT_ID:secret:shared/logging/es_user-SUFFIX"
+  secret_espass_arn = "arn:aws:secretsmanager:eu-west-1:ACCOUNT_ID:secret:shared/logging/es_pass-SUFFIX"
+  secret_eshost_arn = "arn:aws:secretsmanager:eu-west-1:ACCOUNT_ID:secret:shared/logging/es_host-SUFFIX"
+  secret_esport_arn = "arn:aws:secretsmanager:eu-west-1:ACCOUNT_ID:secret:shared/logging/es_port-SUFFIX"
 
   private_subnets = data.terraform_remote_state.infra_shared.outputs.catalogue_vpc_delta_private_subnets
   vpc_id = data.terraform_remote_state.infra_shared.outputs.catalogue_vpc_delta_id

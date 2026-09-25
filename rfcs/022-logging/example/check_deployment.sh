@@ -7,7 +7,7 @@ set -o nounset
 REPO_NAME=${1:-fluentbit-example}
 CONTAINER_NAME=${2:-log_router}
 
-ECR_REPO=760097843905.dkr.ecr.eu-west-1.amazonaws.com/uk.ac.wellcome/"$REPO_NAME"
+ECR_REPO=ACCOUNT_ID.dkr.ecr.eu-west-1.amazonaws.com/uk.ac.wellcome/"$REPO_NAME"
 
 CLUSTER_NAME=$(terraform output ecs_example_cluster_name)
 SERVICE_NAME=$(terraform output ecs_example_service_name)
