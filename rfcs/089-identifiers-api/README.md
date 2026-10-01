@@ -162,7 +162,8 @@ parser serve every response:
 
 **Status codes:** `200` found; `304` conditional GET (matched `ETag`); `400` malformed `canonicalId`
 or an unsupported `type` enum value (rejected at the gateway); `404` no mapping: an unknown id, an unknown
-source tuple, or a canonical id that is pre-generated but not yet assigned, all opaque to the
+source tuple, a canonical id that is pre-generated but not yet assigned, or a canonical id whose
+original row has an ontology type outside the enum (see open question 6), all opaque to the
 consumer as "no public identifier".
 
 ---
@@ -313,10 +314,11 @@ Freshness depends on both the lookup direction and the migration timeline:
 | Forward (`canonicalId → sources`) | Alias set can grow during migration | Bounded TTL + ETag. |
 | Reverse, `include=siblings` | Carries the canonical → sources set | Same as forward. |
 
-The `ETag` is a weak validator derived from `(row_count, max(createdAt))`: cheap to compute, and it
-changes exactly when an alias is added, so revalidation is a cheap `304` until the set actually
-grows. TTL is bounded during the migration window and relaxed after source-system switchover, when
-the alias set is effectively frozen.
+The `ETag` is a weak validator derived from `(row_count, max(createdAt))` of the returned
+identifiers. It is cheap to compute and changes exactly when a returned alias is added, so
+revalidation is a cheap `304` until the returned set actually grows. TTL is bounded during the
+migration window and relaxed after source-system switchover, when the alias set is effectively
+frozen.
 
 ---
 
@@ -439,7 +441,14 @@ still have an unsettled integration point.
 6. **Decided: `type` enum scoped to the three types the API needs.** The live registry holds types
    beyond `Work` / `Image` / `Item` (e.g. `Concept`). The contract scopes
    `SourceIdentifier.type` to the three types the API needs today and extends the enum on demand as
-   further types are required, rather than modelling the full registry up front.
+   further types are required, rather than modelling the full registry up front. Rows of other
+   types are handled when the identifier set is built. If the original row (earliest `createdAt`)
+   has a type outside the enum, the lookup is a `404`, because the canonical id's type is the
+   original's type and the API does not serve it. Otherwise rows of other types are omitted from
+   the set. The original is chosen from every row before any are omitted, so omitting a row never
+   promotes a later alias to original and the top-level `type` of open question 7 keeps its
+   meaning. The `ETag` is derived from the returned rows, so an omitted row does not change it.
+   The bare reverse lookup never builds the set and is unaffected.
 
 7. **Decided: top-level `type`, taken from the original row.** Each row carries its own `type`, and
    a canonical id can carry rows of differing types (cross-type predecessors are allowed). Hoist a
@@ -460,8 +469,8 @@ still have an unsettled integration point.
   from the catalogue API queried in canonical, not from this API.
 - **Sub-work IIIF structure** (canvases, manifestations, files): out of the canonical-first scope,
   per RFC 085.
-- **An aliases toggle on the forward lookup.** The forward lookup always returns the full set; the
-  one-to-many model makes a partial-set toggle pointless.
+- **An aliases toggle on the forward lookup.** The forward lookup always returns every identifier
+  of a type the API serves; the one-to-many model makes a partial-set toggle pointless.
 - **API keys, throttling and cost attribution in the prototype.** These are deployment concerns
   enforced by the gateway and configured in Terraform, not in the Lambda or the OpenAPI body.
 
