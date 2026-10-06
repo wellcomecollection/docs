@@ -8,10 +8,10 @@ same store the ID Minter writes to, per [RFC 083](../083-stable_identifiers/READ
 that translation in one place, between the canonical ids the public surface uses and the source ids
 (Sierra numbers, FOLIO UUIDs, CALM/Axiell refs) that the underlying systems require across the
 Sierra/CALM → FOLIO/Axiell migration. It sets out the contract, the AWS architecture, the
-authentication and cost model, the caching strategy, and what a working prototype has already
+authentication and cost model, the caching decision, and what a working prototype has already
 established.
 
-**Last modified:** 2026-09-15T10:29:00+00:00
+**Last modified:** 2026-10-06T14:27:30+00:00
 
 **Related RFCs:**
 
@@ -226,7 +226,7 @@ graph LR
 | Compute | API Gateway → Lambda | Serverless, scales to near-zero, matches a sparse cacheable lookup. |
 | Gateway type | **REST API (v1)**, not HTTP API | API keys and per-consumer throttling are native REST features; HTTP API would need a Lambda authorizer (more moving parts). |
 | Auth | API key in `x-api-key`, validated by the gateway | Identifies each consumer for cost attribution; no custom authorizer code. |
-| Throttling | Per-consumer throttle bound to the stage | Safety valve capping cache-miss load on the database; not a billing quota. |
+| Throttling | Per-consumer throttle bound to the stage | Shares capacity fairly between consumers and limits cost; not a billing quota. |
 | Datastore | Aurora Serverless v2, kept (not DynamoDB) | One store, simpler infra; the same registry the ID Minter writes to. |
 | DB access | RDS Data API | HTTP-based, no persistent connections to exhaust under Lambda concurrency; lower ops than RDS Proxy. |
 
@@ -271,18 +271,20 @@ the service issues only the two indexed lookups above.
 
 Both consumers are known internal services. The concern is the **cost of database queries** (how
 often a request reaches Aurora), not policing a per-consumer billing quota, and not an anonymous
-public path. So the model is known callers identified by key, with a throttle protecting the
-database:
+public path. So the model is known callers identified by key, with a per-consumer throttle:
 
 - **API key in the `x-api-key` header, validated by API Gateway** before the request reaches the
   Lambda (`x-amazon-apigateway-api-key-source: HEADER`; the `ApiKeyAuth` security scheme in the
   spec). The gateway enforces keys with no custom authorizer code, and the key identifies the
   consumer so database cost can be attributed per consumer.
-- **A per-consumer throttle bound to the stage** is a safety valve that caps how many cache-misses
-  one consumer can drive into the database (rate-limiting to protect the backend, not a quota that
-  bills usage). The keys, the throttle, and their stage binding are **not** in the OpenAPI body;
-  they are separate API Gateway resources in Terraform, so re-importing the definition does not
-  disturb them.
+- **A per-consumer throttle bound to the stage** caps how many requests one consumer can send
+  (rate-limiting, not a quota that bills usage). External consumers are limited to 10 requests a
+  second with a burst of 20 per key, and the internal usage plan has no throttle. The load test in
+  [platform#6536](https://github.com/wellcomecollection/platform/issues/6536#issuecomment-6012994918)
+  found the registry far from its limit, so the throttle shares capacity fairly and limits cost
+  rather than protecting the database. The keys, the throttle, and their stage binding are **not**
+  in the OpenAPI body; they are separate API Gateway resources in Terraform, so re-importing the
+  definition does not disturb them.
 - A **gateway-level regex** on `canonicalId` (`^[a-hjkmnp-z][a-hjkmnp-z2-9]{7}$`) rejects malformed
   ids with a `400` before they reach the Lambda: cheap defence-in-depth, and the basis for WAF
   rate-based rules if the read path is ever exposed more widely.
@@ -291,34 +293,45 @@ database:
 
 ## Caching
 
-The data is highly cacheable and the service should be as low-cost as possible. The cost being
-protected is **database (Aurora) query volume** (how often a request reaches the store), not a
-per-consumer quota. So the strategy is to cache as far out and as aggressively as correctness allows,
-bounded only by how mutable each response is during the migration window. The topology is flagged
-here and the unresolved parts are tracked under [Open questions](#open-questions).
+No cache is placed in front of the API: neither an edge cache (CloudFront) nor the API Gateway stage
+cache. Every request that passes the gateway reaches the Lambda and the registry.
 
-Because the goal is to keep requests away from the database, the
-cache should sit as far in front of it as possible. An **edge cache (CloudFront)** in front of API
-Gateway is the candidate primary cache: a hit is served at the edge and never reaches the gateway,
-the Lambda, or Aurora, which saves the most. (An earlier framing rejected the edge cache because a
-hit never reaches the gateway and so would not be counted for per-consumer metering; with database
-cost as the concern and no billing quota, an uncounted hit that never touches the database is what we
-want.) The API Gateway **stage cache** remains available as a secondary layer, but it sits behind the
-gateway, so it saves less than an edge hit. This is a candidate, not a decision.
+A cache was originally proposed to keep query volume off the registry. The load test in
+[platform#6536](https://github.com/wellcomecollection/platform/issues/6536#issuecomment-6012994918)
+ran the stage API against the previous production registry (`identifiers-v2-serverless`, which has
+half the production registry's maximum capacity) for the forward, reverse and siblings lookups at 5
+to 100 requests a second, with and without a replay of the ID Minter reading the same registry, and
+then without the minter at 200 and 400 requests a second. From 50 to 400 requests a second the
+median latency stayed at about 100 to 165ms with no sign of queueing, and at 400 requests a second
+the registry used about 28% of its maximum capacity. Up to 100 requests a second, the minter replay
+made no measurable difference to latency or to the registry's load. The API's limit was not reached.
 
-Freshness depends on both the lookup direction and the migration timeline:
+With that headroom, a cache would mainly shorten the roughly 100ms each lookup takes, while bringing
+the cache-key problems recorded in platform#6536. Including `x-api-key` in the cache key splits the
+hit ratio per consumer, leaving it out serves cached responses without validating the key, and the
+`idDatabase` alias ([platform#6658](https://github.com/wellcomecollection/platform/issues/6658))
+would have to be part of the key as well. Without a cache none of these arise.
+
+Expected consumer volumes are not yet known. The decision should be revisited if they approach the
+tested rates, if a minting run that writes (the test's replay only read) is found to slow lookups,
+or if a consumer needs lookups much faster than about 100ms.
+
+The API still sends `Cache-Control` and, on the forward and siblings responses, a weak `ETag`, so a
+consumer can keep its own copies. Freshness depends on both the lookup direction and the migration
+timeline:
 
 | Response | Freshness | Treatment |
 |---|---|---|
-| Reverse, bare (`source → canonicalId`) | Immutable once minted | Long TTL, even mid-migration. |
-| Forward (`canonicalId → sources`) | Alias set can grow during migration | Bounded TTL + ETag. |
+| Reverse, bare (`source → canonicalId`) | Immutable once minted | Long `max-age`, even mid-migration. |
+| Forward (`canonicalId → sources`) | Alias set can grow during migration | Bounded `max-age` + `ETag`. |
 | Reverse, `include=siblings` | Carries the canonical → sources set | Same as forward. |
 
 The `ETag` is a weak validator derived from `(row_count, max(createdAt))` of the returned
 identifiers. It is cheap to compute and changes exactly when a returned alias is added, so
-revalidation is a cheap `304` until the returned set actually grows. TTL is bounded during the
-migration window and relaxed after source-system switchover, when the alias set is effectively
-frozen.
+revalidation is a cheap `304` until the returned set actually grows. The `max-age` is bounded during
+the migration window and relaxed after source-system switchover, when the alias set is effectively
+frozen. The concrete `max-age` values and the form of the `ETag` are still open (see open question
+8).
 
 ---
 
@@ -352,19 +365,19 @@ beyond `Work` / `Image` / `Item`).
   served by the existing primary key and `idx_canonical`.
 - **HTTP API instead of REST API.** The HTTP API is cheaper per request, but API keys and
   per-consumer throttling are native REST API features; on the HTTP API they require a custom Lambda
-  authorizer. Keeping keys (for cost attribution) and the throttle (the database safety valve) native
-  makes REST the lower-moving-parts choice. Once a cache sits in front, only misses reach the
-  gateway, so the per-request cost gap largely closes.
+  authorizer. Keeping keys (for cost attribution) and the throttle native makes REST the
+  lower-moving-parts choice.
 - **A direct database read, or a sync, instead of a service** (the RFC 088 open-question 1 framing).
   A direct read couples each consumer to the registry's schema and connection management; a sync
   introduces a second store and a staleness window. A thin read-only service keeps the schema behind
   a stable contract, centralises the `isAlias` / ordering / freshness rules, and is the single unit
-  the cache, the keys and the throttle attach to. This RFC proposes the service; the decision is
-  RFC 088's to ratify.
-- **The API Gateway stage cache as the primary cache.** Workable, but it sits behind the gateway, so
-  every hit still incurs a gateway request and saves less than an edge hit. An edge (CloudFront)
-  cache keeps the most traffic furthest from the database, so it is preferred; the stage cache is
-  kept only as a possible secondary layer (see [Caching](#caching)).
+  the keys and the throttle attach to. This RFC proposes the service; the decision is RFC 088's to
+  ratify.
+- **A cache in front of the API** (CloudFront at the edge, or the API Gateway stage cache). This was
+  the original plan for keeping query volume off the registry, with the edge preferred because a hit
+  never reaches the gateway. The load test found the registry far from its limit, so a cache's
+  remaining benefit is shorter lookups, which does not outweigh the cache-key problems it brings
+  (see [Caching](#caching)).
 
 ---
 
@@ -373,21 +386,15 @@ beyond `Work` / `Image` / `Item`).
 Each has a prototype direction. Items prefixed **Decided** were resolved during review; the rest
 still have an unsettled integration point.
 
-1. **Caching and cost.** The cache placement (edge/CloudFront as primary vs the API Gateway stage
-   cache) is load-bearing for cost, because it sets how often a request reaches the database, and is
-   not yet decided; the edge is the candidate. Sub-questions: the cache **hit ratio vs consumer
-   access patterns** (the saving depends on how repetitive requests are: immutable bare-reverse
-   lookups cache well, but if consumers mostly fetch unique ids once the saving is low and the
-   throttle carries more weight; the two expected clients differ here, with digitisation metadata
-   ingestion fetching mostly unique ids and the Items API more likely to repeat requests); the
-   concrete `max-age` values for the bounded (migration) and
-   relaxed (post-switchover) phases; whether the `ETag` should stay a weak validator from
-   `(row_count, max(createdAt))` or move to a content hash; concrete **per-consumer throttle limits**
-   (the database safety valve); and the **cost-attribution mechanism** (edge/access logs keyed by API
-   key, or CloudWatch). The prototype emits `Cache-Control` (`max-age=300` forward / `include=siblings`,
-   `max-age=86400` on the immutable bare reverse lookup) and a weak `ETag`, and honours
-   `If-None-Match` with a `304`, as **prototype defaults, not contract decisions**, and as response
-   headers only (no real edge or stage cache).
+1. **Decided: no cache, and the throttle limits
+   ([platform#6536](https://github.com/wellcomecollection/platform/issues/6536#issuecomment-6012994918)).**
+   The load test found the registry far from its limit at up to 400 requests a second, and a minting
+   run reading it made no measurable difference at up to 100 requests a second, so no edge or stage
+   cache is placed in front of the API (see [Caching](#caching)). That settles the cache placement,
+   the hit ratio against consumer access patterns, and how `x-api-key` and the `idDatabase` alias
+   would appear in a cache key. External consumers are throttled at 10 requests a second with a
+   burst of 20 per key, and the internal usage plan has no throttle. The rest of the original
+   question is open question 8.
 
 2. **The FOLIO-item ingestion dependency (RFC 088).** The requesting translation (canonical item id
    ↔ FOLIO item UUID) has no data in the registry yet: `folio-item` identifiers are absent. This
@@ -457,6 +464,15 @@ still have an unsettled integration point.
    original is unambiguous because exactly one row has `isAlias=false`; with a mixed-type set the
    top-level value reflects that original and may differ from a later alias.
 
+8. **The rest of the caching and cost question.** With no shared cache, `Cache-Control` and the
+   `ETag` only matter to consumers that keep their own copies. Still to settle: the concrete
+   `max-age` values for the migration and post-switchover phases; whether the `ETag` should stay a
+   weak validator from `(row_count, max(createdAt))` or move to a content hash; and the
+   **cost-attribution mechanism** (access logs keyed by API key, or CloudWatch). The API currently
+   sends `max-age=300` on the forward and `include=siblings` responses and `max-age=86400` on the
+   bare reverse lookup, with a weak `ETag` and `304` on `If-None-Match`, as defaults rather than
+   contract decisions.
+
 ---
 
 ## Out of scope
@@ -481,11 +497,11 @@ still have an unsettled integration point.
 1. **Ratify the service answer with RFC 088** as the access mechanism for identifier translation
    (open question 1 there). RFC 091 has since adopted this API for its predecessor lookup, and the
    DDS's use narrows to source-identifier resolution (see [The consumers](#the-consumers)).
-2. **Resolve the caching topology** (open question 1): decide the edge cache vs the stage cache,
-   pick concrete TTLs for the migration and post-switchover phases, pick per-consumer throttle
-   limits, and choose the cost-attribution mechanism.
+2. **Settle the rest of the caching and cost question** (open question 8): the `max-age` values for
+   the migration and post-switchover phases, the form of the `ETag`, and the cost-attribution
+   mechanism.
 3. **Unblock requesting** (open questions 2 and 3): confirm with the catalogue-pipeline workstream
    that FOLIO items are ingested and `folio-item` predecessors are emitted at item level, so the
    requesting translation has data.
 4. **Productionise**: the Terraform for the REST API, the Lambda, the API keys and
-   per-consumer throttle, and the chosen (edge) cache, deployed to a development environment first.
+   per-consumer throttle, deployed to a development environment first.
