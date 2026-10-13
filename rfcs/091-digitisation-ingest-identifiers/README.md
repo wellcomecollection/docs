@@ -218,7 +218,7 @@ sequenceDiagram
     App->>Folio: OAI-PMH GetRecord by instance UUID
     Folio-->>App: MARC (stored for migrated records, generated for stubs)
     App->>DP: marc.xml with 001 and 907 = P, plus a results CSV
-    DP->>Goobi: Mass import; package id = P, METS record identifier = folio-id
+    DP->>Goobi: Mass import, package id = P, METS record identifier = folio-id
     Goobi->>Storage: Ingest (space=digitised, externalIdentifier=P)
     Storage-->>Pipeline: registered_bag_notification (externalIdentifier=P)
     Pipeline->>Pipeline: Transformer emits mets/folio-id identity + folio-instance/folio-id merge candidate
