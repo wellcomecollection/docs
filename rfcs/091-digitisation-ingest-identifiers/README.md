@@ -6,7 +6,7 @@ Wellcome Collection is migrating its library management system from Sierra to Fo
 
 An earlier draft of this RFC proposed minting catalogue-style identifiers at ingest through a secured extension to the Identifiers API. The review discussion on this RFC's pull request reversed that proposal; this version records the agreed direction and the reasoning. See [Alternatives considered](#alternatives-considered) for the rejected designs.
 
-**Last modified:** 2026-10-13T11:52:02+00:00
+**Last modified:** 2026-10-13T13:14:33+00:00
 
 **Related RFCs:**
 
@@ -193,6 +193,8 @@ The binding that backs this redirect is merge-derived, so it cannot come from th
 ## Proposal
 
 Build a small platform-owned export tool that replaces the Sierra and MarcEdit step digital production use today. Staff drop a CSV of bib-level identifiers (b-numbers, or Folio HRIDs) into an S3 requests prefix; the tool resolves each against Folio inventory by HRID or identifier value, fetches the MARC from mod-oai-pmh through Okapi, sets 001 and 907 to the preservation identifier, and writes one marc.xml per record and a results CSV to an output prefix. Goobi's mass import is unchanged. Nothing is minted at any point. The scoping is recorded in platform#6669 (2026-10-13); digital production confirmed on 2026-10-13 that request lists are bib-level.
+
+The export tool is the primary mechanism (decided 2026-10-13). In parallel, Intranda are asked to scope a Goobi-side connector that pulls the MARC from Folio over the API for a list of identifiers and applies the same predecessor rule; digital production said on 2026-10-13 that the CSV round trip adds no friction compared with MarcEdit today and that the in-Goobi pull is the form they would prefer. The connector can replace the CSV round trip later if the scoping shows it cheap and timely. Intranda work is needed on either route, because the predecessor rule is not something the standard catalogue plugins apply.
 
 Behaviour splits on the predecessor signal:
 
@@ -416,7 +418,7 @@ Cross-migration needs none of these: it reuses the b-number, keeps the transform
 
 ### Open questions
 
-1. **Confirming the Folio HRID, and the multi-volume suffix convention.** The form itself is proposed rather than open (see [The form of the new preservation identifier](#the-form-of-the-new-preservation-identifier)). Digital production confirmed on 2026-10-13 that their request lists are bib-level b-numbers and that they understand the HRID as the equivalent after migration. Formal sign-off on the form and on the suffix convention is still outstanding from digital production, Digirati and Internet Archive, and the suffix convention cannot be left implicit because Goobi stamps it into METS and JP2 filenames upstream of any service. The questions to each party are listed with the platform#6669 scoping.
+1. **Confirming the Folio HRID, and the multi-volume suffix convention.** The form itself is proposed rather than open (see [The form of the new preservation identifier](#the-form-of-the-new-preservation-identifier)). Digital production confirmed on 2026-10-13 that their request lists are bib-level b-numbers and that they understand the HRID as the equivalent after migration, and on the same day that the CSV round trip the export tool offers is workable. Formal sign-off on the form and on the suffix convention is still outstanding from digital production, Digirati and Internet Archive, and the suffix convention cannot be left implicit because Goobi stamps it into METS and JP2 filenames upstream of any service. The questions to each party are listed with the platform#6669 scoping.
 2. **Storage identifier and record identifier divergence.** Post-migration the storage `externalIdentifier` (P) need not be the same string as the METS record identifier (`folio-id`). Today both are the b-number, and whether iiif-builder and DLCS rely on the two being equal is unconfirmed: iiif-builder loads the package by its storage handle but derives Canvas and DLCS asset identifiers from file names recorded in the METS. Choosing the Folio HRID as P keeps the two equal and makes this question moot; any other scheme must answer it before the post-migration path ships.
 3. **Axiell ref stability across the CALM migration.** The born-digital story above assumes archival refs survive the move to Axiell Collections identically, in which case born-digital needs no change, ever. If refs can be restructured in Axiell, born-digital needs the same predecessor mechanism as b-numbers, and that mechanism is currently only specified for Sierra to Folio. Related: whether the METS merge candidate for Axiell-catalogued material stays `calm-ref-no` or becomes an Axiell identifier type, which touches the same transformer fallback.
 4. **The AV e-bib rule.** For AV the storage package was ingested under the e-bib's b-number rather than the physical bib's, because the merger attaches METS to the e-bib (platform#4876). A predecessor lookup from the physical record therefore returns the wrong b-number, and the export tool has to consult the linked e-bib, or what the storage service holds, before treating the item as new. Which record a request names for AV is undecided.
@@ -425,24 +427,25 @@ Cross-migration needs none of these: it reuses the b-number, keeps the transform
 
 1. **Confirm the Folio HRID and agree its multi-volume suffix convention** (open question 1) with digital production, the pipeline team and Digirati, since all three consume its shape.
 2. **Build the export tool** described in [Proposal](#proposal): CSV of bib identifiers in an S3 prefix, Folio inventory lookup, MARC from mod-oai-pmh through Okapi, 001 and 907 set to the preservation identifier read from the instance's Sierra system number or its HRID, marc.xml and a results CSV out, Goobi mass import unchanged. A prototype against the hosted dev tenant comes first; the specs and the ownership question sit with platform#6669.
-3. **Cross-migration first.** It is the lower-risk path: reuse the b-number, leave the METS transformer untouched, and lean on the RFC 083 predecessor relationship to keep canonical ids stable. It needs only the Folio-target merger rules (step 5).
-4. **Add the `folio-instance` transformer branch** (`MetsMergeCandidate`, `MetsData`), shape-gated so b-numbers and refs are unaffected.
-5. **Update the merger rules for Folio targets.** Add a `FolioInstance` predicate to `WorkPredicates`, an entry to `TargetPrecedence`, and a Folio target on the METS fold rule in `ItemsRule`, so that after migration a Folio work is selected as the merge target. Both paths need this; it does not touch the id_minter or the canonical id, and it is independent of the transformer change.
-6. **Scope the DDS recognition change with Digirati**: shape-distinct classification of the new form, authoritative-source lookups for generator and space, and committing to the Work-id redirect behaviour the DDS already provides as a contract.
-7. **Amend RFC 085** to invert its "Use the Work ID" position, as a deliverable of this RFC rather than a follow-up intention, so the two documents do not disagree in the interim.
-8. **Resolve the open questions**, in particular Axiell ref stability (open question 3), which decides whether born-digital needs predecessor support at all.
-9. **Keep existing IIIF URLs permanent.** Existing `iiif.wellcomecollection.org/presentation/{b-number}` URLs, born-digital ref URLs and the `wellcomelibrary.org` redirects stay canonical and keep resolving; this decision strengthens that guarantee rather than weakening it.
+3. **Scope a Goobi-side Folio connector with Intranda**, in parallel with the export tool and without displacing it: given a list of HRIDs or b-numbers, Goobi fetches the MARC from Folio over the API and applies the same predecessor rule. Digital production prefer this form. Timing is not pressing: digital production have created enough Sierra records to work until March 2027 (Nicola Cook, 2026-10-13), so the first batch sourced from Folio is expected after that date and cross-migration reuse of b-numbers remains the live path until then. Whether any accession catalogued only in Folio is wanted for digitisation before March is an open residual.
+4. **Cross-migration first.** It is the lower-risk path: reuse the b-number, leave the METS transformer untouched, and lean on the RFC 083 predecessor relationship to keep canonical ids stable. It needs only the Folio-target merger rules (step 6).
+5. **Add the `folio-instance` transformer branch** (`MetsMergeCandidate`, `MetsData`), shape-gated so b-numbers and refs are unaffected.
+6. **Update the merger rules for Folio targets.** Add a `FolioInstance` predicate to `WorkPredicates`, an entry to `TargetPrecedence`, and a Folio target on the METS fold rule in `ItemsRule`, so that after migration a Folio work is selected as the merge target. Both paths need this; it does not touch the id_minter or the canonical id, and it is independent of the transformer change.
+7. **Scope the DDS recognition change with Digirati**: shape-distinct classification of the new form, authoritative-source lookups for generator and space, and committing to the Work-id redirect behaviour the DDS already provides as a contract.
+8. **Amend RFC 085** to invert its "Use the Work ID" position, as a deliverable of this RFC rather than a follow-up intention, so the two documents do not disagree in the interim.
+9. **Resolve the open questions**, in particular Axiell ref stability (open question 3), which decides whether born-digital needs predecessor support at all.
+10. **Keep existing IIIF URLs permanent.** Existing `iiif.wellcomecollection.org/presentation/{b-number}` URLs, born-digital ref URLs and the `wellcomelibrary.org` redirects stay canonical and keep resolving; this decision strengthens that guarantee rather than weakening it.
 
 | Aspect | Cross-migration ingest | Post-migration ingest |
 | --- | --- | --- |
 | Predecessor present? | Yes | No |
 | Signal | Sierra system number identifier on the Folio instance | No such identifier |
-| Preservation identifier (storage `externalIdentifier`) | Reused old b-number | Newly assigned P (recommended: the Folio HRID) |
+| Preservation identifier (storage `externalIdentifier`) | Reused old b-number | The Folio HRID |
 | METS record identifier | b-number | `folio-id` |
-| Minting at ingest | None | None |
 | METS merge candidate | `sierra-system-number/<old-b-number>` | `folio-instance/<folio-id>` |
-| Change to `MetsMergeCandidate.scala`? | No | Yes (`folio-instance` branch) |
 | Folio-target merger rules | Required after migration | Required after migration |
 | Public work canonical id | Inherited via RFC 083 predecessor link | Newly minted downstream from `folio-instance` |
 | Canonical manifest URI | `/presentation/<b-number>` (unchanged) | `/presentation/<P>` |
 | Storage version history | Preserved (id unchanged) | Starts at v1 (new item, expected) |
+
+Axiell stubs follow the post-migration column, or the cross-migration column where the stub carries a predecessor b-number. AV and visual material stays on the Sierra route until it migrates to Axiell and reaches Folio through the sync.
