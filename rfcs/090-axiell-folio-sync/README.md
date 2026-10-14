@@ -4,7 +4,7 @@
 
 This RFC proposes an automated pipeline to synchronize data from **Axiell Collections (AxC)**, the new Content Management System (CMS), into **FOLIO**, the new Library Management System (LMS). The records from Axiell Collections need to exist in FOLIO so they can be requested and circulated in the LMS. It is designed for **idempotency** (safe to replay without duplication), **auditability** (every create / update / suppress is recorded), and **graceful error isolation** (one bad record never halts the batch).
 
-**Last modified:** 2026-06-30T00:00:00+00:00
+**Last modified:** 2026-10-13T11:52:02+00:00
 
 ## Table of Contents
 
@@ -36,6 +36,12 @@ This RFC proposes an automated pipeline to synchronize data from **Axiell Collec
   - [4. S3 Manifest Storage](#4-s3-manifest-storage)
 - [Cost Analysis](#cost-analysis)
 - [Design Decisions](#design-decisions)
+- [Digitisation requirements on stubs](#digitisation-requirements-on-stubs)
+  - [FOLIO-assigned instance HRID](#folio-assigned-instance-hrid)
+  - [Identifier set on the stub](#identifier-set-on-the-stub)
+  - [Instance type per category](#instance-type-per-category)
+  - [Stub marker](#stub-marker)
+  - [Discovery suppression](#discovery-suppression)
 - [Open Questions](#open-questions)
   - [Field Mapping from Axc to Folio Instance, Holdings and Items needs to be defined](#field-mapping-from-axc-to-folio-instance-holdings-and-items-needs-to-be-defined)
   - [Delete semantics: what should reconciler-detected deletes do in FOLIO?](#delete-semantics-what-should-reconciler-detected-deletes-do-in-folio)
@@ -44,6 +50,9 @@ This RFC proposes an automated pipeline to synchronize data from **Axiell Collec
   - [Manifest query mechanism: S3 Select is not an established org pattern](#manifest-query-mechanism-s3-select-is-not-an-established-org-pattern)
   - [Item creation should likely be gated on record `Level`](#item-creation-should-likely-be-gated-on-record-level)
   - [Item notes not visible on the FOLIO OAI-PMH feed](#item-notes-not-visible-on-the-folio-oai-pmh-feed)
+  - [Stub identifiers and marker: decisions for Collections Information](#stub-identifiers-and-marker-decisions-for-collections-information)
+  - [Axiell feed restricted to the archivecatalogue dataset](#axiell-feed-restricted-to-the-archivecatalogue-dataset)
+  - [Dev tenant mismatch between the sync and the digitisation tool](#dev-tenant-mismatch-between-the-sync-and-the-digitisation-tool)
 
 
 ---
@@ -152,7 +161,7 @@ graph TD
 
 The flow runs in three steps. `parse_marcxml()` (in `mapper.py`) first extracts MARC fields via the `MARC_SOURCE` table (e.g. `title: 245$a`, `location_code: 852$b`, `barcode: 949$a`) into a typed `CanonicalRecord`, where MARC `001` is the Axiell GUID and the basis for every hrid. `build_instance/holdings/item()` then map that record into the `Instance`, `Holdings`, and `Item` Pydantic models, resolving reference data (location, material type, loan type, holdings source, instance type) through **RefCache** and applying defaults. Finally, Pydantic validates on construction (`extra="forbid"` rejects unknown keys) and `build_payloads()` returns `{"instance", "holdings", "item", "meta"}` as JSON-ready dicts, with `meta` carrying `source_id`, the three hrids, and `mapping_version` (used for audit, rollback, and tracing a record back to the rules that produced it).
 
-**hrid scheme** (the idempotency key for every upsert): `AxC-instance-{guid}`, `AxC-holding-{guid}`, `AxC-item-{guid}`. `Instance.source = "FOLIO"` (FOLIO-native, no linked SRS record; see [Design Decisions](#design-decisions)).
+**hrid scheme**: holdings and items carry a computed hrid, `AxC-holding-{guid}` and `AxC-item-{guid}`, which is their idempotency key. The instance hrid was `AxC-instance-{guid}` in the prototype; since the decision of 2026-10-12 it is assigned by FOLIO from the tenant's shared `in` sequence (for example `in00007289833`) and the instance is found again through a GUID to instance mapping table, see [FOLIO-assigned instance HRID](#folio-assigned-instance-hrid). `Instance.source = "FOLIO"` (FOLIO-native, no linked SRS record; see [Design Decisions](#design-decisions)).
 
 ---
 
@@ -180,7 +189,7 @@ table in `mapping.py`; the hrids are derived from the GUID (MARC `001`).
 
 | MARC Source (Axiell) | `CanonicalRecord` field | FOLIO Target | Example |
 |---------------------|------------------|--------------|----------|
-| 001 (GUID) | `source_id` → `instance_hrid` | Instance `hrid` | `AxC-instance-4d8f1208-9812-4bb5-84ef-da436b22d9e2` |
+| 001 (GUID) | `source_id` | Instance `hrid` | assigned by FOLIO, e.g. `in00007289833`; the GUID is stored on the instance as identifiers, see [Identifier set on the stub](#identifier-set-on-the-stub) |
 | 001 (GUID) | `source_id` → `holdings_hrid` | Holdings `hrid` | `AxC-holding-4d8f1208-9812-4bb5-84ef-da436b22d9e2` |
 | 001 (GUID) | `source_id` → `item_hrid` | Item `hrid` | `AxC-item-4d8f1208-9812-4bb5-84ef-da436b22d9e2` |
 | 245$a | `title` | Instance `title` | Daniel Morley, an English Philosopher... |
@@ -240,17 +249,17 @@ Each record in a loader changeset is **new** (the first time this `id` appears i
 
 **Deletes are driven by the reconciler, not the loader's `deleted=true` tombstone** (which is unreliable — the very reason the adapter has a separate reconciler step). The reconciler tracks the `collectId → guid` mapping in its own Iceberg store and, when a `collectId` is remapped, emits a `DeletedSourceWork` for the superseded GUID. Two things follow for the upserter: it consumes the **loader's** changeset, so it never sees these deletes directly, and a reconciler delete is keyed by the **old (superseded) GUID**, not the changeset row being processed.
 
-**Suggested approach:** have the reconciler fan out a FOLIO suppression path mirroring the loader's fan-out to the upsert path (reusing the existing reconciler rather than building a parallel mapping store). On a reconciler delete, suppress the records for the old GUID (`AxC-instance-{old-guid}`) and cascade to its holdings and item; the loader `deleted=true` stays a best-effort secondary signal only. The exact delete action (suppress vs remove, and cascade scope) is an open policy question — see [Delete semantics](#delete-semantics-what-should-reconciler-detected-deletes-do-in-folio).
+**Suggested approach:** have the reconciler fan out a FOLIO suppression path mirroring the loader's fan-out to the upsert path (reusing the existing reconciler rather than building a parallel mapping store). On a reconciler delete, suppress the records for the old GUID (the instance resolved from the old GUID through the mapping table, then `AxC-holding-{old-guid}` and `AxC-item-{old-guid}`) and cascade to its holdings and item; the loader `deleted=true` stays a best-effort secondary signal only. The exact delete action (suppress vs remove, and cascade scope) is an open policy question, see [Delete semantics](#delete-semantics-what-should-reconciler-detected-deletes-do-in-folio).
 
 ### Upsert Key Strategy (Idempotency)
 
 Every entity is matched against its existing FOLIO record by `hrid` (a GET before each write), then created or updated — no blind creates, which is what makes replay idempotent:
 
-- Instance: `GET /inventory/instances?query=(hrid==AxC-instance-{guid})`
+- Instance: a GUID to instance mapping table, keyed by Axiell GUID and holding the FOLIO instance UUID, the assigned hrid and the mapping version, written on create with a conditional put. When the table has no row, `GET /inventory/instances?query=(identifiers =/@value "{guid}")` finds a stub whose stored bare GUID equals the query value and repairs the row. The prototype keyed the instance on a computed `hrid==AxC-instance-{guid}`; that form is retired by the decision of 2026-10-12 (see [FOLIO-assigned instance HRID](#folio-assigned-instance-hrid)).
 - Holdings: `GET /holdings-storage/holdings?query=(hrid==AxC-holding-{guid})`
 - Item: `GET /inventory/items?query=(hrid==AxC-item-{guid})`
 
-The `hrid` is derived from the Axiell GUID (MARC 001), not the `collectId` (object number). Axiell reuses `collectId`s; keying on GUID prevents a reused id from overwriting the wrong FOLIO record.
+Every key is derived from the Axiell GUID (MARC 001), not the `collectId` (object number). Axiell reuses `collectId`s; keying on GUID prevents a reused id from overwriting the wrong FOLIO record.
 
 **Behavior:** when a record is found, its mutable fields are updated while FOLIO-internal metadata is preserved; when it isn't found, a new record is created; and when required fields are missing, the record is skipped with a structured error logged. An update applies only if it passes the stale-write guard (incoming Axiell `last_modified` strictly newer than the watermark on the existing FOLIO record), so out-of-order or replayed changesets never overwrite newer state (see [Invocation Pattern](design-rationale.md#invocation-pattern-ordering--concurrency)).
 
@@ -615,6 +624,45 @@ For the cost evidence behind the "~$3–5/month" figure, see [Cost Analysis](#co
 
 ---
 
+## Digitisation requirements on stubs
+
+[RFC 091](../091-digitisation-ingest-identifiers/README.md) makes the FOLIO instance HRID the preservation identifier for material digitised after the migration, and platform#6697 decided that visual material and AV are catalogued in Axiell Collections and synced to FOLIO. The stubs this sync creates are therefore the records that digital production's export tool resolves when it writes the marc.xml Goobi needs. The export path itself is described in RFC 091; this section records what the stub has to carry for it, decided on 2026-10-12 during the platform#6669 scoping. The requirements were checked against the sync code on catalogue-pipeline main (mapping version 2.6.1) and the hosted dev tenant on 2026-10-13.
+
+### FOLIO-assigned instance HRID
+
+The prototype set the instance `hrid` to `AxC-instance-{guid}`. That value becomes the preservation identifier the moment a stub is digitised: it is stamped into S3 keys, METS and JP2 file names and IIIF URIs, so it has to be a plain, file-name-safe value in the same shape as the HRIDs migrated instances carry. The instance therefore no longer sets `hrid`; FOLIO assigns the next value from the tenant's shared `in` sequence (prefix `in`, leading zeroes retained, eleven digits). Holdings and items keep their computed `AxC-` hrids, which nothing outside the sync reads.
+
+Finding the instance again is done through a GUID to instance mapping table (Axiell GUID to instance UUID, assigned hrid and mapping version), written on create with a conditional put so two concurrent runs for one GUID cannot both create. When the table has no row the sync queries inventory with `identifiers =/@value "{guid}"`, keeps a hit only if its stored bare GUID equals the query value, and repairs the row. On the dev tenant that query is case-insensitive and took 0.1 to 0.4 seconds against 1,038,299 instances; `==/@value` is not supported by the module, so equality is checked in code. The reconciler cascade resolves the instance the same way. On update the existing HRID is carried through, which the current update path already does once the payload omits `hrid`.
+
+### Identifier set on the stub
+
+Stored identifiers are searchable in inventory whatever their type. mod-oai-pmh's `rules/rulesDefault.json` emits only built-in types in the MARC it generates for Inventory-native instances; that emission is inferred from the rules file rather than observed, because no FOLIO-native instance on the dev tenant carries an identifier yet.
+
+| Source in the Axiell MARC | FOLIO identifier type | In generated MARC | Purpose |
+|---|---|---|---|
+| 001, the Axiell GUID | System control number, two entries: `(AxC)<guid>` and the bare `<guid>` | 035$a, inferred | The prefixed entry gives 035 its prefix; the bare entry is the value the export tool and the self-heal query match exactly |
+| 035$a with the `(AltRefNo)` prefix, the object number | Local identifier, as today | 024, inferred | Human lookup |
+| 035$a with the `(RefNo)` prefix | A tenant-defined type of its own, proposed name `Axiell reference number` | not emitted | Lookup by reference, and the process-title prefix the export tool writes into 945$a; a separate type is needed so the tool can tell the RefNo from the object number |
+| 035$a with the `(Bibliographic Number)` prefix, or 907$a when it is b-number-shaped | Sierra system number, the tenant-defined type migrated instances use | not emitted | Lookup by b-number for re-digitisation, the predecessor rule in RFC 091 |
+
+The b-number source needs care. The collect stylesheet fills 907$a from `PID_other.non-URI_ID`, which on migrated archive records is the CALM RecordID (RFC 092 counts it on 99.4 per cent of records). The b-number, where one exists, arrives as 035$a with the `(Bibliographic Number)` prefix through the `Alternative_number` template, the field RFC 092's import fills. What `PID_other` will hold for visual and AV records migrated from Sierra is not yet known and may be the b-number, which is why 907$a is accepted when it matches the b-number shape (`b`, seven digits, then a digit or `x`). The stored b-number is lowercase with any leading dot removed.
+
+The b-number must not be stored under a built-in type. The catalogue pipeline's FOLIO transformer reads the predecessor from MARC 907, so a stub whose harvested MARC carried 907 with a b-number would inherit the Sierra bib's canonical id, and RFC 092 has the Axiell record cite the same b-number while keeping the work id inherited from CALM. Keeping the b-number out of the generated MARC keeps the two records apart.
+
+### Instance type per category
+
+Every stub is currently typed `text` through a single default. The instance type becomes a per-category table resolved through the reference cache: still image for visual material, two-dimensional moving image for film, performed music or spoken word for sound, text for archives. The dev tenant holds all 26 standard instance types. The type drives 336 in the generated MARC and gives the export tool leader byte 6, from which Goobi chooses the process type. FOLIO has no archival instance type, so an archive stub is `text` like a book and the export tool tells them apart through the stub marker.
+
+### Stub marker
+
+Stubs must be identifiable so that staff edit them only in Axiell. The `AxC-` HRID prefix was the only marker and the FOLIO-assigned HRID removes it. It is replaced by an administrative note, staff-only and not exported, saying the record is mastered in Axiell Collections, and a statistical code so stubs can be filtered in FOLIO searches and reports. The dev tenant has 16 statistical codes in four types and none marks a stub, so the code is new reference data. The export tool also depends on the marker: for an Axiell-mastered record whose instance type is `text` it sets leader byte 6 to `t`, so Goobi creates an Archive process rather than a Monograph, and the statistical code or the `(AxC)` System control number is how it recognises the record. The marker is part of the digitisation path, not only a staff convenience.
+
+### Discovery suppression
+
+Stubs are created with no `discoverySuppress`, and the catalogue pipeline's FOLIO adapter harvests every instance with no set filter, so each stub would appear in the public catalogue as a FOLIO work beside its Axiell work. The proposal is to create stubs with `discoverySuppress: true`. The generated MARC still reaches the adapter with 999$t set to 1, and the FOLIO work builder emits a `DeletedSourceWork` for it; both halves were observed on the dev tenant on 2026-10-13 with a suppressed migrated instance. The export tool ignores suppression, since both inventory and OAI-PMH return suppressed records on this tenant. If Collections Information do not want suppression, the pipeline needs a filter on the statistical code or the `(AxC)` 035 prefix instead, which is a pipeline change rather than a sync change. Identifiers, instance type, the administrative note and the statistical code are replaced on every update so a corrected Axiell record corrects the stub.
+
+---
+
 ## Open Questions
 
 ### Field Mapping from Axc to Folio Instance, Holdings and Items needs to be defined
@@ -646,3 +694,24 @@ The legacy CALM→Sierra transform (`docs/discovery/CalmInnopac.xsl`) only attac
 ### Item notes not visible on the FOLIO OAI-PMH feed
 
 Confirmed via the prototype: FOLIO-native instances (`source = "FOLIO"`) created by this sync **can** be updated through mod-inventory, and the records **are** received on the FOLIO adapter in the catalogue pipeline (so the storage-type and catalogue-feed concerns are largely settled for Inventory-native records). One issue remains open: the item **notes list does not appear on the OAI-PMH feed** (`marc21_withholdings`). The records otherwise come through, but the notes we set (for example the `Axiell location` note) are missing from the harvested output. This needs further investigation, likely into how mod-oai-pmh renders Inventory item notes in the MARC output and whether a note type, `staffOnly`, or suppression setting hides them.
+
+### Stub identifiers and marker: decisions for Collections Information
+
+The requirements in [Digitisation requirements on stubs](#digitisation-requirements-on-stubs) leave these open:
+
+1. The `655$a` vocabulary for migrated visual and AV records, and whether `351$c` will be `ITEM` for them.
+2. Whether stubs are discovery-suppressed, or the public catalogue filters them another way.
+3. The wording of the administrative note and the statistical code used as the stub marker.
+4. Whether stubs may draw from the shared `in` HRID sequence, whose settings EBSCO manage, or need a prefix of their own. The export tool and Goobi accept either, but it must be settled before anything is stamped into file names or storage paths.
+5. The loan type source, carried over from catalogue-pipeline PR 3746.
+6. Whether museum and film records should reach the public catalogue through the Axiell transformer as soon as they enter the feed, or be held back.
+7. What `PID_other.non-URI_ID`, and so 907$a, will carry for visual and AV records migrated from Sierra, and whether their b-numbers will be loaded as `(Bibliographic Number)` alternative numbers as RFC 092 does for archives.
+8. The name of the tenant-defined identifier type for the Axiell RefNo, which EBSCO or Collections Information add as reference data.
+
+### Axiell feed restricted to the archivecatalogue dataset
+
+Verified on the production Axiell endpoint on 2026-10-13: the OAI `collect` set is restricted by a search statement `dataset=archivecatalogue` in `adlibweb.xml`, applied by Axiell on 2026-07-28 at our request (platform#6460). Visual records are destined for the `museum` dataset and AV for `film`; on that date museum held 11,008 records and film none. Nothing in those datasets reaches the adapter, so nothing reaches the sync. Before any visual or AV stub can exist Axiell widens the statement to `dataset=archivecatalogue,film,museum` and recycles the application pool, we run a full reharvest because the change does not touch record modification dates, the museum and film record shapes are checked against the collect stylesheet, and Collections Information agree whether those records may reach the public catalogue at the same time, since the adapter feeds both. The migrations are estimated at January 2027 for visual and March 2027 for AV (Nicola Cook, 2026-08-27, unconfirmed), so the sync changes can be built and tested on archive records first.
+
+### Dev tenant mismatch between the sync and the digitisation tool
+
+The deployed sync Lambda runs with `FOLIO_TARGET=dev` against a FOLIO at a private VPC address, tenant `diku`. The export tool and the verification in this RFC use the EBSCO-hosted dev tenant `fs00001190`, which holds the migrated Sierra data, mod-oai-pmh and the OAI edge, and no synced stubs. End-to-end testing of a stub through the export tool needs both on one tenant. The proposal is a second sync target pointing at `fs00001190` with its own SSM credential, used for a bounded dry run and then a small live run, rather than moving the tool to `diku`, which lacks the reference data and the OAI edge. Whether EBSCO accept stubs being written to `fs00001190`, and what cleanup they expect, is open.
