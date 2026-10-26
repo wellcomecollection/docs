@@ -181,16 +181,17 @@ The contract lives with the code it describes, in
 It moved there with the implementation, so that the API Gateway body can template it from the same
 repository and there is no copy to keep in step. This RFC previously carried its own copy.
 
-The spec is deliberately a fragment: it carries the two lookup operations, their schemas, the
-`ApiKeyAuth` security scheme with `x-amazon-apigateway-api-key-source: HEADER` (so API Gateway
-enforces keys), and `aws_proxy` integration stubs pointing at the Lambda. It does **not** carry the
-API keys, the per-consumer throttle, or their stage bindings; those are separate API
-Gateway resources configured in Terraform, so importing or re-importing this definition does not
-disturb them.
+The spec is deliberately a fragment: it carries the lookup operations, the `source-systems` list,
+the deploy tracker's `/management/manifest` endpoint, their schemas, the `ApiKeyAuth` security
+scheme with `x-amazon-apigateway-api-key-source: HEADER` (so API Gateway enforces keys), and
+`aws_proxy` integration stubs pointing at the Lambda. It does **not** carry the API keys, the
+per-consumer throttle, or their stage bindings; those are separate API Gateway resources configured
+in Terraform, so importing or re-importing this definition does not disturb them.
 
-Every pull request in catalogue-api lints the spec with Redocly. On merge, catalogue-api's
-`sync-openapi-spec.yml` bundles it for the developers site, replacing the description with the
-consumer introduction and dropping the API Gateway extensions and the deploy-tracker endpoint.
+Every catalogue-api pull request that changes the spec lints it with Redocly. On merge,
+catalogue-api's `sync-openapi-spec.yml` bundles it for the developers site, replacing the
+description with the consumer introduction and dropping the API Gateway extensions and the
+deploy-tracker endpoint.
 
 ---
 
