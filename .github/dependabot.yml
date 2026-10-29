@@ -13,3 +13,10 @@ updates:
     open-pull-requests-limit: 0
     ignore:
       - dependency-name: "*"
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: weekly
+    groups:
+      github-actions:
+        patterns: ["*"]
