@@ -24,7 +24,7 @@ And a group for folk providing oversight from the Trust:
 
 The organisation enforces SAML single sign-on through Wellcome's Entra ID, so every member signs in to GitHub through their Wellcome account.
 Someone without a linked Wellcome identity is removed from the organisation.
-If they sign in at <https://github.com/orgs/wellcomecollection/sso> within three months and are invited back, their previous teams are restored.
+They can rejoin by signing in at <https://github.com/orgs/wellcomecollection/sso> with their Wellcome account, and if they do so within three months of being removed, their previous teams are restored.
 
 Members of the `ent:data-engineering` and `ent:machine-learning` enterprise teams are added to the organisation by the Wellcome Trust enterprise account, not by us, and stay members whether or not they have signed in through SSO.
 
