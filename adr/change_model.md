@@ -33,7 +33,7 @@ Avoid making a normal change on a Friday afternoon or before a bank holiday unle
 
 ### Test evidence, validation and rollback
 
-The pull request template has headings for how the change was tested, how we check it once it is in production, and how to roll it back ([platform#6874](https://github.com/wellcomecollection/platform/issues/6874)). What goes under them depends on the kind of change:
+The [pull request template](https://github.com/wellcomecollection/.github/blob/main/PULL_REQUEST_TEMPLATE.md) has headings for how the change was tested, how we check it once it is in production, and how to roll it back ([platform#6874](https://github.com/wellcomecollection/platform/issues/6874)); repositories with their own template carry the same headings. What goes under them depends on the kind of change:
 
 - A normal change fills in each heading.
 - A standard change names its catalogue entry and can point at that entry's procedure.
