@@ -23,3 +23,5 @@ An ADR records a a particular decision and contains the key information to under
 | [Uptime monitoring with LogicMonitor](logicmonitor.md) | Overview of our LogicMonitor-based website uptime monitoring and how to manage it. |
 | [Base AMI updates](base_ami_updates.md) | A process for updating base AMIs in Wellcome Collection AWS accounts. |
 | [Identity service for IIIF-Builder](iiif-builder-identity-service.md) | How IIIF-Builder (DDS) learns where and how digital objects are stored, given an identifier |
+| [Service levels](service_levels.md) | Our support hours, the user journeys that must work, and how we set and track availability targets. |
+| [Change model](change_model.md) | How we make production changes: the normal, standard and emergency routes, Terraform applies, the change record and change authority. |
