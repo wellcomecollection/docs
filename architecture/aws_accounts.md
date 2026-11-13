@@ -12,9 +12,11 @@ This document describes the structure and purpose of the AWS accounts used by We
 - [`workflow`](#workflow)
 - [`digitisation`](#digitisation)
 - [`digirati`](#digirati)
+- [`data`](#data)
+- [`reporting`](#reporting)
 - [Legacy accounts](#legacy-accounts)
 
-See https://github.com/wellcomecollection/aws-account-infrastructure for the Infrastructure as Code (IaC) that manages these accounts.
+See https://github.com/wellcomecollection/aws-account-infrastructure (internal) for the Infrastructure as Code (IaC) that manages these accounts.
 
 ## `platform`
 
@@ -133,22 +135,30 @@ See https://github.com/wellcomecollection/aws-account-infrastructure for the Inf
 
 ## `digirati`
 
-**Description**: Contains the infrastructure for the Digirati-managed services.
+**Description**: Contains the infrastructure for the Digirati-managed services, including DLCS. The D&T ITSM assessment lists this account as DLCS.
 
 ### Services
 
 - [`iiif.wellcomecollection.org`](./services/apis/iiif.wellcomecollection.org.md): The IIIF Image and Presentation API endpoints.
 
+## `data`
+
+**Description**: Used by the data science team for prototypes and experiments, never for public-facing or permanent services. The [data-science](https://github.com/wellcomecollection/data-science) repository that deployed here is archived, and in October 2026 the account had no ECS services or Lambda functions.
+
+## `reporting`
+
+**Description**: Set up for the services that populated the reporting cluster. The [reporting](https://github.com/wellcomecollection/reporting) repository is archived, and in October 2026 the account had no ECS services or Lambda functions. The [reporting.wellcomecollection.org](./services/developer/reporting.wellcomecollection.org.md) service runs in the platform and storage accounts.
+
 ## Legacy accounts
 
-### `born-digital-accessions`
+### `microsites` (Legacy Collections Microsites)
 
-**Description**: Contains the infrastructure for the born-digital accessions service. This is a legacy account and is no longer used.
+**Description**: Old Wellcome Collection microsites built by a contractor we no longer use. The account is dormant, and its closure is tracked in [platform#5324](https://github.com/wellcomecollection/platform/issues/5324).
 
-### `catalogue-api-prismic`
+### `systems_strategy` (Legacy Systems Strategy)
 
-**Description**: Contains the infrastructure for the Prismic content API. This is a legacy account and is no longer used.
+**Description**: An old account for mostly deprecated services. Its removal is tracked in [platform#5669](https://github.com/wellcomecollection/platform/issues/5669).
 
-### `wc-platform-infra`
+### `dam_prototype` (DAMPrototype)
 
-**Description**: Contains the infrastructure for the Wellcome Collection platform. This is a legacy account and is no longer used.
+**Description**: Used to test a prototype of the storage service ("DAM" as in digital asset management system). The account has been closed.
