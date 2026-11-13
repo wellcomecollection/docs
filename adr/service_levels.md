@@ -4,7 +4,7 @@ Last updated: 13/11/26
 
 ---
 
-This records the support hours we offer for Wellcome Collection services, which user journeys must work, and how we set and track availability targets. The support position is decided, and so is the website's target of 99.5% measured at the content load balancer. The other availability targets are proposed and due to be agreed by 30 November 2026, so treat those numbers as proposals until this page says otherwise.
+This records the support hours we offer for Wellcome Collection services, which user journeys must work, and how we set and track availability targets. The support position is decided, and the availability targets below were agreed on 13 November 2026.
 
 Tracked in [platform#6794](https://github.com/wellcomecollection/platform/issues/6794).
 
@@ -40,19 +40,19 @@ We measure availability as the share of requests not answered with a server erro
 | Service | Repository | Measured at | Target | Measured, 90 days | Lowest 28-day window |
 |---|---|---|---|---|---|
 | Website | wellcomecollection.org | load balancer, content app | 99.5%, agreed | 99.9256% | 99.7344% |
-| Account pages | wellcomecollection.org | load balancer, identity app | 99.95%, proposed | 99.9980% | 99.9943% |
-| Catalogue API | catalogue-api | API gateway | 99.5%, proposed | 99.8988% | 99.6343% |
-| Identity API | identity | API gateway | 99.5%, proposed | 99.8163% | 99.6488% |
+| Account pages | wellcomecollection.org | load balancer, identity app | 99.95%, agreed | 99.9980% | 99.9943% |
+| Catalogue API | catalogue-api | API gateway | 99.5%, agreed | 99.8988% | 99.6343% |
+| Identity API | identity | API gateway | 99.5%, agreed | 99.8163% | 99.6488% |
 
 The website's SLO is measured at the content load balancer. We also measured the CDN across all paths (99.9832% over 90 days, lowest 28-day window 99.9166%) and did not choose it. That figure is approximate, because CDN error counts are estimated from the error rate CloudWatch publishes.
 
-No target is proposed for catalogue-pipeline. It is a batch pipeline with no request-based measure, and a freshness measure would need a metric we have not yet identified.
+No target is set for catalogue-pipeline. It is a batch pipeline with no request-based measure, and a freshness measure would need a metric we have not yet identified.
 
 ### How these were measured
 
 The figures come from hourly CloudWatch request and 5xx counts from 15 August to 13 November 2026, the same calculation as the load balancer availability template in Backplane's specification. Load balancer figures count errors from our applications only, which leaves out errors the load balancer generates for traffic that did not come through the CDN.
 
-Each target was proposed as the highest of 99%, 99.5%, 99.9% and 99.95% that every rolling 28-day window in the 90 days met.
+Each target was set as the highest of 99%, 99.5%, 99.9% and 99.95% that every rolling 28-day window in the 90 days met.
 
 Most of the errors in the period came from one incident on Sunday 13 September 2026, when the catalogue API returned server errors for about five hours. With a 99.9% target the website and catalogue API would have missed in 45% of 28-day windows, all because of that incident. During office hours the website and catalogue API both measured above 99.99%.
 
