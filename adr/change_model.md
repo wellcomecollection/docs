@@ -48,12 +48,12 @@ A standard change is a kind of change we have agreed in advance is low risk and 
 | Change | Procedure |
 |---|---|
 | A dependency update raised by Dependabot, with CI passing | [Dependabot](https://github.com/wellcomecollection/developer-handbook/blob/main/developer-handbook/dependabot.md) |
-| Turning a toggle on for the public once its checklist is complete, through a pull request | [Toggles and feature flags](https://github.com/wellcomecollection/developer-handbook/blob/main/developer-handbook/front-end/toggles-feature-flags.md), "Before turning a toggle ON" |
+| Turning a toggle on for the public once its checklist is complete, recorded on its issue | [Toggles and feature flags](https://github.com/wellcomecollection/developer-handbook/blob/main/developer-handbook/front-end/toggles-feature-flags.md), "Before turning a toggle ON" |
 | Updating a WAF IP list or a block list through a pull request, either to the WAF IP set updaters or to add an address to a block list | [WAF IP set updaters](https://github.com/wellcomecollection/wellcomecollection.org/blob/main/cache/ip-updaters/README.md), and "Bot or scraper traffic slows or breaks the site" in the [website runbook](https://github.com/wellcomecollection/wellcomecollection.org/blob/main/content/docs/runbook.md#bot-or-scraper-traffic-slows-or-breaks-the-site) |
 | Changing an ECS service's task count or an Elastic Cloud deployment's size within agreed bounds | [Scaling bounds](#scaling-bounds) below |
 | Publishing a Prismic content model change in the documented order | [Updating an existing custom type](https://github.com/wellcomecollection/wellcomecollection.org/blob/main/prismic-model/README.md#updating-an-existing-custom-type) in the prismic-model README |
 
-Toggle flips and block list updates are code changes. They go through an issue and a pull request like any other change, and the merged pull request is their record.
+Block list updates are code changes. They go through an issue and a pull request like any other change, and the merged pull request is their record. A toggle flip changes no file in the repository, so its record is the issue: it says which toggle is being turned on and why, and the person who runs the command comments on the issue when it is done.
 
 Entries are added or removed by a pull request to this page. The lead engineer reviews the catalogue every quarter.
 
