@@ -4,7 +4,7 @@
 
 This RFC proposes rebuilding the A/B testing mechanism on wellcomecollection.org. It replaces the assignment in our Lambda@Edge with a CloudFront Function that runs before the cache lookup, so that each visitor is assigned to a cohort once, independently, and keeps it. It also sets out what a test must have before it starts, why its percentages are fixed while it runs, and how exposure is reported to Google Analytics.
 
-**Last modified:** 2026-11-16T15:00:00+00:00
+**Last modified:** 2026-11-16T15:05:00+00:00
 
 **Related issues:**
 
@@ -181,7 +181,7 @@ Tests are two-way, with a control and a variant, which is what `useABTest` and t
 
 A test's exposure and split come from its definition and are meant to stay as they are while it measures.
 
-The reason is statistical. If the split changes part-way, visitors enrolled before and after were divided in different proportions, and pooling them can give a misleading result, including the wrong sign (Simpson's paradox). If exposure is raised because the result so far is not significant, that is a form of looking early and acting on what you see, which raises the rate of false positives well above the level the test was designed for (Johari and others, "Peeking at A/B Tests", [summarised here](https://blog.acolyer.org/2017/09/28/peeking-at-ab-tests-continuous-monitoring-without-pain/)). The remedy for a test that needs more data is to have planned for it: a larger sample, a longer duration, or an extension rule written into the success criteria before the test starts.
+The reason is statistical. If the split changes part-way, visitors enrolled before and after were divided in different proportions, and pooling them can give a misleading result, including the wrong sign. This is Simpson's paradox, and Wingify's help centre has a [worked example](https://help.wingify.com/hc/en-us/articles/58826802788889-Can-I-Change-The-Traffic-Distribution-While-a-Test-is-Running-in-Wingify) in which one version wins on every day of a test and loses in the pooled total after the split is changed from 50/50 to 90/10. If exposure is raised because the result so far is not significant, that is a form of looking early and acting on what you see, which raises the rate of false positives well above the level the test was designed for (Johari and others, "Peeking at A/B Tests", [summarised here](https://blog.acolyer.org/2017/09/28/peeking-at-ab-tests-continuous-monitoring-without-pain/)). The remedy for a test that needs more data is to have planned for it: a larger sample, a longer duration, or an extension rule written into the success criteria before the test starts.
 
 Two changes are allowed.
 
