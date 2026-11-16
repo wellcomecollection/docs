@@ -4,7 +4,7 @@
 
 This RFC proposes rebuilding the A/B testing mechanism on wellcomecollection.org. It replaces the assignment in our Lambda@Edge with a CloudFront Function that runs before the cache lookup, so that each visitor is assigned to a cohort once, independently, and keeps it. It also sets out what a test must have before it starts, why its percentages are fixed while it runs, and how exposure is reported to Google Analytics.
 
-**Last modified:** 2026-11-16T14:30:00+00:00
+**Last modified:** 2026-11-16T15:00:00+00:00
 
 **Related issues:**
 
@@ -24,6 +24,28 @@ Three things follow from that, and this RFC is built on them.
 - The test ends with that decision: release the variant, drop it, or revise it and test again.
 
 A test is not a gradual release. A percentage that is raised step by step until everyone has the feature is a different activity, with a different purpose, and doing that to a test removes the fixed comparison that makes its result mean something. The beta testing ticket ([#13785](https://github.com/wellcomecollection/wellcomecollection.org/issues/13785)) describes a percentage that rises over time alongside a wish to compare the visitors who have a feature with those who do not. This RFC takes the comparison as the real need and proposes meeting it with a test whose percentages do not move.
+
+### Exposure and split
+
+Two percentages describe a test, and the rest of this RFC uses these names for them.
+
+- Exposure is the share of visitors who are in the test at all. Everyone else is outside it: they see the site as it is and are not part of the measurement.
+- Split is the share of the visitors in the test who get the variant. The rest of the visitors in the test are the control group, who see the site as it is and are measured.
+
+The share of all visitors who see the variant is the two multiplied together. Taking 10,000 visitors:
+
+| Exposure | Split | In the test | Variant | Control | Outside the test |
+| --- | --- | --- | --- | --- | --- |
+| 50 | 50 | 5,000 | 2,500 | 2,500 | 5,000 |
+| 20 | 50 | 2,000 | 1,000 | 1,000 | 8,000 |
+| 100 | 50 | 10,000 | 5,000 | 5,000 | 0 |
+| 50 | 20 | 5,000 | 1,000 | 4,000 | 5,000 |
+
+They do different jobs. Exposure limits how many visitors a test can affect, and decides how quickly it collects the data it needs. Split decides how the visitors in the test are divided, and is normally 50, because two groups of equal size give the most precise comparison for a given number of visitors.
+
+The control group and the visitors outside the test see the same thing, and they are not the same group. The control group was chosen at random in the same draw as the variant group and is recorded, which is what makes the two comparable. The visitors outside were never in the draw.
+
+Under the consent position in this RFC, both percentages are shares of visitors who have accepted analytics cookies. See [Consent](#consent).
 
 ### How A/B tests work today
 
