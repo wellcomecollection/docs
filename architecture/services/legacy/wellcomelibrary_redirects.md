@@ -1,5 +1,9 @@
 # wellcomelibrary_redirects
 
+## Ownership and support
+
+- **Owner and runbook:** `component:wellcomelibrary-org-redirects` in Backplane (internal)
+
 ## Architecture
 
 Redirects for the legacy Wellcome Library website.

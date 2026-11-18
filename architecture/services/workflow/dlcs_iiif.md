@@ -1,5 +1,9 @@
 # dlcs_iiif
 
+## Ownership and support
+
+- **Owner:** Run by Digirati. No Backplane entity. Supplier escalation is on `component:platform-infrastructure-iiif` in Backplane (internal).
+
 ## Architecture
 
 The Digital Library Cloud Service for serving IIIF images.

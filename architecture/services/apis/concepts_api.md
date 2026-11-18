@@ -2,6 +2,10 @@
 
 The Concepts API is responsible for managing and retrieving information about concepts within the Wellcome Collection's digital catalogue. It provides endpoints for retrieving concept data.
 
+## Ownership and support
+
+- **Owner and runbook:** `component:catalogue-api-concepts` in Backplane (internal)
+
 ## Architecture
 
 ```mermaid

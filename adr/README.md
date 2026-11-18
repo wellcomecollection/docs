@@ -25,4 +25,5 @@ An ADR records a a particular decision and contains the key information to under
 | [Identity service for IIIF-Builder](iiif-builder-identity-service.md) | How IIIF-Builder (DDS) learns where and how digital objects are stored, given an identifier |
 | [Service levels](service_levels.md) | Our support hours, the user journeys that must work, and how we set and track availability targets. |
 | [Change model](change_model.md) | How we make production changes: the normal, standard and emergency routes, Terraform applies, the change record and change authority. |
-| [Alert routing and severity](alert_routing.md) | Where alerts go, the three severities and what each asks of us, the service, severity and owner every alarm declares, and the decision on alarms that tell nobody. |
+| [Service ownership](service_ownership.md) | Where service ownership is recorded, who is accountable for a service, and who decides what across its life. |
+| [Alert routing and severity](alert_routing.md) | Where alerts go, the three severities and what each asks of us, the Backplane Component and severity every alarm declares, and the decision on alarms that tell nobody. |

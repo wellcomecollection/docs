@@ -2,6 +2,10 @@
 
 The Catalogue search API is responsible for handling search requests across the Wellcome Collection's digital catalogue. It provides endpoints for searching images and works
 
+## Ownership and support
+
+- **Owner and runbook:** `component:catalogue-api-search` in Backplane (internal)
+
 ## Architecture
 
 ```mermaid

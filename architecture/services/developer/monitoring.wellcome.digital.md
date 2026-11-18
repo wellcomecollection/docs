@@ -1,5 +1,9 @@
 # monitoring.wellcome.digital
 
+## Ownership and support
+
+- **Owner:** Owned by NCW, outside the digital team. No Backplane entity.
+
 ## Architecture
 
 Monitoring and alerting dashboards. 

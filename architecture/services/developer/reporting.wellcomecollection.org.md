@@ -1,5 +1,9 @@
 # reporting.wellcomecollection.org
 
+## Ownership and support
+
+- **Owner and runbook:** `system:platform-infrastructure` in Backplane (internal)
+
 ## Architecture
 
 Internal reporting dashboards and services, it provides:

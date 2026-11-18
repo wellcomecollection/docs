@@ -1,5 +1,9 @@
 # tei_adapter
 
+## Ownership and support
+
+- **Owner and runbook:** `system:catalogue-pipeline` in Backplane (internal)
+
 ## Architecture
 
 Adapter for ingesting Text Encoding Initiative (TEI) XML data. It fetches data from the TEI GitHub repository, writes it to the TEI Adapter Store, and indexes it into the reporting Elasticsearch cluster.

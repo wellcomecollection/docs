@@ -1,5 +1,9 @@
 # sierra_adapter
 
+## Ownership and support
+
+- **Owner and runbook:** `system:catalogue-pipeline` in Backplane (internal)
+
 ## Architecture
 
 Adapter for ingesting data from the Sierra library management system. It fetches data from Sierra, writes it to the Sierra VHS, and indexes it into the reporting Elasticsearch cluster.

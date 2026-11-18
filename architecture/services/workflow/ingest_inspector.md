@@ -1,5 +1,9 @@
 # ingest_inspector
 
+## Ownership and support
+
+- **Owner and runbook:** `system:storage-service` in Backplane (internal)
+
 ## Architecture
 
 A tool for inspecting data being ingested into the storage service.

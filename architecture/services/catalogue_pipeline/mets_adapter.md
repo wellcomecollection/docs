@@ -1,5 +1,9 @@
 # mets_adapter
 
+## Ownership and support
+
+- **Owner and runbook:** `system:catalogue-pipeline` in Backplane (internal)
+
 ## Architecture
 
 Adapter for ingesting METS XML data. METS (Metadata Encoding and Transmission Standard) is a standard for encoding descriptive, administrative, and structural metadata for digital objects. It is the output of digital preservation workflow systems like Archivematica & Goobi, and is used to represent complex digital objects with multiple files and metadata.
