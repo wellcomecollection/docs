@@ -2,6 +2,10 @@
 
 This service provides a dashboard for staff and developers, built with Next.js. It includes the toggles dashboard that drops cookies to indicate which features are enabled for the user.
 
+## Ownership and support
+
+- **Owner and runbook:** `system:wellcomecollection-org` in Backplane (internal)
+
 ## Architecture
 
 ```mermaid

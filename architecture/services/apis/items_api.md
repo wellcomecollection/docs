@@ -2,6 +2,10 @@
 
 The Items API provides endpoints for retrieving information about individual items in the Wellcome Collection's digital catalogue. It gets the freshest data for items from Sierra directly.
 
+## Ownership and support
+
+- **Owner and runbook:** `component:catalogue-api-items` in Backplane (internal)
+
 ## Architecture
 
 ```mermaid

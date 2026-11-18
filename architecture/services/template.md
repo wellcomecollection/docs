@@ -6,12 +6,9 @@
 
 ## Ownership and support
 
-*Fill in all four fields. Link to Backplane rather than copying what it holds: owners come from `spec.owner` in the repository's `manifest.yml`, team contacts from the team page, and supplier contacts from the System or Component. Name roles, not people.*
+*Name the service's Backplane entity as `kind:name`, without a link. Owner, runbook and supplier contacts live in the repository's `manifest.yml` and show in Backplane, so don't copy them here. Support hours follow the [service levels ADR](https://github.com/wellcomecollection/docs/blob/main/adr/service_levels.md) and escalation follows the [major incident playbook](https://github.com/wellcomecollection/developer-handbook/blob/main/incident-management/incident-comms-and-escalation.md). Write anything else here only when the service is an exception, for example run by a supplier or owned outside the team.*
 
-- **Owner:** *The owning team from `spec.owner` in `manifest.yml` and the role accountable for the service, linking the Backplane entity, for example "[catalogue-api](https://backplane.wellcome.digital/catalog/system/default/catalogue-api) (internal), Digital Platform team, lead engineer". If the repository has no `manifest.yml` yet, name the team and role and add "no Backplane entity yet".*
-- **Runbook:** *Link the service's `docs/runbook.md`, the same URL as the `Runbook` link in `manifest.yml`. If there is no runbook, write "none yet".*
-- **Support hours:** Office hours. Out of hours is best effort. See the [service-level statement](https://github.com/wellcomecollection/docs/blob/main/adr/service_levels.md).
-- **Escalation:** Follow the [major incident playbook](https://github.com/wellcomecollection/developer-handbook/blob/main/incident-management/incident-comms-and-escalation.md). *If a supplier runs part of the service, add "Supplier escalation is on the Backplane entity page (internal)."*
+- **Owner and runbook:** *`system:ENTITY` in Backplane (internal)*
 
 ## Architecture
 

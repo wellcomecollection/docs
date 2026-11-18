@@ -2,6 +2,10 @@
 
 This service generates RSS feeds for website content.
 
+## Ownership and support
+
+- **Owner and runbook:** `component:content` in Backplane (internal)
+
 ## Architecture
 
 ```mermaid

@@ -2,6 +2,10 @@
 
 The Data API provides endpoints for retrieving bulk data snapshots of the Wellcome Collection's digital catalogue. It allows users to download large datasets in gzipped JSONL format.
 
+## Ownership and support
+
+- **Owner and runbook:** `component:catalogue-api-snapshot-generator` in Backplane (internal)
+
 ## Architecture
 
 ```mermaid

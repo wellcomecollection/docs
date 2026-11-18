@@ -2,6 +2,10 @@
 
 This service is built with Next.js and provide the main website content and catalogue search functionality.
 
+## Ownership and support
+
+- **Owner and runbook:** `component:content` in Backplane (internal)
+
 ## Architecture
 
 ```mermaid

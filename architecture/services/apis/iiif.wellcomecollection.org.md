@@ -2,6 +2,10 @@
 
 The IIIF APIs serve metadata and images for Wellcome Collection digital assets ingested via the digital preservation workflow.
 
+## Ownership and support
+
+- **Owner and runbook:** `component:platform-infrastructure-iiif` in Backplane (internal)
+
 ## Architecture
 
 ```mermaid

@@ -1,5 +1,9 @@
 # calm_adapter
 
+## Ownership and support
+
+- **Owner and runbook:** `system:catalogue-pipeline` in Backplane (internal)
+
 ## Architecture
 
 Adapter for ingesting data from the Calm archive management system. It fetches data from Calm, writes it to the Calm VHS, and indexes it into the reporting Elasticsearch cluster.

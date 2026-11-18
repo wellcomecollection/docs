@@ -1,5 +1,9 @@
 # workflow (Goobi)
 
+## Ownership and support
+
+- **Owner and runbook:** `system:goobi-infrastructure` in Backplane (internal)
+
 ## Architecture
 
 The Goobi workflow management system for digitisation.

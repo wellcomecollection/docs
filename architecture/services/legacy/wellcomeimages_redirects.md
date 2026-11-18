@@ -1,5 +1,9 @@
 # wellcomeimages_redirects
 
+## Ownership and support
+
+- **Owner and runbook:** `component:wellcomeimages-org-redirects` in Backplane (internal)
+
 ## Architecture
 
 Redirects for the legacy Wellcome Images website.

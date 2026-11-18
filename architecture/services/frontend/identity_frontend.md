@@ -2,6 +2,10 @@
 
 This service is built with Next.js and provides some user account management features.
 
+## Ownership and support
+
+- **Owner and runbook:** `component:identity` in Backplane (internal)
+
 ## Architecture
 
 ```mermaid

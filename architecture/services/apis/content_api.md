@@ -2,6 +2,10 @@
 
 The Content API is responsible for managing and retrieving editorial content. It provides endpoints for searching content beyond what is available from Prismic APIs.
 
+## Ownership and support
+
+- **Owner and runbook:** `system:content-api` in Backplane (internal)
+
 ## Architecture
 
 ```mermaid

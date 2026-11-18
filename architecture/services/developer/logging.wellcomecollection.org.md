@@ -1,5 +1,9 @@
 # logging.wellcomecollection.org
 
+## Ownership and support
+
+- **Owner and runbook:** `system:elasticsearch-log-forwarder` in Backplane (internal)
+
 ## Architecture
 
 Centralised logging for applications and services.

@@ -1,5 +1,9 @@
 # catalogue_graph
 
+## Ownership and support
+
+- **Owner and runbook:** `component:catalogue-graph` in Backplane (internal)
+
 ## Architecture
 
 The catalogue graph pipeline is a serverless, event-driven system for building and maintaining a knowledge graph of concepts, names, and locations, enriched with data from external sources. It integrates with the existing catalogue pipeline to provide a comprehensive view of Wellcome Collection concepts and their relationships.
