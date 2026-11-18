@@ -35,19 +35,21 @@ The bug nurse also handles alerts that are not CloudWatch alarms: ECS tasks fail
 
 ## Decision
 
-### Every alarm declares a service, a severity and an owner
+### Every alarm names its Backplane Component and a severity
 
-Every CloudWatch alarm we create declares three values:
+Every CloudWatch alarm we create carries three tags:
 
-- **service**: the Backplane Component name from the owning repository's `manifest.yml` where there is one, otherwise a short stable name
-- **severity**: `high`, `medium` or `low`, as defined below
-- **owner**: the owning team as a team reference, such as `team:digital-platform`
+- **`backplane:component`**: the name of the Backplane Component it watches, from the owning repository's `manifest.yml`. This is the tag Backplane already uses to tie AWS resources to Components
+- **`github.com/project-slug`**: the owning repository, which tells Components apart when a repository has several
+- **`severity`**: `high`, `medium` or `low`, as defined below
 
-They go in two places: as alarm tags named `service`, `severity` and `owner`, and as a prefix on the alarm description, for example `[service=catalogue-api severity=high owner=team:digital-platform]`. Alarms also carry two tags for machines: `backplane:component`, set to the same Component name, which is the tag Backplane already uses to tie AWS resources to Components, and `github.com/project-slug`, the owning repository. Backplane takes the owner from the Component in the catalogue rather than from the tag, and can report a difference between the two. The prefix is what appears in Slack, because CloudWatch's notification to SNS includes the description but not the tags, and Amazon Q shows the description for alarms that go to it directly.
+The alarm does not record its service or owner separately. The Component is the service, and Backplane gives its owner from `spec.owner` in the manifest, so an owner change in the manifest reaches every alarm without touching Terraform. That is what gives each alarm a named owner for AWS-26.
 
-Alarms are created through the shared modules (`terraform-aws-lambda`, `terraform-aws-sqs`, the platform-infrastructure monitoring and CloudFront modules, and catalogue-pipeline's state machine alarms), which take the three values as inputs. A repository that writes its own `aws_cloudwatch_metric_alarm` sets the tags and prefix itself. Alarms created by hand in the console are not allowed; the ones that exist today are being deleted.
+The Component and severity also go in a prefix on the alarm description, for example `[component=catalogue-api-search severity=high]`. The prefix is what appears in Slack, because CloudWatch's notification to SNS includes the description but not the tags, and Amazon Q shows the description for alarms that go to it directly.
 
-The forwarding Lambdas read the prefix and show severity as an emoji: `:rotating_light:` for high, `:warning:` for medium and `:information_source:` for low, with the owner on its own line. All three severities post to #wc-platform-alerts.
+Alarms are created through the shared modules (`terraform-aws-lambda`, `terraform-aws-sqs`, the platform-infrastructure monitoring and CloudFront modules, and catalogue-pipeline's state machine alarms), which take the Component and severity as inputs. A repository that writes its own `aws_cloudwatch_metric_alarm` sets the tags and prefix itself. Alarms created by hand in the console are not allowed; the ones that exist today are being deleted.
+
+The forwarding Lambdas read the prefix and show severity as an emoji: `:rotating_light:` for high, `:warning:` for medium and `:information_source:` for low, with the Component name, so the bug nurse can look up its owner in Backplane. All three severities post to #wc-platform-alerts.
 
 Alarms whose only action is an autoscaling policy are exempt. They are tagged `purpose = autoscaling` instead.
 
@@ -68,7 +70,7 @@ Alerts that arrive outside office hours are picked up on the next working day. T
 | Step | Who | When |
 |---|---|---|
 | 1 | Bug nurse | Every alert. They acknowledge it with the emoji in the bug nurse page and either explain it, fix it, ticket it or hand it on |
-| 2 | Owning team, from the `owner` on the alarm or the service's `manifest.yml` in Backplane | When the bug nurse cannot resolve it, and always for high severity |
+| 2 | Owning team, the owner of the alarm's Component in Backplane | When the bug nurse cannot resolve it, and always for high severity |
 | 3 | Incident lead and delivery manager, under the [incident comms and escalation playbook](https://github.com/wellcomecollection/developer-handbook/blob/main/incident-management/incident-comms-and-escalation.md) | When it meets the playbook's definition of a major incident: the website, search, the catalogue API, requesting or sign-in unavailable or badly degraded for most users for 30 minutes or more, or a confirmed security or data exposure. Anyone can start the [incident response process](https://github.com/wellcomecollection/developer-handbook/blob/main/incident-management/incident-response-process.md) for a smaller incident |
 | 4 | Supplier, such as Digirati or Elastic | Decided by the incident lead, through the supplier routes in the playbook |
 
