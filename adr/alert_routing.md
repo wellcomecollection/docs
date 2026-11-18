@@ -83,6 +83,7 @@ Alerts that arrive outside office hours are picked up on the next working day. T
 | Errors in a forwarding Lambda, because a broken forwarder silences a whole class of alerts | high |
 | Lambda errors, the default in `terraform-aws-lambda`. Callers on a service with an availability target set high | medium |
 | Catalogue pipeline: a failed state machine run or transformer failures. New works reach search late, but search keeps serving the existing index | medium |
+| Messages in a catalogue pipeline dead-letter queue, which the team treats as information | low |
 | Any alarm in staging or dev | low, in the same channel |
 
 LogicMonitor's own levels map onto these: critical is high, error is medium and warning is low. Its routes to Slack, email and ServiceNow stay as they are. Whether the ServiceNow integration raises tickets, and who closes them, is being confirmed with D&T under [platform#6797](https://github.com/wellcomecollection/platform/issues/6797).
@@ -91,13 +92,12 @@ A high severity alarm is not automatically an incident. The bug nurse or owning 
 
 ### Alarms with no recipient
 
-An alarm that tells nobody is not allowed unless we decide it should. Each one is routed, deleted, or says in its description why it tells nobody.
+An alarm that tells nobody is not allowed. Each one is routed or deleted.
 
 For the 70 alarms that reached nobody on 18 November 2026 we will:
 
-- **route 5**: the dead-letter queue alarms on the editorial photography ingest queues go to their account's dead-letter queue forwarder
+- **route 19**: the 5 dead-letter queue alarms on the editorial photography ingest queues go to their account's dead-letter queue forwarder, and the 14 on the catalogue pipelines go straight to Amazon Q at low severity. Messages land in the pipeline queues routinely and the team does not act on them one by one, so they are for information and are looked at in the Monday review
 - **delete 51**: the 15 adapter and reindexer queue-age alarms, which we do not act on; 23 DynamoDB capacity alarms made in the console between 2018 and 2021; 8 scaling-style alarms on storage queues that have nothing to scale; 3 alarms on an unused inference queue; an alarm on a load balancer that has had no data since 2019; and a personal test alarm
-- **leave 14 telling nobody**: the dead-letter queue alarms on the catalogue pipelines. The team treats them as noise and does not act on them one by one. Each alarm's description will say so
 
 We will also delete the 36 CloudWatch budget alarms, which watch a metric AWS Budgets does not publish and so cannot fire. The budgets' own notifications, at 100% and 110% of each account's monthly limit, cover the same thing. The error alarm on each forwarding Lambda will go straight to `alerting-chatbot-events`, so that a broken forwarder does not report its own failure through itself.
 
