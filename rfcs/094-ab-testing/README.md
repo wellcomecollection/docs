@@ -135,6 +135,10 @@ The function keeps two cookies of its own on the visitor's browser. Neither is p
 | `wc_ab_bucket` | A random whole number from 0 to 9999 | A stable input for assignment that is shared by many visitors, so it does not identify one |
 | `wc_ab` | One entry per test the visitor is in: test id, version, and cohort | The record of what the visitor was assigned and under which percentages |
 
+`wc_ab` is a single cookie that holds every test the visitor is in. Each entry is the test id, the version and the cohort joined by colons, and entries are separated by a vertical bar. A visitor in two tests has, for example, `wc_ab=newTags:2:variant|searchFilters:1:control`. The function writes it, and the exposure hook and the dashboard read it with the same small parser.
+
+One cookie could hold the bucket number as well. They are kept apart because the bucket number never changes, while the list is rewritten as tests start and finish. A list that cannot be parsed is discarded and rebuilt from the hash, and the visitor keeps their bucket number.
+
 For each running test, on each request:
 
 1. If the request carries a personal `toggle_ID` cookie for the test, leave it alone and stop.
@@ -174,6 +178,8 @@ A test is defined in a new file, `toggles/webapp/tests.ts`. This replaces the en
 | `documentationLink`, `dashboardLink` | Optional links to the fuller test plan and to the report where results are read |
 
 The plan fields are required. A test without them does not type-check, and `yarn deploy` will not publish it. They are short text, and the point is that they are written down, reviewed in the pull request that adds the test, and published with it before any visitor is enrolled.
+
+A variant can be a value of a feature flag or a phase of a phased flag. Modes are not something a test can vary, because they are permanent ways of using the site and not changes waiting to be released.
 
 Tests are two-way, with a control and a variant, which is what `useABTest` and the `toggle_ID` cookie already express. Tests with more than two versions are not part of this proposal.
 
@@ -233,13 +239,13 @@ A finished test stays finished. Its record remains in `tests.json`, and its defi
 Exposure to a test is reported with a new event that follows [Google's convention for experiment integrations](https://developers.google.com/analytics/devguides/collection/ga4/integration): an `experience_impression` event with an `exp_variant_string` parameter.
 
 - The event is sent when a component that depends on a test renders, through a small hook that wraps `useABTest`. A visitor who is assigned to a test but never reaches the page it changes is not counted as exposed.
-- The value has the form `wc-TESTID.vVERSION-COHORT`, for example `wc-newTags.v2-variant`, which fits GA's 100-character limit on parameter values. The version identifies the analysis period.
+- The value has the form `wc-TESTID.vVERSION-COHORT`, for example `wc-newTags.v2-variant`, and each event carries one test, so GA's 100-character limit on parameter values applies to each test separately. The version identifies the analysis period.
 - The hook reads the version from the `wc_ab` cookie in the browser. The version is not rendered into the page, because the cached page is shared by visitors assigned under different versions.
 - The hook does not send the event when the visitor's value came from a personal cookie, so staff previews are left out of results.
 
 The event needs a GTM tag and a custom dimension for `exp_variant_string`, which is the analyst's to set up. Google's guide describes audiences per variant, created through the Admin API by third-party tools. We would not be doing that automatically, and a custom dimension analysed in Explorations or BigQuery may be all we need.
 
-The existing `toggles` value in the dataLayer continues to list the tests a visitor is in, so current report filters keep working.
+The existing `toggles` value in the dataLayer continues to list the tests a visitor is in, so current report filters keep working. That value joins the names of all the visitor's tests into one parameter, so the 100-character limit there is shared between them, as it is now.
 
 
 ### Testing something that is behind a flag
@@ -270,7 +276,7 @@ A visitor is only enrolled in tests once they have accepted analytics cookies. T
 
 This is the cautious reading. The ICO's [guidance on storage and access technologies](https://ico.org.uk/for-organisations/direct-marketing-and-privacy-and-electronic-communications/guidance-on-the-use-of-storage-and-access-technologies/what-are-the-exceptions/) lists A/B testing as an example likely to meet the statistical purposes exception, which would allow enrolling visitors without consent provided they are told and can object. That exception has conditions, and the guidance does not discuss a cookie that keeps a visitor's cohort. Enrolling only consenting visitors costs a test nothing in measurement, since they are the only visitors GA records. It does mean that a test's percentages are shares of consenting visitors, and that non-consenting visitors never see a variant until it is released.
 
-Kiosk devices are treated as consenting by the webapp. I propose excluding them from tests, because they show a different version of the site to a different audience.
+Kiosk devices, which have the `toggle_kioskMode` cookie, are treated as consenting by the webapp, so without a rule of their own they would be enrolled in tests like any other consenting visitor. The function leaves them out of every test, because they show a different version of the site to a different audience.
 
 ### Failure handling
 
@@ -409,8 +415,7 @@ Building it now also carries a risk. Two things that both have a percentage are 
 1. Is enrolling only consenting visitors the right position, or should we use the statistical purposes exception to enrol everyone? This needs a view from whoever advises us on data protection.
 2. Is a custom dimension on the exposure event enough for analysing tests, or does the analyst want GA audiences per variant? And are the plan fields the right ones?
 3. Does the beta testing work need visitors to be told they are in a beta? If so, how should a result be read when only the variant group is told?
-4. Should kiosk devices be excluded from tests?
-5. Is six months the right lifetime for the two cookies?
+4. Is six months the right lifetime for the two cookies?
 
 ## Next steps
 
