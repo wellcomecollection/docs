@@ -1,5 +1,9 @@
 # storage_service
 
+## Ownership and support
+
+- **Owner and runbook:** `system:storage-service` in Backplane (internal)
+
 ## Architecture
 
 The storage service is responsible for the long-term preservation of our digital assets. It ensures that files are stored securely, their integrity is maintained, and they can be retrieved when needed.

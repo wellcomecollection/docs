@@ -2,6 +2,10 @@
 
 This service is the Storybook component library for the design system, built with Next.js.
 
+## Ownership and support
+
+- **Owner and runbook:** `system:wellcomecollection-org` in Backplane (internal)
+
 ## Architecture
 
 ```mermaid

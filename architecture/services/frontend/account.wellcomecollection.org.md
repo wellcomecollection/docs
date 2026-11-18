@@ -2,6 +2,10 @@
 
 This service handles user registration and login and is managed by Auth0. It integrates with the Sierra library management system for user authentication. Successful logins redirect to the main website, and will set a cookie to indicate the user is logged in.
 
+## Ownership and support
+
+- **Owner and runbook:** `component:identity` in Backplane (internal)
+
 ## Architecture
 
 ```mermaid

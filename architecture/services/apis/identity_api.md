@@ -2,6 +2,10 @@
 
 The Identity API is responsible for managing user identity and authentication. It provides endpoints for user registration, and profile management.
 
+## Ownership and support
+
+- **Owner and runbook:** `system:identity` in Backplane (internal)
+
 ## Architecture
 
 ```mermaid

@@ -1,5 +1,9 @@
 # ebsco_adapter
 
+## Ownership and support
+
+- **Owner and runbook:** `system:catalogue-pipeline` in Backplane (internal)
+
 ## Architecture
 
 Adapter for ingesting data from EBSCO. It fetches MARCXML records from the EBSCO FTP service, stores them in S3, and notifies the catalogue pipeline of updates.

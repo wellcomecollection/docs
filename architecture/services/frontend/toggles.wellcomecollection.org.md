@@ -2,6 +2,10 @@
 
 This service provides a JSON endpoint for feature flags and A/B testing toggles. It is used by the main website to determine which features are enabled for the user.
 
+## Ownership and support
+
+- **Owner and runbook:** `system:wellcomecollection-org` in Backplane (internal)
+
 ## Architecture
 
 ```mermaid

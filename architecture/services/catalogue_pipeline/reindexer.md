@@ -1,5 +1,9 @@
 # reindexer
 
+## Ownership and support
+
+- **Owner and runbook:** `system:catalogue-pipeline` in Backplane (internal)
+
 ## Architecture
 
 The service for re-indexing catalogue data, it sends data from the catalogue pipeline adapter source data stores through the catalogue pipeline to be re-transformed and re-indexed in the catalogue pipeline Elasticsearch index.

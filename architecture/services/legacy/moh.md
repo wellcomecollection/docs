@@ -1,5 +1,9 @@
 # moh (Medical Officer of Health reports)
 
+## Ownership and support
+
+- **Owner and runbook:** `system:londons-pulse` in Backplane (internal)
+
 ## Architecture
 
 A standalone service for the Medical Officer of Health reports (https://wellcomelibrary.org/moh/).

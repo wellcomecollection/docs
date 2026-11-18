@@ -1,5 +1,9 @@
 # buildkite_stack
 
+## Ownership and support
+
+- **Owner and runbook:** `system:buildkite-infrastructure` in Backplane (internal)
+
 ## Architecture
 
 The infrastructure for our CI/CD pipelines, which uses Buildkite to run agents on AWS. This stack is designed to scale and manage the lifecycle of Buildkite agents, allowing for efficient continuous integration and deployment processes.

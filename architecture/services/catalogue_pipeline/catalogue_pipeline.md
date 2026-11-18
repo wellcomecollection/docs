@@ -1,5 +1,9 @@
 # catalogue_pipeline
 
+## Ownership and support
+
+- **Owner and runbook:** `system:catalogue-pipeline` in Backplane (internal)
+
 ## Architecture
 
 The catalogue pipeline creates the search index for our unified collections search. It populates an Elasticsearch index with data which can then be read by our catalogue API. This allows users to search data from all our catalogues in one place, rather than searching multiple systems which each have different views of the data.

@@ -6,6 +6,10 @@ Use the [service template](./template.md) to add a new service.
 
 See also the [system context diagram](../system_context.md) for a high-level overview of how these services interact with each other and external systems.
 
+## Ownership
+
+Each service page names its Backplane entity (internal). Owners and runbooks are recorded there, from the `manifest.yml` in each repository. Support hours and escalation follow the [service levels ADR](../../adr/service_levels.md) and the [major incident playbook](https://github.com/wellcomecollection/developer-handbook/blob/main/incident-management/incident-comms-and-escalation.md) unless a page says otherwise. Who decides what across a service's life is in the [service ownership ADR](../../adr/service_ownership.md).
+
 ## Front-end Services (wellcomecollection.org)
 
 Services that are directly related to the Wellcome Collection website and its user-facing features.

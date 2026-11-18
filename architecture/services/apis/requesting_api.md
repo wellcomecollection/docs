@@ -2,6 +2,10 @@
 
 The Requesting API is responsible for managing user requests to view items in the Wellcome Collection. It provides endpoints for submitting and tracking requests, and is authorized by the Identity API.
 
+## Ownership and support
+
+- **Owner and runbook:** `component:catalogue-api-requests` in Backplane (internal)
+
 ## Architecture
 
 ```mermaid

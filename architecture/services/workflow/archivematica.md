@@ -1,5 +1,9 @@
 # archivematica
 
+## Ownership and support
+
+- **Owner and runbook:** `system:archivematica-infrastructure` in Backplane (internal)
+
 ## Architecture
 
 The Archivematica digital preservation system.
