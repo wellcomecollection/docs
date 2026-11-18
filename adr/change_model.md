@@ -1,6 +1,6 @@
 # Change model
 
-Last updated: 13/11/26
+Last updated: 18/11/26
 
 ---
 
@@ -43,7 +43,7 @@ The usual rollback for code is a revert pull request through the same route, as 
 
 ### Standard changes
 
-A standard change is a kind of change we have agreed in advance is low risk and has a written procedure. Its pull request names the catalogue entry it falls under, and still needs an approving review from someone other than the author.
+A standard change is a kind of change we have agreed in advance is low risk and has a written procedure. Its pull request names the catalogue entry it falls under, and still needs an approving review from someone other than the author, unless the entry says otherwise.
 
 | Change | Procedure |
 |---|---|
@@ -52,6 +52,7 @@ A standard change is a kind of change we have agreed in advance is low risk and 
 | Updating a WAF IP list or a block list through a pull request, either to the WAF IP set updaters or to add an address to a block list | [WAF IP set updaters](https://github.com/wellcomecollection/wellcomecollection.org/blob/main/cache/ip-updaters/README.md), and "Bot or scraper traffic slows or breaks the site" in the [website runbook](https://github.com/wellcomecollection/wellcomecollection.org/blob/main/content/docs/runbook.md#bot-or-scraper-traffic-slows-or-breaks-the-site) |
 | Changing an ECS service's task count or an Elastic Cloud deployment's size within agreed bounds | [Scaling bounds](#scaling-bounds) below |
 | Publishing a Prismic content model change in the documented order | [Updating an existing custom type](https://github.com/wellcomecollection/wellcomecollection.org/blob/main/prismic-model/README.md#updating-an-existing-custom-type) in the prismic-model README |
+| A Terraform change whose plan touches only non-production resources: staging, dev or test environments, or a root that serves no production traffic. Shared resources (IAM, networking, DNS, KMS, state backends, and anything production also uses) never count | Paste the plan summary in the pull request to show it. Merge to `main` without a review, post a message in #wc-digital-platform linking the pull request, then apply from `main` as usual |
 
 Block list updates are code changes. They go through an issue and a pull request like any other change, and the merged pull request is their record. A toggle flip changes no file in the repository, so its record is the issue: it says which toggle is being turned on and why, and the person who runs the command comments on the issue when it is done.
 
@@ -75,7 +76,7 @@ An emergency change is one that can't wait for the normal route. Only the lead e
 
 ### Merging without review
 
-Merging a pull request without an approving review is not standard practice. The lead engineer may do it when it is required, for an emergency change or when no reviewer is available and the change can't wait. Each time, the lead engineer records it: the pull request body says why the change could not wait for review, and a message in #wc-digital-platform links the pull request. Other admins don't merge without a review.
+Merging a pull request without an approving review is not standard practice. The lead engineer may do it when it is required, for an emergency change or when no reviewer is available and the change can't wait. Each time, the lead engineer records it: the pull request body says why the change could not wait for review, and a message in #wc-digital-platform links the pull request. Other admins don't merge without a review. The exception is the non-production Terraform standard change, which any admin may merge without a review, posting a message in #wc-digital-platform that links the pull request.
 
 ### Terraform
 
