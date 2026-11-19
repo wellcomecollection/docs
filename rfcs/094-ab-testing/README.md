@@ -91,7 +91,7 @@ The first three mean that results from past tests cannot be treated as coming fr
 3. A test cannot start without a plan: a hypothesis, a primary metric, a planned sample or duration, and success criteria.
 4. A test's exposure (the share of visitors in the test) and split (the share of those who get the variant) are set in the plan and fixed while it measures. A change is an exception that needs a recorded reason and starts a new analysis period.
 5. Starting, changing and finishing a test need no code deploy, and each is recorded with a timestamp and kept.
-6. Exposure to a test is recorded in Google Analytics for visitors who have consented to analytics, with enough detail to analyse each period separately. We accept that visitors who have not consented are not measured.
+6. Exposure to a test is recorded in Google Analytics for visitors who have consented to analytics, with enough detail to analyse each period separately. Visitors who have not consented are not enrolled or measured, which limits the sample a test can reach.
 7. A test ends with a recorded decision.
 8. A personal cookie, set from the dashboard or a `?toggle=` link, overrides assignment, so staff can preview either version. Previews do not count in results.
 9. A test is defined in one place.
@@ -135,7 +135,7 @@ The function keeps two cookies of its own on the visitor's browser. Neither is p
 | `wc_ab_bucket` | A random whole number from 0 to 9999 | A stable input for assignment that is shared by many visitors, so it does not identify one |
 | `wc_ab` | One entry per test the visitor is in: test id, version, and cohort | The record of what the visitor was assigned and under which percentages |
 
-`wc_ab` is a single cookie that holds every test the visitor is in. Each entry is the test id, the version and the cohort joined by colons, and entries are separated by a vertical bar. A visitor in two tests has, for example, `wc_ab=newTags:2:variant|searchFilters:1:control`. The function writes it, and the exposure hook and the dashboard read it with the same small parser.
+`wc_ab` is a single cookie that holds every test the visitor is in. Each entry is the test id, the version and the cohort joined by colons, and entries are separated by a vertical bar. A visitor in two tests has, for example, `wc_ab=newTags:2:variant|searchFilters:1:control`. The function writes it, and the webapp and the dashboard read it.
 
 One cookie could hold the bucket number as well. They are kept apart because the bucket number never changes, while the list is rewritten as tests start and finish. A list that cannot be parsed is discarded and rebuilt from the hash, and the visitor keeps their bucket number.
 
@@ -195,7 +195,7 @@ The first is a safety ramp at the start. A test can begin at a lower exposure th
 
 The second is an exceptional change, for example lowering exposure because the variant is hurting a page that matters. It needs a reason, which is recorded, and it starts a new analysis period.
 
-Each version of a test's percentages is an analysis period. The exposure event carries the version, so the analyst can read each period separately and decide whether periods with the same split can be pooled. Visitors keep the cohort they were first given across periods, because the stored assignment is used first.
+Each version of a test's percentages is an analysis period. The `toggles` value sent to GA carries the version, so the analyst can read each period separately and decide whether periods with the same split can be pooled. Visitors keep the cohort they were first given across periods, because the stored assignment is used first.
 
 ### Commands
 
@@ -236,17 +236,17 @@ A finished test stays finished. Its record remains in `tests.json`, and its defi
 
 ### Reporting to Google Analytics
 
-Exposure to a test is reported with a new event that follows [Google's convention for experiment integrations](https://developers.google.com/analytics/devguides/collection/ga4/integration): an `experience_impression` event with an `exp_variant_string` parameter.
+Tests are reported to GA through the `toggles` value in the dataLayer, which the webapp already sets on each full page load and which GTM sends to GA as a parameter. No new event, tag or custom dimension is needed. The analyst reads which tests a session was in from that value, and filters to the sessions that viewed the page or fired the event a test is about.
 
-- The event is sent when a component that depends on a test renders, through a small hook that wraps `useABTest`. A visitor who is assigned to a test but never reaches the page it changes is not counted as exposed.
-- The value has the form `wc-TESTID.vVERSION-COHORT`, for example `wc-newTags.v2-variant`, and each event carries one test, so GA's 100-character limit on parameter values applies to each test separately. The version identifies the analysis period.
-- The hook reads the version from the `wc_ab` cookie in the browser. The version is not rendered into the page, because the cached page is shared by visitors assigned under different versions.
-- The hook does not send the event when the visitor's value came from a personal cookie, so staff previews are left out of results.
+The value changes in three ways.
 
-The event needs a GTM tag and a custom dimension for `exp_variant_string`, which is the analyst's to set up. Google's guide describes audiences per variant, created through the Admin API by third-party tools. We would not be doing that automatically, and a custom dimension analysed in Explorations or BigQuery may be all we need.
+- Each entry gains the test's version, which identifies the analysis period. A visitor in the variant of one test and the control of another has `newTags.v2,!searchFilters.v1`, where today they would have `newTags,!searchFilters`. Report filters that look for a test's name within the value keep working, and filters that match the whole value need updating.
+- The version is added in the browser from the `wc_ab` cookie. It is not rendered into the page, because the cached page is shared by visitors assigned under different versions.
+- A test is left out of the value when the browser holds its own `toggle_ID` cookie for it, so staff previews are left out of results.
 
-The existing `toggles` value in the dataLayer continues to list the tests a visitor is in, so current report filters keep working. That value joins the names of all the visitor's tests into one parameter, so the 100-character limit there is shared between them, as it is now.
+Because a test is limited to the pages it affects, the value only lists a test on those pages. A visitor who is assigned to a test but never reaches a page it changes sends no events that carry it.
 
+GA limits a parameter value to 100 characters, and the value joins all of a visitor's tests, so that limit is shared between the tests running on a page. `yarn startTest` refuses to start a test if the tests that could appear together would exceed it.
 
 ### Testing something that is behind a flag
 
@@ -274,7 +274,17 @@ Either way the release goes to everyone at once. This RFC does not propose relea
 
 A visitor is only enrolled in tests once they have accepted analytics cookies. The function reads the consent cookie that our consent banner sets, which is already part of the cache key. Visitors who have not consented see the control version and are given neither `wc_ab_bucket` nor `wc_ab`. If consent is withdrawn, the viewer-response function removes both cookies. A visitor's first page view usually happens before they have answered the banner, so they are enrolled from their next request after accepting.
 
-This is the cautious reading. The ICO's [guidance on storage and access technologies](https://ico.org.uk/for-organisations/direct-marketing-and-privacy-and-electronic-communications/guidance-on-the-use-of-storage-and-access-technologies/what-are-the-exceptions/) lists A/B testing as an example likely to meet the statistical purposes exception, which would allow enrolling visitors without consent provided they are told and can object. That exception has conditions, and the guidance does not discuss a cookie that keeps a visitor's cohort. Enrolling only consenting visitors costs a test nothing in measurement, since they are the only visitors GA records. It does mean that a test's percentages are shares of consenting visitors, and that non-consenting visitors never see a variant until it is released.
+We considered enrolling every visitor under the statistical purposes exception to the consent rule. The ICO's [guidance on storage and access technologies](https://ico.org.uk/for-organisations/direct-marketing-and-privacy-and-electronic-communications/guidance-on-the-use-of-storage-and-access-technologies/what-are-the-exceptions/) lists A/B testing as an example likely to meet that exception, so the two cookies could probably be set without consent if visitors were told about them and could object. We are not proposing it, for two reasons.
+
+The exception stops applying when a visitor objects, and the ICO's model consent banner treats turning off the analytics category as the objection. Our banner describes that category as measuring how the site is used in order to improve it, so I think a visitor who rejects it has objected to what a test does.
+
+The exception also requires that an analytics provider acts only as our processor and does not link the data with anything else, and that data about individual visits is not kept once it has been aggregated. Whether Google Analytics meets those conditions is not settled. The ICO's guidance names no product, and the published legal commentary we found avoids a firm answer.
+
+GOV.UK takes the same position. Its developer documentation says "[A/B tests are only enabled for users who have opted in to analytics cookies](https://docs.publishing.service.gov.uk/manual/ab-testing.html)".
+
+Enrolling only consenting visitors has a cost. A test's percentages are shares of consenting visitors, non-consenting visitors never see a variant until it is released, and the sample is smaller. On a page with little traffic a test may not reach its planned sample within a few weeks, and a longer test is exposed to seasonal change and to visitors' cookies expiring. A test like that needs full exposure and a planned duration that is realistic for the page's traffic, written into its plan before it starts, and some tests will not be worth running.
+
+Including visitors who have not consented would mean changing how the site asks for consent to analytics, with measurement on by default under the exception and a way to object. That is a decision about the site's consent model as a whole, and it is outside this RFC. The mechanism here would not need redesigning if it were made, because the consent check is one rule in the function.
 
 Kiosk devices, which have the `toggle_kioskMode` cookie, are treated as consenting by the webapp, so without a rule of their own they would be enrolled in tests like any other consenting visitor. The function leaves them out of every test, because they show a different version of the site to a different audience.
 
@@ -303,10 +313,10 @@ The existing dashboard type for tests does not match what is published and cause
 | --- | --- |
 | `cache/` | Two CloudFront Functions and a KeyValueStore. Functions attached to the behaviours that have the Lambda today, and to `/_next/data/*`. Toggler removed from the Lambda@Edge. Origin-response Lambda detached. Alarms for function errors and cache hit rate. |
 | `toggles/webapp` | Tests move to their own `tests.ts` with a required plan. Test commands and a published `tests.json`. `toggles.json` keeps only the ids and titles of tests that have not finished. |
-| `common/` | Exposure hook and event. |
+| `common/` | The `toggles` dataLayer value gains each test's version, and leaves out staff previews. |
 | `dash/webapp` | New tests page. Type fix. |
 | Docs | The cache and toggles READMEs, and the cookie policy entry for the new cookies. |
-| GTM and GA | Tag and custom dimension for the new event. |
+| GTM and GA | No new tag. Report filters that match the whole `toggles` value need updating for the version. |
 
 ## How this relates to the beta testing tickets
 
@@ -334,7 +344,7 @@ The existing dashboard type for tests does not match what is published and cause
 | [#13836](https://github.com/wellcomecollection/wellcomecollection.org/issues/13836) | The assignment is saved in a cookie with an expiry we choose on purpose | Six months from the last visit, which is open question 5 |
 | [#13836](https://github.com/wellcomecollection/wellcomecollection.org/issues/13836) | A user keeps the same experience across visits until the cookie expires | The stored assignment |
 | [#13785](https://github.com/wellcomecollection/wellcomecollection.org/issues/13785), [#13836](https://github.com/wellcomecollection/wellcomecollection.org/issues/13836) | A personal cookie overrides in both directions | The function leaves a personal `toggle_ID` cookie alone |
-| [#13785](https://github.com/wellcomecollection/wellcomecollection.org/issues/13785) | Visitors in the test appear in the existing `toggles` value | They do, as tests do today, and the new event adds the detail analysis needs |
+| [#13785](https://github.com/wellcomecollection/wellcomecollection.org/issues/13785) | Visitors in the test appear in the existing `toggles` value | They do, as tests do today, with the version added |
 | [#13836](https://github.com/wellcomecollection/wellcomecollection.org/issues/13836) | Tests and percentages are listed in one place | `tests.ts`, with running state and history in `tests.json` |
 | [#13837](https://github.com/wellcomecollection/wellcomecollection.org/issues/13837) | The dashboard shows the percentage, what this browser is seeing, and when changes happened | The tests page |
 | [#13786](https://github.com/wellcomecollection/wellcomecollection.org/issues/13786#issuecomment-6820850777) | `?toggleOverride=` wins for one page load, and someone can be in on a phone and out on a laptop | The webapp already resolves an override ahead of the cookie, and assignment is per browser |
@@ -347,7 +357,7 @@ A shorter-lived `?toggle=` link ([#13834](https://github.com/wellcomecollection/
 | --- | --- |
 | Does the assignment run early enough to cover users with no cookie, given CloudFront's cache? | Not today. It does at viewer-request, which the spike confirmed. |
 | How do we change the percentage? | A test's percentages are set in its definition and fixed while it runs. Starting and finishing are commands modelled on `setDefaultValueFor`, with no deploy, and take effect in about a minute. |
-| Which field do we send membership in? | The existing `toggles` value, plus a new exposure event that carries the cohort and analysis period. |
+| Which field do we send membership in? | The existing `toggles` value, with each test's version added to identify the analysis period. |
 | Is the change in cost acceptable, and do we want alarms for the cache hit rate? | Cost needs estimating from request volume (see Impact). I propose alarms on cache hit rate and on function errors. |
 | Does this still allow us to do A/B tests? | Yes. It is what the mechanism is for. |
 
@@ -388,9 +398,13 @@ Client-side assignment needs no infrastructure. The page would render the public
 
 Tools such as GrowthBook provide assignment, rollouts, a results dashboard and statistics. We would still need the edge function, because the value has to be in the cache key before the page is served, and we would be adding a service and its SDK next to a toggles system and dashboard we already have. The assignment and change semantics proposed here follow GrowthBook's, so moving to it later would not mean changing how tests behave.
 
+### A separate exposure event
+
+We could report tests with a new `experience_impression` event carrying an `exp_variant_string` parameter, following [Google's convention for experiment integrations](https://developers.google.com/analytics/devguides/collection/ga4/integration), sent by a hook when a component that depends on a test renders. That gives each test its own 100 characters and records exposure at the level of the component. It also needs the hook, a GTM tag and a custom dimension. The analyst told us the existing `toggles` value is enough, because sessions can be filtered to those that viewed the page or fired the event in question, so the event is left out. It can be added later without changing assignment.
+
 ### Assign by hash alone, with no stored assignment
 
-Without the `wc_ab` record, a visitor's cohort would be recomputed from the hash on every request. That is simpler and needs one fewer cookie. An exceptional change to a test's split would then move some visitors from one version to the other, and the dashboard and the GA event would have no record of the period a visitor was assigned in. Analysing a test by period depends on that record.
+Without the `wc_ab` record, a visitor's cohort would be recomputed from the hash on every request. That is simpler and needs one fewer cookie. An exceptional change to a test's split would then move some visitors from one version to the other, and the dashboard and the value sent to GA would have no record of the period a visitor was assigned in. Analysing a test by period depends on that record.
 
 ### A gradual release mechanism
 
@@ -407,25 +421,25 @@ Building it now also carries a risk. Two things that both have a percentage are 
 - The cache holds up to three copies of each page a test applies to (not enrolled, control, variant) and one copy of every other page. Today every page on the site is affected by every test.
 - Two new first-party cookies are set for consenting visitors. The cookie policy needs updating.
 - The beta testing tickets need revising to describe a test with fixed percentages. This RFC does not deliver a percentage that rises over time.
-- The analyst's existing filters on the `toggles` value keep working. Analysis of future tests uses the new event and reads each period separately.
+- Tests are still read from the `toggles` value in GA. It gains each test's version, so filters that match the whole value need updating, and each period can be read separately.
 - Adding a test becomes a change to `tests.ts` and a `yarn deploy`, with no Lambda build or Terraform. Starting and finishing a test are one command each.
 
 ## Open questions
 
-1. Is enrolling only consenting visitors the right position, or should we use the statistical purposes exception to enrol everyone? This needs a view from whoever advises us on data protection.
-2. Is a custom dimension on the exposure event enough for analysing tests, or does the analyst want GA audiences per variant? And are the plan fields the right ones?
+1. Should the site move to a consent model in which analytics and tests run by default under the statistical purposes exception, with a way to object? This RFC assumes not. The question covers analytics as a whole and is for whoever advises us on data protection.
+2. Are the plan fields the right ones for the analyst?
 3. Does the beta testing work need visitors to be told they are in a beta? If so, how should a result be read when only the variant group is told?
 4. Is six months the right lifetime for the two cookies?
 
 ## Next steps
 
 1. Review of this RFC by the Digital Experience and Digital Platform teams, and by the analyst.
-2. An answer to the consent question.
+2. Raise the consent model question with whoever advises us on data protection. The rest of these steps do not wait for the answer.
 3. Revise the beta testing tickets in line with this RFC.
 4. Fixes that do not depend on the RFC: the dashboard type and search error, and corrections to the cache and toggles READMEs.
 5. Build the functions, the KeyValueStore, the CI check and the alarms, and deploy to staging with a test that changes nothing visible.
 6. Move tests to `tests.ts` with the plan fields, and add the test commands and `tests.json`.
-7. Add the exposure hook and GTM tag, and check the events in GA's DebugView.
+7. Add the version to the `toggles` value, and check it in GA's DebugView.
 8. Deploy to production with no tests configured, then remove the toggler from the Lambda@Edge.
 9. Add the tests page to the dashboard.
 10. Run a first test with the analyst, and check the share of visitors in each cohort against its plan.
