@@ -39,13 +39,13 @@ The bug nurse also handles alerts that are not CloudWatch alarms: ECS tasks fail
 
 Every CloudWatch alarm we create carries three tags:
 
-- **`backplane:component`**: the name of the Backplane Component it watches, from the owning repository's `manifest.yml`. This is the tag Backplane already uses to tie AWS resources to Components
+- **`backplane:component`**: the name of the Backplane Component it watches, from the owning repository's `manifest.yml`. This is the tag Backplane already uses to tie AWS resources to Components. If no Component covers what the alarm watches, the alarm carries **`backplane:system`** instead, with the System's name, and no `backplane:component`
 - **`github.com/project-slug`**: the owning repository, which tells Components apart when a repository has several
 - **`severity`**: `high`, `medium` or `low`, as defined below
 
 The alarm does not record its service or owner separately. The Component is the service, and Backplane gives its owner from `spec.owner` in the manifest, so an owner change in the manifest reaches every alarm without touching Terraform. That is what gives each alarm a named owner for AWS-26.
 
-The Component and severity also go in a prefix on the alarm description, for example `[component=catalogue-api-search severity=high]`. The prefix is what appears in Slack, because CloudWatch's notification to SNS includes the description but not the tags, and Amazon Q shows the description for alarms that go to it directly.
+The Component and severity also go in a prefix on the alarm description, for example `[component=catalogue-api-search severity=high]`. An alarm tagged with a System uses `system=` in the prefix, for example `[system=platform-infrastructure severity=high]`. The prefix is what appears in Slack, because CloudWatch's notification to SNS includes the description but not the tags, and Amazon Q shows the description for alarms that go to it directly.
 
 Alarms are created through the shared modules (`terraform-aws-lambda`, `terraform-aws-sqs`, the platform-infrastructure monitoring and CloudFront modules, and catalogue-pipeline's state machine alarms), which take the Component and severity as inputs. A repository that writes its own `aws_cloudwatch_metric_alarm` sets the tags and prefix itself. Alarms created by hand in the console are not allowed; the ones that exist today are being deleted.
 
