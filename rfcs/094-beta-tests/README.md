@@ -6,7 +6,7 @@ This RFC proposes a mechanism for beta tests on wellcomecollection.org. A beta t
 
 The Digital Experience team wants to get working changes in front of visitors sooner. Beta tests are meant to make a larger change less risky to release, so that we release more often. The RFC also sets out what a test must have before it starts, why its percentages are fixed while it runs, and how tests are reported to Google Analytics.
 
-**Last modified:** 2026-11-23T08:50:00+00:00
+**Last modified:** 2026-11-23T14:55:00+00:00
 
 **Related issues:**
 
@@ -39,7 +39,7 @@ The label affects what a test can tell us, and we accept that. People who know t
 
 Two percentages describe a test, and the rest of this RFC uses these names for them.
 
-- Enrolment is the share of visitors who are in the test at all. Everyone else is outside it: they see the site as it is and are not recorded as part of the test.
+- Enrolment is the share of visitors who are in the test at all. Everyone else is outside it: they see the site as it is and are recorded as outside.
 - Split is the share of the visitors in the test who get the variant. The rest of the visitors in the test are the control group, who see the site as it is and are recorded.
 
 The share of all visitors who see the variant is the two multiplied together. Taking 10,000 visitors:
@@ -53,7 +53,7 @@ The share of all visitors who see the variant is the two multiplied together. Ta
 
 The first row is the usual shape of a beta test: a fifth of visitors get the feature and everyone else is the control group. A split of 50 gives the most precise comparison for a given number of visitors, and a test that sets out to measure an effect would normally use it. A lower split shows the feature to fewer visitors and still leaves a large group to compare them with. Enrolment below 100 keeps some visitors out of the test altogether, and is what the safety ramp at the start of a test lowers.
 
-The control group and the visitors outside the test see the same thing, and they are not the same group. The control group was chosen at random in the same draw as the variant group and is recorded, which is what makes the two comparable. The visitors outside were never in the draw.
+The control group and the visitors outside the test see the same thing, and they are not the same group. The control group was chosen in the same draw as the variant group, which is what makes the two comparable, and a test is designed around the comparison between them. The visitors outside are recorded as well, so that the analyst can tell them apart from the control group.
 
 A team can read a beta test against the metrics it already tracks. The control group is there as well, at no extra cost, and I think it is the better comparison because it covers the same days as the variant. If an exhibition opens or traffic shifts during the test, the control group sees the same change, and a baseline from an earlier period does not.
 
@@ -145,21 +145,21 @@ The function keeps two cookies of its own on the visitor's browser. Neither is p
 | Cookie | Contents | Purpose |
 | --- | --- | --- |
 | `wc_ab_bucket` | A random whole number from 0 to 9999 | A stable input for assignment that is shared by many visitors, so it does not identify one |
-| `wc_ab` | One entry per test the visitor is in: test id, version, and cohort | The record of what the visitor was assigned and under which percentages |
+| `wc_ab` | One entry per running test: test id, version, and cohort (`variant`, `control` or `outside`) | The record of what the visitor was assigned and under which percentages |
 
-`wc_ab` is a single cookie that holds every test the visitor is in. Each entry is the test id, the version and the cohort joined by colons, and entries are separated by a vertical bar. A visitor in two tests has, for example, `wc_ab=newTags:2:variant|searchFilters:1:control`. The function writes it and the webapp reads it.
+`wc_ab` is a single cookie that holds an entry for every running test. Each entry is the test id, the version and the cohort joined by colons, and entries are separated by a vertical bar. A visitor who is in two tests and outside a third has, for example, `wc_ab=newTags:2:variant|searchFilters:1:control|imageSidebar:1:outside`. The function writes it and the webapp reads it.
 
 One cookie could hold the bucket number as well. They are kept apart because the bucket number never changes, while the list is rewritten as tests start and finish. A list that cannot be parsed is discarded and rebuilt from the hash, and the visitor keeps their bucket number.
 
 For each running test, on each request:
 
 1. If the request carries a personal `toggle_ID` cookie for the test, leave it alone and stop.
-2. If the visitor has an entry for the test in `wc_ab`, use it.
+2. If the visitor has an entry for the test in `wc_ab`, use it. The exception is an `outside` entry made under an earlier version, which is assigned again.
 3. Otherwise hash the test id together with the visitor's bucket number, and take two numbers from the hash. The first is compared with the enrolment to decide whether the visitor is in the test. The second is compared with the split to decide which version they get. Including the test id in the hash keeps different tests independent of each other.
-4. If the visitor is in the test, add an entry to `wc_ab` recording the cohort and the version in force.
-5. Set `toggle_ID` on the request to `true` or `false` for visitors in the test, and remove it for visitors who are not.
+4. Add an entry to `wc_ab` recording the cohort (`variant`, `control` or `outside`) and the version in force.
+5. Set `toggle_ID` on the request to `true` or `false` for visitors in the test, and remove it for visitors who are outside.
 
-A visitor who is not in the test has no entry. Because the hash is deterministic they stay out for as long as the enrolment is unchanged.
+A visitor who is outside the test has an entry that says so, which is how they are reported to GA. Their entry is assigned again when the version changes, so that a rise in enrolment, such as the end of a safety ramp, can bring them into the test. The hash is deterministic, so a visitor who is still outside after that stays outside. Visitors recorded as variant or control keep their entry whatever the version.
 
 A test has a version number that increases by one whenever its percentages change. A change takes about a minute to reach visitors. In our test the new value first appeared 34 seconds after the write, and for roughly 20 seconds after that requests saw old and new values interleaved. Each assignment records the version it was made under, so the interleaving does not make any visitor's record ambiguous.
 
@@ -211,7 +211,7 @@ The first is a safety ramp at the start. A test can begin at a lower enrolment t
 
 The second is an exceptional change, for example lowering enrolment because the variant is hurting a page that matters. It needs a reason, which is recorded, and it starts a new analysis period.
 
-Each version of a test's percentages is an analysis period. The `toggles` value sent to GA carries the version, so the analyst can read each period separately and decide whether periods with the same split can be pooled. Visitors keep the cohort they were first given across periods, because the stored assignment is used first.
+Each version of a test's percentages is an analysis period. The `toggles` value sent to GA carries the version, so the analyst can read each period separately and decide whether periods with the same split can be pooled. Visitors in the variant or the control keep the cohort they were first given across periods, because the stored assignment is used first.
 
 ### Commands
 
@@ -226,7 +226,7 @@ yarn finishTest --id=newTags --decision=ship
 
 Each command reads the published `tests.json`, records the change with a timestamp, writes `tests.json`, and writes the running tests to the KeyValueStore. If a later write fails, running the command again repairs it. A developer runs these. There is no dashboard control.
 
-`tests.json` is published next to `toggles.json` on `toggles.wellcomecollection.org`. For each test it holds the definition, the state, the current percentages and version, the history of changes with their reasons, and the decision. It is the durable record of a test. It is public, so entries do not include who made a change. `toggles.json` keeps only the ids and titles of tests that have not finished, which is what the webapp needs to accept their cookies.
+`tests.json` is published next to `toggles.json` on `toggles.wellcomecollection.org`. For each test it holds the definition, the state, the current percentages and version, the history of changes with their reasons, and the decision. It is the durable record of a test. It is public, so entries do not include who made a change. `toggles.json` keeps only the ids, titles and paths of tests that have not finished, which is what the webapp needs to accept their cookies and to know which pages a test covers.
 
 ### The life of a test
 
@@ -254,15 +254,18 @@ A finished test stays finished. Its record remains in `tests.json`, and its defi
 
 Tests are reported to GA through the `toggles` value in the dataLayer, which the webapp already sets on each full page load and which GTM sends to GA as a parameter. No new event, tag or custom dimension is needed. The analyst reads which tests a session was in from that value, and filters to the sessions that viewed the page or fired the event a test is about.
 
-The value changes in three ways.
+The value changes in four ways.
 
-- Each entry gains the test's version, which identifies the analysis period. A visitor in the variant of one test and the control of another has `newTags.v2,!searchFilters.v1`, where today they would have `newTags,!searchFilters`. Report filters that look for a test's name within the value keep working, and filters that match the whole value need updating.
-- The version is added in the browser from the `wc_ab` cookie. It is not rendered into the page, because the cached page is shared by visitors assigned under different versions.
+- Each entry names the cohort in words. A visitor in the variant of one test, the control of another and outside a third has `newTags.v2.variant,searchFilters.v1.control,imageSidebar.v1.outside`. Today the control is marked with a leading `!`, as in `newTags,!searchFilters`, which is easy to miss, and visitors outside a test are not reported at all. Existing report filters need updating for the new format.
+- Each entry gains the test's version, which identifies the analysis period.
+- The entries for tests are built in the browser from the `wc_ab` cookie. They are not rendered into the page, because a cached page is shared by visitors assigned under different versions, and visitors outside a test share a cached page with visitors who have not consented.
 - A test is left out of the value when the browser holds its own `toggle_ID` cookie for it, so staff previews are left out of results.
 
-Because a test is limited to the pages it affects, the value only lists a test on those pages. A visitor who is assigned to a test but never reaches a page it changes sends no events that carry it.
+The value only lists a test on the pages it covers, which the webapp knows from the test's paths in `toggles.json`. A visitor who is assigned to a test but never reaches a page it covers sends no events that carry it.
 
-GA limits a parameter value to 100 characters, and the value joins all of a visitor's tests, so that limit is shared between the tests running on a page. `yarn startTest` refuses to start a test if the tests that could appear together would exceed it.
+Recording visitors outside a test lets the analyst separate three groups on a covered page: the variant, the control, and consenting visitors who were not in the test. Visitors who have not consented have no entry and send no analytics.
+
+GA limits a parameter value to 100 characters, and the value joins all of a visitor's tests, so that limit is shared between the tests running on a page. An entry is the test id plus up to 12 characters. `yarn startTest` refuses to start a test if the tests that could appear together would exceed it.
 
 ### Testing something that is behind a flag
 
@@ -330,11 +333,11 @@ A page of its own for tests is recorded under [A tests page on the dashboard](#a
 | Area | Change |
 | --- | --- |
 | `cache/` | Two CloudFront Functions and a KeyValueStore. Functions attached to the behaviours that have the Lambda today, and to `/_next/data/*`. Toggler removed from the Lambda@Edge. Origin-response Lambda detached. Alarms for function errors and cache hit rate. |
-| `toggles/webapp` | Tests move to their own `tests.ts` with a required close date, decision owner and stop criteria. Test commands and a published `tests.json`. `toggles.json` keeps only the ids and titles of tests that have not finished. |
-| `common/` | The `toggles` dataLayer value gains each test's version, and leaves out staff previews. |
+| `toggles/webapp` | Tests move to their own `tests.ts` with a required close date, decision owner and stop criteria. Test commands and a published `tests.json`. `toggles.json` keeps only the ids, titles and paths of tests that have not finished. |
+| `common/` | The `toggles` dataLayer value gains each test's version and names the cohort, including visitors outside the test, and leaves out staff previews. |
 | `dash/webapp` | Type fix. The group on the toggles page is renamed. |
 | Docs | The cache and toggles READMEs, and the cookie policy entry for the new cookies. |
-| GTM and GA | No new tag. Report filters that match the whole `toggles` value need updating for the version. |
+| GTM and GA | No new tag. Report filters on the `toggles` value need updating for the new entry format. |
 
 ## How this relates to the beta testing tickets
 
@@ -360,10 +363,10 @@ A page of its own for tests is recorded under [A tests page on the dashboard](#a
 | Ticket | Criterion | How |
 | --- | --- | --- |
 | [#13785](https://github.com/wellcomecollection/wellcomecollection.org/issues/13785), [#13836](https://github.com/wellcomecollection/wellcomecollection.org/issues/13836) | Each toggle has its own audience | The test id is part of the hash |
-| [#13836](https://github.com/wellcomecollection/wellcomecollection.org/issues/13836) | The assignment is saved in a cookie with an expiry we choose on purpose | Six months from the last visit, which is open question 2 |
+| [#13836](https://github.com/wellcomecollection/wellcomecollection.org/issues/13836) | The assignment is saved in a cookie with an expiry we choose on purpose | Six months from the last visit, which is the open question |
 | [#13836](https://github.com/wellcomecollection/wellcomecollection.org/issues/13836) | A user keeps the same experience across visits until the cookie expires | The stored assignment |
 | [#13785](https://github.com/wellcomecollection/wellcomecollection.org/issues/13785), [#13836](https://github.com/wellcomecollection/wellcomecollection.org/issues/13836) | A personal cookie overrides in both directions | The function leaves a personal `toggle_ID` cookie alone |
-| [#13785](https://github.com/wellcomecollection/wellcomecollection.org/issues/13785) | Visitors in the test appear in the existing `toggles` value | They do, as tests do today, with the version added |
+| [#13785](https://github.com/wellcomecollection/wellcomecollection.org/issues/13785) | Visitors in the test appear in the existing `toggles` value | They do, with the version and the cohort named in each entry |
 | [#13836](https://github.com/wellcomecollection/wellcomecollection.org/issues/13836) | Tests and percentages are listed in one place | `tests.ts`, with running state and history in `tests.json` |
 | [#13786](https://github.com/wellcomecollection/wellcomecollection.org/issues/13786#issuecomment-6820850777) | `?toggleOverride=` wins for one page load, and someone can be in on a phone and out on a laptop | The webapp already resolves an override ahead of the cookie, and assignment is per browser |
 
@@ -375,7 +378,7 @@ A shorter-lived `?toggle=` link ([#13834](https://github.com/wellcomecollection/
 | --- | --- |
 | Does the assignment run early enough to cover users with no cookie, given CloudFront's cache? | Not today. It does at viewer-request, which the spike confirmed. |
 | How do we change the percentage? | A test's percentages are set in its definition and fixed while it runs. Starting and finishing are commands modelled on `setDefaultValueFor`, with no deploy, and take effect in about a minute. |
-| Which field do we send membership in? | The existing `toggles` value, with each test's version added to identify the analysis period. |
+| Which field do we send membership in? | The existing `toggles` value. Each entry names the test, the version, which identifies the analysis period, and the cohort. |
 | Is the change in cost acceptable, and do we want alarms for the cache hit rate? | Cost needs estimating from request volume (see Impact). I propose alarms on cache hit rate and on function errors. |
 | Does this still allow us to do A/B tests? | Yes. A beta test with the measurement fields set, a split of 50 and no label is an A/B test. |
 
@@ -446,13 +449,12 @@ Building it now also carries a risk. Two things that both have a percentage are 
 - The cache holds up to three copies of each page a test applies to (not enrolled, control, variant) and one copy of every other page. Today every page on the site is affected by every test.
 - Two new first-party cookies are set for consenting visitors. The cookie policy needs updating.
 - The beta testing tickets need revising to describe a test with fixed percentages. This RFC does not deliver a percentage that rises over time, or a dashboard page for tests.
-- Tests are still read from the `toggles` value in GA. It gains each test's version, so filters that match the whole value need updating, and each period can be read separately.
+- Tests are still read from the `toggles` value in GA. Its entries change format to carry the version and name the cohort, so existing filters need updating. Each period can be read separately, and visitors outside a test can be told apart from its control group.
 - Adding a test becomes a change to `tests.ts` and a `yarn deploy`, with no Lambda build or Terraform. Starting and finishing a test are one command each.
 
 ## Open questions
 
-1. Are the required fields (close date, decision owner, stop criteria) the right ones for the Digital Experience team, and are the optional measurement fields the right ones for the analyst?
-2. Is six months the right lifetime for the two cookies?
+1. Is six months the right lifetime for the two cookies?
 
 ## Next steps
 
@@ -461,6 +463,6 @@ Building it now also carries a risk. Two things that both have a percentage are 
 3. Fixes that do not depend on the RFC: the dashboard type and search error, and corrections to the cache and toggles READMEs.
 4. Build the functions, the KeyValueStore, the CI check and the alarms, and deploy to staging with a test that changes nothing visible.
 5. Move tests to `tests.ts` with the required fields, and add the test commands and `tests.json`.
-6. Add the version to the `toggles` value, and check it in GA's DebugView.
+6. Change the `toggles` value to the new entry format, and check it in GA's DebugView.
 7. Deploy to production with no tests configured, then remove the toggler from the Lambda@Edge.
 8. Run a first beta test, and check the share of visitors in each cohort against its definition.
