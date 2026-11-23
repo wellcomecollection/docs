@@ -1,6 +1,6 @@
 # Service ownership and lifecycle decisions
 
-Last updated: 18/11/26
+Last updated: 23/11/26
 
 ---
 
@@ -11,6 +11,8 @@ This records where service ownership is held, who is accountable for a service, 
 Backplane (internal), our developer portal, is the ownership register. Each repository declares its systems and components in `manifest.yml`, with the owning team in `spec.owner` and the runbook as a link. Backplane shows these, and D&T can open it. The service pages in [architecture/services](../architecture/services/README.md) name the Backplane entity rather than copying the owner or runbook.
 
 The lead engineer of the owning team is accountable for a service day to day.
+
+Services are not recorded as ServiceNow configuration items. This follows the D&T CMMI work package on a product-led application lifecycle (INIT-16), which builds on the product operating model and asks that each application has clear accountable ownership from Transform through Build and Run to Retire. Backplane holds that ownership next to the code, so it changes in the same pull request as the service. If D&T needs our services listed in ServiceNow, the list should be generated from Backplane rather than kept by hand, so that the two cannot drift.
 
 ## Lifecycle decisions
 
