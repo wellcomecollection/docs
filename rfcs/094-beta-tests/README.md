@@ -2,11 +2,11 @@
 
 ## Purpose
 
-This RFC proposes a mechanism for beta tests on wellcomecollection.org. A beta test shows a feature that is ready to a fixed share of visitors for a set period, with a beta label, so that we find problems and hear feedback before it goes to everyone, and it ends with a decision to release the feature or roll it back. The mechanism replaces the A/B test assignment in our Lambda@Edge with a CloudFront Function that runs before the cache lookup, so that each visitor is assigned once, independently, and keeps what they were given.
+This RFC proposes a mechanism for beta tests on wellcomecollection.org. A beta test shows a feature that is ready to a fixed share of visitors for a set period, so that we find problems and hear feedback before it goes to everyone, and it ends with a decision to release the feature or roll it back. The mechanism replaces the A/B test assignment in our Lambda@Edge with a CloudFront Function that runs before the cache lookup, so that each visitor is assigned once, independently, and keeps what they were given.
 
 The Digital Experience team wants to get working changes in front of visitors sooner. Beta tests are meant to make a larger change less risky to release, so that we release more often. The RFC also sets out what a test must have before it starts, why its percentages are fixed while it runs, and how tests are reported to Google Analytics.
 
-**Last modified:** 2026-11-23T14:55:00+00:00
+**Last modified:** 2026-11-24T17:00:00+00:00
 
 **Related issues:**
 
@@ -17,7 +17,7 @@ The Digital Experience team wants to get working changes in front of visitors so
 
 ### What a beta test is
 
-A beta test puts a feature in front of some visitors before all of them. The feature is finished enough to release. We show it to a share of visitors chosen at random, tell them it is in beta, watch for problems and collect feedback, and then either release it to everyone or take it away.
+A beta test puts a feature in front of some visitors before all of them. The feature is finished enough to release. We show it to a share of visitors chosen at random, watch for problems and collect feedback, and then either release it to everyone or take it away.
 
 Mechanically this is an A/B test. Visitors are divided at random into those who get the feature (the variant) and those who do not (the control), each visitor keeps their group, and the group is recorded in Google Analytics. This RFC rebuilds the existing A/B test mechanism and calls what it provides a beta test, because the main use is releasing changes with less risk. Measuring the size of an effect is possible and optional.
 
@@ -31,9 +31,9 @@ A beta test is not a gradual release. The beta testing ticket ([#13785](https://
 
 ### The beta label
 
-Visitors who get the feature are told it is in beta and can give feedback ([#13821](https://github.com/wellcomecollection/wellcomecollection.org/issues/13821)). The label is part of the variant's page and needs nothing from this mechanism.
+A feature in a beta test may tell visitors that it is in beta and ask for their feedback ([#13821](https://github.com/wellcomecollection/wellcomecollection.org/issues/13821)). Whether it does, and where, is decided in the work on that feature. A label is part of the variant's page, and this mechanism has no part in it.
 
-The label affects what a test can tell us, and we accept that. People who know they are being shown something new behave differently, and only the variant group is told. A difference between the two groups therefore describes the labelled feature, and it cannot be read as the effect the feature will have once the label is gone. That suits a test whose purpose is to find problems and gather feedback.
+A label affects what a test can tell us, and we accept that. People who know they are being shown something new behave differently, and only the variant group is told. A difference between the two groups then describes the labelled feature, and it cannot be read as the effect the feature will have once the label is gone. That suits a test whose purpose is to find problems and gather feedback.
 
 ### Enrolment and split
 
@@ -100,12 +100,12 @@ The first three mean that results from past tests cannot be treated as coming fr
 
 1. A visitor is assigned to a cohort once, independently of other visitors, of other tests and of the cache, and keeps it across visits.
 2. Assignment works for client-side navigation as well as full page loads.
-3. A test cannot start without a close date, an owner for the decision, and a statement of what would roll it back early. A test that sets out to measure an effect also has a hypothesis, a primary metric, a planned sample or duration, and success criteria.
+3. A test cannot start without a close date, an owner for the decision, and a statement of what would roll it back early. These are fields in the test's definition, and a definition without them does not type-check or publish. A test that sets out to measure an effect also has a hypothesis, a primary metric, a planned sample or duration, and success criteria.
 4. A test's enrolment (the share of visitors in the test) and split (the share of those who get the variant) are set in its definition and fixed while it runs. A change is an exception that needs a recorded reason and starts a new analysis period.
-5. Starting, changing and finishing a test need no code deploy, and each is recorded with a timestamp and kept.
+5. A test's definition is merged and deployed before the test starts. Starting, changing and finishing it then need no code deploy, and each is recorded with a timestamp and kept in the published record of the test.
 6. The version of the site a visitor was given is recorded in Google Analytics for visitors who have consented to analytics, with enough detail to analyse each period separately. Visitors who have not consented are not enrolled or measured, which limits how many visitors a test can reach.
 7. A test ends with a recorded decision.
-8. A personal cookie, set from the dashboard or a `?toggle=` link, overrides assignment, so staff can preview either version. Previews do not count in results.
+8. A personal cookie, set from the dashboard or a `?toggle=` link, overrides assignment, so staff can preview either version. Previews do not count in results. See [Staff previews](#staff-previews).
 9. A test is defined in one place.
 10. Pages stay cacheable, and a test does not reduce the cache hit rate on pages it does not affect.
 
@@ -151,6 +151,8 @@ The function keeps two cookies of its own on the visitor's browser. Neither is p
 
 One cookie could hold the bucket number as well. They are kept apart because the bucket number never changes, while the list is rewritten as tests start and finish. A list that cannot be parsed is discarded and rebuilt from the hash, and the visitor keeps their bucket number.
 
+A test has a version number that increases by one whenever its percentages change. A change takes about a minute to reach visitors. In our test the new value first appeared 34 seconds after the write, and for roughly 20 seconds after that requests saw old and new values interleaved. Each assignment records the version it was made under, so the interleaving does not make any visitor's record ambiguous.
+
 For each running test, on each request:
 
 1. If the request carries a personal `toggle_ID` cookie for the test, leave it alone and stop.
@@ -160,8 +162,6 @@ For each running test, on each request:
 5. Set `toggle_ID` on the request to `true` or `false` for visitors in the test, and remove it for visitors who are outside.
 
 A visitor who is outside the test has an entry that says so, which is how they are reported to GA. Their entry is assigned again when the version changes, so that a rise in enrolment, such as the end of a safety ramp, can bring them into the test. The hash is deterministic, so a visitor who is still outside after that stays outside. Visitors recorded as variant or control keep their entry whatever the version.
-
-A test has a version number that increases by one whenever its percentages change. A change takes about a minute to reach visitors. In our test the new value first appeared 34 seconds after the write, and for roughly 20 seconds after that requests saw old and new values interleaved. Each assignment records the version it was made under, so the interleaving does not make any visitor's record ambiguous.
 
 ### Staff previews
 
@@ -256,7 +256,7 @@ Tests are reported to GA through the `toggles` value in the dataLayer, which the
 
 The value changes in four ways.
 
-- Each entry names the cohort in words. A visitor in the variant of one test, the control of another and outside a third has `newTags.v2.variant,searchFilters.v1.control,imageSidebar.v1.outside`. Today the control is marked with a leading `!`, as in `newTags,!searchFilters`, which is easy to miss, and visitors outside a test are not reported at all. Existing report filters need updating for the new format.
+- Each entry names the cohort in words. A visitor in the variant of one test, the control of another and outside a third has `newTags.v2.variant,searchFilters.v1.control,imageSidebar.v1.outside`. Today the control is marked with a leading `!`, as in `newTags,!searchFilters`, and visitors outside a test are not reported at all. The analyst asked for the cohort to be named. Existing report filters need updating for the new format.
 - Each entry gains the test's version, which identifies the analysis period.
 - The entries for tests are built in the browser from the `wc_ab` cookie. They are not rendered into the page, because a cached page is shared by visitors assigned under different versions, and visitors outside a test share a cached page with visitors who have not consented.
 - A test is left out of the value when the browser holds its own `toggle_ID` cookie for it, so staff previews are left out of results.
@@ -353,7 +353,7 @@ A page of its own for tests is recorded under [A tests page on the dashboard](#a
 | "Rollout percentages are changed by PR and deploy" ([#13785](https://github.com/wellcomecollection/wellcomecollection.org/issues/13785)) | A test's percentages are in its definition, so they are set and reviewed in a PR. Starting and finishing a test are commands. | The percentages are meant to be decided once, which suits a PR. Starting, and above all stopping, should not wait for a deploy: a feature that is causing problems can be rolled back in about a minute. |
 | "Raising the percentage only adds visitors" ([#13785](https://github.com/wellcomecollection/wellcomecollection.org/issues/13785)) | Percentages are not raised, apart from an optional safety ramp at the start. Where enrolment does rise, nobody already enrolled is removed or moved. | The guarantee the criterion wants holds. The routine raising does not happen. |
 | A rollout raised to 100% becomes the public default ([#13785](https://github.com/wellcomecollection/wellcomecollection.org/issues/13785), [#13836](https://github.com/wellcomecollection/wellcomecollection.org/issues/13836)) | A test ends with a decision. If it is to ship, the flag's public value is changed and the test is finished. | Reaching everyone is a release decision, made by the test's decision owner by its close date. |
-| Visitors in a rollout see a beta label ([#13821](https://github.com/wellcomecollection/wellcomecollection.org/issues/13821)) | Visitors who get the feature see the label, which is part of the variant. | Agreed in review. A difference between the groups then describes the labelled feature. See [The beta label](#the-beta-label). |
+| Visitors in a rollout see a beta label ([#13821](https://github.com/wellcomecollection/wellcomecollection.org/issues/13821)) | A feature may carry a beta label, which is added in the work on that feature. The mechanism has no part in it. | The Digital Experience team decided this in review. Where there is a label, a difference between the groups describes the labelled feature. See [The beta label](#the-beta-label). |
 | The dashboard keeps a copy of the hash to say whether this browser is in ([#13786](https://github.com/wellcomecollection/wellcomecollection.org/issues/13786#issuecomment-6820850777)) | The assignment is stored in the `wc_ab` cookie, which the dashboard can read. | The assignment is stored anyway. Reading it avoids two implementations of the hash that could drift apart. |
 | The dashboard shows the percentage, what this browser is seeing, and when changes happened ([#13837](https://github.com/wellcomecollection/wellcomecollection.org/issues/13837)) | No new dashboard page. `tests.json` holds the percentages and the history, and the browser's cohort is in the `wc_ab` cookie. | The Digital Experience team would rather not add a dashboard page now. See [A tests page on the dashboard](#a-tests-page-on-the-dashboard). |
 | Every visitor has a position, and is in if it falls within the percentage ([#13785](https://github.com/wellcomecollection/wellcomecollection.org/issues/13785)) | Only visitors who have accepted analytics cookies are enrolled. | Enrolling a visitor stores something on their device. See [Consent](#consent). The tickets do not discuss consent. |
@@ -441,7 +441,7 @@ Building it now also carries a risk. Two things that both have a percentage are 
 
 ## Impact
 
-- A feature can be shown to a stable, known share of visitors, labelled as beta, and then released or rolled back in about a minute without a deploy. This is the reason for the change.
+- A feature can be shown to a stable, known share of visitors, and then released or rolled back in about a minute without a deploy. This is the reason for the change.
 - A comparison between the visitors who had a feature and those who did not becomes sound, because the groups are divided at random and recorded.
 - Starting a test needs a close date, a decision owner and stop criteria, written and reviewed first. I think that is a benefit, because it is what stops a test from being left running.
 - Every request to the site runs a CloudFront Function and reads the KeyValueStore, including when nothing is running. CloudFront Functions are priced per invocation. The cost needs estimating from our request volume before we commit, and I expect it to be small next to what we pay for the two Lambda@Edge invocations on each cache miss today, one of which goes away.
