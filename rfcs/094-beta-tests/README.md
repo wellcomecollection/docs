@@ -4,9 +4,9 @@
 
 This RFC proposes a mechanism for beta tests on wellcomecollection.org. A beta test shows a feature that is ready to a fixed share of visitors for a set period, so that we find problems and hear feedback before it goes to everyone, and it ends with a decision to release the feature or roll it back. The mechanism replaces the A/B test assignment in our Lambda@Edge with a CloudFront Function that runs before the cache lookup, so that each visitor is assigned once, independently, and keeps what they were given.
 
-The Digital Experience team wants to get working changes in front of visitors sooner. Beta tests are meant to make a larger change less risky to release, so that we release more often. The RFC also sets out what a test must have before it starts, why its percentages are fixed while it runs, and how tests are reported to Google Analytics.
+The Digital Experience team wants to get working changes in front of visitors sooner. Beta tests are meant to make a larger change less risky to release, so that we release more often. The RFC also sets out why a test's percentages are fixed while it runs and how tests are reported to Google Analytics.
 
-**Last modified:** 2026-11-24T17:00:00+00:00
+**Last modified:** 2026-11-25T11:20:00+00:00
 
 **Related issues:**
 
@@ -21,10 +21,9 @@ A beta test puts a feature in front of some visitors before all of them. The fea
 
 Mechanically this is an A/B test. Visitors are divided at random into those who get the feature (the variant) and those who do not (the control), each visitor keeps their group, and the group is recorded in Google Analytics. This RFC rebuilds the existing A/B test mechanism and calls what it provides a beta test, because the main use is releasing changes with less risk. Measuring the size of an effect is possible and optional.
 
-Three rules follow from that purpose.
+Two rules follow from that purpose.
 
 - The percentages are decided before the test starts and stay fixed while it runs.
-- A test has a close date and an owner for the decision, both set before it starts. A test that is left running is a feature that some visitors have and others do not, with nobody due to resolve it, and it adds cached copies of every page it covers.
 - The test ends with a recorded decision: release the feature, roll it back, or revise it and test again.
 
 A beta test is not a gradual release. The beta testing ticket ([#13785](https://github.com/wellcomecollection/wellcomecollection.org/issues/13785)) describes a percentage that rises over time. In review the Digital Experience team said they do not need that: a feature goes to a fixed share of visitors, for example 20%, and then to everyone or to nobody. This RFC proposes that, and does not provide a percentage that is raised step by step.
@@ -100,7 +99,7 @@ The first three mean that results from past tests cannot be treated as coming fr
 
 1. A visitor is assigned to a cohort once, independently of other visitors, of other tests and of the cache, and keeps it across visits.
 2. Assignment works for client-side navigation as well as full page loads.
-3. A test cannot start without a close date, an owner for the decision, and a statement of what would roll it back early. These are fields in the test's definition, and a definition without them does not type-check or publish. A test that sets out to measure an effect also has a hypothesis, a primary metric, a planned sample or duration, and success criteria.
+3. A test that sets out to measure an effect records a hypothesis, a primary metric, a planned sample or duration, and success criteria in its definition before it starts.
 4. A test's enrolment (the share of visitors in the test) and split (the share of those who get the variant) are set in its definition and fixed while it runs. A change is an exception that needs a recorded reason and starts a new analysis period.
 5. A test's definition is merged and deployed before the test starts. Starting, changing and finishing it then need no code deploy, and each is recorded with a timestamp and kept in the published record of the test.
 6. The version of the site a visitor was given is recorded in Google Analytics for visitors who have consented to analytics, with enough detail to analyse each period separately. Visitors who have not consented are not enrolled or measured, which limits how many visitors a test can reach.
@@ -173,25 +172,20 @@ Anyone can set that cookie, as they can today. It only selects between the two c
 
 A test lists the path prefixes it applies to. Assignment is the same on every page, but the function only adds `toggle_ID` to requests for those paths. Pages outside them keep a single cached copy. For `/_next/data/BUILD/path.json` requests the function compares the page path inside the URL.
 
-### Definition and plan
+### Definition
 
 A test is defined in a new file, `toggles/webapp/tests.ts`. This replaces the entry in `toggler.ts`, its `when` function, and the `tests` list in `toggles.ts`. A definition has:
 
 | Field | Purpose |
 | --- | --- |
 | `id`, `title`, `description` | As today |
-| `closeDate` | The date by which the decision to release or roll back is due |
-| `decisionOwner` | The role or team that makes that decision. The file is public, so this is not a person's name. |
-| `stopCriteria` | What would lead us to roll the feature back before the close date |
 | `enrolment`, `split` | The percentage of visitors in the test, and the percentage of those who get the variant |
 | `paths` | The pages the test affects |
 | `flag`, `value` | Optional. A feature flag or phased flag, and the value the variant turns on. See [Testing something that is behind a flag](#testing-something-that-is-behind-a-flag). |
-| `hypothesis`, `primaryMetric`, `plannedSample` or `plannedDuration`, `successCriteria` | Optional as a group, for a test that sets out to measure an effect |
+| `hypothesis`, `primaryMetric`, `plannedSample` or `plannedDuration`, `successCriteria` | Optional as a group, for a test that sets out to measure an effect, and published before it starts |
 | `documentationLink`, `dashboardLink` | Optional links to a fuller write-up and to the report where results are read |
 
-The close date, the decision owner and the stop criteria are required. A test without them does not type-check, and `yarn deploy` will not publish it. They are short text that is reviewed in the pull request that adds the test and published with it before any visitor is enrolled. They exist so that every test has a date by which someone is due to release the feature or take it away.
-
-Nothing stops automatically on the close date, because ending a test without a decision would take a feature away from visitors when nobody had decided to roll it back. `yarn deploy` and the test commands list any running test that is past its close date.
+A definition has no close date, decision owner or roll-back criteria. A test still needs someone who is due to decide, by a known date, whether the feature is released or rolled back, because a test that is left running is a feature that some visitors have and others do not, and it adds cached copies of every page it covers. We suggest tracking that in the test's GitHub issue or in Notion, with `documentationLink` pointing at it. How that process works is outside this RFC. See [A close date and decision owner in the definition](#a-close-date-and-decision-owner-in-the-definition) under Alternatives.
 
 The measurement fields are for a test that will be used to say how much a feature changed a metric. They are set together or not at all: what we expect the variant to change and why, the measure the decision rests on, how many visitors per version or how long the test needs before it is read, and what result leads to which decision. A test without them can still be compared with its control group, and that comparison should be read as an indication.
 
@@ -333,7 +327,7 @@ A page of its own for tests is recorded under [A tests page on the dashboard](#a
 | Area | Change |
 | --- | --- |
 | `cache/` | Two CloudFront Functions and a KeyValueStore. Functions attached to the behaviours that have the Lambda today, and to `/_next/data/*`. Toggler removed from the Lambda@Edge. Origin-response Lambda detached. Alarms for function errors and cache hit rate. |
-| `toggles/webapp` | Tests move to their own `tests.ts` with a required close date, decision owner and stop criteria. Test commands and a published `tests.json`. `toggles.json` keeps only the ids, titles and paths of tests that have not finished. |
+| `toggles/webapp` | Tests move to their own `tests.ts`. Test commands and a published `tests.json`. `toggles.json` keeps only the ids, titles and paths of tests that have not finished. |
 | `common/` | The `toggles` dataLayer value gains each test's version and names the cohort, including visitors outside the test, and leaves out staff previews. |
 | `dash/webapp` | Type fix. The group on the toggles page is renamed. |
 | Docs | The cache and toggles READMEs, and the cookie policy entry for the new cookies. |
@@ -352,7 +346,7 @@ A page of its own for tests is recorded under [A tests page on the dashboard](#a
 | Any feature flag or phase can be put on for a percentage of visitors ([#13785](https://github.com/wellcomecollection/wellcomecollection.org/issues/13785), [#13836](https://github.com/wellcomecollection/wellcomecollection.org/issues/13836)) | A test's variant can be a value of a feature flag or a phase of a phased flag. | This gives the same result, a chosen share of visitors seeing a flag's new value, with a control group alongside. |
 | "Rollout percentages are changed by PR and deploy" ([#13785](https://github.com/wellcomecollection/wellcomecollection.org/issues/13785)) | A test's percentages are in its definition, so they are set and reviewed in a PR. Starting and finishing a test are commands. | The percentages are meant to be decided once, which suits a PR. Starting, and above all stopping, should not wait for a deploy: a feature that is causing problems can be rolled back in about a minute. |
 | "Raising the percentage only adds visitors" ([#13785](https://github.com/wellcomecollection/wellcomecollection.org/issues/13785)) | Percentages are not raised, apart from an optional safety ramp at the start. Where enrolment does rise, nobody already enrolled is removed or moved. | The guarantee the criterion wants holds. The routine raising does not happen. |
-| A rollout raised to 100% becomes the public default ([#13785](https://github.com/wellcomecollection/wellcomecollection.org/issues/13785), [#13836](https://github.com/wellcomecollection/wellcomecollection.org/issues/13836)) | A test ends with a decision. If it is to ship, the flag's public value is changed and the test is finished. | Reaching everyone is a release decision, made by the test's decision owner by its close date. |
+| A rollout raised to 100% becomes the public default ([#13785](https://github.com/wellcomecollection/wellcomecollection.org/issues/13785), [#13836](https://github.com/wellcomecollection/wellcomecollection.org/issues/13836)) | A test ends with a decision. If it is to ship, the flag's public value is changed and the test is finished. | Reaching everyone is a release decision that follows the test. It is not the last step of a dial. |
 | Visitors in a rollout see a beta label ([#13821](https://github.com/wellcomecollection/wellcomecollection.org/issues/13821)) | A feature may carry a beta label, which is added in the work on that feature. The mechanism has no part in it. | The Digital Experience team decided this in review. Where there is a label, a difference between the groups describes the labelled feature. See [The beta label](#the-beta-label). |
 | The dashboard keeps a copy of the hash to say whether this browser is in ([#13786](https://github.com/wellcomecollection/wellcomecollection.org/issues/13786#issuecomment-6820850777)) | The assignment is stored in the `wc_ab` cookie, which the dashboard can read. | The assignment is stored anyway. Reading it avoids two implementations of the hash that could drift apart. |
 | The dashboard shows the percentage, what this browser is seeing, and when changes happened ([#13837](https://github.com/wellcomecollection/wellcomecollection.org/issues/13837)) | No new dashboard page. `tests.json` holds the percentages and the history, and the browser's cohort is in the `wc_ab` cookie. | The Digital Experience team would rather not add a dashboard page now. See [A tests page on the dashboard](#a-tests-page-on-the-dashboard). |
@@ -429,21 +423,27 @@ Without the `wc_ab` record, a visitor's cohort would be recomputed from the hash
 
 ### A tests page on the dashboard
 
-Tests could have their own page next to the toggles page, read from `tests.json`. For each test it would show the close date, the decision owner, the percentages, each analysis period with its dates and any reason for a change, and the decision, and it would say which cohort this browser is in. [#13837](https://github.com/wellcomecollection/wellcomecollection.org/issues/13837) asks for something like it.
+Tests could have their own page next to the toggles page, read from `tests.json`. For each test it would show the percentages, each analysis period with its dates and any reason for a change, and the decision, and it would say which cohort this browser is in. [#13837](https://github.com/wellcomecollection/wellcomecollection.org/issues/13837) asks for something like it.
 
 It is left out because the Digital Experience team would rather not take on another dashboard page now, and one toggles page is easier to reason about. `tests.json` holds everything the page would show, so it can be added later without changing the mechanism.
+
+### A close date and decision owner in the definition
+
+A test's definition could require a close date, the role or team that owns the decision, and what would roll the feature back early, so that a test without them would not type-check or publish. The test commands could then list tests that are past their close date.
+
+It is left out to keep a definition small. These fields describe how the team works and the mechanism does not act on them, so they are better tracked with the rest of the work on a feature. They can be added later if tests are being left running.
 
 ### A gradual release mechanism
 
 We could also build a way to release a feature to a rising percentage of visitors, with no control group and no record, purely to limit the effect of a fault. It would use the same assignment. It is left out because nothing we have been asked for needs it: the Digital Experience team wants a fixed share of visitors followed by everyone or nobody, and our releases can be switched off with `setDefaultValueFor` if they misbehave. If we later want it, the mechanism here does not need to change.
 
-Building it now also carries a risk. Two things that both have a percentage are easy to mistake for each other, and a test whose percentage is turned up until it becomes the release no longer has a close date or a decision.
+Building it now also carries a risk. Two things that both have a percentage are easy to mistake for each other, and a test whose percentage is turned up until it becomes the release never reaches a recorded decision.
 
 ## Impact
 
 - A feature can be shown to a stable, known share of visitors, and then released or rolled back in about a minute without a deploy. This is the reason for the change.
 - A comparison between the visitors who had a feature and those who did not becomes sound, because the groups are divided at random and recorded.
-- Starting a test needs a close date, a decision owner and stop criteria, written and reviewed first. I think that is a benefit, because it is what stops a test from being left running.
+- Nothing in the mechanism stops a test from being left running. That depends on the team tracking each test to a decision, which is outside this RFC.
 - Every request to the site runs a CloudFront Function and reads the KeyValueStore, including when nothing is running. CloudFront Functions are priced per invocation. The cost needs estimating from our request volume before we commit, and I expect it to be small next to what we pay for the two Lambda@Edge invocations on each cache miss today, one of which goes away.
 - A fault in the function affects every page. The failure handling above is how we limit that, and it is the main operational risk of the proposal.
 - The cache holds up to three copies of each page a test applies to (not enrolled, control, variant) and one copy of every other page. Today every page on the site is affected by every test.
@@ -462,7 +462,7 @@ Building it now also carries a risk. Two things that both have a percentage are 
 2. Revise the beta testing tickets in line with this RFC.
 3. Fixes that do not depend on the RFC: the dashboard type and search error, and corrections to the cache and toggles READMEs.
 4. Build the functions, the KeyValueStore, the CI check and the alarms, and deploy to staging with a test that changes nothing visible.
-5. Move tests to `tests.ts` with the required fields, and add the test commands and `tests.json`.
+5. Move tests to `tests.ts`, and add the test commands and `tests.json`.
 6. Change the `toggles` value to the new entry format, and check it in GA's DebugView.
 7. Deploy to production with no tests configured, then remove the toggler from the Lambda@Edge.
 8. Run a first beta test, and check the share of visitors in each cohort against its definition.
