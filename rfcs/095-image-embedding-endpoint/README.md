@@ -4,7 +4,7 @@
 
 The image pipeline computes a feature vector for every image with a VGG16 model that runs in a sidecar next to the inference manager. We want to replace those vectors with SigLIP 2 embeddings, and the Data Science team has offered to host the model on a GPU endpoint in their AWS account. This RFC proposes how the inference manager calls that endpoint across accounts, what it does when the endpoint is unavailable, and how it caches everything it infers about an image in Iceberg tables so that an image is downloaded and embedded once per model. The state machine reads the cache once per run and only starts inference tasks for images it has not seen. It also proposes that the inference manager computes palette and aspect ratio itself, which removes the three sidecars and leaves the task with a single container.
 
-**Last modified:** 2026-11-24T17:05:00+00:00
+**Last modified:** 2026-11-26T11:55:58+00:00
 
 **Status:** Draft. Sections marked _Open_ wait on answers from the Data Science team or on measurements against a test endpoint.
 
@@ -71,8 +71,8 @@ flowchart TD
     COMMIT --> CACHE
 ```
 
-1. **Find work** selects the images that changed in the window, as it does today. It then reads the id and URL columns of the cache for the pipeline's model identity and palette encoder version, which is a few megabytes, and splits the images into hits and misses.
-2. **Copy from cache** handles the hits. It reads the cached rows, reads the image documents from `images-initial`, and writes augmented documents. Hits are grouped by the table's id bucket, so each copy task reads one slice of the table.
+1. **Find work** selects the images that changed in the window, as it does today. It then reads the id, URL and written time columns of the cache for the pipeline's model identity and palette encoder version, which is a few megabytes, takes the latest row for each image, and splits the images into hits and misses.
+2. **Copy from cache** handles the hits. It reads the latest cached row for each image, reads the image documents from `images-initial`, and writes augmented documents. Hits are grouped by the table's id bucket, so each copy task reads one slice of the table.
 3. **The inference manager** handles the misses, in partitions. It downloads each thumbnail, computes aspect ratio and palette, calls the endpoint, validates the vectors and writes augmented documents. It also writes its new rows to a staging file in S3.
 4. **Commit to cache** appends every staged file to the tables in one commit and then deletes the files. It runs whether or not any inference task failed.
 
@@ -174,14 +174,16 @@ Find work compares the URL in each image document with the URL in the cache. A d
 
 Caching the palette freezes one sample of the encoder's random noise for each image. I think this is an improvement, because an image's palette then stays the same from one reindex to the next.
 
-**Writes.** The inference tasks do not commit to the tables. Twelve tasks committing at once would conflict and retry, which this pipeline has already experienced with the FOLIO adapter. Each task writes its rows to staging files, and one step at the end of the run commits them together as an upsert on image id and identity. Two pipeline dates running at the same moment are at most two writers, which a commit retry handles.
+**Writes.** Rows are appended and never updated in place. A reader takes the latest row for each image and identity, by the time it was written. An image is embedded once for a model, so a second row for the same image only appears after a forced refresh, a changed IIIF URL, or a staged file that was committed twice, and the table stays close to one row per image. If replaced rows accumulate, a pruning job removes them. The id minter already writes its Iceberg table this way, with the matcher and merger taking the latest row when they read it and a pruner removing the rest, so the cache reuses a pattern and code the pipeline has.
+
+The inference tasks do not commit to the tables. Each task writes its rows to staging files, and one step at the end of the run appends them in a single commit. Twelve tasks committing at once would conflict and retry, which this pipeline has already experienced with the FOLIO adapter. An append that conflicts is cheap to retry, because it rewrites no data, so the tasks may be able to append directly, without the staging files and the commit step. I have kept the single commit until that has been measured with twelve writers. Two pipeline dates running at the same moment are at most two writers, which a commit retry handles.
 
 The inference manager writes augmented documents before the commit step runs, so a failed commit loses nothing from the pipeline's output. The staged files stay in S3 and the next run's commit step picks them up. Until then, those images are misses and would be inferred again if selected.
 
 **Repair.** There are three routes.
 
 - A commit that wrote bad rows can be rolled back to the previous snapshot, for as long as that snapshot is retained.
-- A forced refresh for named ids deletes their rows, so the next run recomputes them. This is also the route for an image that has been re-digitised.
+- A forced refresh for named ids recomputes them and appends new rows, which readers then take in place of the old ones. This is also the route for an image that has been re-digitised.
 - A periodic audit compares stored hashes with fresh downloads for a sample of ids, and reports mismatches.
 
 An image whose bytes change under the same id and URL keeps its old rows until one of these catches it. We have not measured how often this happens, and I think it is rare enough for the refresh and the audit to cover.
@@ -268,6 +270,10 @@ Either would be quicker to build. We prefer the tables because a single reader a
 
 This keeps the state machine unchanged and uses the tables as a key-value store. A point lookup of 300 random ids cannot skip any files, so each task would read the whole partition to use a small part of it, and concurrent commits from parallel tasks would conflict.
 
+### Upsert rows in the commit step
+
+The commit step would replace an image's row and keep one row per image, so a reader would not need to pick the latest. An upsert has to match the incoming rows against the table on every run and rewrite the data files that hold a replaced row, and a commit that conflicts has to redo that work. Replacement is rare in this cache, so I think the cost is not worth paying, and appending matches how the id minter's table is written and read.
+
 ### Key the cache on a hash of the image bytes
 
 A hash of the thumbnail would catch a changed image without anyone noticing it. It needs the download on every run to compute the key, so a reindex would still fetch every thumbnail, and it depends on the image server returning identical bytes for the same request over months. We have confirmed that across minutes only. The proposal stores the hash for auditing and does not use it as the key.
@@ -311,6 +317,7 @@ To measure:
 - Throughput and error behaviour with 12 concurrent tasks, including throttling.
 - Cold-start time, if the endpoint scales to zero.
 - CPU time and peak memory of the palette encoding inside the manager, for partitions of 300 and of 2,000 images. This sizes the task and sets the inference partition size.
+- Whether twelve inference tasks can append to the tables directly, with commit retries, in place of the staging files and the commit step. The id minter appends from six concurrent tasks today.
 - Time and memory for find work to read the id and URL columns, and for a copy task to read one bucket and write its documents. This decides whether the copy runs as a Lambda or as a task, and how many buckets to use.
 - How often thumbnail bytes change under the same URL, sampled over several weeks and bypassing the CDN cache.
 - Whether merging a work again selects its unchanged images for inference, observed on a live run.
