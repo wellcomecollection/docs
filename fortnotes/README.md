@@ -2,7 +2,7 @@
 
 Fortnightly updates about the work of the digital platform team.
 - [2026 November 25](20261125.md)
-- [2026 November 11](202611111.md)
+- [2026 November 11](20261111.md)
 - [2026 October 14](20261014.md)
 - [2026 September 30](20260930.md)
 - [2026 September 9](20260909.md)
