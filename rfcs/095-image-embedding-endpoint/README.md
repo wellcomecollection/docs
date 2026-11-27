@@ -4,7 +4,7 @@
 
 The image pipeline computes a feature vector for every image with a VGG16 model that runs in a sidecar next to the inference manager. We want to replace those vectors with SigLIP 2 embeddings, and the Data Science team has offered to host the model on a GPU endpoint in their AWS account. This RFC proposes how the inference manager calls that endpoint across accounts, what it does when the endpoint is unavailable, and how it caches everything it infers about an image in Iceberg tables so that an image is downloaded and embedded once per model. The state machine reads the cache once per run and only starts inference tasks for images it has not seen. It also proposes that the inference manager computes palette and aspect ratio itself, which removes the three sidecars and leaves the task with a single container.
 
-**Last modified:** 2026-11-26T11:55:58+00:00
+**Last modified:** 2026-11-27T09:18:14+00:00
 
 **Status:** Draft. Sections marked _Open_ wait on answers from the Data Science team or on measurements against a test endpoint.
 
@@ -47,7 +47,7 @@ The checkpoint's reference preprocessing resizes the image straight to 224 by 22
 
 The Data Science team serves a text embedding model from a SageMaker GPU endpoint running Triton Inference Server behind a Ray Serve wrapper, with the model exported to ONNX. They have proposed hosting SigLIP 2 the same way. Their existing endpoint takes one piece of text per request and returns a bare array of floats, with pooling and normalisation compiled into the model graph. It runs one replica on one GPU and its response carries no model version. An image endpoint does not exist yet.
 
-The endpoint will live in the Machine Learning account, which the Data Science team owns and which is separate from the platform account. That account's only VPC is in eu-west-2, so we assume the endpoint will be deployed there. The pipeline runs in eu-west-1.
+The endpoint will live in the Machine Learning account, which the Data Science team owns and which is separate from the platform account. The Data Science team has confirmed it will run in eu-west-2, and is open to moving it if network latency turns out to be a problem. The pipeline runs in eu-west-1.
 
 ## Proposal
 
@@ -115,11 +115,11 @@ The full list of what we need from the endpoint, with the reason for each item a
 
 We ask the endpoint to accept JPEG bytes in batches and to own decoding, preprocessing and L2 normalisation, so that every caller gets the same vector for the same image.
 
-- Request: _Open_. A batch of JPEG thumbnails, each with an identifier the caller chooses. Thirty thumbnails at our 99th percentile size (75 KB) is about 2.3 MB, which is inside the 6 MB payload ceiling that the stricter AWS documentation gives for `InvokeEndpoint`.
-- Response: _Open_. For each item, the caller's identifier, a status, and on success one 768-dimension unit-length float32 vector. The response also reports the model version.
+- Request: a batch of JPEG thumbnails, each with an identifier the caller chooses. The Data Science team has confirmed the endpoint will accept JPEG bytes at our thumbnail sizes. _Open_: batching and the identifier. Thirty thumbnails at our 99th percentile size (75 KB) is about 2.3 MB, which is inside the 6 MB payload ceiling that the stricter AWS documentation gives for `InvokeEndpoint`.
+- Response: for each item, the caller's identifier, a status, and on success one 768-dimension unit-length float32 vector. The response also reports the model version, which the Data Science team has confirmed it can do. _Open_: the status for each item.
 - Per-item status matters because one image the endpoint cannot decode must not fail the other 29. The manager skips an image the endpoint rejects, counts it and raises the same alarm as for a thumbnail that cannot be downloaded. If the endpoint cannot report per-item status, the client splits a failed batch in half and retries until it isolates the image.
 - The echoed identifier lets the client detect a response whose items are out of order, which would otherwise store valid vectors against the wrong images.
-- Decoding: the endpoint converts every image to RGB (thumbnails can be greyscale or CMYK) and applies EXIF orientation. _Open_: confirm with the Data Science team.
+- Decoding: the endpoint converts every image to RGB (thumbnails can be greyscale or CMYK) and applies EXIF orientation. The Data Science team has agreed that the endpoint does the preprocessing and post-processing. _Open_: that this includes RGB conversion and EXIF orientation.
 - Preprocessing: the checkpoint's own configuration, described above. A path reused from CLIP would produce different vectors.
 - Timing: SageMaker requires the container to respond within 60 seconds, which bounds the batch size.
 
@@ -138,7 +138,9 @@ This places two requirements on the endpoint.
 
 The manager compares the version in each response with its configuration and fails the run on a mismatch. A mismatch means the endpoint changed underneath a live pipeline, which is an incident for both teams to resolve and should not be handled by updating configuration.
 
-_Open_: whether the response can report a version. If it cannot, the endpoint name stands in for the version, on the understanding that a named endpoint is never redeployed with a different model.
+The Data Science team has confirmed that each response can carry the model's unique id from their model registry.
+
+_Open_: the two requirements above. The Data Science team thinks they will work and has not yet worked them through. They also describe swapping a model in and out of an endpoint with no downtime. For a version that a pipeline is pinned to, that is the change in place these requirements rule out, so it needs to be agreed explicitly.
 
 ### Cross-account access
 
@@ -196,9 +198,8 @@ Find work publishes the number of hits and misses for each run. A sudden fall in
 
 A remote endpoint adds failure modes that a local sidecar does not have.
 
-- A real-time endpoint that has scaled to zero returns errors for several minutes while an instance starts, and it does not queue requests.
 - Container errors arrive as `ModelError` with the container's status code. Service unavailability arrives as a 503 that AWS says to retry.
-- The endpoint can throttle us. A reindex with 12 tasks against a single GPU replica is where that would appear.
+- The endpoint can throttle us. The Data Science team expects 100 to 1,000 images a second, depending on the instance, and says a full fill of the cache may need to be sent in chunks.
 
 The proposal is as follows.
 
@@ -207,7 +208,7 @@ The proposal is as follows.
 - An inference task writes augmented documents and staged rows for every image it completed before it reports the outcome. Today one failed image discards the partition.
 - If any image could not be embedded after retries, the task then fails. The commit step still runs, the execution fails and alarms as it does today, and a replay of the failed partition finds everything that succeeded in the cache.
 
-_Open_: whether the endpoint stays warm, and if it scales to zero, whether it uses inference components (which AWS requires for scaling a real-time endpoint to zero). This sets the length of the retry window.
+The Data Science team has confirmed the endpoint is always on, because starting it is slow. The retry window therefore has to cover throttling and short outages, and not a cold start.
 
 _Open_: replaying a failed window is manual today. An automatic replay would help this design and the existing pipeline, and is not part of this RFC.
 
@@ -284,7 +285,7 @@ We keep downloading and embedding on every merge and every new pipeline date. Th
 
 ## Impact
 
-- The image pipeline gains a runtime dependency on a service another team operates, in another account and, we assume, another region. The cache limits that dependency to images the pipeline has not seen before.
+- The image pipeline gains a runtime dependency on a service another team operates, in another account and another region. The cache limits that dependency to images the pipeline has not seen before.
 - The Data Science team takes on two commitments: a model version never changes in place, and an old version keeps serving until we retire the pipeline date that uses it.
 - The three sidecars, their container images and their build and deploy steps are removed once the last pipeline date that uses them is retired. The inference manager takes on Pillow as a dependency.
 - The image inferrer state machine gains three steps: the split in find work, the copy from cache and the commit. Most scheduled runs start no inference task.
@@ -295,27 +296,35 @@ We keep downloading and embedding on every merge and every new pipeline date. Th
 - An image's palette no longer changes between reindexes.
 - An image whose bytes change under the same id and URL keeps its old inferred data until someone refreshes it or the audit finds it.
 - `vectorValues.features` changes from 4,096 to 768 dimensions, which needs a new index mapping and a reindex ([wellcomecollection/platform#6914](https://github.com/wellcomecollection/platform/issues/6914)).
-- _Open_: who pays for the endpoint, and what availability it is run to.
+- The Data Science team expects the endpoint to be available about 99% of the time. _Open_: who pays for it.
 
 ## Open questions
 
-For the Data Science team:
+The Data Science team has answered these:
 
-1. The region and account of the endpoint.
-2. Whether it is always on or scales to zero, and whether it uses inference components.
-3. Whether it accepts batched JPEG bytes, with per-item status and a caller-supplied identifier echoed for each item.
-4. Whether it owns decoding (RGB conversion, EXIF orientation), preprocessing and L2 normalisation.
-5. Whether the response can report a model version, and the export precision.
-6. Whether a model version can be immutable once deployed, with an old version kept serving until we retire the pipeline that uses it.
-7. The authorisation route they will support.
-8. Expected throughput, and the rate we should stay under while filling the cache.
-9. Who we tell when it is down, and the availability to design for.
+- The endpoint runs in the Machine Learning account in eu-west-2.
+- It is always on.
+- It accepts JPEG bytes at our thumbnail sizes, and does the preprocessing and post-processing.
+- Each response can report the model's id from their model registry.
+- They expect 100 to 1,000 images a second, depending on the instance.
+- Their engineering team supports it. A support rota starts next year, and a support email address and Slack channel are being set up.
+- They expect about 99% availability.
+
+They asked for our batch size, how often we reindex, and the throughput we need. A batch is about 30 images. A reindex reads the cache and does not call the endpoint, so the whole collection is only sent when the model changes. We have told them 100 images a second is more than enough.
+
+Still open with the Data Science team:
+
+1. Whether a request can carry a batch, with a status for each item and a caller-supplied identifier returned with it.
+2. Whether decoding on the endpoint includes RGB conversion and EXIF orientation.
+3. Whether a model version is immutable once deployed, with an old version kept serving until we retire the pipeline that uses it.
+4. The authorisation route they will support.
+5. The rate we should stay under while filling the cache, and whether the fill has to be chunked.
+6. Who pays for the endpoint.
 
 To measure:
 
 - Cosine similarity and overlap of the ten nearest neighbours between the endpoint's vectors and our reference vectors, on a few thousand images. This tells us how far ONNX export and any quantisation move the vectors.
 - Throughput and error behaviour with 12 concurrent tasks, including throttling.
-- Cold-start time, if the endpoint scales to zero.
 - CPU time and peak memory of the palette encoding inside the manager, for partitions of 300 and of 2,000 images. This sizes the task and sets the inference partition size.
 - Whether twelve inference tasks can append to the tables directly, with commit retries, in place of the staging files and the commit step. The id minter appends from six concurrent tasks today.
 - Time and memory for find work to read the id and URL columns, and for a copy task to read one bucket and write its documents. This decides whether the copy runs as a Lambda or as a task, and how many buckets to use.
@@ -324,7 +333,7 @@ To measure:
 
 ## Next steps
 
-1. Get answers to the questions above and fill in the open sections.
+1. Agree the questions still open with the Data Science team and fill in the open sections.
 2. Run the measurements that need a test endpoint, and the ones that do not.
 3. Review this RFC with the Data Science team.
 4. Move palette and aspect ratio into the inference manager. This does not depend on the endpoint. It is outside the scope of the current build issue and needs an issue of its own.
