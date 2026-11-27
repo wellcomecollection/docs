@@ -4,7 +4,7 @@
 
 This RFC proposes an automated pipeline to synchronize data from **Axiell Collections (AxC)**, the new Content Management System (CMS), into **FOLIO**, the new Library Management System (LMS). The records from Axiell Collections need to exist in FOLIO so they can be requested and circulated in the LMS. It is designed for **idempotency** (safe to replay without duplication), **auditability** (every create / update / suppress is recorded), and **graceful error isolation** (one bad record never halts the batch).
 
-**Last modified:** 2026-10-13T11:52:02+00:00
+**Last modified:** 2026-11-26T12:00:00+00:00
 
 ## Table of Contents
 
@@ -52,7 +52,7 @@ This RFC proposes an automated pipeline to synchronize data from **Axiell Collec
   - [Item notes not visible on the FOLIO OAI-PMH feed](#item-notes-not-visible-on-the-folio-oai-pmh-feed)
   - [Stub identifiers and marker: decisions for Collections Information](#stub-identifiers-and-marker-decisions-for-collections-information)
   - [Axiell feed restricted to the archivecatalogue dataset](#axiell-feed-restricted-to-the-archivecatalogue-dataset)
-  - [Dev tenant mismatch between the sync and the digitisation tool](#dev-tenant-mismatch-between-the-sync-and-the-digitisation-tool)
+  - [Testing stubs through Goobi's lookup](#testing-stubs-through-goobis-lookup)
 
 
 ---
@@ -626,7 +626,7 @@ For the cost evidence behind the "~$3–5/month" figure, see [Cost Analysis](#co
 
 ## Digitisation requirements on stubs
 
-[RFC 091](../091-digitisation-ingest-identifiers/README.md) makes the FOLIO instance HRID the preservation identifier for material digitised after the migration, and platform#6697 decided that visual material and AV are catalogued in Axiell Collections and synced to FOLIO. The stubs this sync creates are therefore the records that digital production's export tool resolves when it writes the marc.xml Goobi needs. The export path itself is described in RFC 091; this section records what the stub has to carry for it, decided on 2026-10-12 during the platform#6669 scoping. The requirements were checked against the sync code on catalogue-pipeline main (mapping version 2.6.1) and the hosted dev tenant on 2026-10-13.
+[RFC 091](../091-digitisation-ingest-identifiers/README.md) makes the FOLIO instance HRID the preservation identifier for material digitised after the migration, and platform#6697 decided that visual material and AV are catalogued in Axiell Collections and synced to FOLIO. The stubs this sync creates are therefore the records Goobi resolves in Folio when digital production create a process. That lookup is described in RFC 091; this section records what the stub has to carry for it, decided on 2026-10-12 during the platform#6669 scoping. The requirements were checked against the sync code on catalogue-pipeline main (mapping version 2.6.1) and the hosted dev tenant on 2026-10-13.
 
 ### FOLIO-assigned instance HRID
 
@@ -640,9 +640,9 @@ Stored identifiers are searchable in inventory whatever their type. mod-oai-pmh'
 
 | Source in the Axiell MARC | FOLIO identifier type | In generated MARC | Purpose |
 |---|---|---|---|
-| 001, the Axiell GUID | System control number, two entries: `(AxC)<guid>` and the bare `<guid>` | 035$a, inferred | The prefixed entry gives 035 its prefix; the bare entry is the value the export tool and the self-heal query match exactly |
+| 001, the Axiell GUID | System control number, two entries: `(AxC)<guid>` and the bare `<guid>` | 035$a, inferred | The prefixed entry gives 035 its prefix; the bare entry is the value Goobi's lookup and the self-heal query match exactly |
 | 035$a with the `(AltRefNo)` prefix, the object number | Local identifier, as today | 024, inferred | Human lookup |
-| 035$a with the `(RefNo)` prefix | A tenant-defined type of its own, proposed name `Axiell reference number` | not emitted | Lookup by reference, and the process-title prefix the export tool writes into 945$a; a separate type is needed so the tool can tell the RefNo from the object number |
+| 035$a with the `(RefNo)` prefix | A tenant-defined type of its own, proposed name `Axiell reference number` | not emitted | Lookup by reference, and the process-title prefix Goobi takes from 945$a; a separate type is needed so the RefNo can be told apart from the object number |
 | 035$a with the `(Bibliographic Number)` prefix, or 907$a when it is b-number-shaped | Sierra system number, the tenant-defined type migrated instances use | not emitted | Lookup by b-number for re-digitisation, the predecessor rule in RFC 091 |
 
 The b-number source needs care. The collect stylesheet fills 907$a from `PID_other.non-URI_ID`, which on migrated archive records is the CALM RecordID (RFC 092 counts it on 99.4 per cent of records). The b-number, where one exists, arrives as 035$a with the `(Bibliographic Number)` prefix through the `Alternative_number` template, the field RFC 092's import fills. What `PID_other` will hold for visual and AV records migrated from Sierra is not yet known and may be the b-number, which is why 907$a is accepted when it matches the b-number shape (`b`, seven digits, then a digit or `x`). The stored b-number is lowercase with any leading dot removed.
@@ -651,15 +651,15 @@ The b-number must not be stored under a built-in type. The catalogue pipeline's 
 
 ### Instance type per category
 
-Every stub is currently typed `text` through a single default. The instance type becomes a per-category table resolved through the reference cache: still image for visual material, two-dimensional moving image for film, performed music or spoken word for sound, text for archives. The dev tenant holds all 26 standard instance types. The type drives 336 in the generated MARC and gives the export tool leader byte 6, from which Goobi chooses the process type. FOLIO has no archival instance type, so an archive stub is `text` like a book and the export tool tells them apart through the stub marker.
+Every stub is currently typed `text` through a single default. The instance type becomes a per-category table resolved through the reference cache: still image for visual material, two-dimensional moving image for film, performed music or spoken word for sound, text for archives. The dev tenant holds all 26 standard instance types. The type drives 336 in the generated MARC and gives leader byte 6, from which Goobi chooses the process type. FOLIO has no archival instance type, so an archive stub is `text` like a book and Goobi's lookup tells them apart through the stub marker.
 
 ### Stub marker
 
-Stubs must be identifiable so that staff edit them only in Axiell. The `AxC-` HRID prefix was the only marker and the FOLIO-assigned HRID removes it. It is replaced by an administrative note, staff-only and not exported, saying the record is mastered in Axiell Collections, and a statistical code so stubs can be filtered in FOLIO searches and reports. The dev tenant has 16 statistical codes in four types and none marks a stub, so the code is new reference data. The export tool also depends on the marker: for an Axiell-mastered record whose instance type is `text` it sets leader byte 6 to `t`, so Goobi creates an Archive process rather than a Monograph, and the statistical code or the `(AxC)` System control number is how it recognises the record. The marker is part of the digitisation path, not only a staff convenience.
+Stubs must be identifiable so that staff edit them only in Axiell. The `AxC-` HRID prefix was the only marker and the FOLIO-assigned HRID removes it. It is replaced by an administrative note, staff-only and not exported, saying the record is mastered in Axiell Collections, and a statistical code so stubs can be filtered in FOLIO searches and reports. The dev tenant has 16 statistical codes in four types and none marks a stub, so the code is new reference data. Goobi's lookup also depends on the marker: for an Axiell-mastered record whose instance type is `text` it sets leader byte 6 to `t`, so Goobi creates an Archive process rather than a Monograph, and the statistical code or the `(AxC)` System control number is how it recognises the record. The marker is part of the digitisation path, not only a staff convenience.
 
 ### Discovery suppression
 
-Stubs are created with no `discoverySuppress`, and the catalogue pipeline's FOLIO adapter harvests every instance with no set filter, so each stub would appear in the public catalogue as a FOLIO work beside its Axiell work. The proposal is to create stubs with `discoverySuppress: true`. The generated MARC still reaches the adapter with 999$t set to 1, and the FOLIO work builder emits a `DeletedSourceWork` for it; both halves were observed on the dev tenant on 2026-10-13 with a suppressed migrated instance. The export tool ignores suppression, since both inventory and OAI-PMH return suppressed records on this tenant. If Collections Information do not want suppression, the pipeline needs a filter on the statistical code or the `(AxC)` 035 prefix instead, which is a pipeline change rather than a sync change. Identifiers, instance type, the administrative note and the statistical code are replaced on every update so a corrected Axiell record corrects the stub.
+Stubs are created with no `discoverySuppress`, and the catalogue pipeline's FOLIO adapter harvests every instance with no set filter, so each stub would appear in the public catalogue as a FOLIO work beside its Axiell work. The proposal is to create stubs with `discoverySuppress: true`. The generated MARC still reaches the adapter with 999$t set to 1, and the FOLIO work builder emits a `DeletedSourceWork` for it; both halves were observed on the dev tenant on 2026-10-13 with a suppressed migrated instance. Goobi's lookup must ignore suppression; inventory and OAI-PMH both return suppressed records on the dev tenant, and the Z39.50 server is to be checked on the test environment. If Collections Information do not want suppression, the pipeline needs a filter on the statistical code or the `(AxC)` 035 prefix instead, which is a pipeline change rather than a sync change. Identifiers, instance type, the administrative note and the statistical code are replaced on every update so a corrected Axiell record corrects the stub.
 
 ---
 
@@ -702,7 +702,7 @@ The requirements in [Digitisation requirements on stubs](#digitisation-requireme
 1. The `655$a` vocabulary for migrated visual and AV records, and whether `351$c` will be `ITEM` for them.
 2. Whether stubs are discovery-suppressed, or the public catalogue filters them another way.
 3. The wording of the administrative note and the statistical code used as the stub marker.
-4. Whether stubs may draw from the shared `in` HRID sequence, whose settings EBSCO manage, or need a prefix of their own. The export tool and Goobi accept either, but it must be settled before anything is stamped into file names or storage paths.
+4. Whether stubs may draw from the shared `in` HRID sequence, whose settings EBSCO manage, or need a prefix of their own. Goobi accepts either, but it must be settled before anything is stamped into file names or storage paths.
 5. The loan type source, carried over from catalogue-pipeline PR 3746.
 6. Whether museum and film records should reach the public catalogue through the Axiell transformer as soon as they enter the feed, or be held back.
 7. What `PID_other.non-URI_ID`, and so 907$a, will carry for visual and AV records migrated from Sierra, and whether their b-numbers will be loaded as `(Bibliographic Number)` alternative numbers as RFC 092 does for archives.
@@ -712,6 +712,6 @@ The requirements in [Digitisation requirements on stubs](#digitisation-requireme
 
 Verified on the production Axiell endpoint on 2026-10-13: the OAI `collect` set is restricted by a search statement `dataset=archivecatalogue` in `adlibweb.xml`, applied by Axiell on 2026-07-28 at our request (platform#6460). Visual records are destined for the `museum` dataset and AV for `film`; on that date museum held 11,008 records and film none. Nothing in those datasets reaches the adapter, so nothing reaches the sync. Before any visual or AV stub can exist Axiell widens the statement to `dataset=archivecatalogue,film,museum` and recycles the application pool, we run a full reharvest because the change does not touch record modification dates, the museum and film record shapes are checked against the collect stylesheet, and Collections Information agree whether those records may reach the public catalogue at the same time, since the adapter feeds both. The migrations are estimated at January 2027 for visual and March 2027 for AV (Nicola Cook, 2026-08-27, unconfirmed), so the sync changes can be built and tested on archive records first.
 
-### Dev tenant mismatch between the sync and the digitisation tool
+### Testing stubs through Goobi's lookup
 
-The deployed sync Lambda runs with `FOLIO_TARGET=dev` against a FOLIO at a private VPC address, tenant `diku`. The export tool and the verification in this RFC use the EBSCO-hosted dev tenant `fs00001190`, which holds the migrated Sierra data, mod-oai-pmh and the OAI edge, and no synced stubs. End-to-end testing of a stub through the export tool needs both on one tenant. The proposal is a second sync target pointing at `fs00001190` with its own SSM credential, used for a bounded dry run and then a small live run, rather than moving the tool to `diku`, which lacks the reference data and the OAI edge. Whether EBSCO accept stubs being written to `fs00001190`, and what cleanup they expect, is open.
+The sync is validated against the Folio test environment, a copy of production (platform#6849, 2026-11-24), and EBSCO host the Z39.50 server Goobi's lookup uses for the same environment (RFC 091). Stubs written by the sync and migrated Sierra records are therefore on one tenant, and Intranda test the lookup end to end there. The earlier proposal of a second sync target on the dev tenant `fs00001190`, which holds the migrated data but no stubs, is no longer needed.

@@ -6,16 +6,16 @@ Wellcome Collection is migrating its library management system from Sierra to Fo
 
 An earlier draft of this RFC proposed minting catalogue-style identifiers at ingest through a secured extension to the Identifiers API. The review discussion on this RFC's pull request reversed that proposal; this version records the agreed direction and the reasoning. See [Alternatives considered](#alternatives-considered) for the rejected designs.
 
-**Last modified:** 2026-10-13T13:14:33+00:00
+**Last modified:** 2026-11-26T12:00:00+00:00
 
 **Related RFCs:**
 
-- [RFC 089: Identifiers API](../089-identifiers-api/README.md): the read-only canonical to source identifier translation service over the ID Registry. The export tool reads the predecessor from the Folio instance instead, so the API is no longer on the digitisation path; the registry remains the system of record for predecessor relationships in the catalogue pipeline. It stays read-only; the secured mint extension the earlier draft of this RFC proposed is withdrawn.
+- [RFC 089: Identifiers API](../089-identifiers-api/README.md): the read-only canonical to source identifier translation service over the ID Registry. Goobi reads the predecessor from the Folio instance instead, so the API is no longer on the digitisation path; the registry remains the system of record for predecessor relationships in the catalogue pipeline. It stays read-only; the secured mint extension the earlier draft of this RFC proposed is withdrawn.
 - [RFC 083: Stable identifiers following mass record migration](../083-stable_identifiers/README.md): the predecessor / many-to-one minting that keeps an old b-number resolving to the same canonical id.
 - [RFC 081: Identifiers in iiif-builder: beyond the B number](../081-identifiers-in-iiif-builder/README.md): the DDS identity service. Its structural constraints shape the form of the new preservation identifier, but it is no longer a blocking gate on the ingest path.
 - [RFC 085: Identifiers of and within IIIF resources after the migration](../085-IIIF-Identities-and-Migration/README.md): proposes that canonical IIIF URIs move to the Work id (open in [PR #143](https://github.com/wellcomecollection/docs/pull/143)). The decision recorded here inverts that position; amending RFC 085 is a named deliverable of this RFC (see [Next steps](#next-steps)).
 - [RFC 088: Migrating identity, requesting and items APIs from Sierra to FOLIO](../088-folio-identity-requesting-migration/README.md): the wider identity and requesting half of the same Sierra to Folio migration.
-- [RFC 090: CMS to LMS Sync](../090-axiell-folio-sync/README.md): the Axiell to Folio sync. Visual and AV material reaches Folio through it as Inventory-native stubs, and the stub design that gives them a Folio-assigned HRID and the identifiers the export tool needs is recorded there (see [Axiell material through the sync](#axiell-material-through-the-sync)).
+- [RFC 090: CMS to LMS Sync](../090-axiell-folio-sync/README.md): the Axiell to Folio sync. Visual and AV material reaches Folio through it as Inventory-native stubs, and the stub design that gives them a Folio-assigned HRID and the identifiers Goobi's lookup needs is recorded there (see [Axiell material through the sync](#axiell-material-through-the-sync)).
 - [RFC 092: Keeping digitised archive material connected after Sierra](../092-digitised-archive-links/README.md): the archive-side companion. Digitised archive material merges into a CALM (later Axiell) target rather than a Sierra or Folio one, and keeps its METS link through a b number on the Axiell record with no Folio record involved. The merge-behaviour notes in this RFC describe library material.
 - RFC 002: Archival storage, <https://docs.wellcomecollection.org/developers/rfcs/002-archival_storage>.
 
@@ -192,9 +192,13 @@ The binding that backs this redirect is merge-derived, so it cannot come from th
 
 ## Proposal
 
-Build a small platform-owned export tool that replaces the Sierra and MarcEdit step digital production use today. Staff drop a CSV of bib-level identifiers (b-numbers, or Folio HRIDs) into an S3 requests prefix; the tool resolves each against Folio inventory by HRID or identifier value, fetches the MARC from mod-oai-pmh through Okapi, sets 001 and 907 to the preservation identifier, and writes one marc.xml per record and a results CSV to an output prefix. Goobi's mass import is unchanged. Nothing is minted at any point. The scoping is recorded in platform#6669 (2026-10-13); digital production confirmed on 2026-10-13 that request lists are bib-level.
+Goobi pulls the record from Folio itself and applies the predecessor rule, replacing the Sierra and MarcEdit step digital production use today. Staff give Goobi bib-level identifiers (b-numbers, or Folio HRIDs); Goobi resolves each against Folio by HRID or identifier value, fetches the MARC, sets 001 and 907 to the preservation identifier and names the process from it. Nothing is minted at any point. The scoping is recorded in platform#6669 (2026-10-13); digital production confirmed on 2026-10-13 that request lists are bib-level and that an in-Goobi pull is the form they prefer.
 
-The export tool is the primary mechanism (decided 2026-10-13). In parallel, Intranda are asked to scope a Goobi-side connector that pulls the MARC from Folio over the API for a list of identifiers and applies the same predecessor rule; digital production said on 2026-10-13 that the CSV round trip adds no friction compared with MarcEdit today and that the in-Goobi pull is the form they would prefer. The connector can replace the CSV round trip later if the scoping shows it cheap and timely. Intranda work is needed on either route, because the predecessor rule is not something the standard catalogue plugins apply.
+Intranda build this, agreed at a meeting with them on 2026-11-12, as two packages of work: changing the identifiers Goobi uses for processes and packages, and pulling the metadata from Folio in place of a file import. Both are tracked in platform#6769. The predecessor rule is not something Goobi's standard catalogue plugins apply, so Intranda work was needed on any route.
+
+Intranda's preferred route is Z39.50 or SRU, which is mostly configuration in Goobi. Folio has no Z39.50 module on Wellcome's tenants; EBSCO host a Z39.50 server alongside them, and set one up for the Folio test environment on 2026-11-24. Which identifiers that server can search on is not yet confirmed. If it cannot search on the Sierra system number identifier, Goobi uses the Folio REST API (inventory and source records through Okapi) instead, which is development work for Intranda. Axiell-synced stubs have no source record, so Z39.50 cannot serve them and they need the REST API whichever route serves migrated records (see [Finding the predecessor](#finding-the-predecessor)). Intranda develop and test against the Folio test environment, a copy of production, with a read-only account that exists only there.
+
+A platform-built export tool, taking a CSV of identifiers and writing marc.xml for Goobi's existing mass import, was the primary mechanism from 2026-10-13 until the 2026-11-12 meeting. It is kept as the fallback if Intranda cannot deliver the Folio pull in time for Sierra's retirement (see [Alternatives considered](#alternatives-considered)).
 
 Behaviour splits on the predecessor signal:
 
@@ -205,22 +209,20 @@ Behaviour splits on the predecessor signal:
 sequenceDiagram
     autonumber
     actor DP as Digital production staff
-    participant App as Export tool
-    participant Folio as Folio (LMS)
     participant Goobi as Goobi
+    participant Folio as Folio (LMS)
     participant Storage as Storage service
     participant Pipeline as Catalogue pipeline
     participant IIIF as iiif-builder / DLCS
     participant Public as Public catalogue work
 
-    DP->>App: Drop a CSV of bib identifiers in the requests prefix
-    App->>Folio: Inventory lookup by HRID or identifier value
-    Folio-->>App: Instance with no Sierra system number (post-migration path)
-    App->>App: Preservation identifier P = the instance HRID
-    App->>Folio: OAI-PMH GetRecord by instance UUID
-    Folio-->>App: MARC (stored for migrated records, generated for stubs)
-    App->>DP: marc.xml with 001 and 907 = P, plus a results CSV
-    DP->>Goobi: Mass import, package id = P, METS record identifier = folio-id
+    DP->>Goobi: Request records by b-number or HRID
+    Goobi->>Folio: Lookup by HRID or identifier value
+    Folio-->>Goobi: Instance with no Sierra system number (post-migration path)
+    Goobi->>Goobi: Preservation identifier P = the instance HRID
+    Goobi->>Folio: Fetch the instance's MARC
+    Folio-->>Goobi: MARC (stored for migrated records, generated for stubs)
+    Goobi->>Goobi: 001 and 907 = P, package id = P, METS record identifier = folio-id
     Goobi->>Storage: Ingest (space=digitised, externalIdentifier=P)
     Storage-->>Pipeline: registered_bag_notification (externalIdentifier=P)
     Pipeline->>Pipeline: Transformer emits mets/folio-id identity + folio-instance/folio-id merge candidate
@@ -230,11 +232,11 @@ sequenceDiagram
     IIIF->>Public: Serve IIIF manifests at /presentation/P
 ```
 
-On the cross-migration path the lookup finds a Sierra system number identifier on the instance, `P` is that b-number, the METS record identifier is the b-number too, and the flow is indistinguishable from today's from Goobi onwards. Zero or several matching instances are reported in the results CSV and no file is written; the tool never chooses between candidates.
+On the cross-migration path the lookup finds a Sierra system number identifier on the instance, `P` is that b-number, the METS record identifier is the b-number too, and the flow is indistinguishable from today's from Goobi onwards. Zero or several matching instances are reported to the user and no process is created; Goobi never chooses between candidates.
 
 ### Finding the predecessor
 
-The predecessor signal is read from the Folio instance. The migration writes the old b-number onto each migrated instance as an identifier of the tenant-defined type "Sierra system number", and keeps it in 907 of the stored MARC (verified on the dev tenant on 2026-10-13: `in00006446226` carries `b24042237` under that type and in 907). The export tool reads that identifier from the inventory record it has already fetched, for migrated records and for Axiell-synced stubs alike; for stubs the sync stores the b-number the Axiell record cites as a `(Bibliographic Number)` alternative number under the same type (RFC 090). Generated MARC for stubs omits tenant-defined identifier types, which is why the tool reads the inventory record rather than the harvested MARC.
+The predecessor signal is read from the Folio instance. The migration writes the old b-number onto each migrated instance as an identifier of the tenant-defined type "Sierra system number", and keeps it in 907 of the stored MARC (verified on the dev tenant on 2026-10-13: `in00006446226` carries `b24042237` under that type and in 907). For stubs the sync stores the b-number the Axiell record cites as a `(Bibliographic Number)` alternative number under the same type (RFC 090). Generated MARC for stubs omits tenant-defined identifier types, so for a stub the predecessor is on the inventory record and not in its MARC. A route that reads only MARC, as Z39.50 and SRU do, finds the predecessor in 907 for migrated records but not for stubs. Stubs are also out of reach of Z39.50 altogether: Net-Z3950-FOLIO cannot serve MARC for an instance without a source record (verified in version 4.4.1, issue ZF-14). Unless EBSCO's hosted server behaves differently, which is to be checked on the test environment, Goobi reads Axiell-synced stubs through the inventory API, and Z39.50 or SRU covers migrated records only.
 
 The ID Registry remains the system of record for predecessor relationships in the catalogue pipeline (RFC 083), and the two can be cross-checked. A disagreement between the registry and the record is a data-quality problem worth failing loudly on, not something to resolve silently in favour of either side.
 
@@ -251,7 +253,7 @@ This holds even though the target becomes a Folio work after migration. The METS
 
 Reuse applies whether or not the item was digitised before the migration. A record with a b-number predecessor that is digitised for the first time after migration still uses the b-number as its preservation identifier: it costs nothing, keeps the transformer untouched, and gives iiif-builder an identifier form it already understands.
 
-For **post-migration ingest** there is no predecessor. The app assigns a new preservation identifier `P`, passes `P` to Goobi as the package id, and puts the Folio id in the METS record identifier. The next sections set out the mechanics.
+For **post-migration ingest** there is no predecessor. Goobi assigns a new preservation identifier `P`, passes `P` to Goobi as the package id, and puts the Folio id in the METS record identifier. The next sections set out the mechanics.
 
 ### Post-migration merge candidate
 
@@ -310,9 +312,9 @@ For cross-migration the same shape holds with the b-number as both `P` and the r
 
 ### Axiell material through the sync
 
-Visual material and AV are catalogued in Axiell Collections and synced to Folio (platform#6697, answered 2026-09-09). They reach Folio through the RFC 090 sync as Inventory-native stubs. With the sync change recorded in RFC 090, Folio assigns each stub an instance HRID from the shared `in` sequence and the stub carries the Axiell GUID, reference number, object number and any predecessor b-number as searchable identifiers, so the export path above serves these items with the same two Folio calls and the same rule: the b-number where there is a predecessor, the HRID otherwise. The stub's instance type and a stub marker let the tool set the MARC leader so Goobi chooses the right document type. Digitised archive material keeps the Axiell ref as today, and born-digital material is unchanged.
+Visual material and AV are catalogued in Axiell Collections and synced to Folio (platform#6697, answered 2026-09-09). They reach Folio through the RFC 090 sync as Inventory-native stubs. With the sync change recorded in RFC 090, Folio assigns each stub an instance HRID from the shared `in` sequence and the stub carries the Axiell GUID, reference number, object number and any predecessor b-number as searchable identifiers, so Goobi's lookup serves these items with the same rule: the b-number where there is a predecessor, the HRID otherwise. The stub's instance type and a stub marker let Goobi set the MARC leader so Goobi chooses the right document type. Digitised archive material keeps the Axiell ref as today, and born-digital material is unchanged.
 
-Two preconditions sit outside this RFC. The sync change itself, and the Axiell OAI feed being widened from the `archivecatalogue` dataset to the `museum` and `film` datasets where this material will land (platform#6460; verified on the production endpoint on 2026-10-13 that neither dataset is in the feed), followed by a full reharvest. The Sierra to Axiell migrations are estimated for January 2027 (visual) and March 2027 (AV), so the export path serves Folio-mastered books first and Axiell material when those land.
+Two preconditions sit outside this RFC. The sync change itself, and the Axiell OAI feed being widened from the `archivecatalogue` dataset to the `museum` and `film` datasets where this material will land (platform#6460; verified on the production endpoint on 2026-10-13 that neither dataset is in the feed), followed by a full reharvest. The Sierra to Axiell migrations are estimated for January 2027 (visual) and March 2027 (AV), so Goobi's lookup serves Folio-mastered books first and Axiell material when those land.
 
 ### Worked examples
 
@@ -386,6 +388,8 @@ A fifth permutation, born-digital material catalogued in Folio, is expected even
 
 **Mint an independent digitisation identifier.** Raised at the 2026-08 meeting with digital production and collections information, and the direction platform#6669 was opened to scope: an identifier minted outside Folio and Axiell, carried into Goobi in the marc.xml and written back to the source record. Parked on 2026-10-13. Once visual and AV material has Folio stubs with Folio-assigned HRIDs (see [Axiell material through the sync](#axiell-material-through-the-sync)), the HRID with b-number reuse covers every case the independent identifier was proposed for, and the minted identifier would add a minting service, a write-back into two source systems and a third identifier shape for every consumer, for no gain in coverage. It is revisited if the sync cannot assign real HRIDs, if digitising before cataloguing turns out to be a real workflow, if collections information will not sync a material type digital production needs, or if a third identifier shape becomes unavoidable for another reason.
 
+**A platform-built export tool.** The primary mechanism from 2026-10-13 until the 2026-11-12 meeting with Intranda: staff drop a CSV of bib-level identifiers into an S3 requests prefix, and the tool resolves each against Folio inventory, fetches the MARC from mod-oai-pmh through Okapi, sets 001 and 907 to the preservation identifier and writes one marc.xml per record and a results CSV for Goobi's existing mass import. Digital production found the CSV round trip workable but preferred an in-Goobi pull, and Intranda need to change Goobi's identifiers either way, so building the lookup into Goobi removes a platform-owned service and a manual step. The tool is kept as the fallback if Intranda cannot deliver the Folio pull before Sierra retires; its specification is in platform#6411.
+
 **Feed the Folio id into Goobi as the package id for existing items.** The simplest option for cross-migration would be to use the Folio id where the b-number is used today. This breaks two independent mechanisms.
 
 The first is storage versioning. The `externalIdentifier` is effectively immutable; there is no rename operation. Whether the storage service creates a new bag or updates an existing one is decided purely by whether the `(space, externalIdentifier)` pair already exists. Changing the identifier produces a different bag whose version counter starts again at v1, and the version history that IIIF and the catalogue rely on does not carry across.
@@ -418,16 +422,17 @@ Cross-migration needs none of these: it reuses the b-number, keeps the transform
 
 ### Open questions
 
-1. **Confirming the Folio HRID, and the multi-volume suffix convention.** The form itself is proposed rather than open (see [The form of the new preservation identifier](#the-form-of-the-new-preservation-identifier)). Digital production confirmed on 2026-10-13 that their request lists are bib-level b-numbers and that they understand the HRID as the equivalent after migration, and on the same day that the CSV round trip the export tool offers is workable. Formal sign-off on the form and on the suffix convention is still outstanding from digital production, Digirati and Internet Archive, and the suffix convention cannot be left implicit because Goobi stamps it into METS and JP2 filenames upstream of any service. The questions to each party are listed with the platform#6669 scoping.
+1. **Confirming the Folio HRID, and the multi-volume suffix convention.** The form itself is proposed rather than open (see [The form of the new preservation identifier](#the-form-of-the-new-preservation-identifier)). Digital production confirmed on 2026-10-13 that their request lists are bib-level b-numbers and that they understand the HRID as the equivalent after migration. Formal sign-off on the form and on the suffix convention is still outstanding from digital production, Digirati and Internet Archive, and the suffix convention cannot be left implicit because Goobi stamps it into METS and JP2 filenames upstream of any service. The suffix convention is tracked in platform#6936.
 2. **Storage identifier and record identifier divergence.** Post-migration the storage `externalIdentifier` (P) need not be the same string as the METS record identifier (`folio-id`). Today both are the b-number, and whether iiif-builder and DLCS rely on the two being equal is unconfirmed: iiif-builder loads the package by its storage handle but derives Canvas and DLCS asset identifiers from file names recorded in the METS. Choosing the Folio HRID as P keeps the two equal and makes this question moot; any other scheme must answer it before the post-migration path ships.
 3. **Axiell ref stability across the CALM migration.** The born-digital story above assumes archival refs survive the move to Axiell Collections identically, in which case born-digital needs no change, ever. If refs can be restructured in Axiell, born-digital needs the same predecessor mechanism as b-numbers, and that mechanism is currently only specified for Sierra to Folio. Related: whether the METS merge candidate for Axiell-catalogued material stays `calm-ref-no` or becomes an Axiell identifier type, which touches the same transformer fallback.
-4. **The AV e-bib rule.** For AV the storage package was ingested under the e-bib's b-number rather than the physical bib's, because the merger attaches METS to the e-bib (platform#4876). A predecessor lookup from the physical record therefore returns the wrong b-number, and the export tool has to consult the linked e-bib, or what the storage service holds, before treating the item as new. Which record a request names for AV is undecided.
+4. **The AV e-bib rule.** For AV the storage package was ingested under the e-bib's b-number rather than the physical bib's, because the merger attaches METS to the e-bib (platform#4876). A predecessor lookup from the physical record therefore returns the wrong b-number, and Goobi's lookup has to consult the linked e-bib, or what the storage service holds, before treating the item as new. Which record a request names for AV is undecided.
+5. **Which identifiers the hosted Z39.50 server can search.** Intranda's configuration-only route needs searches on the instance HRID and on the Sierra system number identifier. EBSCO are confirming the searchable fields; if either search is missing, Goobi uses the Folio REST API for that step. Axiell-synced stubs need the REST API in any case (see [Finding the predecessor](#finding-the-predecessor)), so Intranda's estimate should cover both routes.
 
 ## Next steps
 
 1. **Confirm the Folio HRID and agree its multi-volume suffix convention** (open question 1) with digital production, the pipeline team and Digirati, since all three consume its shape.
-2. **Build the export tool** described in [Proposal](#proposal): CSV of bib identifiers in an S3 prefix, Folio inventory lookup, MARC from mod-oai-pmh through Okapi, 001 and 907 set to the preservation identifier read from the instance's Sierra system number or its HRID, marc.xml and a results CSV out, Goobi mass import unchanged. A prototype against the hosted dev tenant comes first; the specs and the ownership question sit with platform#6669.
-3. **Scope a Goobi-side Folio connector with Intranda**, in parallel with the export tool and without displacing it: given a list of HRIDs or b-numbers, Goobi fetches the MARC from Folio over the API and applies the same predecessor rule. Digital production prefer this form. Timing is not pressing: digital production have created enough Sierra records to work until March 2027 (Nicola Cook, 2026-10-13), so the first batch sourced from Folio is expected after that date and cross-migration reuse of b-numbers remains the live path until then. Whether any accession catalogued only in Folio is wanted for digitisation before March is an open residual.
+2. **Intranda build the Folio pull and the identifier change in Goobi** described in [Proposal](#proposal), tracked in platform#6769 (the identifier change in platform#6937 and the pull in platform#6938): resolve by HRID or b-number, apply the predecessor rule, set 001 and 907, and name the process and package from the preservation identifier. Platform give Intranda a read-only account on the Folio test environment and a sample marc.xml built from real records, and digital production accept the result there.
+3. **Keep the platform export tool as the fallback** (platform#6411), built only if Intranda cannot deliver the Folio pull in time. Timing is not pressing: digital production have created enough Sierra records to work until March 2027 (Nicola Cook, 2026-10-13), so the first batch sourced from Folio is expected after that date and cross-migration reuse of b-numbers remains the live path until then. Whether any accession catalogued only in Folio is wanted for digitisation before March is an open residual.
 4. **Cross-migration first.** It is the lower-risk path: reuse the b-number, leave the METS transformer untouched, and lean on the RFC 083 predecessor relationship to keep canonical ids stable. It needs only the Folio-target merger rules (step 6).
 5. **Add the `folio-instance` transformer branch** (`MetsMergeCandidate`, `MetsData`), shape-gated so b-numbers and refs are unaffected.
 6. **Update the merger rules for Folio targets.** Add a `FolioInstance` predicate to `WorkPredicates`, an entry to `TargetPrecedence`, and a Folio target on the METS fold rule in `ItemsRule`, so that after migration a Folio work is selected as the merge target. Both paths need this; it does not touch the id_minter or the canonical id, and it is independent of the transformer change.
