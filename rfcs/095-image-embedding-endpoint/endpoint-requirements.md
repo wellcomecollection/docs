@@ -64,7 +64,7 @@ These requirements matter most to us. Vectors from two versions of a model canno
 
 | Requirement | Level | Why |
 | --- | --- | --- |
-| The pipeline can call the endpoint from a different AWS account and region through the public SageMaker runtime API. | Must | The pipeline and the endpoint are in different accounts, and we assume different regions. |
+| The pipeline can call the endpoint from a different AWS account and region through the public SageMaker runtime API. | Must | The pipeline is in eu-west-1 in the platform account. The endpoint will be in eu-west-2 in the hosting team's account. |
 | Authorisation is an IAM role in the hosting account that allows `sagemaker:InvokeEndpoint` on the image embedding endpoints, which our task assumes. | Should | It needs no shared network. We are open to another route if the hosting team prefers one. |
 | The role trusts our account with a condition on the calling role's name pattern, and does not name a single role. | Should | Our task role is recreated with a new name for each pipeline. Naming it would mean a change on the hosting side every time. |
 | No private network path is required. | Should | The images are public catalogue thumbnails. If a private path is required by policy, we need to know early, because it adds infrastructure on both sides. |
@@ -104,7 +104,6 @@ Once a test endpoint exists we will run these checks and share the results.
 
 ## Still to agree
 
-- The region and account the endpoint runs in.
 - Which of the Should items the endpoint will meet, and which we work around.
 - The thresholds marked as proposed.
 - Who pays for the endpoint, and whether other teams are expected to use it.
